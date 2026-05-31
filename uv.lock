@@ -328,13 +328,11 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "rich" },
+    { name = "sacrebleu" },
     { name = "typer" },
 ]
 
 [package.optional-dependencies]
-quality = [
-    { name = "sacrebleu" },
-]
 tokens = [
     { name = "tiktoken" },
 ]
@@ -353,11 +351,11 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.8.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "rich", specifier = ">=13.7.1" },
-    { name = "sacrebleu", marker = "extra == 'quality'", specifier = ">=2.4.0" },
+    { name = "sacrebleu", specifier = ">=2.4.0" },
     { name = "tiktoken", marker = "extra == 'tokens'", specifier = ">=0.7.0" },
     { name = "typer", specifier = ">=0.12.3" },
 ]
-provides-extras = ["quality", "tokens"]
+provides-extras = ["tokens"]
 
 [package.metadata.requires-dev]
 dev = [

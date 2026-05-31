@@ -10,6 +10,7 @@ class Document:
     source_id: str
     text: str
     metadata: dict[str, Any]
+    ground_truth: str | None = None
 
 
 @dataclass(frozen=True)

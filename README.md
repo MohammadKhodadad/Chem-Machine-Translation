@@ -70,6 +70,17 @@ uv run pytest
 uv run ruff check .
 ```
 
+Evaluate Google Patents aligned translations separately from the main CLI:
+
+```powershell
+uv run python scripts/evaluate_google_patents.py --strategy dry-run --limit 2
+uv run python scripts/evaluate_google_patents.py --strategy openai-agentic --language French --limit 5
+```
+
+The script pairs English and target-language Google Patents rows by `publication_number`, runs the
+selected translation strategy, and writes prediction/reference metrics to
+`reports/google-patents-eval.jsonl`.
+
 ## Current Strategies
 
 - `dry-run`: returns the source text unchanged. Use this to validate loading, truncation, and report generation without API cost.
