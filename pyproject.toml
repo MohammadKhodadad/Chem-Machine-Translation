@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chem-machine-translation"
+version = "0.1.0"
+description = "Chemistry-aware document translation experiments."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "BASF AI" }
+]
+dependencies = [
+  "datasets>=2.20.0",
+  "huggingface-hub>=0.25.0",
+  "openai>=1.40.0",
+  "pydantic>=2.8.0",
+  "python-dotenv>=1.0.1",
+  "rich>=13.7.1",
+  "typer>=0.12.3",
+]
+
+[project.optional-dependencies]
+quality = [
+  "sacrebleu>=2.4.0",
+]
+tokens = [
+  "tiktoken>=0.7.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.2.0",
+  "ruff>=0.5.0",
+]
+
+[project.scripts]
+chem-translate = "chem_machine_translation.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chem_machine_translation"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
