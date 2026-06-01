@@ -58,16 +58,21 @@ def main() -> None:
         for language in languages:
             language_code = normalize_language_code(language)
             language_name = LANGUAGE_NAMES[language_code]
-            documents = list(
-                iter_google_patent_translation_documents(
-                    data_dir=args.data_dir,
-                    target_language=language_name,
-                    limit=args.limit,
-                    min_input_tokens=args.min_input_tokens,
-                    max_input_tokens=args.max_input_tokens,
-                    text_field=args.text_field,
+            try:
+                documents = list(
+                    iter_google_patent_translation_documents(
+                        data_dir=args.data_dir,
+                        target_language=language_name,
+                        limit=args.limit,
+                        min_input_tokens=args.min_input_tokens,
+                        max_input_tokens=args.max_input_tokens,
+                        text_field=args.text_field,
+                    )
                 )
-            )
+            except FileNotFoundError:
+                skipped_languages.append(language_name)
+                continue
+
             if not documents:
                 skipped_languages.append(language_name)
                 continue
