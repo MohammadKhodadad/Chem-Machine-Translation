@@ -1,7 +1,10 @@
 import csv
 from pathlib import Path
 
-from chem_machine_translation.google_patents import iter_google_patent_translation_documents
+from chem_machine_translation.google_patents import (
+    iter_google_patent_translation_documents,
+    normalize_language_code,
+)
 
 FIELDNAMES = [
     "id",
@@ -64,3 +67,8 @@ def test_iter_google_patent_translation_documents_aligns_ground_truth(tmp_path) 
     assert documents[0].text == source_context
     assert documents[0].ground_truth == target_context
     assert documents[0].metadata["target_language_code"] == "fr"
+
+
+def test_normalize_language_code_supports_dutch() -> None:
+    assert normalize_language_code("Dutch") == "nl"
+    assert normalize_language_code("nl") == "nl"

@@ -15,7 +15,7 @@ from chem_machine_translation.metrics import compute_translation_metrics
 from chem_machine_translation.text import approximate_token_count
 from chem_machine_translation.translators import build_translator
 
-DEFAULT_LANGUAGES = ["French", "German", "Portuguese", "Chinese", "Spanish"]
+DEFAULT_LANGUAGES = ["French", "German", "Spanish", "Portuguese", "Dutch", "Chinese"]
 
 
 def parse_args() -> argparse.Namespace:

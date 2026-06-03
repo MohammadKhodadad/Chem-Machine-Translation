@@ -11,11 +11,13 @@ LANGUAGE_CODES = {
     "chinese": "zh",
     "french": "fr",
     "german": "de",
+    "dutch": "nl",
     "portuguese": "pt",
     "spanish": "es",
     "zh": "zh",
     "fr": "fr",
     "de": "de",
+    "nl": "nl",
     "pt": "pt",
     "es": "es",
 }
@@ -24,6 +26,7 @@ LANGUAGE_NAMES = {
     "zh": "Chinese",
     "fr": "French",
     "de": "German",
+    "nl": "Dutch",
     "pt": "Portuguese",
     "es": "Spanish",
 }
