@@ -6,14 +6,15 @@ from collections import defaultdict
 from pathlib import Path
 
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
-from chem_machine_translation.google_patents import (
+from chem_machine_translation.data.google_patents import (
     LANGUAGE_NAMES,
     iter_google_patent_translation_documents,
     normalize_language_code,
 )
-from chem_machine_translation.metrics import compute_translation_metrics
-from chem_machine_translation.text import approximate_token_count
-from chem_machine_translation.translators import build_translator
+from chem_machine_translation.evaluation.metrics import compute_translation_metrics
+from chem_machine_translation.translation.terminology import build_terminology_layer
+from chem_machine_translation.translation.translators import build_translator
+from chem_machine_translation.utils.text import approximate_token_count
 
 DEFAULT_LANGUAGES = ["French", "German", "Spanish", "Portuguese", "Dutch", "Chinese"]
 
@@ -33,6 +34,33 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--max-review-rounds", type=int, default=3)
+    parser.add_argument("--terminology-prompt", type=Path, default=None)
+    parser.add_argument(
+        "--extract-terminology",
+        action="store_true",
+        help="Use an LLM to extract source terms before translation.",
+    )
+    parser.add_argument(
+        "--terminology-model",
+        default=None,
+        help="Model used for LLM terminology extraction. Defaults to the translation model.",
+    )
+    parser.add_argument(
+        "--terminology-max-terms",
+        type=int,
+        default=20,
+        help="Maximum LLM-extracted terminology items per document/language.",
+    )
+    parser.add_argument(
+        "--iate-terminology",
+        action="store_true",
+        help="Use IATE candidate labels for LLM-extracted terminology.",
+    )
+    parser.add_argument(
+        "--wikidata-terminology",
+        action="store_true",
+        help="Use Wikidata as backup for extracted terms without IATE candidates.",
+    )
     parser.add_argument("--min-input-tokens", type=int, default=192)
     parser.add_argument("--max-input-tokens", type=int, default=256)
     parser.add_argument("--text-field", default="context", choices=["context", "abstract", "title"])
@@ -42,11 +70,24 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     settings = load_settings()
+    terminology_layer = build_terminology_layer(
+        settings=settings,
+        static_prompt_path=args.terminology_prompt,
+        extract_terms=(
+            args.extract_terminology or args.iate_terminology or args.wikidata_terminology
+        )
+        and args.strategy != "dry-run",
+        extraction_model=args.terminology_model or args.model,
+        max_terms=args.terminology_max_terms,
+        use_iate=args.iate_terminology,
+        use_wikidata=args.wikidata_terminology,
+    )
     translator = build_translator(
         strategy=args.strategy,
         settings=settings,
         model=args.model,
         max_rounds=args.max_review_rounds,
+        terminology_layer=terminology_layer,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
@@ -96,6 +137,7 @@ def main() -> None:
                     "approved": result.approved,
                     "review_rounds": result.review_rounds,
                     "review_notes": result.review_notes,
+                    "terminology_section": result.terminology_section,
                     "approx_source_tokens": approximate_token_count(document.text),
                     "source_text": document.text,
                     "predicted_translation": result.translated_text,

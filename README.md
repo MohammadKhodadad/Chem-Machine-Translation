@@ -63,6 +63,55 @@ The command writes reports to `reports/` by default.
 If Hugging Face upload variables are configured in `.env`, the generated report is uploaded after
 it is written locally. Use `--no-upload` to skip that for a run.
 
+Optionally inject terminology instructions from a text or markdown file:
+
+```powershell
+uv run chem-translate translate `
+  --strategy openai-agentic `
+  --language German `
+  --terminology-prompt data/terminology/german.md
+```
+
+When omitted, the terminology layer is empty and prompts are unchanged.
+
+You can also ask an LLM to extract terminology from each source document before translation:
+
+```powershell
+uv run chem-translate translate `
+  --strategy openai-agentic `
+  --language German `
+  --extract-terminology `
+  --terminology-max-terms 20
+```
+
+The extracted terms are injected as a terminology focus list. They are useful for consistency, but
+they are not treated as an approved bilingual glossary.
+
+To enrich those extracted source terms with Wikidata candidate labels in the target language:
+
+```powershell
+uv run chem-translate translate `
+  --strategy openai-agentic `
+  --language German `
+  --wikidata-terminology
+```
+
+This enables LLM extraction and adds Wikidata labels when a matching entity has a target-language
+label. These labels are still marked as candidates, not approved company terminology.
+
+To use IATE first and fall back to Wikidata when IATE does not produce a target-language label:
+
+```powershell
+uv run chem-translate translate `
+  --strategy openai-agentic `
+  --language German `
+  --iate-terminology `
+  --wikidata-terminology
+```
+
+The terminology layer tries IATE first, then uses Wikidata for extracted terms without an IATE
+candidate.
+
 Run checks:
 
 ```powershell

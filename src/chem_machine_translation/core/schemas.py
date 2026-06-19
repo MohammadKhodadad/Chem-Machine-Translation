@@ -24,6 +24,7 @@ class TranslationResult:
     approved: bool | None = None
     review_rounds: int = 0
     review_notes: list[str] = field(default_factory=list)
+    terminology_section: str = ""
 
 
 @dataclass(frozen=True)

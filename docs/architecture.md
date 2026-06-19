@@ -3,12 +3,16 @@
 ## Package Layout
 
 - `chem_machine_translation.cli`: Typer-based command line interface.
-- `chem_machine_translation.datasets`: Hugging Face streaming dataset loaders and row normalization.
-- `chem_machine_translation.prompts`: Chemistry-specific translator and reviewer prompts.
-- `chem_machine_translation.openai_agents`: OpenAI generation, review, and revision workflow.
-- `chem_machine_translation.translators`: Translation strategy abstraction and implementations.
-- `chem_machine_translation.comparison`: JSONL/CSV report writers for sample comparisons.
-- `chem_machine_translation.text`: Text normalization and approximate token counting.
+- `chem_machine_translation.core`: shared domain schemas such as `Document` and
+  `TranslationResult`.
+- `chem_machine_translation.data`: Hugging Face and Google Patents dataset loaders.
+- `chem_machine_translation.translation`: prompts, terminology layers, OpenAI agents, and
+  translation strategy implementations.
+- `chem_machine_translation.evaluation`: metric computation and JSONL/CSV report writers.
+- `chem_machine_translation.integrations`: external service integrations such as Hugging Face
+  uploads.
+- `chem_machine_translation.utils`: shared helpers such as text normalization and approximate token
+  counting.
 - `chem_machine_translation.config`: Environment-backed runtime settings.
 
 ## Data Flow

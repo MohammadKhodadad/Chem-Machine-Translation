@@ -8,19 +8,20 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from chem_machine_translation.comparison import (
+from chem_machine_translation.config import DEFAULT_MAX_INPUT_TOKENS, DEFAULT_MODEL, load_settings
+from chem_machine_translation.data.datasets import DATASET_REPOS, DatasetName, iter_documents
+from chem_machine_translation.evaluation.comparison import (
     timestamped_report_path,
     write_csv,
     write_jsonl,
 )
-from chem_machine_translation.config import DEFAULT_MAX_INPUT_TOKENS, DEFAULT_MODEL, load_settings
-from chem_machine_translation.datasets import DATASET_REPOS, DatasetName, iter_documents
-from chem_machine_translation.huggingface_upload import (
+from chem_machine_translation.integrations.huggingface_upload import (
     is_huggingface_upload_configured,
     upload_report_to_huggingface,
 )
-from chem_machine_translation.text import approximate_token_count
-from chem_machine_translation.translators import build_translator
+from chem_machine_translation.translation.terminology import build_terminology_layer
+from chem_machine_translation.translation.translators import build_translator
+from chem_machine_translation.utils.text import approximate_token_count
 
 DEFAULT_TARGET_LANGUAGES = ["French", "German", "Portuguese", "Chinese", "Spanish"]
 
@@ -243,6 +244,54 @@ def translate(
             rich_help_panel="Advanced",
         ),
     ] = 3,
+    terminology_prompt: Annotated[
+        Path | None,
+        typer.Option(
+            "--terminology-prompt",
+            help="Optional text/markdown file with terminology instructions.",
+            rich_help_panel="Advanced",
+        ),
+    ] = None,
+    extract_terminology: Annotated[
+        bool,
+        typer.Option(
+            "--extract-terminology/--no-extract-terminology",
+            help="Use an LLM to extract source terms before translation.",
+            rich_help_panel="Advanced",
+        ),
+    ] = False,
+    terminology_model: Annotated[
+        str | None,
+        typer.Option(
+            "--terminology-model",
+            help="Model used for LLM terminology extraction. Defaults to the translation model.",
+            rich_help_panel="Advanced",
+        ),
+    ] = None,
+    terminology_max_terms: Annotated[
+        int,
+        typer.Option(
+            "--terminology-max-terms",
+            help="Maximum LLM-extracted terminology items per document/language.",
+            rich_help_panel="Advanced",
+        ),
+    ] = 20,
+    wikidata_terminology: Annotated[
+        bool,
+        typer.Option(
+            "--wikidata-terminology/--no-wikidata-terminology",
+            help="Add Wikidata target-language labels for LLM-extracted terms.",
+            rich_help_panel="Advanced",
+        ),
+    ] = False,
+    iate_terminology: Annotated[
+        bool,
+        typer.Option(
+            "--iate-terminology/--no-iate-terminology",
+            help="Use IATE as a fallback for LLM-extracted terminology labels.",
+            rich_help_panel="Advanced",
+        ),
+    ] = False,
     min_input_tokens: Annotated[
         int,
         typer.Option(
@@ -269,12 +318,23 @@ def translate(
 
     settings = load_settings()
     selected_strategy = "dry-run" if dry_run else strategy
+    terminology_layer = build_terminology_layer(
+        settings=settings,
+        static_prompt_path=terminology_prompt,
+        extract_terms=(extract_terminology or wikidata_terminology or iate_terminology)
+        and selected_strategy != "dry-run",
+        extraction_model=terminology_model or model,
+        max_terms=terminology_max_terms,
+        use_wikidata=wikidata_terminology,
+        use_iate=iate_terminology,
+    )
     translator = build_translator(
         strategy=selected_strategy,
         settings=settings,
         model=model,
         temperature=temperature,
         max_rounds=max_review_rounds,
+        terminology_layer=terminology_layer,
     )
     results = []
 

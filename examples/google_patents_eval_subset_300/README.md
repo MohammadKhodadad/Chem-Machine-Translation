@@ -53,6 +53,39 @@ uv run python scripts/evaluate_google_patents.py `
 The command writes predictions, Google Patents references, per-row metrics, and review metadata to
 `reports/google-patents-agentic-300-eval-rerun.jsonl`.
 
+## Terminology Pipeline Evaluation
+
+To run the same evaluation with LLM-extracted terminology, IATE candidate labels first, and Wikidata
+as backup:
+
+```powershell
+uv run python scripts/evaluate_google_patents.py `
+  --data-dir examples/google_patents_eval_subset_300 `
+  --strategy openai-agentic `
+  --language German `
+  --limit 5 `
+  --min-input-tokens 128 `
+  --max-input-tokens 384 `
+  --iate-terminology `
+  --wikidata-terminology `
+  --output reports/google-patents-agentic-terminology-de-5.jsonl
+```
+
+The command writes the injected `terminology_section` for each evaluated row so the terminology
+candidate list can be audited alongside the prediction and metrics.
+
+Recent smoke-test result for German with `--limit 5`:
+
+- Output: `reports/google-patents-agentic-terminology-de-5.jsonl`
+- Rows: 5
+- BLEU: 42.92
+- chrF: 74.62
+- Sequence similarity: 28.90
+
+The terminology layer preserves element symbols such as `Mo`, `W`, `V`, `Cu`, and `Sb` without
+external lookup, uses IATE for available terminology candidates, and only uses Wikidata as backup
+when the Wikidata source label exactly matches the extracted source term.
+
 ## Dry Run
 
 To verify loading and metric generation without API calls, run:

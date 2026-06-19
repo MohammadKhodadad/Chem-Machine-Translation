@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from chem_machine_translation.config import Settings
-from chem_machine_translation.huggingface_upload import (
+from chem_machine_translation.integrations.huggingface_upload import (
     build_huggingface_path,
     is_huggingface_upload_configured,
 )

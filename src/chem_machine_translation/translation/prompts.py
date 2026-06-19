@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from chem_machine_translation.schemas import Document, TranslationReview
+from chem_machine_translation.core.schemas import Document, TranslationReview
 
 TRANSLATOR_SYSTEM_PROMPT = """You are a senior scientific translator specializing in chemistry,
 materials science, chemical engineering, catalysis, polymers, analytical chemistry, and
@@ -21,6 +21,7 @@ Chemistry-specific requirements:
 - Preserve the meaning of mechanistic language: oxidation, reduction, hydrolysis, cycloaddition,
   hydrogenation, adsorption, desorption, selectivity, conversion, yield, activity, stability,
   inhibition, activation, and similar technical terms.
+- When approved terminology instructions are provided in the user prompt, follow them exactly.
 - Do not translate established chemical abbreviations unless the abbreviation has a standard
   target-language expansion in the source context.
 - Do not add missing context, convert units, normalize notation, or fix apparent source mistakes.
@@ -40,6 +41,7 @@ Approve only if the translation preserves the source meaning and chemistry detai
 - mistranslated mechanistic or analytical terms;
 - added explanations, summaries, or facts absent from the source;
 - omitted qualifiers, negations, comparisons, uncertainty, or scope;
+- missing or altered approved terminology when terminology instructions are provided;
 - target-language text that is ungrammatical enough to obscure the scientific meaning.
 
 Return only valid JSON with this exact shape:
@@ -58,9 +60,12 @@ def build_initial_translation_prompt(
     document: Document,
     target_language: str,
     source_language: str,
+    terminology_section: str = "",
 ) -> str:
+    terminology_block = _format_terminology_section(terminology_section)
     return (
         f"Translate this {source_language} chemistry document into {target_language}.\n\n"
+        f"{terminology_block}"
         f"Source document:\n{document.text}"
     )
 
@@ -71,12 +76,15 @@ def build_revision_prompt(
     review: TranslationReview,
     target_language: str,
     source_language: str,
+    terminology_section: str = "",
 ) -> str:
     issues = "\n".join(f"- {issue}" for issue in review.issues) or "- None"
     required_changes = "\n".join(f"- {change}" for change in review.required_changes) or "- None"
+    terminology_block = _format_terminology_section(terminology_section)
     return (
         f"Revise the {target_language} translation of this {source_language} chemistry document.\n"
         "Address every reviewer issue while preserving all chemistry details exactly.\n\n"
+        f"{terminology_block}"
         f"Source document:\n{document.text}\n\n"
         f"Current translation:\n{current_translation}\n\n"
         f"Reviewer issues:\n{issues}\n\n"
@@ -89,9 +97,19 @@ def build_review_prompt(
     candidate_translation: str,
     target_language: str,
     source_language: str,
+    terminology_section: str = "",
 ) -> str:
+    terminology_block = _format_terminology_section(terminology_section)
     return (
         f"Review this {target_language} translation against the {source_language} source.\n\n"
+        f"{terminology_block}"
         f"Source document:\n{document.text}\n\n"
         f"Candidate translation:\n{candidate_translation}"
     )
+
+
+def _format_terminology_section(terminology_section: str) -> str:
+    text = terminology_section.strip()
+    if not text:
+        return ""
+    return f"{text}\n\n"

@@ -1,4 +1,4 @@
-from chem_machine_translation.datasets import iter_documents, row_to_document
+from chem_machine_translation.data.datasets import iter_documents, row_to_document
 
 
 def test_dolma_row_to_document_uses_paragraph_and_query() -> None:
@@ -43,7 +43,7 @@ def test_iter_documents_filters_to_token_range(monkeypatch) -> None:
     ]
 
     monkeypatch.setattr(
-        "chem_machine_translation.datasets.load_streaming_dataset",
+        "chem_machine_translation.data.datasets.load_streaming_dataset",
         lambda dataset_name, split: rows,
     )
 

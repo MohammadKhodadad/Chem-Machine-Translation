@@ -5,8 +5,8 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from chem_machine_translation.schemas import TranslationResult
-from chem_machine_translation.text import approximate_token_count
+from chem_machine_translation.core.schemas import TranslationResult
+from chem_machine_translation.utils.text import approximate_token_count
 
 REPORT_COLUMNS = [
     "dataset",
@@ -20,6 +20,7 @@ REPORT_COLUMNS = [
     "approx_source_tokens",
     "source_text",
     "translated_text",
+    "terminology_section",
     "review_notes_json",
     "metadata_json",
 ]
@@ -44,6 +45,7 @@ def write_jsonl(results: list[TranslationResult], output_path: Path) -> None:
                         "approx_source_tokens": approximate_token_count(result.document.text),
                         "source_text": result.document.text,
                         "translated_text": result.translated_text,
+                        "terminology_section": result.terminology_section,
                         "metadata": result.document.metadata,
                     },
                     ensure_ascii=False,
@@ -71,6 +73,7 @@ def write_csv(results: list[TranslationResult], output_path: Path) -> None:
                     "approx_source_tokens": approximate_token_count(result.document.text),
                     "source_text": result.document.text,
                     "translated_text": result.translated_text,
+                    "terminology_section": result.terminology_section,
                     "review_notes_json": json.dumps(result.review_notes, ensure_ascii=False),
                     "metadata_json": json.dumps(result.document.metadata, ensure_ascii=False),
                 }

@@ -5,14 +5,19 @@ import re
 
 from openai import OpenAI
 
-from chem_machine_translation.prompts import (
+from chem_machine_translation.core.schemas import Document, TranslationReview
+from chem_machine_translation.translation.prompts import (
     REVIEWER_SYSTEM_PROMPT,
     TRANSLATOR_SYSTEM_PROMPT,
     build_initial_translation_prompt,
     build_review_prompt,
     build_revision_prompt,
 )
-from chem_machine_translation.schemas import Document, TranslationReview
+from chem_machine_translation.translation.terminology import (
+    EmptyTerminologyLayer,
+    TerminologyContext,
+    TerminologyLayer,
+)
 
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 
@@ -25,23 +30,33 @@ class OpenAITranslationAgents:
         client: OpenAI,
         model: str,
         temperature: float = 0.0,
+        terminology_layer: TerminologyLayer | None = None,
     ) -> None:
         self.client = client
         self.model = model
         self.temperature = temperature
+        self.terminology_layer = terminology_layer or EmptyTerminologyLayer()
 
     def translate_once(
         self,
         document: Document,
         target_language: str,
         source_language: str,
+        terminology_section: str | None = None,
     ) -> str:
+        if terminology_section is None:
+            terminology_section = self.build_terminology_section(
+                document=document,
+                target_language=target_language,
+                source_language=source_language,
+            )
         return self._generate_text(
             system_prompt=TRANSLATOR_SYSTEM_PROMPT,
             user_prompt=build_initial_translation_prompt(
                 document=document,
                 target_language=target_language,
                 source_language=source_language,
+                terminology_section=terminology_section,
             ),
             temperature=self.temperature,
         )
@@ -53,7 +68,14 @@ class OpenAITranslationAgents:
         review: TranslationReview,
         target_language: str,
         source_language: str,
+        terminology_section: str | None = None,
     ) -> str:
+        if terminology_section is None:
+            terminology_section = self.build_terminology_section(
+                document=document,
+                target_language=target_language,
+                source_language=source_language,
+            )
         return self._generate_text(
             system_prompt=TRANSLATOR_SYSTEM_PROMPT,
             user_prompt=build_revision_prompt(
@@ -62,6 +84,7 @@ class OpenAITranslationAgents:
                 review=review,
                 target_language=target_language,
                 source_language=source_language,
+                terminology_section=terminology_section,
             ),
             temperature=self.temperature,
         )
@@ -72,7 +95,14 @@ class OpenAITranslationAgents:
         candidate_translation: str,
         target_language: str,
         source_language: str,
+        terminology_section: str | None = None,
     ) -> TranslationReview:
+        if terminology_section is None:
+            terminology_section = self.build_terminology_section(
+                document=document,
+                target_language=target_language,
+                source_language=source_language,
+            )
         review_text = self._generate_text(
             system_prompt=REVIEWER_SYSTEM_PROMPT,
             user_prompt=build_review_prompt(
@@ -80,6 +110,7 @@ class OpenAITranslationAgents:
                 candidate_translation=candidate_translation,
                 target_language=target_language,
                 source_language=source_language,
+                terminology_section=terminology_section,
             ),
             temperature=0.0,
         )
@@ -91,14 +122,22 @@ class OpenAITranslationAgents:
         target_language: str,
         source_language: str,
         max_rounds: int = 3,
+        terminology_section: str | None = None,
     ) -> tuple[str, TranslationReview, int, list[str]]:
         if max_rounds < 1:
             raise ValueError("max_rounds must be at least 1.")
 
+        if terminology_section is None:
+            terminology_section = self.build_terminology_section(
+                document=document,
+                target_language=target_language,
+                source_language=source_language,
+            )
         translation = self.translate_once(
             document=document,
             target_language=target_language,
             source_language=source_language,
+            terminology_section=terminology_section,
         )
         notes: list[str] = []
 
@@ -108,6 +147,7 @@ class OpenAITranslationAgents:
                 candidate_translation=translation,
                 target_language=target_language,
                 source_language=source_language,
+                terminology_section=terminology_section,
             )
             notes.append(format_review_note(round_number, review))
             if review.approved or round_number == max_rounds:
@@ -119,6 +159,7 @@ class OpenAITranslationAgents:
                 review=review,
                 target_language=target_language,
                 source_language=source_language,
+                terminology_section=terminology_section,
             )
 
         return translation, review, max_rounds, notes
@@ -133,6 +174,20 @@ class OpenAITranslationAgents:
             ],
         )
         return response.output_text.strip()
+
+    def build_terminology_section(
+        self,
+        document: Document,
+        target_language: str,
+        source_language: str,
+    ) -> str:
+        return self.terminology_layer.build_prompt_section(
+            TerminologyContext(
+                document=document,
+                target_language=target_language,
+                source_language=source_language,
+            )
+        )
 
 
 def parse_translation_review(review_text: str) -> TranslationReview:

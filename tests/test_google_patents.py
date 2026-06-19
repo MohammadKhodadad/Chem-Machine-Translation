@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 
-from chem_machine_translation.google_patents import (
+from chem_machine_translation.data.google_patents import (
     iter_google_patent_translation_documents,
     normalize_language_code,
 )
