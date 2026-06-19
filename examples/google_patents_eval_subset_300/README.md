@@ -68,19 +68,21 @@ uv run python scripts/evaluate_google_patents.py `
   --max-input-tokens 384 `
   --iate-terminology `
   --wikidata-terminology `
-  --output reports/google-patents-agentic-terminology-de-5.jsonl
+  --refine-terminology `
+  --output reports/google-patents-agentic-terminology-refined-de-5.jsonl
 ```
 
 The command writes the injected `terminology_section` for each evaluated row so the terminology
-candidate list can be audited alongside the prediction and metrics.
+candidate list can be audited alongside the prediction and metrics. The refinement agent can keep,
+replace, update, preserve, or drop retrieved candidates before they reach the translator prompt.
 
 Recent smoke-test result for German with `--limit 5`:
 
-- Output: `reports/google-patents-agentic-terminology-de-5.jsonl`
+- Output: `reports/google-patents-agentic-terminology-refined-de-5.jsonl`
 - Rows: 5
-- BLEU: 42.92
-- chrF: 74.62
-- Sequence similarity: 28.90
+- BLEU: 45.44
+- chrF: 76.19
+- Sequence similarity: 28.28
 
 The terminology layer preserves element symbols such as `Mo`, `W`, `V`, `Cu`, and `Sb` without
 external lookup, uses IATE for available terminology candidates, and only uses Wikidata as backup

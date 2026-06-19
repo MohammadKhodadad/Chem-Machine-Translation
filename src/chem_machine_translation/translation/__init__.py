@@ -21,6 +21,7 @@ from chem_machine_translation.translation.terminology import (
     format_extracted_terms,
     load_static_terminology_layer,
     parse_extracted_terms,
+    parse_refined_terms,
 )
 from chem_machine_translation.translation.translators import (
     BaseOpenAITranslator,
@@ -62,6 +63,7 @@ __all__ = [
     "load_static_terminology_layer",
     "parse_extracted_terms",
     "parse_iate_translation",
+    "parse_refined_terms",
     "parse_translation_review",
     "wikidata_language_code",
 ]

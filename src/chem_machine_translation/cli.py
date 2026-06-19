@@ -292,6 +292,14 @@ def translate(
             rich_help_panel="Advanced",
         ),
     ] = False,
+    refine_terminology: Annotated[
+        bool,
+        typer.Option(
+            "--refine-terminology/--no-refine-terminology",
+            help="Use an LLM agent to keep, replace, preserve, or drop terminology candidates.",
+            rich_help_panel="Advanced",
+        ),
+    ] = False,
     min_input_tokens: Annotated[
         int,
         typer.Option(
@@ -321,12 +329,18 @@ def translate(
     terminology_layer = build_terminology_layer(
         settings=settings,
         static_prompt_path=terminology_prompt,
-        extract_terms=(extract_terminology or wikidata_terminology or iate_terminology)
+        extract_terms=(
+            extract_terminology
+            or wikidata_terminology
+            or iate_terminology
+            or refine_terminology
+        )
         and selected_strategy != "dry-run",
         extraction_model=terminology_model or model,
         max_terms=terminology_max_terms,
         use_wikidata=wikidata_terminology,
         use_iate=iate_terminology,
+        refine_terms=refine_terminology,
     )
     translator = build_translator(
         strategy=selected_strategy,

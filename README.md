@@ -112,6 +112,21 @@ uv run chem-translate translate `
 The terminology layer tries IATE first, then uses Wikidata for extracted terms without an IATE
 candidate.
 
+To add an LLM refinement agent that can keep, replace, update, preserve, or drop terminology rows
+before translation:
+
+```powershell
+uv run chem-translate translate `
+  --strategy openai-agentic `
+  --language German `
+  --iate-terminology `
+  --wikidata-terminology `
+  --refine-terminology
+```
+
+The refinement agent receives the full source context plus the extracted terms and candidates. Its
+output is what gets injected into the translator prompt.
+
 Run checks:
 
 ```powershell

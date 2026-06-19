@@ -61,6 +61,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use Wikidata as backup for extracted terms without IATE candidates.",
     )
+    parser.add_argument(
+        "--refine-terminology",
+        action="store_true",
+        help="Use an LLM agent to keep, replace, preserve, or drop terminology candidates.",
+    )
     parser.add_argument("--min-input-tokens", type=int, default=192)
     parser.add_argument("--max-input-tokens", type=int, default=256)
     parser.add_argument("--text-field", default="context", choices=["context", "abstract", "title"])
@@ -74,13 +79,17 @@ def main() -> None:
         settings=settings,
         static_prompt_path=args.terminology_prompt,
         extract_terms=(
-            args.extract_terminology or args.iate_terminology or args.wikidata_terminology
+            args.extract_terminology
+            or args.iate_terminology
+            or args.wikidata_terminology
+            or args.refine_terminology
         )
         and args.strategy != "dry-run",
         extraction_model=args.terminology_model or args.model,
         max_terms=args.terminology_max_terms,
         use_iate=args.iate_terminology,
         use_wikidata=args.wikidata_terminology,
+        refine_terms=args.refine_terminology,
     )
     translator = build_translator(
         strategy=args.strategy,

@@ -167,6 +167,38 @@ Return only valid JSON with this shape:
 }
 """
 
+TERMINOLOGY_REFINER_SYSTEM_PROMPT = """You are a terminology refinement agent for chemistry and
+patent translation.
+
+You receive a source document, extracted source terms, and optional candidate translations from
+terminology sources such as IATE and Wikidata. Your job is to decide which terms should reach the
+translator.
+
+For each input term, choose exactly one decision:
+- keep: the candidate is correct as-is;
+- replace: the candidate is wrong, too broad, too narrow, or context-mismatched; provide a better
+  target-language translation;
+- update: the candidate is close but needs contextual wording; provide the improved translation;
+- preserve: the source term should be copied unchanged, for example formulas, element symbols,
+  identifiers, units, sequence IDs, CAS numbers, or variable-like labels;
+- drop: the term is unrelated, too generic, redundant, or not useful for the translation prompt.
+
+Use the full source context. Do not force a terminology source candidate if it does not fit the
+document. Prefer concise, standard technical terminology in the target language.
+
+Return only valid JSON with this shape:
+{
+  "terms": [
+    {
+      "source_term": "exact source term from input",
+      "decision": "keep|replace|update|preserve|drop",
+      "final_translation": "target-language term, source term for preserve, or empty for drop",
+      "reason": "short reason"
+    }
+  ]
+}
+"""
+
 
 @dataclass(frozen=True)
 class TerminologyContext:
@@ -227,6 +259,9 @@ class ExtractedTerm:
     wikidata_description: str = ""
     iate_target_label: str = ""
     iate_entry_id: str = ""
+    refinement_decision: str = ""
+    final_translation: str = ""
+    refinement_reason: str = ""
 
 
 class LLMTerminologyLayer:
@@ -239,12 +274,14 @@ class LLMTerminologyLayer:
         max_terms: int = _DEFAULT_MAX_TERMS,
         wikidata_client: WikidataClient | None = None,
         iate_client: IATEClient | None = None,
+        refine_terms: bool = False,
     ) -> None:
         self.client = client
         self.model = model
         self.max_terms = max_terms
         self.wikidata_client = wikidata_client
         self.iate_client = iate_client
+        self.refine_terms = refine_terms
         self._cache: dict[tuple[str, str, str, str, str], str] = {}
 
     def build_prompt_section(self, context: TerminologyContext) -> str:
@@ -261,6 +298,8 @@ class LLMTerminologyLayer:
         terms = self.extract_terms(context)
         terms = self.add_iate_translations(terms, context)
         terms = self.add_wikidata_translations(terms, context)
+        if self.refine_terms:
+            terms = self.refine_extracted_terms(terms, context)
         section = format_extracted_terms(terms)
         self._cache[cache_key] = section
         return section
@@ -281,6 +320,30 @@ class LLMTerminologyLayer:
             ],
         )
         return parse_extracted_terms(response.output_text)
+
+    def refine_extracted_terms(
+        self,
+        terms: list[ExtractedTerm],
+        context: TerminologyContext,
+    ) -> list[ExtractedTerm]:
+        if not terms:
+            return []
+
+        response = self.client.responses.create(
+            model=self.model,
+            temperature=0.0,
+            input=[
+                {"role": "system", "content": TERMINOLOGY_REFINER_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": build_term_refinement_prompt(
+                        context=context,
+                        terms=terms,
+                    ),
+                },
+            ],
+        )
+        return parse_refined_terms(response.output_text, terms)
 
     def add_wikidata_translations(
         self,
@@ -355,6 +418,7 @@ def build_terminology_layer(
     max_terms: int = _DEFAULT_MAX_TERMS,
     use_wikidata: bool = False,
     use_iate: bool = False,
+    refine_terms: bool = False,
 ) -> TerminologyLayer:
     layers: list[TerminologyLayer] = []
 
@@ -371,6 +435,7 @@ def build_terminology_layer(
                 max_terms=max_terms,
                 wikidata_client=WikidataClient() if use_wikidata else None,
                 iate_client=IATEClient() if use_iate else None,
+                refine_terms=refine_terms,
             )
         )
 
@@ -388,6 +453,32 @@ def build_term_extraction_prompt(context: TerminologyContext, max_terms: int) ->
         "Source document:\n"
         f"{context.document.text}"
     )
+
+
+def build_term_refinement_prompt(
+    context: TerminologyContext,
+    terms: list[ExtractedTerm],
+) -> str:
+    return (
+        f"Refine terminology candidates for translation from {context.source_language} "
+        f"into {context.target_language}.\n\n"
+        f"Source document:\n{context.document.text}\n\n"
+        "Input terms:\n"
+        f"{json.dumps([term_to_refinement_payload(term) for term in terms], ensure_ascii=False)}"
+    )
+
+
+def term_to_refinement_payload(term: ExtractedTerm) -> dict[str, str | bool]:
+    return {
+        "source_term": term.source_term,
+        "category": term.category,
+        "reason": term.reason,
+        "iate_candidate": term.iate_target_label,
+        "iate_entry_id": term.iate_entry_id,
+        "wikidata_candidate": term.wikidata_target_label,
+        "wikidata_entity_id": term.wikidata_entity_id,
+        "should_preserve": should_preserve_without_external_lookup(term),
+    }
 
 
 def parse_extracted_terms(text: str) -> list[ExtractedTerm]:
@@ -413,9 +504,66 @@ def parse_extracted_terms(text: str) -> list[ExtractedTerm]:
     return terms
 
 
+def parse_refined_terms(text: str, original_terms: list[ExtractedTerm]) -> list[ExtractedTerm]:
+    match = _JSON_OBJECT_RE.search(text)
+    try:
+        payload = json.loads(match.group(0) if match else text)
+    except json.JSONDecodeError:
+        return original_terms
+
+    refined_by_source: dict[str, dict] = {}
+    for raw_term in payload.get("terms", []):
+        if not isinstance(raw_term, dict):
+            continue
+        source_term = str(raw_term.get("source_term", "")).strip()
+        if source_term:
+            refined_by_source[source_term] = raw_term
+
+    refined_terms = []
+    for term in original_terms:
+        refined = refined_by_source.get(term.source_term)
+        if refined is None:
+            refined_terms.append(term)
+            continue
+        refined_terms.append(apply_refinement(term, refined))
+
+    return refined_terms
+
+
+def apply_refinement(term: ExtractedTerm, refinement: dict) -> ExtractedTerm:
+    decision = str(refinement.get("decision", "")).strip().lower()
+    if decision not in {"keep", "replace", "update", "preserve", "drop"}:
+        decision = ""
+
+    final_translation = str(refinement.get("final_translation", "")).strip()
+    if decision == "keep" and not final_translation:
+        final_translation = primary_candidate(term)
+    if decision == "preserve" and not final_translation:
+        final_translation = term.source_term
+    if decision == "drop":
+        final_translation = ""
+
+    return ExtractedTerm(
+        source_term=term.source_term,
+        category=term.category,
+        reason=term.reason,
+        wikidata_target_label=term.wikidata_target_label,
+        wikidata_entity_id=term.wikidata_entity_id,
+        wikidata_description=term.wikidata_description,
+        iate_target_label=term.iate_target_label,
+        iate_entry_id=term.iate_entry_id,
+        refinement_decision=decision,
+        final_translation=final_translation,
+        refinement_reason=str(refinement.get("reason", "")).strip(),
+    )
+
+
 def format_extracted_terms(terms: list[ExtractedTerm]) -> str:
     if not terms:
         return ""
+
+    if any(term.refinement_decision for term in terms):
+        return format_refined_terms(terms)
 
     lines = [
         "LLM-extracted terminology focus list:",
@@ -440,6 +588,46 @@ def format_extracted_terms(terms: list[ExtractedTerm]) -> str:
     return "\n".join(lines)
 
 
+def format_refined_terms(terms: list[ExtractedTerm]) -> str:
+    approved_lines = []
+    preserve_lines = []
+    caution_lines = []
+
+    for term in terms:
+        if term.refinement_decision == "drop":
+            continue
+        reason = term.refinement_reason or term.reason
+        detail = f" ({reason})" if reason else ""
+        if term.refinement_decision == "preserve":
+            preserve_lines.append(f"- {term.source_term}{detail}")
+            continue
+        if term.final_translation:
+            approved_lines.append(f"- {term.source_term} -> {term.final_translation}{detail}")
+            continue
+        caution_lines.append(f"- {term.source_term} [{term.category}]{detail}")
+
+    lines = [
+        "Refined terminology instructions:",
+        "Use these document-specific decisions. They are generated candidates, "
+        "not a permanent glossary.",
+    ]
+    if approved_lines:
+        lines.append("\nPreferred terminology:")
+        lines.extend(approved_lines)
+    if preserve_lines:
+        lines.append("\nPreserve exactly:")
+        lines.extend(preserve_lines)
+    if caution_lines:
+        lines.append("\nTerms requiring caution:")
+        lines.extend(caution_lines)
+
+    return "\n".join(lines)
+
+
+def primary_candidate(term: ExtractedTerm) -> str:
+    return term.iate_target_label or term.wikidata_target_label
+
+
 def enrich_term_with_wikidata(
     term: ExtractedTerm,
     translation: WikidataTermTranslation | None,
@@ -456,6 +644,9 @@ def enrich_term_with_wikidata(
         wikidata_description=translation.description,
         iate_target_label=term.iate_target_label,
         iate_entry_id=term.iate_entry_id,
+        refinement_decision=term.refinement_decision,
+        final_translation=term.final_translation,
+        refinement_reason=term.refinement_reason,
     )
 
 
@@ -475,6 +666,9 @@ def enrich_term_with_iate(
         wikidata_description=term.wikidata_description,
         iate_target_label=translation.target_label,
         iate_entry_id=translation.entry_id,
+        refinement_decision=term.refinement_decision,
+        final_translation=term.final_translation,
+        refinement_reason=term.refinement_reason,
     )
 
 

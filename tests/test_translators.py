@@ -10,10 +10,12 @@ from chem_machine_translation.translation.iate import (
 )
 from chem_machine_translation.translation.prompts import build_initial_translation_prompt
 from chem_machine_translation.translation.terminology import (
+    ExtractedTerm,
     LLMTerminologyLayer,
     StaticTerminologyLayer,
     TerminologyContext,
     parse_extracted_terms,
+    parse_refined_terms,
 )
 from chem_machine_translation.translation.translators import DryRunTranslator
 from chem_machine_translation.translation.wikidata import (
@@ -470,3 +472,130 @@ def test_llm_terminology_layer_preserves_element_symbols_without_external_lookup
     assert "Cu [chemical]" in section
     assert iate_client.calls == []
     assert wikidata_client.calls == []
+
+
+def test_parse_refined_terms_updates_and_drops_rows() -> None:
+    original_terms = [
+        ExtractedTerm(
+            source_term="aqueous solution",
+            category="material",
+            reason="solvent system",
+            iate_target_label="wässrige Lösung",
+            iate_entry_id="IATE-1",
+        ),
+        ExtractedTerm(
+            source_term="dryer",
+            category="material",
+            reason="equipment",
+            iate_target_label="Trockenkammer",
+            iate_entry_id="IATE-2",
+        ),
+        ExtractedTerm(
+            source_term="powder P",
+            category="material",
+            reason="variable-like material label",
+        ),
+    ]
+
+    refined_terms = parse_refined_terms(
+        """
+        {
+          "terms": [
+            {
+              "source_term": "aqueous solution",
+              "decision": "keep",
+              "final_translation": "wässrige Lösung",
+              "reason": "standard term"
+            },
+            {
+              "source_term": "dryer",
+              "decision": "replace",
+              "final_translation": "Trockner",
+              "reason": "candidate is too specific"
+            },
+            {
+              "source_term": "powder P",
+              "decision": "drop",
+              "final_translation": "",
+              "reason": "not useful terminology"
+            }
+          ]
+        }
+        """,
+        original_terms,
+    )
+
+    assert refined_terms[0].refinement_decision == "keep"
+    assert refined_terms[0].final_translation == "wässrige Lösung"
+    assert refined_terms[1].refinement_decision == "replace"
+    assert refined_terms[1].final_translation == "Trockner"
+    assert refined_terms[2].refinement_decision == "drop"
+
+
+def test_llm_terminology_layer_refines_candidates_before_prompting() -> None:
+    document = Document(
+        dataset="dolma",
+        source_id="1",
+        text="An aqueous solution is dried in a dryer with Mo.",
+        metadata={},
+    )
+    client = _FakeClient(
+        [
+            (
+                '{"terms": ['
+                '{"source_term": "aqueous solution", "category": "material", '
+                '"reason": "solvent system"}, '
+                '{"source_term": "dryer", "category": "material", "reason": "equipment"}, '
+                '{"source_term": "Mo", "category": "chemical", "reason": "element symbol"}, '
+                '{"source_term": "powder P", "category": "material", "reason": "label"}'
+                "]}"
+            ),
+            (
+                '{"terms": ['
+                '{"source_term": "aqueous solution", "decision": "keep", '
+                '"final_translation": "wässrige Lösung", "reason": "standard term"}, '
+                '{"source_term": "dryer", "decision": "replace", '
+                '"final_translation": "Trockner", "reason": "generic equipment"}, '
+                '{"source_term": "Mo", "decision": "preserve", '
+                '"final_translation": "Mo", "reason": "element symbol"}, '
+                '{"source_term": "powder P", "decision": "drop", '
+                '"final_translation": "", "reason": "variable-like label"}'
+                "]}"
+            ),
+        ]
+    )
+    iate_client = _FakeIATEClient(
+        {
+            "aqueous solution": IATETermTranslation(
+                source_term="aqueous solution",
+                target_label="wässrige Lösung",
+                entry_id="IATE-1",
+            ),
+            "dryer": IATETermTranslation(
+                source_term="dryer",
+                target_label="Trockenkammer",
+                entry_id="IATE-2",
+            ),
+        }
+    )
+    layer = LLMTerminologyLayer(
+        client=client,
+        model="gpt-4.1-mini",
+        iate_client=iate_client,
+        refine_terms=True,
+    )
+
+    section = layer.build_prompt_section(
+        TerminologyContext(
+            document=document,
+            target_language="German",
+            source_language="English",
+        )
+    )
+
+    assert "Refined terminology instructions:" in section
+    assert "aqueous solution -> wässrige Lösung" in section
+    assert "dryer -> Trockner" in section
+    assert "Mo" in section
+    assert "powder P" not in section
+    assert len(client.responses.calls) == 2
