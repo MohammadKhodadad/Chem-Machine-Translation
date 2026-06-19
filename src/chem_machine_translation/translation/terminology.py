@@ -23,6 +23,19 @@ from chem_machine_translation.translation.wikidata import (
 
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 _DEFAULT_MAX_TERMS = 20
+_DEFAULT_REFINEMENT_CONFIDENCE_THRESHOLD = 0.85
+_DEFAULT_MAX_REFINED_TERMS = 8
+_GENERIC_TERMS = {
+    "apparatus",
+    "base value",
+    "control parameter",
+    "method",
+    "model",
+    "prediction",
+    "sample",
+    "state parameter",
+    "system",
+}
 _ELEMENT_SYMBOLS = {
     "H",
     "He",
@@ -174,6 +187,11 @@ You receive a source document, extracted source terms, and optional candidate tr
 terminology sources such as IATE and Wikidata. Your job is to decide which terms should reach the
 translator.
 
+Be selective. The translator is already fluent; only pass terminology that is high-confidence and
+material to chemistry, patent meaning, identifiers, or technical consistency. Drop generic words
+such as method, system, apparatus, model, prediction, sample, or parameter unless the full phrase is
+domain-specific and the target term is very high confidence.
+
 For each input term, choose exactly one decision:
 - keep: the candidate is correct as-is;
 - replace: the candidate is wrong, too broad, too narrow, or context-mismatched; provide a better
@@ -193,10 +211,15 @@ Return only valid JSON with this shape:
       "source_term": "exact source term from input",
       "decision": "keep|replace|update|preserve|drop",
       "final_translation": "target-language term, source term for preserve, or empty for drop",
+      "confidence": 0.0,
       "reason": "short reason"
     }
   ]
 }
+
+Use confidence as the probability that this row should constrain the translator. Use 0.85 or higher
+only when the source term is context-relevant and the final translation is clearly suitable for this
+document. If uncertain, choose drop.
 """
 
 
@@ -261,6 +284,7 @@ class ExtractedTerm:
     iate_entry_id: str = ""
     refinement_decision: str = ""
     final_translation: str = ""
+    refinement_confidence: float = 0.0
     refinement_reason: str = ""
 
 
@@ -275,6 +299,8 @@ class LLMTerminologyLayer:
         wikidata_client: WikidataClient | None = None,
         iate_client: IATEClient | None = None,
         refine_terms: bool = False,
+        refinement_confidence_threshold: float = _DEFAULT_REFINEMENT_CONFIDENCE_THRESHOLD,
+        max_refined_terms: int = _DEFAULT_MAX_REFINED_TERMS,
     ) -> None:
         self.client = client
         self.model = model
@@ -282,6 +308,8 @@ class LLMTerminologyLayer:
         self.wikidata_client = wikidata_client
         self.iate_client = iate_client
         self.refine_terms = refine_terms
+        self.refinement_confidence_threshold = refinement_confidence_threshold
+        self.max_refined_terms = max_refined_terms
         self._cache: dict[tuple[str, str, str, str, str], str] = {}
 
     def build_prompt_section(self, context: TerminologyContext) -> str:
@@ -343,7 +371,12 @@ class LLMTerminologyLayer:
                 },
             ],
         )
-        return parse_refined_terms(response.output_text, terms)
+        return parse_refined_terms(
+            response.output_text,
+            terms,
+            confidence_threshold=self.refinement_confidence_threshold,
+            max_terms=self.max_refined_terms,
+        )
 
     def add_wikidata_translations(
         self,
@@ -419,6 +452,8 @@ def build_terminology_layer(
     use_wikidata: bool = False,
     use_iate: bool = False,
     refine_terms: bool = False,
+    refinement_confidence_threshold: float = _DEFAULT_REFINEMENT_CONFIDENCE_THRESHOLD,
+    max_refined_terms: int = _DEFAULT_MAX_REFINED_TERMS,
 ) -> TerminologyLayer:
     layers: list[TerminologyLayer] = []
 
@@ -436,6 +471,8 @@ def build_terminology_layer(
                 wikidata_client=WikidataClient() if use_wikidata else None,
                 iate_client=IATEClient() if use_iate else None,
                 refine_terms=refine_terms,
+                refinement_confidence_threshold=refinement_confidence_threshold,
+                max_refined_terms=max_refined_terms,
             )
         )
 
@@ -478,6 +515,8 @@ def term_to_refinement_payload(term: ExtractedTerm) -> dict[str, str | bool]:
         "wikidata_candidate": term.wikidata_target_label,
         "wikidata_entity_id": term.wikidata_entity_id,
         "should_preserve": should_preserve_without_external_lookup(term),
+        "has_external_candidate": bool(primary_candidate(term)),
+        "is_generic": is_generic_term(term.source_term),
     }
 
 
@@ -504,7 +543,12 @@ def parse_extracted_terms(text: str) -> list[ExtractedTerm]:
     return terms
 
 
-def parse_refined_terms(text: str, original_terms: list[ExtractedTerm]) -> list[ExtractedTerm]:
+def parse_refined_terms(
+    text: str,
+    original_terms: list[ExtractedTerm],
+    confidence_threshold: float = _DEFAULT_REFINEMENT_CONFIDENCE_THRESHOLD,
+    max_terms: int = _DEFAULT_MAX_REFINED_TERMS,
+) -> list[ExtractedTerm]:
     match = _JSON_OBJECT_RE.search(text)
     try:
         payload = json.loads(match.group(0) if match else text)
@@ -523,11 +567,25 @@ def parse_refined_terms(text: str, original_terms: list[ExtractedTerm]) -> list[
     for term in original_terms:
         refined = refined_by_source.get(term.source_term)
         if refined is None:
-            refined_terms.append(term)
+            refined_terms.append(
+                apply_refinement(
+                    term,
+                    {
+                        "decision": "drop",
+                        "final_translation": "",
+                        "confidence": 0.0,
+                        "reason": "No high-confidence refinement decision returned.",
+                    },
+                )
+            )
             continue
         refined_terms.append(apply_refinement(term, refined))
 
-    return refined_terms
+    return select_high_confidence_terms(
+        refined_terms,
+        confidence_threshold=confidence_threshold,
+        max_terms=max_terms,
+    )
 
 
 def apply_refinement(term: ExtractedTerm, refinement: dict) -> ExtractedTerm:
@@ -536,6 +594,7 @@ def apply_refinement(term: ExtractedTerm, refinement: dict) -> ExtractedTerm:
         decision = ""
 
     final_translation = str(refinement.get("final_translation", "")).strip()
+    confidence = parse_confidence(refinement.get("confidence"))
     if decision == "keep" and not final_translation:
         final_translation = primary_candidate(term)
     if decision == "preserve" and not final_translation:
@@ -554,8 +613,63 @@ def apply_refinement(term: ExtractedTerm, refinement: dict) -> ExtractedTerm:
         iate_entry_id=term.iate_entry_id,
         refinement_decision=decision,
         final_translation=final_translation,
+        refinement_confidence=confidence,
         refinement_reason=str(refinement.get("reason", "")).strip(),
     )
+
+
+def parse_confidence(value: object) -> float:
+    try:
+        confidence = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return max(0.0, min(confidence, 1.0))
+
+
+def select_high_confidence_terms(
+    terms: list[ExtractedTerm],
+    confidence_threshold: float,
+    max_terms: int,
+) -> list[ExtractedTerm]:
+    accepted = [
+        term
+        for term in terms
+        if should_include_refined_term(
+            term,
+            confidence_threshold=confidence_threshold,
+        )
+    ]
+    dropped = [term for term in terms if term.refinement_decision == "drop"]
+    accepted.sort(key=refinement_rank, reverse=True)
+    return accepted[:max_terms] + dropped
+
+
+def should_include_refined_term(
+    term: ExtractedTerm,
+    confidence_threshold: float,
+) -> bool:
+    if term.refinement_decision == "drop":
+        return False
+    if term.refinement_decision == "preserve":
+        return (
+            should_preserve_without_external_lookup(term)
+            or term.refinement_confidence >= confidence_threshold
+        )
+    if term.refinement_decision not in {"keep", "replace", "update"}:
+        return False
+    if not term.final_translation:
+        return False
+
+    threshold = confidence_threshold
+    if is_generic_term(term.source_term):
+        threshold = max(threshold, 0.95)
+    return term.refinement_confidence >= threshold
+
+
+def refinement_rank(term: ExtractedTerm) -> tuple[float, int, int]:
+    has_candidate = 1 if primary_candidate(term) else 0
+    is_multiword = 1 if len(term.source_term.split()) > 1 else 0
+    return (term.refinement_confidence, has_candidate, is_multiword)
 
 
 def format_extracted_terms(terms: list[ExtractedTerm]) -> str:
@@ -597,7 +711,8 @@ def format_refined_terms(terms: list[ExtractedTerm]) -> str:
         if term.refinement_decision == "drop":
             continue
         reason = term.refinement_reason or term.reason
-        detail = f" ({reason})" if reason else ""
+        confidence = f", confidence={term.refinement_confidence:.2f}"
+        detail = f" ({reason}{confidence})" if reason else f" ({confidence.lstrip(', ')})"
         if term.refinement_decision == "preserve":
             preserve_lines.append(f"- {term.source_term}{detail}")
             continue
@@ -608,8 +723,8 @@ def format_refined_terms(terms: list[ExtractedTerm]) -> str:
 
     lines = [
         "Refined terminology instructions:",
-        "Use these document-specific decisions. They are generated candidates, "
-        "not a permanent glossary.",
+        "Use only these high-confidence document-specific decisions. "
+        "They are generated candidates, not a permanent glossary.",
     ]
     if approved_lines:
         lines.append("\nPreferred terminology:")
@@ -620,12 +735,19 @@ def format_refined_terms(terms: list[ExtractedTerm]) -> str:
     if caution_lines:
         lines.append("\nTerms requiring caution:")
         lines.extend(caution_lines)
+    if not approved_lines and not preserve_lines and not caution_lines:
+        return ""
 
     return "\n".join(lines)
 
 
 def primary_candidate(term: ExtractedTerm) -> str:
     return term.iate_target_label or term.wikidata_target_label
+
+
+def is_generic_term(source_term: str) -> bool:
+    normalized = re.sub(r"\s+", " ", source_term.strip().casefold())
+    return normalized in _GENERIC_TERMS
 
 
 def enrich_term_with_wikidata(
@@ -646,6 +768,7 @@ def enrich_term_with_wikidata(
         iate_entry_id=term.iate_entry_id,
         refinement_decision=term.refinement_decision,
         final_translation=term.final_translation,
+        refinement_confidence=term.refinement_confidence,
         refinement_reason=term.refinement_reason,
     )
 
@@ -668,6 +791,7 @@ def enrich_term_with_iate(
         iate_entry_id=translation.entry_id,
         refinement_decision=term.refinement_decision,
         final_translation=term.final_translation,
+        refinement_confidence=term.refinement_confidence,
         refinement_reason=term.refinement_reason,
     )
 

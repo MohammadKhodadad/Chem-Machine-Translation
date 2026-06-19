@@ -300,6 +300,22 @@ def translate(
             rich_help_panel="Advanced",
         ),
     ] = False,
+    terminology_confidence_threshold: Annotated[
+        float,
+        typer.Option(
+            "--terminology-confidence-threshold",
+            help="Minimum confidence for refined terminology candidates.",
+            rich_help_panel="Advanced",
+        ),
+    ] = 0.85,
+    terminology_max_refined_terms: Annotated[
+        int,
+        typer.Option(
+            "--terminology-max-refined-terms",
+            help="Maximum high-confidence refined terms injected per document.",
+            rich_help_panel="Advanced",
+        ),
+    ] = 8,
     min_input_tokens: Annotated[
         int,
         typer.Option(
@@ -341,6 +357,8 @@ def translate(
         use_wikidata=wikidata_terminology,
         use_iate=iate_terminology,
         refine_terms=refine_terminology,
+        refinement_confidence_threshold=terminology_confidence_threshold,
+        max_refined_terms=terminology_max_refined_terms,
     )
     translator = build_translator(
         strategy=selected_strategy,

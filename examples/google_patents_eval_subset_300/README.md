@@ -69,12 +69,15 @@ uv run python scripts/evaluate_google_patents.py `
   --iate-terminology `
   --wikidata-terminology `
   --refine-terminology `
+  --terminology-confidence-threshold 0.85 `
+  --terminology-max-refined-terms 8 `
   --output reports/google-patents-agentic-terminology-refined-de-5.jsonl
 ```
 
 The command writes the injected `terminology_section` for each evaluated row so the terminology
 candidate list can be audited alongside the prediction and metrics. The refinement agent can keep,
 replace, update, preserve, or drop retrieved candidates before they reach the translator prompt.
+Only high-confidence rows are injected.
 
 Recent smoke-test result for German with `--limit 5`:
 

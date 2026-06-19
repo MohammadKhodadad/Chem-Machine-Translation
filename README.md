@@ -121,11 +121,15 @@ uv run chem-translate translate `
   --language German `
   --iate-terminology `
   --wikidata-terminology `
-  --refine-terminology
+  --refine-terminology `
+  --terminology-confidence-threshold 0.85 `
+  --terminology-max-refined-terms 8
 ```
 
 The refinement agent receives the full source context plus the extracted terms and candidates. Its
-output is what gets injected into the translator prompt.
+output is confidence-gated before it gets injected into the translator prompt. Low-confidence rows
+and generic terms are dropped, while formulas, element symbols, units, and identifiers can still be
+preserved exactly.
 
 Run checks:
 

@@ -66,6 +66,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use an LLM agent to keep, replace, preserve, or drop terminology candidates.",
     )
+    parser.add_argument(
+        "--terminology-confidence-threshold",
+        type=float,
+        default=0.85,
+        help="Minimum confidence for refined terminology candidates.",
+    )
+    parser.add_argument(
+        "--terminology-max-refined-terms",
+        type=int,
+        default=8,
+        help="Maximum high-confidence refined terms injected per document.",
+    )
     parser.add_argument("--min-input-tokens", type=int, default=192)
     parser.add_argument("--max-input-tokens", type=int, default=256)
     parser.add_argument("--text-field", default="context", choices=["context", "abstract", "title"])
@@ -90,6 +102,8 @@ def main() -> None:
         use_iate=args.iate_terminology,
         use_wikidata=args.wikidata_terminology,
         refine_terms=args.refine_terminology,
+        refinement_confidence_threshold=args.terminology_confidence_threshold,
+        max_refined_terms=args.terminology_max_refined_terms,
     )
     translator = build_translator(
         strategy=args.strategy,

@@ -505,18 +505,21 @@ def test_parse_refined_terms_updates_and_drops_rows() -> None:
               "source_term": "aqueous solution",
               "decision": "keep",
               "final_translation": "wässrige Lösung",
+              "confidence": 0.93,
               "reason": "standard term"
             },
             {
               "source_term": "dryer",
               "decision": "replace",
               "final_translation": "Trockner",
+              "confidence": 0.91,
               "reason": "candidate is too specific"
             },
             {
               "source_term": "powder P",
               "decision": "drop",
               "final_translation": "",
+              "confidence": 0.2,
               "reason": "not useful terminology"
             }
           ]
@@ -527,6 +530,7 @@ def test_parse_refined_terms_updates_and_drops_rows() -> None:
 
     assert refined_terms[0].refinement_decision == "keep"
     assert refined_terms[0].final_translation == "wässrige Lösung"
+    assert refined_terms[0].refinement_confidence == 0.93
     assert refined_terms[1].refinement_decision == "replace"
     assert refined_terms[1].final_translation == "Trockner"
     assert refined_terms[2].refinement_decision == "drop"
@@ -553,13 +557,15 @@ def test_llm_terminology_layer_refines_candidates_before_prompting() -> None:
             (
                 '{"terms": ['
                 '{"source_term": "aqueous solution", "decision": "keep", '
-                '"final_translation": "wässrige Lösung", "reason": "standard term"}, '
+                '"final_translation": "wässrige Lösung", "confidence": 0.93, '
+                '"reason": "standard term"}, '
                 '{"source_term": "dryer", "decision": "replace", '
-                '"final_translation": "Trockner", "reason": "generic equipment"}, '
+                '"final_translation": "Trockner", "confidence": 0.91, '
+                '"reason": "generic equipment"}, '
                 '{"source_term": "Mo", "decision": "preserve", '
-                '"final_translation": "Mo", "reason": "element symbol"}, '
+                '"final_translation": "Mo", "confidence": 0.99, "reason": "element symbol"}, '
                 '{"source_term": "powder P", "decision": "drop", '
-                '"final_translation": "", "reason": "variable-like label"}'
+                '"final_translation": "", "confidence": 0.2, "reason": "variable-like label"}'
                 "]}"
             ),
         ]
@@ -598,4 +604,65 @@ def test_llm_terminology_layer_refines_candidates_before_prompting() -> None:
     assert "dryer -> Trockner" in section
     assert "Mo" in section
     assert "powder P" not in section
+    assert "confidence=0.93" in section
     assert len(client.responses.calls) == 2
+
+
+def test_refinement_gate_rejects_low_confidence_and_generic_terms() -> None:
+    original_terms = [
+        ExtractedTerm(
+            source_term="aqueous suspension",
+            category="material",
+            reason="solvent system",
+            iate_target_label="wässrige Suspension",
+            iate_entry_id="IATE-1",
+        ),
+        ExtractedTerm(
+            source_term="system",
+            category="other",
+            reason="generic noun",
+            iate_target_label="System",
+            iate_entry_id="IATE-2",
+        ),
+        ExtractedTerm(
+            source_term="apparatus",
+            category="other",
+            reason="generic patent noun",
+            iate_target_label="Apparat",
+            iate_entry_id="IATE-3",
+        ),
+    ]
+
+    refined_terms = parse_refined_terms(
+        """
+        {
+          "terms": [
+            {
+              "source_term": "aqueous suspension",
+              "decision": "keep",
+              "final_translation": "wässrige Suspension",
+              "confidence": 0.84,
+              "reason": "almost good, but below threshold"
+            },
+            {
+              "source_term": "system",
+              "decision": "keep",
+              "final_translation": "System",
+              "confidence": 0.9,
+              "reason": "generic term should require higher confidence"
+            },
+            {
+              "source_term": "apparatus",
+              "decision": "keep",
+              "final_translation": "Vorrichtung",
+              "confidence": 0.96,
+              "reason": "high-confidence patent term"
+            }
+          ]
+        }
+        """,
+        original_terms,
+    )
+
+    assert [term.source_term for term in refined_terms] == ["apparatus"]
+    assert refined_terms[0].final_translation == "Vorrichtung"
