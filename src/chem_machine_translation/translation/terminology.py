@@ -522,7 +522,11 @@ def term_to_refinement_payload(term: ExtractedTerm) -> dict[str, str | bool]:
 
 def parse_extracted_terms(text: str) -> list[ExtractedTerm]:
     match = _JSON_OBJECT_RE.search(text)
-    payload = json.loads(match.group(0) if match else text)
+    try:
+        payload = json.loads(match.group(0) if match else text)
+    except json.JSONDecodeError:
+        return []
+
     raw_terms = payload.get("terms", [])
     terms: list[ExtractedTerm] = []
 

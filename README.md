@@ -139,6 +139,7 @@ uv run ruff check .
 ```
 
 Google Patents evaluation examples live in `examples/google_patents_eval_subset_300`.
+EPO evaluation examples live in `examples/epo_eval_subset_100`.
 
 ## Current Strategies
 

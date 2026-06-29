@@ -192,7 +192,15 @@ class OpenAITranslationAgents:
 
 def parse_translation_review(review_text: str) -> TranslationReview:
     match = _JSON_OBJECT_RE.search(review_text)
-    payload = json.loads(match.group(0) if match else review_text)
+    try:
+        payload = json.loads(match.group(0) if match else review_text)
+    except json.JSONDecodeError:
+        return TranslationReview(
+            approved=False,
+            issues=["Reviewer response was not valid JSON."],
+            required_changes=["Provide a valid JSON review object."],
+            rationale=review_text.strip()[:500],
+        )
 
     return TranslationReview(
         approved=bool(payload.get("approved", False)),
