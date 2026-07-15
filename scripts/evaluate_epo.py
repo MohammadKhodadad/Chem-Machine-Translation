@@ -11,7 +11,13 @@ from chem_machine_translation.data.epo import (
     iter_epo_translation_documents,
     normalize_language_code,
 )
-from chem_machine_translation.evaluation.metrics import compute_translation_metrics
+from chem_machine_translation.evaluation.metrics import (
+    COMET_DEFAULT_MODEL,
+    GENERAL_METRIC_NAMES,
+    UnbabelCometScorer,
+    compute_translation_metrics,
+    parse_metric_names,
+)
 from chem_machine_translation.translation.terminology import build_terminology_layer
 from chem_machine_translation.translation.translators import build_translator
 from chem_machine_translation.utils.text import approximate_token_count
@@ -34,6 +40,19 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--max-review-rounds", type=int, default=3)
+    parser.add_argument(
+        "--metric",
+        action="append",
+        choices=GENERAL_METRIC_NAMES,
+        default=None,
+        help=(
+            "Metric to compute. Repeat to select multiple metrics. "
+            "Defaults to sequence_similarity, BLEU, chrF, and COMET."
+        ),
+    )
+    parser.add_argument("--comet-model", default=COMET_DEFAULT_MODEL)
+    parser.add_argument("--comet-batch-size", type=int, default=8)
+    parser.add_argument("--comet-gpus", type=int, default=0)
     parser.add_argument("--terminology-prompt", type=Path, default=None)
     parser.add_argument(
         "--extract-terminology",
@@ -91,6 +110,16 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     settings = load_settings()
+    metric_names = parse_metric_names(args.metric)
+    comet_scorer = (
+        UnbabelCometScorer(
+            model_name=args.comet_model,
+            batch_size=args.comet_batch_size,
+            gpus=args.comet_gpus,
+        )
+        if "comet" in metric_names
+        else None
+    )
     terminology_layer = build_terminology_layer(
         settings=settings,
         static_prompt_path=args.terminology_prompt,
@@ -152,7 +181,13 @@ def main() -> None:
                     source_language="English",
                 )
                 assert document.ground_truth is not None
-                metrics = compute_translation_metrics(result.translated_text, document.ground_truth)
+                metrics = compute_translation_metrics(
+                    prediction=result.translated_text,
+                    reference=document.ground_truth,
+                    source=document.text,
+                    metric_names=metric_names,
+                    comet_scorer=comet_scorer,
+                )
                 row = {
                     "dataset": document.dataset,
                     "source_id": document.source_id,

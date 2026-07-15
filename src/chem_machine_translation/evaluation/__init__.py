@@ -4,11 +4,23 @@ from chem_machine_translation.evaluation.comparison import (
     write_csv,
     write_jsonl,
 )
-from chem_machine_translation.evaluation.metrics import compute_translation_metrics
+from chem_machine_translation.evaluation.metrics import (
+    COMET_DEFAULT_MODEL,
+    DEFAULT_METRIC_NAMES,
+    GENERAL_METRIC_NAMES,
+    UnbabelCometScorer,
+    compute_translation_metrics,
+    parse_metric_names,
+)
 
 __all__ = [
+    "COMET_DEFAULT_MODEL",
+    "DEFAULT_METRIC_NAMES",
+    "GENERAL_METRIC_NAMES",
     "REPORT_COLUMNS",
+    "UnbabelCometScorer",
     "compute_translation_metrics",
+    "parse_metric_names",
     "timestamped_report_path",
     "write_csv",
     "write_jsonl",
