@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from openai import OpenAI
@@ -40,6 +41,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--refine-terminology", action="store_true")
     parser.add_argument("--terminology-confidence-threshold", type=float, default=0.85)
     parser.add_argument("--terminology-cache", type=Path, default=None)
+    parser.add_argument("--terminology-workers", type=int, default=1)
+    parser.add_argument("--openai-timeout", type=float, default=120.0)
     return parser.parse_args()
 
 
@@ -66,6 +69,7 @@ def main() -> None:
         languages=languages,
         text_field=args.text_field,
         generator=generator,
+        terminology_workers=max(1, args.terminology_workers),
     )
     print(f"Wrote {len(selected)} source rows and {len(selected) * len(languages)} pairs.")
     print(f"Manifest: {manifest_path}")
@@ -155,7 +159,11 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
     if not settings.openai_api_key:
         raise ValueError("OPENAI_API_KEY is required to generate dataset terminology.")
     return DatasetTerminologyGenerator(
-        client=OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url),
+        client=OpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+            timeout=args.openai_timeout,
+        ),
         model=args.terminology_model,
         max_terms=args.terminology_max_terms,
         use_iate=args.iate_terminology,
@@ -172,38 +180,79 @@ def write_manifest(
     languages: list[str],
     text_field: str,
     generator: DatasetTerminologyGenerator | None,
+    terminology_workers: int = 1,
 ) -> None:
-    with manifest_path.open("w", encoding="utf-8") as handle:
-        for selection in selected:
-            source_row = selection["en"]
-            source_text = normalize_text(source_row.get(text_field, ""))
-            for language in languages:
-                target_row = selection[language]
-                target_text = normalize_text(target_row.get(text_field, ""))
-                row = {
-                    "source_id": source_row.get("publication_number"),
-                    "target_language": LANGUAGE_NAMES[language],
-                    "target_language_code": language,
-                    "source_row_id": source_row.get("id"),
-                    "target_row_id": target_row.get("id"),
-                    "publication_number": source_row.get("publication_number"),
-                    "country_code": source_row.get("country_code"),
-                    "publication_date": source_row.get("publication_date"),
-                    "approx_source_tokens": approximate_token_count(source_text),
-                    "text_field": text_field,
-                    "selection": "requires_en_targets_context_token_window",
-                    "ipc_codes": source_row.get("ipc_codes"),
-                }
-                if generator:
-                    row["terminology"] = [
-                        term.to_json()
-                        for term in generator.generate(
-                            source_text=source_text,
-                            target_language=LANGUAGE_NAMES[language],
-                            reference_text=target_text,
-                        )
-                    ]
-                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    manifest_rows = [
+        build_manifest_row(
+            source_row=selection["en"],
+            target_row=selection[language],
+            language=language,
+            text_field=text_field,
+        )
+        for selection in selected
+        for language in languages
+    ]
+    if generator:
+        if terminology_workers == 1:
+            manifest_rows = [add_terminology(row, generator) for row in manifest_rows]
+        else:
+            with ThreadPoolExecutor(max_workers=terminology_workers) as executor:
+                manifest_rows = list(
+                    executor.map(lambda row: add_terminology(row, generator), manifest_rows)
+                )
+
+    temp_path = manifest_path.with_suffix(manifest_path.suffix + ".tmp")
+    with temp_path.open("w", encoding="utf-8") as handle:
+        for row in manifest_rows:
+            output_row = {
+                key: value
+                for key, value in row.items()
+                if key not in {"_source_text", "_target_text"}
+            }
+            handle.write(json.dumps(output_row, ensure_ascii=False) + "\n")
+    temp_path.replace(manifest_path)
+
+
+def build_manifest_row(
+    source_row: dict[str, str],
+    target_row: dict[str, str],
+    language: str,
+    text_field: str,
+) -> dict:
+    source_text = normalize_text(source_row.get(text_field, ""))
+    target_text = normalize_text(target_row.get(text_field, ""))
+    return {
+        "source_id": source_row.get("publication_number"),
+        "target_language": LANGUAGE_NAMES[language],
+        "target_language_code": language,
+        "source_row_id": source_row.get("id"),
+        "target_row_id": target_row.get("id"),
+        "publication_number": source_row.get("publication_number"),
+        "country_code": source_row.get("country_code"),
+        "publication_date": source_row.get("publication_date"),
+        "approx_source_tokens": approximate_token_count(source_text),
+        "text_field": text_field,
+        "selection": "requires_en_targets_context_token_window",
+        "ipc_codes": source_row.get("ipc_codes"),
+        "_source_text": source_text,
+        "_target_text": target_text,
+    }
+
+
+def add_terminology(row: dict, generator: DatasetTerminologyGenerator) -> dict:
+    print(
+        f"Generating terminology for {row['publication_number']} -> {row['target_language']}",
+        flush=True,
+    )
+    row["terminology"] = [
+        term.to_json()
+        for term in generator.generate(
+            source_text=row["_source_text"],
+            target_language=row["target_language"],
+            reference_text=row["_target_text"],
+        )
+    ]
+    return row
 
 
 if __name__ == "__main__":

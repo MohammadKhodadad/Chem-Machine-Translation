@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -16,17 +17,59 @@ _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 _FORMULA_OR_IDENTIFIER_RE = re.compile(
     r"^(?:[A-Z][a-z]?\d*)+$|^[A-Z]{1,6}-?\d[\w.-]*$|^\d+(?:[.,]\d+)?\s?[A-Za-z/%]+$"
 )
+_COMPACT_NUMERIC_UNIT_RE = re.compile(
+    r"^\d+(?:[.,]\d+)?(?:\s*(?:-|to|–|—)\s*\d+(?:[.,]\d+)?)?\s*"
+    r"(?:%|°C|K|ppm|ppb|mol%|wt%|mg|g|kg|mL|L|cm2|cm3|mm|cm|m|nm|µm|um)(?:\s+or\s+less)?$",
+    re.IGNORECASE,
+)
+_SEQUENCE_IDENTIFIER_RE = re.compile(
+    r"^(?:SEQ\s+ID\s+NO:\s*\d+|CAS\s+RN\s*[:\s]?\d[\d-]+)$",
+    re.IGNORECASE,
+)
 _DEFAULT_CONFIDENCE_THRESHOLD = 0.85
+_TERMINOLOGY_PIPELINE_VERSION = "reference-first-v2"
 
 DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT = """You identify terminology for chemistry and patent
 machine-translation evaluation datasets.
 
-Extract exact English source spans that should be evaluated for terminology preservation:
+The source text may be in any language. Extract exact source-language spans that are technical
+enough to evaluate for terminology preservation:
 - chemical names, formulas, materials, catalysts, reagents, solvents, proteins, and abbreviations;
 - reaction/process terms, analytical methods, property names, and domain-specific phrases;
 - quantities, units, conditions, hazard/regulatory phrases, and identifiers when important.
 
-Do not translate terms. Do not invent terms. Prefer exact source spans from the text.
+Be strict. Extract only domain-critical terms whose translation could change scientific, legal, or
+patent meaning. Prefer precise multi-word technical spans over broad single words.
+
+Good examples:
+- solid electrolyte separator
+- polycarbonate resin
+- transition metal oxide catalyst
+- cationic surfactant
+- 2-acrylamido-2-methylpropanesulfonic acid copolymer
+- atomic layer deposition
+- SEQ ID NO: 10
+- 700 ppm or less
+- aqueous sodium hydroxide solution
+
+Bad examples as standalone terms:
+- water
+- method
+- system
+- apparatus
+- sample
+- solution
+- mixture
+- process
+- device
+- material
+- temperature
+- pressure
+
+Only extract a common word when it is part of a specific technical phrase, such as "aqueous sodium
+hydroxide solution" rather than "water" or "solution".
+
+Do not translate terms. Do not invent terms. Prefer exact source-language spans from the text.
 Return only valid JSON with this shape:
 {
   "terms": [
@@ -39,16 +82,48 @@ Return only valid JSON with this shape:
 }
 """
 
+DATASET_REFERENCE_CANDIDATE_SYSTEM_PROMPT = """You find target-language terminology spans in a
+reference translation for chemistry and patent machine-translation evaluation datasets.
+
+The source and target texts may be any language pair. You receive source-language terminology
+terms, the full source text, and the target-language reference translation. For each source term,
+find exact target-language span(s) from the reference translation that correspond to that source
+term.
+
+Use only spans that appear in the target reference. Do not use external terminology sources. Do not
+invent canonical translations that are not in the reference. If the reference paraphrases the
+concept and no compact terminology span is present, return an empty list for that source term.
+
+Return only valid JSON with this shape:
+{
+  "terms": [
+    {
+      "source_term": "exact source term from input",
+      "reference_candidates": ["exact target span from reference"],
+      "confidence": 0.0,
+      "reason": "short reason"
+    }
+  ]
+}
+"""
+
 DATASET_TERM_REFINER_SYSTEM_PROMPT = """You refine terminology mappings for chemistry and patent
 machine-translation evaluation datasets.
 
-You receive an English source text, its reference translation, and terminology candidates. Keep only
-terms that are high-confidence and useful for automatic terminology accuracy. Use the reference to
-validate target terms, but do not invent arbitrary target strings from the reference.
+The source and target texts may be any language pair. You receive the source-language text, the
+target-language reference translation, reference-derived candidates, and external IATE/Wikidata
+candidates. Keep only terms that are high-confidence and useful for automatic terminology accuracy
+or prompt-time terminology guidance.
+
+Reference candidates are the main evidence for benchmark terminology because they are spans from the
+target reference. External candidates are validation/canonicalization evidence only. Do not let an
+external candidate override a correct reference candidate. If reference and external candidates both
+look valid, keep both as variants.
 
 For each input term, choose exactly one decision:
-- keep: one or more candidate target terms are correct;
-- replace: candidates are wrong, but a better target term is clear;
+- keep_reference: reference candidate(s) are correct and should be the final target term(s);
+- keep_external: external candidate(s) are correct and reference candidate(s) are absent/noisy;
+- keep_both: reference and external candidate(s) are both valid variants;
 - update: candidates are close but need contextual wording;
 - preserve: the source term should be copied unchanged;
 - drop: the term is generic, unrelated, or too uncertain for evaluation.
@@ -72,6 +147,7 @@ Return only valid JSON with this shape:
 class DatasetTerminologyTerm:
     source_term: str
     target_terms: tuple[str, ...] = ()
+    reference_candidates: tuple[str, ...] = ()
     category: str = "other"
     source: str = "llm"
     confidence: float = 0.0
@@ -83,11 +159,13 @@ class DatasetTerminologyTerm:
         return {
             "source_term": self.source_term,
             "target_terms": list(self.target_terms),
+            "reference_candidates": list(self.reference_candidates),
             "category": self.category,
             "source": self.source,
             "confidence": self.confidence,
             "decision": self.decision,
             "reason": self.reason,
+            "external_candidates": self.candidates,
             "candidates": self.candidates,
         }
 
@@ -119,6 +197,7 @@ class DatasetTerminologyGenerator:
         self.iate_client = iate_client or (IATEClient() if use_iate else None)
         self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
         self._cache = load_terminology_cache(cache_path)
+        self._cache_lock = threading.Lock()
 
     def generate(
         self,
@@ -139,16 +218,26 @@ class DatasetTerminologyGenerator:
             refine_terms=self.refine_terms,
             confidence_threshold=self.confidence_threshold,
         )
-        if cache_key in self._cache:
-            return [dataset_term_from_json(term) for term in self._cache[cache_key]]
+        with self._cache_lock:
+            cached_terms = self._cache.get(cache_key)
+        if cached_terms is not None:
+            return [dataset_term_from_json(term) for term in cached_terms]
 
         terms = self.extract_source_terms(
             source_text=source_text,
             source_language=source_language,
             target_language=target_language,
         )
+        if reference_text:
+            terms = self.extract_reference_candidates(
+                terms=terms,
+                source_text=source_text,
+                reference_text=reference_text,
+                source_language=source_language,
+                target_language=target_language,
+            )
         terms = [
-            self.add_target_candidates(
+            self.add_external_candidates(
                 term=term,
                 source_language=source_language,
                 target_language=target_language,
@@ -166,8 +255,14 @@ class DatasetTerminologyGenerator:
         else:
             terms = select_dataset_terms(terms, confidence_threshold=0.0, max_terms=self.max_terms)
 
-        self._cache[cache_key] = [term.to_json() for term in terms]
-        append_terminology_cache(cache_path=self.cache_path, cache_key=cache_key, terms=terms)
+        with self._cache_lock:
+            if cache_key not in self._cache:
+                self._cache[cache_key] = [term.to_json() for term in terms]
+                append_terminology_cache(
+                    cache_path=self.cache_path,
+                    cache_key=cache_key,
+                    terms=terms,
+                )
         return terms
 
     def extract_source_terms(
@@ -187,8 +282,8 @@ class DatasetTerminologyGenerator:
                 {
                     "role": "user",
                     "content": (
-                        f"Find up to {self.max_terms} terminology items in this "
-                        f"{source_language} chemistry patent text before evaluation against "
+                        f"Find up to {self.max_terms} strict technical terminology items in this "
+                        f"{source_language} chemistry patent text before pairing with "
                         f"{target_language}.\n\nSource text:\n{source_text}"
                     ),
                 },
@@ -196,7 +291,46 @@ class DatasetTerminologyGenerator:
         )
         return parse_dataset_extracted_terms(response.output_text)
 
+    def extract_reference_candidates(
+        self,
+        terms: list[DatasetTerminologyTerm],
+        source_text: str,
+        reference_text: str,
+        source_language: str,
+        target_language: str,
+    ) -> list[DatasetTerminologyTerm]:
+        if self.client is None or not terms:
+            return terms
+
+        response = self.client.responses.create(
+            model=self.model,
+            temperature=0.0,
+            input=[
+                {"role": "system", "content": DATASET_REFERENCE_CANDIDATE_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": (
+                        f"Find reference terminology candidates for {source_language} to "
+                        f"{target_language}.\n\n"
+                        f"Source text:\n{source_text}\n\n"
+                        f"Target reference:\n{reference_text}\n\n"
+                        "Source terms:\n"
+                        f"{json.dumps([term.to_json() for term in terms], ensure_ascii=False)}"
+                    ),
+                },
+            ],
+        )
+        return parse_reference_candidate_terms(response.output_text, terms)
+
     def add_target_candidates(
+        self,
+        term: DatasetTerminologyTerm,
+        source_language: str,
+        target_language: str,
+    ) -> DatasetTerminologyTerm:
+        return self.add_external_candidates(term, source_language, target_language)
+
+    def add_external_candidates(
         self,
         term: DatasetTerminologyTerm,
         source_language: str,
@@ -206,14 +340,14 @@ class DatasetTerminologyGenerator:
             return replace_dataset_term(
                 term,
                 target_terms=(term.source_term,),
+                reference_candidates=term.reference_candidates,
                 source="preserve",
                 confidence=1.0,
                 decision="preserve",
             )
 
         candidates: dict[str, list[str]] = {}
-        target_terms: tuple[str, ...] = ()
-        source = term.source
+        source_parts = ["reference"] if term.reference_candidates else ["llm_only"]
 
         if self.iate_client:
             source_code = iate_language_code(source_language)
@@ -226,10 +360,9 @@ class DatasetTerminologyGenerator:
                 )
                 if translation:
                     candidates["iate"] = [translation.target_label]
-                    target_terms = (translation.target_label,)
-                    source = "llm+iate"
+                    source_parts.append("iate")
 
-        if self.wikidata_client and not target_terms:
+        if self.wikidata_client and "iate" not in candidates:
             source_code = wikidata_language_code(source_language)
             target_code = wikidata_language_code(target_language)
             if source_code and target_code:
@@ -240,14 +373,14 @@ class DatasetTerminologyGenerator:
                 )
                 if translation:
                     candidates["wikidata"] = [translation.target_label]
-                    target_terms = (translation.target_label,)
-                    source = "llm+wikidata"
+                    source_parts.append("wikidata")
 
+        external_terms = flatten_candidate_terms(candidates)
         return replace_dataset_term(
             term,
-            target_terms=target_terms,
-            source=source,
-            confidence=0.75 if target_terms else term.confidence,
+            target_terms=term.reference_candidates or external_terms,
+            source="+".join(source_parts),
+            confidence=0.85 if term.reference_candidates else 0.75 if external_terms else 0.5,
             candidates=candidates,
         )
 
@@ -313,6 +446,48 @@ def parse_dataset_extracted_terms(text: str) -> list[DatasetTerminologyTerm]:
     return terms
 
 
+def parse_reference_candidate_terms(
+    text: str,
+    original_terms: list[DatasetTerminologyTerm],
+) -> list[DatasetTerminologyTerm]:
+    match = _JSON_OBJECT_RE.search(text)
+    try:
+        payload = json.loads(match.group(0) if match else text)
+    except json.JSONDecodeError:
+        return original_terms
+
+    reference_by_source = {
+        str(raw_term.get("source_term", "")).strip(): raw_term
+        for raw_term in payload.get("terms", [])
+        if isinstance(raw_term, dict) and str(raw_term.get("source_term", "")).strip()
+    }
+    updated_terms = []
+    for term in original_terms:
+        raw_reference = reference_by_source.get(term.source_term)
+        if raw_reference is None:
+            updated_terms.append(term)
+            continue
+        raw_candidates = raw_reference.get("reference_candidates", [])
+        if not isinstance(raw_candidates, list):
+            raw_candidates = []
+        reference_candidates = tuple(
+            str(candidate).strip()
+            for candidate in raw_candidates
+            if str(candidate).strip()
+        )
+        updated_terms.append(
+            replace_dataset_term(
+                term,
+                target_terms=reference_candidates,
+                reference_candidates=reference_candidates,
+                confidence=max(term.confidence, parse_confidence(raw_reference.get("confidence"))),
+                reason=str(raw_reference.get("reason", "")).strip() or term.reason,
+                source="reference" if reference_candidates else term.source,
+            )
+        )
+    return updated_terms
+
+
 def parse_refined_dataset_terms(
     text: str,
     original_terms: list[DatasetTerminologyTerm],
@@ -339,10 +514,27 @@ def parse_refined_dataset_terms(
     for term in original_terms:
         raw_refined = refined_by_source.get(term.source_term)
         if raw_refined is None:
-            refined_terms.append(replace_dataset_term(term, decision="drop", confidence=0.0))
+            refined_terms.append(
+                replace_dataset_term(
+                    term,
+                    decision=term.decision or "llm_only",
+                    confidence=term.confidence,
+                    reason=term.reason or "No refinement decision returned for this LLM-only term.",
+                )
+            )
             continue
         decision = str(raw_refined.get("decision", "")).strip().lower()
-        if decision not in {"keep", "replace", "update", "preserve", "drop"}:
+        valid_decisions = {
+            "keep",
+            "keep_reference",
+            "keep_external",
+            "keep_both",
+            "replace",
+            "update",
+            "preserve",
+            "drop",
+        }
+        if decision not in valid_decisions:
             decision = "drop"
         raw_target_terms = raw_refined.get("target_terms", [])
         if not isinstance(raw_target_terms, list):
@@ -352,8 +544,14 @@ def parse_refined_dataset_terms(
             for target_term in raw_target_terms
             if str(target_term).strip()
         )
-        if decision == "keep" and not target_terms:
-            target_terms = term.target_terms
+        if decision in {"keep", "keep_reference"} and not target_terms:
+            target_terms = term.reference_candidates or term.target_terms
+        if decision == "keep_external" and not target_terms:
+            target_terms = external_candidate_terms(term)
+        if decision == "keep_both" and not target_terms:
+            target_terms = tuple(
+                dict.fromkeys([*term.reference_candidates, *external_candidate_terms(term)])
+            )
         if decision == "preserve" and not target_terms:
             target_terms = (term.source_term,)
         if decision == "drop":
@@ -385,15 +583,15 @@ def select_dataset_terms(
         term
         for term in terms
         if term.decision != "drop"
-        and (term.target_terms or term.decision == "preserve")
-        and term.confidence >= confidence_threshold
+        and (term.target_terms or term.decision == "preserve" or term.source == "llm_only")
+        and (term.confidence >= confidence_threshold or term.source == "llm_only")
     ]
     accepted.sort(key=lambda term: (term.confidence, len(term.source_term.split())), reverse=True)
     return accepted[:max_terms]
 
 
 def dataset_term_from_json(payload: dict[str, Any]) -> DatasetTerminologyTerm:
-    raw_candidates = payload.get("candidates", {})
+    raw_candidates = payload.get("external_candidates", payload.get("candidates", {}))
     if not isinstance(raw_candidates, dict):
         raw_candidates = {}
     return DatasetTerminologyTerm(
@@ -402,6 +600,11 @@ def dataset_term_from_json(payload: dict[str, Any]) -> DatasetTerminologyTerm:
             str(target_term).strip()
             for target_term in payload.get("target_terms", [])
             if str(target_term).strip()
+        ),
+        reference_candidates=tuple(
+            str(candidate).strip()
+            for candidate in payload.get("reference_candidates", [])
+            if str(candidate).strip()
         ),
         category=str(payload.get("category", "other")).strip() or "other",
         source=str(payload.get("source", "")).strip() or "unknown",
@@ -419,6 +622,7 @@ def dataset_term_from_json(payload: dict[str, Any]) -> DatasetTerminologyTerm:
 def replace_dataset_term(
     term: DatasetTerminologyTerm,
     target_terms: tuple[str, ...] | None = None,
+    reference_candidates: tuple[str, ...] | None = None,
     category: str | None = None,
     source: str | None = None,
     confidence: float | None = None,
@@ -429,6 +633,9 @@ def replace_dataset_term(
     return DatasetTerminologyTerm(
         source_term=term.source_term,
         target_terms=term.target_terms if target_terms is None else target_terms,
+        reference_candidates=(
+            term.reference_candidates if reference_candidates is None else reference_candidates
+        ),
         category=term.category if category is None else category,
         source=term.source if source is None else source,
         confidence=term.confidence if confidence is None else confidence,
@@ -438,9 +645,30 @@ def replace_dataset_term(
     )
 
 
+def external_candidate_terms(term: DatasetTerminologyTerm) -> tuple[str, ...]:
+    return flatten_candidate_terms(term.candidates)
+
+
+def flatten_candidate_terms(candidates_by_source: dict[str, list[str]]) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            candidate
+            for candidates in candidates_by_source.values()
+            for candidate in candidates
+            if candidate
+        )
+    )
+
+
 def should_preserve_dataset_term(source_term: str, category: str = "") -> bool:
     stripped = source_term.strip()
-    return category in {"unit", "identifier"} or bool(_FORMULA_OR_IDENTIFIER_RE.match(stripped))
+    if _FORMULA_OR_IDENTIFIER_RE.match(stripped):
+        return True
+    if _COMPACT_NUMERIC_UNIT_RE.match(stripped):
+        return True
+    if _SEQUENCE_IDENTIFIER_RE.match(stripped):
+        return True
+    return False
 
 
 def parse_confidence(value: object) -> float:
@@ -474,6 +702,7 @@ def terminology_cache_key(
         "use_wikidata": use_wikidata,
         "refine_terms": refine_terms,
         "confidence_threshold": confidence_threshold,
+        "pipeline_version": _TERMINOLOGY_PIPELINE_VERSION,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
