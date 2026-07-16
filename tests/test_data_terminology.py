@@ -14,6 +14,7 @@ from chem_machine_translation.data.terminology import (
     parse_dataset_extracted_terms,
     parse_reference_candidate_terms,
     parse_refined_dataset_terms,
+    select_dataset_terms,
     should_preserve_dataset_term,
 )
 
@@ -27,12 +28,8 @@ def test_dataset_term_prompts_are_strict_and_language_pair_neutral() -> None:
     assert "External candidates are validation/canonicalization evidence only" in (
         DATASET_TERM_REFINER_SYSTEM_PROMPT
     )
-    assert "solid electrolyte separator" in DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT
-    assert "2-acrylamido-2-methylpropanesulfonic acid copolymer" in (
-        DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT
-    )
-    assert "Bad examples as standalone terms" in DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT
-    assert "- water" in DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT
+    assert "Do not extract generic patent scaffolding" in DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT
+    assert "language-neutral" in DATASET_TERM_REFINER_SYSTEM_PROMPT
 
 
 def test_dataset_term_round_trips_json_shape() -> None:
@@ -121,6 +118,118 @@ def test_parse_refined_dataset_terms_applies_confidence_gate() -> None:
     assert [term.source_term for term in refined] == ["solid electrolyte"]
     assert refined[0].target_terms == ("Festelektrolyt",)
     assert refined[0].decision == "keep"
+
+
+def test_refiner_drop_decision_filters_generic_and_clause_like_terms() -> None:
+    terms = [
+        DatasetTerminologyTerm(
+            source_term="gastrointestinal tract",
+            target_terms=("tube digestif",),
+            reference_candidates=("tube digestif",),
+            category="other",
+            source="reference+refined",
+            confidence=0.95,
+            decision="keep_reference",
+        ),
+        DatasetTerminologyTerm(
+            source_term="cow",
+            target_terms=("une vache",),
+            reference_candidates=("une vache",),
+            category="other",
+            source="reference+refined",
+            confidence=0.99,
+            decision="drop",
+        ),
+        DatasetTerminologyTerm(
+            source_term="working amount",
+            target_terms=("une quantité de travail",),
+            reference_candidates=("une quantité de travail",),
+            category="other",
+            source="reference+refined",
+            confidence=0.99,
+            decision="drop",
+        ),
+        DatasetTerminologyTerm(
+            source_term="one or more nutrients selected from minerals, vitamins and amino acids",
+            target_terms=(
+                "un ou plusieurs nutriments choisis parmi des minéraux, des vitamines et "
+                "des acides aminés",
+            ),
+            reference_candidates=(
+                "un ou plusieurs nutriments choisis parmi des minéraux, des vitamines et "
+                "des acides aminés",
+            ),
+            category="other",
+            source="reference+refined",
+            confidence=0.99,
+            decision="drop",
+        ),
+        DatasetTerminologyTerm(
+            source_term="starch is at least 40% of the weight of the starch product",
+            target_terms=("l'amidon représente au moins 40 % du poids du produit d'amidon",),
+            reference_candidates=(
+                "l'amidon représente au moins 40 % du poids du produit d'amidon",
+            ),
+            category="unit",
+            source="reference+refined",
+            confidence=0.99,
+            decision="drop",
+        ),
+    ]
+
+    selected = select_dataset_terms(terms, confidence_threshold=0.85, max_terms=10)
+
+    assert [term.source_term for term in selected] == ["gastrointestinal tract"]
+
+
+def test_select_dataset_terms_keeps_refiner_approved_terms_without_english_filters() -> None:
+    terms = [
+        DatasetTerminologyTerm(
+            source_term="55 to 65 °C",
+            target_terms=("55 à 65 °C",),
+            reference_candidates=("55 à 65 °C",),
+            category="unit",
+            source="reference+refined",
+            confidence=0.95,
+            decision="keep_reference",
+        ),
+        DatasetTerminologyTerm(
+            source_term="marker assisted selection",
+            target_terms=("sélection assistée par marqueur",),
+            reference_candidates=("sélection assistée par marqueur",),
+            category="process",
+            source="reference+refined",
+            confidence=0.94,
+            decision="keep_reference",
+        ),
+        DatasetTerminologyTerm(
+            source_term="quantitative trait locus (QTL)",
+            target_terms=("locus de caractère quantitatif (QTL)",),
+            reference_candidates=("locus de caractère quantitatif (QTL)",),
+            category="identifier",
+            source="reference+refined",
+            confidence=0.93,
+            decision="keep_reference",
+        ),
+        DatasetTerminologyTerm(
+            source_term="valid non-English technical phrase",
+            target_terms=("terme technique valide",),
+            reference_candidates=("terme technique valide",),
+            category="other",
+            source="reference+refined",
+            confidence=0.92,
+            decision="keep_reference",
+        ),
+    ]
+
+    selected = select_dataset_terms(terms, confidence_threshold=0.85, max_terms=10)
+
+    assert [term.source_term for term in selected] == [
+        "55 to 65 °C",
+        "marker assisted selection",
+        "quantitative trait locus (QTL)",
+        "valid non-English technical phrase",
+    ]
 
 
 def test_parse_reference_candidate_terms_adds_reference_spans() -> None:

@@ -22,9 +22,9 @@ The current flow is reference-first:
 1. Extract source terms with an LLM.
 
    The first LLM sees only the source text and extracts strict technical terms. It should not
-   translate terms or infer target-language mappings. The prompt is intentionally strict: it favors
-   chemistry, materials, process, method, unit, hazard, and patent-critical phrases, while rejecting
-   common standalone words such as `method`, `system`, `solution`, or `temperature`.
+   translate terms or infer target-language mappings. The prompt is intentionally strict and
+   language-neutral: it asks for source spans that are domain-critical terminology, not generic
+   patent scaffolding, common prose, sentence fragments, or full clauses.
 
 2. Extract reference candidates with an LLM.
 
@@ -55,6 +55,10 @@ The current flow is reference-first:
    - `update`: use a corrected contextual form.
    - `preserve`: copy the source term unchanged.
    - `drop`: remove the term as generic, unrelated, or too uncertain.
+
+   Generic-term removal belongs here rather than in deterministic word lists. The refiner sees the
+   source text, reference text, and candidates, so it can judge whether a term is actually technical
+   in that language pair and context.
 
 5. Apply confidence gating.
 
@@ -152,7 +156,10 @@ The EPO builder exposes the same terminology flags.
 The reference-first flow is much stronger than using IATE/Wikidata as direct target-term sources.
 Most good pairs now come from the reference, while external sources add variants and validation.
 
-The main remaining quality issue is extraction strictness. Some extracted terms can still be too
-broad, too generic, or too phrase-like for terminology metrics. The next improvement should be a
-post-refinement filter that drops generic biological/common nouns and long non-term fragments unless
-they are clearly chemistry-, process-, or patent-critical.
+The extraction prompt and refiner are intentionally strict. The code avoids language-specific
+lexical filtering because the datasets may contain many source languages and technical forms. The
+remaining deterministic rules are language-neutral structural checks, such as narrow `preserve`
+handling for formulas, identifiers, and compact numeric/unit expressions.
+
+Generic standalone nouns, broad phrase fragments, and clause-like expressions should be removed by
+the refiner with `decision: "drop"` after seeing the source/reference context.

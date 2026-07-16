@@ -27,7 +27,7 @@ _SEQUENCE_IDENTIFIER_RE = re.compile(
     re.IGNORECASE,
 )
 _DEFAULT_CONFIDENCE_THRESHOLD = 0.85
-_TERMINOLOGY_PIPELINE_VERSION = "reference-first-v2"
+_TERMINOLOGY_PIPELINE_VERSION = "reference-first-v4"
 
 DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT = """You identify terminology for chemistry and patent
 machine-translation evaluation datasets.
@@ -39,35 +39,17 @@ enough to evaluate for terminology preservation:
 - quantities, units, conditions, hazard/regulatory phrases, and identifiers when important.
 
 Be strict. Extract only domain-critical terms whose translation could change scientific, legal, or
-patent meaning. Prefer precise multi-word technical spans over broad single words.
+patent meaning. Every extracted term must be useful as a terminology metric item, not merely a
+translated phrase.
 
-Good examples:
-- solid electrolyte separator
-- polycarbonate resin
-- transition metal oxide catalyst
-- cationic surfactant
-- 2-acrylamido-2-methylpropanesulfonic acid copolymer
-- atomic layer deposition
-- SEQ ID NO: 10
-- 700 ppm or less
-- aqueous sodium hydroxide solution
+Do not extract generic patent scaffolding, common everyday objects, broad field labels, grammatical
+fragments, full clauses, or terms that are only meaningful because of surrounding sentence context.
+Prefer the smallest exact span that carries the technical meaning. For quantities and conditions,
+extract the compact measurement or condition itself rather than the surrounding clause.
 
-Bad examples as standalone terms:
-- water
-- method
-- system
-- apparatus
-- sample
-- solution
-- mixture
-- process
-- device
-- material
-- temperature
-- pressure
-
-Only extract a common word when it is part of a specific technical phrase, such as "aqueous sodium
-hydroxide solution" rather than "water" or "solution".
+Only extract a common word when it is part of a precise source-language technical expression. If
+a term could appear unchanged in a non-technical document without changing domain meaning, leave it
+out.
 
 Do not translate terms. Do not invent terms. Prefer exact source-language spans from the text.
 Return only valid JSON with this shape:
@@ -120,6 +102,10 @@ target reference. External candidates are validation/canonicalization evidence o
 external candidate override a correct reference candidate. If reference and external candidates both
 look valid, keep both as variants.
 
+Drop aggressively when the source term is generic, not technical, too broad, a sentence fragment,
+a full clause, or only useful as normal translated prose rather than terminology. This judgment
+must be language-neutral and based on the source/reference context, not on a fixed list of words.
+
 For each input term, choose exactly one decision:
 - keep_reference: reference candidate(s) are correct and should be the final target term(s);
 - keep_external: external candidate(s) are correct and reference candidate(s) are absent/noisy;
@@ -133,7 +119,7 @@ Return only valid JSON with this shape:
   "terms": [
     {
       "source_term": "exact source term from input",
-      "decision": "keep|replace|update|preserve|drop",
+      "decision": "keep_reference|keep_external|keep_both|update|preserve|drop",
       "target_terms": ["target term"],
       "confidence": 0.0,
       "reason": "short reason"
