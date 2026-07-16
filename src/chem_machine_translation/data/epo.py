@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from chem_machine_translation.core.schemas import Document
+from chem_machine_translation.data.terminology import load_manifest_terminology
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
 LANGUAGE_CODES = {
@@ -59,6 +60,7 @@ def iter_epo_translation_documents(
     target_language_code = normalize_language_code(target_language)
     source_rows = load_epo_rows_by_publication(data_dir, "en")
     target_rows = load_epo_rows_by_publication(data_dir, target_language_code)
+    terminology_by_key = load_manifest_terminology(data_dir)
     target_language_name = LANGUAGE_NAMES[target_language_code]
     yielded = 0
 
@@ -78,23 +80,28 @@ def iter_epo_translation_documents(
         ):
             continue
 
+        metadata = {
+            "target_language": target_language_name,
+            "target_language_code": target_language_code,
+            "source_language": "English",
+            "source_row_id": source_rows[publication_number].get("id"),
+            "target_row_id": target_row.get("id"),
+            "publication_number": publication_number,
+            "country_code": source_rows[publication_number].get("country_code"),
+            "publication_date": source_rows[publication_number].get("publication_date"),
+            "text_field": text_field,
+            "ipc_codes": source_rows[publication_number].get("ipc_codes"),
+        }
+        terminology = terminology_by_key.get((publication_number, target_language_code, text_field))
+        if terminology:
+            metadata["terminology"] = terminology
+
         yield Document(
             dataset="epo",
             source_id=publication_number,
             text=source_text,
             ground_truth=target_text,
-            metadata={
-                "target_language": target_language_name,
-                "target_language_code": target_language_code,
-                "source_language": "English",
-                "source_row_id": source_rows[publication_number].get("id"),
-                "target_row_id": target_row.get("id"),
-                "publication_number": publication_number,
-                "country_code": source_rows[publication_number].get("country_code"),
-                "publication_date": source_rows[publication_number].get("publication_date"),
-                "text_field": text_field,
-                "ipc_codes": source_rows[publication_number].get("ipc_codes"),
-            },
+            metadata=metadata,
         )
         yielded += 1
         if yielded >= limit:

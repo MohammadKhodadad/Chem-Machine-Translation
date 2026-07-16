@@ -1,4 +1,5 @@
 import csv
+import json
 from pathlib import Path
 
 from chem_machine_translation.data.google_patents import (
@@ -53,6 +54,24 @@ def test_iter_google_patent_translation_documents_aligns_ground_truth(tmp_path) 
             }
         ],
     )
+    (tmp_path / "google-patents-subset-1-manifest.jsonl").write_text(
+        json.dumps(
+            {
+                "source_id": "EP-1",
+                "target_language_code": "fr",
+                "text_field": "context",
+                "terminology": [
+                    {
+                        "source_term": "solid electrolyte",
+                        "target_terms": ["electrolyte solide"],
+                        "category": "material",
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     documents = list(
         iter_google_patent_translation_documents(
@@ -67,6 +86,7 @@ def test_iter_google_patent_translation_documents_aligns_ground_truth(tmp_path) 
     assert documents[0].text == source_context
     assert documents[0].ground_truth == target_context
     assert documents[0].metadata["target_language_code"] == "fr"
+    assert documents[0].metadata["terminology"][0]["target_terms"] == ["electrolyte solide"]
 
 
 def test_normalize_language_code_supports_dutch() -> None:

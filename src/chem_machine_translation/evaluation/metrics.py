@@ -9,8 +9,8 @@ except ImportError:  # pragma: no cover - dependency is included for normal uv i
     BLEU = None
     CHRF = None
 
-GENERAL_METRIC_NAMES = ("sequence_similarity", "bleu", "chrf", "comet")
-DEFAULT_METRIC_NAMES = GENERAL_METRIC_NAMES
+GENERAL_METRIC_NAMES = ("sequence_similarity", "bleu", "chrf", "chrf2++", "comet")
+DEFAULT_METRIC_NAMES = ("sequence_similarity", "bleu", "chrf2++", "comet")
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
 
 
@@ -51,7 +51,7 @@ class UnbabelCometScorer:
                     "COMET metric requested but unbabel-comet or one of its dependencies "
                     f"could not be imported: {exc}. Install dependencies with `uv sync` "
                     "or select metrics explicitly, "
-                    "for example `--metric sequence_similarity --metric bleu --metric chrf`."
+                    "for example `--metric sequence_similarity --metric bleu --metric chrf2++`."
                 ) from exc
 
             model_path = download_model(self.model_name)
@@ -92,6 +92,12 @@ def compute_translation_metrics(
 
     if "chrf" in selected_metrics and CHRF:
         metrics["chrf"] = CHRF().sentence_score(prediction, [reference]).score
+
+    if "chrf2++" in selected_metrics and CHRF:
+        metrics["chrf2++"] = CHRF(
+            char_order=6,
+            word_order=2,
+        ).sentence_score(prediction, [reference]).score
 
     if "comet" in selected_metrics:
         if source is None:

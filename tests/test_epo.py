@@ -1,4 +1,5 @@
 import csv
+import json
 from pathlib import Path
 
 from chem_machine_translation.data.epo import (
@@ -76,6 +77,24 @@ def test_iter_epo_translation_documents_loads_aligned_context(tmp_path: Path) ->
             }
         ],
     )
+    (tmp_path / "epo-subset-1-manifest.jsonl").write_text(
+        json.dumps(
+            {
+                "source_id": "3686982",
+                "target_language_code": "de",
+                "text_field": "context",
+                "terminology": [
+                    {
+                        "source_term": "solid electrolyte",
+                        "target_terms": ["Festelektrolyt"],
+                        "category": "material",
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     documents = list(
         iter_epo_translation_documents(
@@ -93,3 +112,4 @@ def test_iter_epo_translation_documents_loads_aligned_context(tmp_path: Path) ->
     assert documents[0].ground_truth == normalize_text(target_context)
     assert documents[0].metadata["target_language_code"] == "de"
     assert documents[0].metadata["ipc_codes"] == "H01M 10/0565|H01M 10/0562"
+    assert documents[0].metadata["terminology"][0]["source_term"] == "solid electrolyte"

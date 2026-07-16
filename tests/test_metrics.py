@@ -18,6 +18,8 @@ class _FakeCometScorer:
 
 def test_parse_metric_names_defaults_to_all_general_metrics() -> None:
     assert parse_metric_names(None) == DEFAULT_METRIC_NAMES
+    assert "chrf2++" in DEFAULT_METRIC_NAMES
+    assert "chrf" not in DEFAULT_METRIC_NAMES
 
 
 def test_parse_metric_names_rejects_unknown_metric() -> None:
@@ -29,13 +31,14 @@ def test_compute_translation_metrics_can_select_overlap_metrics_only() -> None:
     metrics = compute_translation_metrics(
         prediction="solid electrolyte battery",
         reference="solid electrolyte battery",
-        metric_names=["sequence_similarity", "bleu", "chrf"],
+        metric_names=["sequence_similarity", "bleu", "chrf", "chrf2++"],
     )
 
-    assert set(metrics) == {"sequence_similarity", "bleu", "chrf"}
+    assert set(metrics) == {"sequence_similarity", "bleu", "chrf", "chrf2++"}
     assert metrics["sequence_similarity"] == 100
     assert metrics["bleu"] > 0
     assert metrics["chrf"] > 0
+    assert metrics["chrf2++"] > 0
 
 
 def test_compute_translation_metrics_adds_comet_with_source_text() -> None:

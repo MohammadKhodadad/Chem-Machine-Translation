@@ -47,7 +47,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Metric to compute. Repeat to select multiple metrics. "
-            "Defaults to sequence_similarity, BLEU, chrF, and COMET."
+            "Defaults to sequence_similarity, BLEU, chrF2++, and COMET."
         ),
     )
     parser.add_argument("--comet-model", default=COMET_DEFAULT_MODEL)

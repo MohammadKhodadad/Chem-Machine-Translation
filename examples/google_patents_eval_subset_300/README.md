@@ -25,6 +25,10 @@ Files:
 - `google-patents-subset-300-manifest.jsonl`: exact selected source/target pairs, including
   `family_id`, `publication_number`, language, source token count, and selection rule.
 
+The manifest can also include a structured `terminology` list per source-target row. These mappings
+are generated before evaluation and are intended for terminology accuracy metrics, separate from
+translation-time prompt injection.
+
 ## Setup
 
 Install dependencies:
@@ -37,6 +41,27 @@ For the real OpenAI evaluation, copy `.env.example` to `.env` and set `OPENAI_AP
 No API key is needed for the dry run.
 
 ## Run The Evaluation
+
+Regenerate the subset from preprocessed language CSVs:
+
+```powershell
+uv run python scripts/build_google_patents_eval_subset.py `
+  --source-dir data/preprocessed `
+  --output-dir examples/google_patents_eval_subset_300 `
+  --limit 50 `
+  --min-input-tokens 128 `
+  --max-input-tokens 384
+```
+
+To add terminology mappings during subset generation, include:
+
+```powershell
+  --extract-terminology `
+  --iate-terminology `
+  --wikidata-terminology `
+  --refine-terminology `
+  --terminology-cache reports/google-patents-terminology-cache.jsonl
+```
 
 Rerun the full 300-example agentic evaluation:
 

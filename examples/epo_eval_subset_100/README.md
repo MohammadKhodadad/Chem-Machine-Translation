@@ -21,6 +21,10 @@ Files:
 - `epo-subset-100-manifest.jsonl`: exact selected source/target pairs, including publication
   number, language, source token count, IPC codes, and selection rule.
 
+The manifest can also include a structured `terminology` list per source-target row. These mappings
+are generated before evaluation and are intended for terminology accuracy metrics, separate from
+translation-time prompt injection.
+
 ## Setup
 
 Install dependencies:
@@ -33,6 +37,29 @@ For the real OpenAI evaluation, copy `.env.example` to `.env` and set `OPENAI_AP
 No API key is needed for the dry run.
 
 ## Run The Evaluation
+
+Regenerate the subset from the raw EPO CSV:
+
+```powershell
+uv run python scripts/build_epo_eval_subset.py `
+  --source-csv data/EPO.csv `
+  --output-dir examples/epo_eval_subset_100 `
+  --limit 50 `
+  --language fr `
+  --language de `
+  --min-input-tokens 128 `
+  --max-input-tokens 384
+```
+
+To add terminology mappings during subset generation, include:
+
+```powershell
+  --extract-terminology `
+  --iate-terminology `
+  --wikidata-terminology `
+  --refine-terminology `
+  --terminology-cache reports/epo-terminology-cache.jsonl
+```
 
 Rerun the full 100-example dry-run evaluation:
 

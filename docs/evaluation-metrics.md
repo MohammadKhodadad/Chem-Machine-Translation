@@ -2,8 +2,8 @@
 
 This project computes automatic reference-based metrics for benchmark scripts such as
 `scripts/evaluate_google_patents.py` and `scripts/evaluate_epo.py`. By default, benchmark scripts
-compute `sequence_similarity`, BLEU, chrF, and COMET. Use repeated `--metric` flags to override the
-default set.
+compute `sequence_similarity`, BLEU, chrF2++, and COMET. Use repeated `--metric` flags to override
+the default set.
 
 The implementation lives in `src/chem_machine_translation/evaluation/metrics.py`:
 
@@ -30,8 +30,36 @@ We separate metrics into two groups:
 - **Domain-specific metrics**: chemistry- or patent-aware checks. These are intended to measure
   things like formula preservation, terminology consistency, and chemical identity.
 
-At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, and reference-based COMET.
-Terminology accuracy is a planned integration.
+At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++, and
+reference-based COMET. Terminology accuracy is a planned integration.
+
+## Current Status
+
+Implemented in code:
+
+- `sequence_similarity`: simple string-level similarity, useful as a sanity check.
+- `bleu`: sentence-level SacreBLEU BLEU, useful as a standard lexical baseline.
+- `chrf`: sentence-level SacreBLEU chrF, useful for morphology and character-level overlap.
+- `chrf2++`: WMT-style chrF with word bigrams, now preferred over plain `chrf` in defaults.
+- `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
+
+Reviewed from the WMT25 Terminology Shared Task repository:
+
+- `chrf2++`: WMT25 uses chrF with character n-grams and word n-grams for general MT quality.
+- `term_success_rate` / `Acc`: WMT25's main terminology accuracy metric.
+- `term_consistency` / `Cons.`: WMT25's terminology consistency metric.
+- `FSP`: an LLM-as-judge MQM-style document evaluation metric.
+
+Recommended next implementation for this project:
+
+- first add terminology success rate;
+- then add normalized terminology accuracy;
+- later consider simplified terminology consistency;
+- keep FSP/MQM as a later, expensive evaluation option.
+
+The practical interpretation is: general metrics tell us whether the translation resembles the
+reference and preserves meaning broadly; domain-specific metrics tell us whether chemistry-critical
+terms, symbols, units, and identifiers survived correctly.
 
 ## General Metrics
 
@@ -224,6 +252,51 @@ Limitations:
 - it can reward strings that look similar but mean different things;
 - it does not validate formulas, identifiers, stereochemistry, units, or reaction roles.
 
+### chrF2++ / WMT-Style chrF
+
+Status: **implemented** as `chrf2++`.
+
+The WMT25 Terminology Shared Task uses chrF2++ for general MT quality. In code, their setting is:
+
+```python
+CHRF(char_order=6, word_order=2)
+```
+
+This differs from plain `CHRF()` because chrF2++ includes word n-gram overlap in addition to
+character n-gram overlap.
+
+Project default:
+
+```text
+--metric chrf2++
+```
+
+Plain `chrf` is still available as an explicit metric for backwards comparison, but `chrf2++` is the
+preferred default.
+
+Formula:
+
+```text
+chrF++ = F_beta(P_char+word, R_char+word)
+```
+
+where precision and recall are averaged over:
+
+- character n-grams up to order `6`;
+- word n-grams up to order `2`.
+
+Why it is good:
+
+- WMT25 chose chrF because it works for both sentence-level and document-level translation;
+- it is more robust than BLEU for morphology and compounds;
+- adding word n-grams gives a little more phrase-level signal than plain chrF.
+
+Why we should add it:
+
+- it makes our evaluation closer to WMT terminology evaluation practice;
+- it is cheap to compute;
+- it is a better default lexical metric than BLEU alone for German/French patent text.
+
 ### COMET
 
 COMET is a learned neural machine translation metric. Unlike BLEU and chrF, it does not only compare
@@ -315,6 +388,20 @@ For reproducible experiments, record:
 - hardware setting, especially CPU vs GPU;
 - batch size.
 
+Why it is good:
+
+- COMET gives a semantic adequacy signal that BLEU and chrF cannot provide;
+- it is useful when a translation is valid but uses different wording from the reference;
+- it is now implemented and end-to-end tested in this codebase.
+
+Project status:
+
+- implemented with `unbabel-comet`;
+- default model is `Unbabel/wmt22-comet-da`;
+- tested on a one-row EPO smoke run under Python `3.12`;
+- project Python is constrained to `<3.13` because the COMET dependency stack is not currently
+  reliable on Python `3.13` on Windows.
+
 ## Report-Level Aggregation
 
 The benchmark scripts compute metrics per row and then average each metric by target language.
@@ -361,6 +448,23 @@ These metrics should complement the general metrics, not replace them. BLEU, chr
 similarity tell us how close the output is to the reference wording; domain-specific metrics tell us
 whether chemically important information survived the translation.
 
+## WMT25 Terminology Metrics Review
+
+The WMT25 terminology repository evaluates systems with three main ranking signals:
+
+- **General MT quality**: chrF, specifically chrF2++.
+- **Terminology success rate**: reported as `Acc`.
+- **Term consistency**: reported as `Cons.`.
+
+The repository also includes an additional FSP metric for LLM-as-judge MQM-style document-level
+evaluation.
+
+For our project, the most useful part is terminology success rate. It directly answers the question:
+when the source contains an approved term, did the translation contain an approved target term?
+
+The WMT25 term consistency and FSP implementations are useful references, but they are heavier than
+we need for a first chemistry benchmark.
+
 ### Terminology Accuracy
 
 Terminology accuracy measures whether approved target-language terms appear in the translation when
@@ -368,6 +472,8 @@ their source-language terms appear in the source text.
 
 This is a domain-specific metric because it evaluates controlled chemistry or patent terminology,
 not general translation fluency.
+
+Status: **not implemented yet, recommended next**.
 
 There is no single standard Python package equivalent to `unbabel-comet`. The WMT25 Terminology
 Shared Task repository provides research-code implementations:
@@ -384,6 +490,13 @@ Relevant parts of that repository:
 
 The primary WMT terminology metric is often reported as terminology success rate, or `Acc`. It
 measures how often applicable approved target terms are present in the system output.
+
+WMT25 has two versions that matter for us:
+
+- **Track 1 sentence-level metric**: uses Stanza lemmatization for English and target languages, then
+  checks whether either original or lemmatized source/target terms appear.
+- **Track 2 document-level metric**: uses a simpler lowercased count-based success rate over source
+  and target terms.
 
 For this project, a small reusable glossary matcher may be easier to integrate first.
 
@@ -450,6 +563,13 @@ Useful for:
 - comparing terminology layer variants;
 - measuring terminology coverage separately from BLEU/chrF/COMET.
 
+Why it is good:
+
+- it directly measures the thing our terminology layer is supposed to improve;
+- it is interpretable: `0.80` means roughly 80% of applicable terms were found;
+- it can be computed per row, per language, per glossary source, and per term category;
+- it is much cheaper than LLM judging.
+
 Limitations:
 
 - exact matching can miss valid inflected or paraphrased terms;
@@ -463,6 +583,8 @@ Limitations:
 
 Terminology consistency measures whether repeated source terms are translated consistently across a
 document or corpus.
+
+Status: **not implemented yet**.
 
 One simple document-level version is:
 
@@ -483,6 +605,59 @@ The WMT25 consistency implementation is more sophisticated and heavier. It may r
 language-specific normalization, alignment, and embedding-based matching. For a first chemistry
 benchmark, keep terminology accuracy and terminology consistency as separate metrics rather than
 combining them into one score.
+
+Why it is good:
+
+- patent and chemistry translation often require the same technical term to be rendered consistently;
+- consistency can matter even when the chosen term is not the exact reference term;
+- it helps evaluate document-level behavior, not just sentence-level correctness.
+
+Why not first:
+
+- it needs reliable detection of target renderings;
+- WMT25's version uses heavier dependencies and alignment machinery;
+- for our current `context` examples, terminology success rate is a simpler and more useful first
+  step.
+
+### FSP / MQM LLM Judge
+
+Status: **not implemented yet**.
+
+The WMT25 repository includes FSP, or Focus Sentence Prompting, as an additional metric. It is an
+LLM-as-judge evaluation method based on MQM-style error analysis. It evaluates a focused segment
+while giving the judge access to wider document context.
+
+The scoring code produces:
+
+- `quality_score`;
+- `error_score`;
+- severity-weighted errors:
+  - minor errors;
+  - major errors;
+  - critical errors.
+
+The default severity weights in their scoring utility are:
+
+```text
+minor = 1
+major = 2
+critical = 5
+```
+
+Why it is good:
+
+- it can capture errors that lexical metrics miss;
+- it can provide interpretable error categories;
+- it is suitable for document-level translation review.
+
+Why it is expensive:
+
+- it requires LLM API calls;
+- outputs need JSON parsing and validation;
+- results depend on prompt, judge model, and calibration;
+- it is slower and less deterministic than BLEU, chrF, COMET, or terminology accuracy.
+
+For this project, FSP/MQM should be treated as a later review metric, not a default benchmark metric.
 
 ## What The General Metrics Do Not Measure
 
@@ -529,7 +704,6 @@ metrics. The most useful additions for this codebase would be:
 
 - **formula/entity preservation rate**: check whether formulas, units, sequence IDs, and identifiers
   from the source are preserved in the translation;
-- **COMET or another learned MT metric**: estimate semantic adequacy beyond lexical overlap;
 - **terminology accuracy**: check whether approved target terms appear when their source terms are
   present;
 - **terminology consistency**: check whether repeated chemistry terms are translated consistently;

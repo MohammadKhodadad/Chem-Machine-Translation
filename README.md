@@ -140,6 +140,10 @@ uv run ruff check .
 
 Google Patents evaluation examples live in `examples/google_patents_eval_subset_300`.
 EPO evaluation examples live in `examples/epo_eval_subset_100`.
+Regenerate those subsets with `scripts/build_google_patents_eval_subset.py` and
+`scripts/build_epo_eval_subset.py`. Both builders can add structured `terminology` mappings to the
+manifest before evaluation, which keeps terminology accuracy metrics separate from translation-time
+prompt injection.
 
 ## Current Strategies
 
