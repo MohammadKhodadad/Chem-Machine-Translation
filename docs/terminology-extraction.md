@@ -145,11 +145,15 @@ uv run --no-sync python scripts/build_google_patents_eval_subset.py `
   --iate-terminology `
   --wikidata-terminology `
   --refine-terminology `
-  --terminology-model gpt-5.4-mini `
+  --terminology-model gpt-5.4 `
   --terminology-workers 4
 ```
 
 The EPO builder exposes the same terminology flags.
+
+For terminology quality, prefer the strongest available model for `--terminology-model`. In the
+20-sample Google Patents check, `gpt-5.4` was more selective than `gpt-5.4-mini` and removed more
+generic terms.
 
 ## Current Quality Notes
 
