@@ -14,6 +14,8 @@ from chem_machine_translation.data.google_patents import (
 from chem_machine_translation.evaluation.metrics import (
     COMET_DEFAULT_MODEL,
     GENERAL_METRIC_NAMES,
+    MQM_DEFAULT_MODEL,
+    OpenAIMqmJudge,
     UnbabelCometScorer,
     compute_translation_metrics,
     parse_metric_names,
@@ -47,12 +49,14 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Metric to compute. Repeat to select multiple metrics. "
-            "Defaults to sequence_similarity, BLEU, chrF2++, and COMET."
+            "Defaults to sequence_similarity, BLEU, chrF2++, COMET, and terminology success rate."
         ),
     )
     parser.add_argument("--comet-model", default=COMET_DEFAULT_MODEL)
     parser.add_argument("--comet-batch-size", type=int, default=8)
     parser.add_argument("--comet-gpus", type=int, default=0)
+    parser.add_argument("--fsp-mqm-model", default=MQM_DEFAULT_MODEL)
+    parser.add_argument("--fsp-mqm-timeout", type=float, default=120.0)
     parser.add_argument("--terminology-prompt", type=Path, default=None)
     parser.add_argument(
         "--extract-terminology",
@@ -114,6 +118,16 @@ def main() -> None:
             gpus=args.comet_gpus,
         )
         if "comet" in metric_names
+        else None
+    )
+    mqm_judge = (
+        OpenAIMqmJudge(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+            model=args.fsp_mqm_model,
+            timeout=args.fsp_mqm_timeout,
+        )
+        if "fsp_mqm" in metric_names
         else None
     )
     terminology_layer = build_terminology_layer(
@@ -183,6 +197,8 @@ def main() -> None:
                     source=document.text,
                     metric_names=metric_names,
                     comet_scorer=comet_scorer,
+                    terminology=document.metadata.get("terminology"),
+                    mqm_judge=mqm_judge,
                 )
                 row = {
                     "dataset": document.dataset,

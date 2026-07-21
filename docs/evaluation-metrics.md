@@ -2,8 +2,8 @@
 
 This project computes automatic reference-based metrics for benchmark scripts such as
 `scripts/evaluate_google_patents.py` and `scripts/evaluate_epo.py`. By default, benchmark scripts
-compute `sequence_similarity`, BLEU, chrF2++, and COMET. Use repeated `--metric` flags to override
-the default set.
+compute `sequence_similarity`, BLEU, chrF2++, COMET, and `terminology_success_rate`. Use repeated
+`--metric` flags to override the default set.
 
 The implementation lives in `src/chem_machine_translation/evaluation/metrics.py`:
 
@@ -30,8 +30,10 @@ We separate metrics into two groups:
 - **Domain-specific metrics**: chemistry- or patent-aware checks. These are intended to measure
   things like formula preservation, terminology consistency, and chemical identity.
 
-At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++, and
-reference-based COMET. Terminology accuracy is a planned integration.
+At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
+reference-based COMET, manifest-based `terminology_success_rate`, and optional `fsp_mqm` LLM judging.
+The benchmark builders can generate terminology mappings in manifest rows. Terminology consistency is
+not wired into `compute_translation_metrics` yet.
 
 ## Current Status
 
@@ -42,6 +44,10 @@ Implemented in code:
 - `chrf`: sentence-level SacreBLEU chrF, useful for morphology and character-level overlap.
 - `chrf2++`: WMT-style chrF with word bigrams, now preferred over plain `chrf` in defaults.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
+- `terminology_success_rate`: manifest-based terminology accuracy. It is included in defaults, but
+  only produces a row score when manifest terminology exists for that row.
+- `fsp_mqm`: optional LLM-as-judge MQM-style metric. It is implemented, but not included in defaults
+  because it requires extra API calls.
 
 Reviewed from the WMT25 Terminology Shared Task repository:
 
@@ -52,18 +58,29 @@ Reviewed from the WMT25 Terminology Shared Task repository:
 
 Recommended next implementation for this project:
 
-- first add terminology success rate;
-- then add normalized terminology accuracy;
-- later consider simplified terminology consistency;
-- keep FSP/MQM as a later, expensive evaluation option.
+- improve normalized terminology matching for inflection and languages without whitespace;
+- add simplified terminology consistency across rows/documents;
+- improve FSP/MQM calibration and reporting after collecting enough judged examples.
 
 The practical interpretation is: general metrics tell us whether the translation resembles the
 reference and preserves meaning broadly; domain-specific metrics tell us whether chemistry-critical
 terms, symbols, units, and identifiers survived correctly.
 
+Current terminology data status:
+
+- `scripts/build_google_patents_eval_subset.py` and `scripts/build_epo_eval_subset.py` can generate
+  terminology-bearing manifests.
+- Each manifest term can include `source_term`, final accepted `target_terms`,
+  `reference_candidates`, `external_candidates`, `category`, `confidence`, `decision`, and `reason`.
+- The latest terminology flow is documented in `docs/terminology-extraction.md`.
+- `terminology_success_rate` consumes these manifest terms directly instead of extracting
+  terminology during evaluation.
+
 ## General Metrics
 
 ### Sequence Similarity
+
+Status: **implemented** as `sequence_similarity` in `compute_translation_metrics`.
 
 `sequence_similarity` is computed with Python's `difflib.SequenceMatcher`.
 
@@ -122,6 +139,8 @@ Limitations:
   punctuation overlap.
 
 ### BLEU
+
+Status: **implemented** as `bleu` in `compute_translation_metrics`.
 
 `bleu` is computed with `sacrebleu.metrics.BLEU` using sentence-level scoring:
 
@@ -192,6 +211,9 @@ Limitations:
 - sentence-level BLEU is noisier than corpus-level BLEU, especially on small samples.
 
 ### chrF
+
+Status: **implemented** as `chrf` in `compute_translation_metrics`, but not included in the default
+metric set. Use it explicitly when backwards comparison with plain chrF is needed.
 
 `chrf` is computed with `sacrebleu.metrics.CHRF` using sentence-level scoring:
 
@@ -291,13 +313,16 @@ Why it is good:
 - it is more robust than BLEU for morphology and compounds;
 - adding word n-grams gives a little more phrase-level signal than plain chrF.
 
-Why we should add it:
+Why it is the preferred default:
 
 - it makes our evaluation closer to WMT terminology evaluation practice;
 - it is cheap to compute;
 - it is a better default lexical metric than BLEU alone for German/French patent text.
 
 ### COMET
+
+Status: **implemented** as `comet` in `compute_translation_metrics` and included in the default
+metric set. It requires source text and lazy-loads the COMET model.
 
 COMET is a learned neural machine translation metric. Unlike BLEU and chrF, it does not only compare
 surface overlap. It uses a trained model to estimate translation quality from the source text,
@@ -346,7 +371,7 @@ To skip COMET for a faster run, explicitly select only the cheaper metrics:
 uv run python scripts/evaluate_epo.py `
   --metric sequence_similarity `
   --metric bleu `
-  --metric chrf
+  --metric chrf2++
 ```
 
 Formula:
@@ -416,7 +441,8 @@ For example, `scripts/evaluate_epo.py` writes rows like:
   "metrics": {
     "sequence_similarity": 46.7,
     "bleu": 46.01,
-    "chrf": 72.24
+    "chrf2++": 72.24,
+    "comet": 0.81
   }
 }
 ```
@@ -424,29 +450,37 @@ For example, `scripts/evaluate_epo.py` writes rows like:
 Then the script prints language-level means:
 
 ```text
-German: n=50, bleu=46.01, chrf=72.24, sequence_similarity=46.70
+German: n=50, bleu=46.01, chrf2++=72.24, comet=0.81, sequence_similarity=46.70
 ```
 
 These are simple arithmetic averages over the evaluated rows.
 
 ## Domain-Specific Metrics
 
-Domain-specific metrics are not implemented in `compute_translation_metrics` yet. They are the
-metrics we should add to evaluate chemical and patent translation behavior more directly.
+Domain-specific metrics are not implemented in `compute_translation_metrics` yet. However, the
+dataset builders now create the terminology data needed to implement them. These metrics should
+evaluate chemical and patent translation behavior more directly.
 
 Planned domain-specific metrics include:
 
-- formula/entity preservation rate;
-- terminology accuracy / terminology success rate;
-- terminology consistency across documents;
-- chemical name/structure validation;
-- unit and numerical value preservation;
-- sequence ID and identifier preservation;
-- chemistry-aware human/MQM review categories.
+- **Formula/entity preservation rate**: **not implemented**. This should check whether formulas,
+  units, sequence IDs, and identifiers from the source are preserved in the translation.
+- **Terminology accuracy / terminology success rate**: **implemented** as
+  `terminology_success_rate`. It consumes manifest `terminology` rows and is included in defaults.
+- **Terminology consistency**: **not implemented**. This should check consistency across repeated
+  manifest terms.
+- **Chemical name/structure validation**: **not implemented**. This should compare parsed or
+  canonicalized chemical identities where possible.
+- **Unit and numerical value preservation**: **not implemented**. This should check quantities,
+  units, temperatures, pressures, concentrations, and ranges.
+- **Sequence ID and identifier preservation**: **not implemented**. This should check sequence IDs,
+  CAS-like identifiers, patent identifiers, and compact symbols.
+- **Chemistry-aware human/MQM review categories**: **partially implemented** as optional
+  `fsp_mqm`. It provides LLM-judge quality/error scores, not a fully calibrated human review system.
 
-These metrics should complement the general metrics, not replace them. BLEU, chrF, and sequence
-similarity tell us how close the output is to the reference wording; domain-specific metrics tell us
-whether chemically important information survived the translation.
+These metrics should complement the general metrics, not replace them. BLEU, chrF2++, COMET, and
+sequence similarity tell us how close the output is to the reference wording or meaning;
+domain-specific metrics tell us whether chemically important information survived the translation.
 
 ## WMT25 Terminology Metrics Review
 
@@ -473,7 +507,8 @@ their source-language terms appear in the source text.
 This is a domain-specific metric because it evaluates controlled chemistry or patent terminology,
 not general translation fluency.
 
-Status: **not implemented yet, recommended next**.
+Status: **implemented** as `terminology_success_rate` in `compute_translation_metrics` and included
+in the default metric set. It is omitted for rows that have no accepted manifest terminology.
 
 There is no single standard Python package equivalent to `unbabel-comet`. The WMT25 Terminology
 Shared Task repository provides research-code implementations:
@@ -498,45 +533,53 @@ WMT25 has two versions that matter for us:
 - **Track 2 document-level metric**: uses a simpler lowercased count-based success rate over source
   and target terms.
 
-For this project, a small reusable glossary matcher may be easier to integrate first.
+The project implementation consumes the manifest `terminology` field directly. The glossary-like
+shape per row is:
 
-Glossary shape:
-
-```python
+```json
 {
-    "acetylsalicylic acid": ["acide acétylsalicylique"],
-    "cyclooxygenase": ["cyclooxygénase"],
-    "active ingredient": ["principe actif", "substance active"],
+  "terminology": [
+    {
+      "source_term": "gastrointestinal tract",
+      "target_terms": ["tube digestif", "tractus gastro-intestinal"],
+      "category": "other",
+      "confidence": 0.9,
+      "decision": "keep_both"
+    }
+  ]
 }
 ```
 
-Per-term formula:
+Row-level terminology success can be binary:
 
 ```text
-source_count_t = count(source, source_term_t)
-target_count_t = sum_j count(prediction, valid_target_term_tj)
-matched_count_t = min(source_count_t, target_count_t)
-accuracy_t = matched_count_t / source_count_t
+success_t = 1 if any accepted target term for source_term_t appears in prediction
+success_t = 0 otherwise
 ```
 
 where:
 
-- `source_term_t` is the source-language glossary term;
-- `valid_target_term_tj` is one accepted target-language rendering for that source term;
-- `source_count_t` is how many times the source term appears in the source;
-- `target_count_t` is how many accepted target terms appear in the translation;
-- `matched_count_t` is clipped so extra repeated target terms do not receive extra credit.
+- `source_term_t` is the manifest source term;
+- accepted target terms are `target_terms`;
+- preserve terms use the source term itself as the expected target text;
+- terms with `decision = "drop"` should not be included in the metric.
 
-Macro terminology accuracy over all applicable terms is:
+Macro terminology success rate over a row is:
 
 ```text
-terminology_accuracy = (1 / |T_applicable|) * sum_t accuracy_t
+term_success_rate_row = (1 / |T_row|) * sum_t success_t
 ```
 
-where `T_applicable` is the set of glossary terms that actually appear in the source text.
+where `T_row` is the set of accepted terminology items attached to that manifest row.
 
-If no glossary terms appear in the source, the metric should return no score for that row rather
-than treating it as a failure. In reports, this can be represented as `null`, omitted, or tracked as
+System-level terminology accuracy should be a macro-average over rows or over terms:
+
+```text
+term_success_rate_system = (1 / N) * sum_i term_success_rate_row_i
+```
+
+For rows with no accepted terminology, the metric should return no score for that row rather than
+treating it as a failure. In reports, this can be represented as `null`, omitted, or tracked as
 `applicable_terms = 0`.
 
 Normalization:
@@ -555,6 +598,24 @@ The simple implementation can use conservative word-boundary matching:
 
 This works reasonably for English, French, and German glossary terms, but languages without
 whitespace-based tokenization need language-specific matching.
+
+Possible report fields:
+
+```json
+{
+  "terminology": {
+    "applicable_terms": 10,
+    "matched_terms": 8,
+    "term_success_rate": 0.8,
+    "missing_terms": [
+      {
+        "source_term": "phosphate-binder(s)",
+        "target_terms": ["chélateurs du phosphate"]
+      }
+    ]
+  }
+}
+```
 
 Useful for:
 
@@ -586,7 +647,7 @@ document or corpus.
 
 Status: **not implemented yet**.
 
-One simple document-level version is:
+A simple document-level version for this project is:
 
 ```text
 consistency_t = most_common_target_rendering_count_t / total_target_renderings_t
@@ -601,10 +662,41 @@ terminology_consistency = (1 / |T_repeated|) * sum_t consistency_t
 where `T_repeated` is the set of source terms that occur more than once and have detected target
 renderings.
 
-The WMT25 consistency implementation is more sophisticated and heavier. It may require
-language-specific normalization, alignment, and embedding-based matching. For a first chemistry
-benchmark, keep terminology accuracy and terminology consistency as separate metrics rather than
-combining them into one score.
+The WMT25 sentence-level Track 1 consistency metric is more sophisticated. It does not require a
+gold target term for every source term. Instead, it builds a pseudo-reference from the system outputs:
+
+1. Select source terms from each source sentence.
+2. Align each selected source term to a candidate target term in the corresponding translation.
+3. Count candidate target renderings per source term across the corpus.
+4. Assign the pseudo-reference rendering as the most frequent target candidate for that source term.
+5. Score each occurrence as a hit when the aligned candidate matches the pseudo-reference.
+6. Macro-average hits over source terms.
+
+In formula-like notation:
+
+```text
+candidate_counts[t, c] = number of times source term t aligned to target candidate c
+pseudo_ref[t] = argmax_c candidate_counts[t, c]
+hit_i,t = 1 if aligned_candidate_i,t == pseudo_ref[t] else 0
+consistency = macro_average_t(mean_i(hit_i,t))
+```
+
+This is useful when there is no approved dictionary, but it depends on reliable source-term
+selection and alignment. Since our benchmark manifests already contain accepted `target_terms`, the
+first project implementation should be simpler:
+
+```text
+for each repeated manifest source_term:
+    collect observed accepted target variants in outputs
+    consistency_t = most_common_variant_count / total_matched_occurrences
+```
+
+If no accepted variant is found for a repeated term, terminology accuracy should capture that as a
+miss. Consistency should focus on variation among matched renderings.
+
+The WMT25 consistency implementation may require language-specific normalization, alignment, and
+embedding-based matching. For a first chemistry benchmark, keep terminology accuracy and terminology
+consistency as separate metrics rather than combining them into one score.
 
 Why it is good:
 
@@ -621,20 +713,21 @@ Why not first:
 
 ### FSP / MQM LLM Judge
 
-Status: **not implemented yet**.
+Status: **implemented** as optional metric `fsp_mqm`, but not included in the default metric set.
+Use `--metric fsp_mqm` to enable it.
 
 The WMT25 repository includes FSP, or Focus Sentence Prompting, as an additional metric. It is an
-LLM-as-judge evaluation method based on MQM-style error analysis. It evaluates a focused segment
-while giving the judge access to wider document context.
+LLM-as-judge evaluation method based on MQM-style error analysis. Our implementation is a lightweight
+segment-level MQM-style judge: it gives the judge the source, reference translation, and candidate
+translation, then asks for a quality score and severity-labeled errors.
 
-The scoring code produces:
+The scoring code produces these report metrics:
 
-- `quality_score`;
-- `error_score`;
-- severity-weighted errors:
-  - minor errors;
-  - major errors;
-  - critical errors.
+- `fsp_mqm`: quality score from `0` to `100`;
+- `fsp_mqm_error_score`: severity-weighted error score;
+- `fsp_mqm_minor_errors`: count of minor errors;
+- `fsp_mqm_major_errors`: count of major errors;
+- `fsp_mqm_critical_errors`: count of critical errors.
 
 The default severity weights in their scoring utility are:
 
@@ -657,7 +750,16 @@ Why it is expensive:
 - results depend on prompt, judge model, and calibration;
 - it is slower and less deterministic than BLEU, chrF, COMET, or terminology accuracy.
 
-For this project, FSP/MQM should be treated as a later review metric, not a default benchmark metric.
+Usage:
+
+```powershell
+uv run --no-sync python scripts/evaluate_epo.py `
+  --metric fsp_mqm `
+  --fsp-mqm-model gpt-4.1-mini
+```
+
+For this project, FSP/MQM should be treated as an optional review metric, not a default benchmark
+metric.
 
 ## What The General Metrics Do Not Measure
 
@@ -691,26 +793,27 @@ Risky uses:
 
 - claiming one translation is chemically correct from BLEU/chrF alone;
 - comparing scores across different datasets or different sample sizes without context;
-- using a small sample, such as `n=5`, as a final decision.
+- using a small sample as a final decision.
 
-For recent experiments, the EPO `gpt-4.1-nano` agentic benchmark used `n=100` rows, while the Google
-Patents terminology smoke test used only `n=5`. The EPO numbers are therefore more meaningful, but
-still need chemistry-specific checks before drawing strong product conclusions.
+For recent experiments, the EPO benchmark has larger evaluation subsets for translation quality,
+while the Google Patents `n=20` subset is mainly useful for inspecting terminology extraction
+quality. Both still need chemistry-specific metrics before drawing strong product conclusions.
 
 ## Recommended Next Metrics
 
 The research notes in `docs/paper/deep-research-report.md` recommend expanding beyond lexical
 metrics. The most useful additions for this codebase would be:
 
+- **terminology success rate**: consume manifest `terminology` and check whether any accepted
+  `target_terms` variant appears in the predicted translation;
 - **formula/entity preservation rate**: check whether formulas, units, sequence IDs, and identifiers
   from the source are preserved in the translation;
-- **terminology accuracy**: check whether approved target terms appear when their source terms are
-  present;
-- **terminology consistency**: check whether repeated chemistry terms are translated consistently;
+- **terminology consistency**: check whether repeated manifest terms are translated consistently;
 - **chemistry-aware human/MQM review**: categorize errors such as formula corruption, unit changes,
   wrong chemical term, omission, hallucination, or bad patent style;
 - **structure validation for chemical names**: where possible, parse source/reference/predicted
   chemical names and compare canonical structures.
 
-Until those are implemented, BLEU, chrF, and sequence similarity should be treated as baseline
-automatic metrics.
+Until those are implemented, `sequence_similarity`, BLEU, chrF2++, and COMET should be treated as
+general baseline automatic metrics. They are useful but not enough to prove chemistry or patent
+terminology correctness.
