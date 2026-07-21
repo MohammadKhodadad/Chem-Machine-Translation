@@ -3,6 +3,7 @@ import pytest
 from chem_machine_translation.evaluation.metrics import (
     DEFAULT_METRIC_NAMES,
     MqmJudgeResult,
+    compute_corpus_overlap_metrics,
     compute_terminology_success_rate,
     compute_translation_metrics,
     parse_metric_names,
@@ -114,6 +115,55 @@ def test_compute_terminology_success_rate_matches_manifest_target_terms() -> Non
     assert score == 50
 
 
+def test_compute_terminology_success_rate_uses_wmt_style_applicability_and_counts() -> None:
+    terminology = [
+        {
+            "source_term": "fatty acid",
+            "target_terms": ["acide gras"],
+            "decision": "keep_reference",
+        },
+        {
+            "source_term": "water soluble polymer",
+            "target_terms": ["polymère soluble dans l'eau"],
+            "decision": "keep_reference",
+        },
+        {
+            "source_term": "not in source",
+            "target_terms": ["absent"],
+            "decision": "keep_reference",
+        },
+    ]
+
+    score = compute_terminology_success_rate(
+        prediction="acide gras est répété: acide gras.",
+        source="fatty acid and fatty acid in a water soluble polymer",
+        reference="acide gras et polymère soluble dans l'eau",
+        terminology=terminology,
+    )
+
+    assert score == 50
+
+
+def test_compute_terminology_success_rate_skips_terms_absent_from_reference() -> None:
+    terminology = [
+        {
+            "source_term": "external variant",
+            "target_terms": ["variante externe"],
+            "decision": "keep_external",
+        }
+    ]
+
+    assert (
+        compute_terminology_success_rate(
+            prediction="variante externe",
+            source="external variant",
+            reference="autre traduction",
+            terminology=terminology,
+        )
+        is None
+    )
+
+
 def test_compute_terminology_success_rate_handles_preserve_and_drop_terms() -> None:
     terminology = [
         {
@@ -167,6 +217,25 @@ def test_compute_translation_metrics_omits_terminology_score_without_terms() -> 
     )
 
     assert metrics == {}
+
+
+def test_compute_corpus_overlap_metrics_uses_corpus_level_sacrebleu() -> None:
+    metrics = compute_corpus_overlap_metrics(
+        predictions=[
+            "solid electrolyte battery contains stable ceramic particles",
+            "aqueous solution includes dissolved phosphate binder molecules",
+        ],
+        references=[
+            "solid electrolyte battery contains stable ceramic particles",
+            "aqueous solution includes dissolved phosphate binder molecules",
+        ],
+        metric_names=["bleu", "chrf", "chrf2++"],
+    )
+
+    assert set(metrics) == {"bleu", "chrf", "chrf2++"}
+    assert metrics["bleu"] > 0
+    assert metrics["chrf"] > 0
+    assert metrics["chrf2++"] > 0
 
 
 def test_parse_mqm_judge_response_counts_severity_weighted_errors() -> None:

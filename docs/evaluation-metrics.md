@@ -14,12 +14,16 @@ def compute_translation_metrics(
     source: str | None = None,
     metric_names: list[str] | tuple[str, ...] | None = None,
     comet_scorer: CometScorer | None = None,
+    terminology: list[dict[str, Any]] | None = None,
+    mqm_judge: MqmJudge | None = None,
 ) -> dict[str, float]:
     ...
 ```
 
 Each benchmark row stores these values under the `metrics` field in the JSONL report. The evaluation
-scripts then print the average metric values per target language.
+scripts also print target-language summaries. For BLEU, chrF, and chrF2++, the printed summaries use
+SacreBLEU corpus scoring, which is closer to WMT reporting than averaging sentence scores. Other
+metrics are averaged over evaluated rows.
 
 ## Metric Groups
 
@@ -40,9 +44,10 @@ not wired into `compute_translation_metrics` yet.
 Implemented in code:
 
 - `sequence_similarity`: simple string-level similarity, useful as a sanity check.
-- `bleu`: sentence-level SacreBLEU BLEU, useful as a standard lexical baseline.
-- `chrf`: sentence-level SacreBLEU chrF, useful for morphology and character-level overlap.
-- `chrf2++`: WMT-style chrF with word bigrams, now preferred over plain `chrf` in defaults.
+- `bleu`: SacreBLEU BLEU. Row reports use sentence BLEU; printed summaries use corpus BLEU.
+- `chrf`: SacreBLEU chrF. Row reports use sentence chrF; printed summaries use corpus chrF.
+- `chrf2++`: WMT-style chrF with word bigrams. Row reports use sentence chrF2++; printed summaries
+  use corpus chrF2++.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
 - `terminology_success_rate`: manifest-based terminology accuracy. It is included in defaults, but
   only produces a row score when manifest terminology exists for that row.
@@ -58,7 +63,6 @@ Reviewed from the WMT25 Terminology Shared Task repository:
 
 Recommended next implementation for this project:
 
-- improve normalized terminology matching for inflection and languages without whitespace;
 - add simplified terminology consistency across rows/documents;
 - improve FSP/MQM calibration and reporting after collecting enough judged examples.
 
@@ -142,10 +146,16 @@ Limitations:
 
 Status: **implemented** as `bleu` in `compute_translation_metrics`.
 
-`bleu` is computed with `sacrebleu.metrics.BLEU` using sentence-level scoring:
+`bleu` is computed with `sacrebleu.metrics.BLEU`. Row-level JSON reports use sentence scoring:
 
 ```python
 BLEU(effective_order=True).sentence_score(prediction, [reference]).score
+```
+
+Language-level benchmark summaries use corpus scoring, which is the WMT-style way to report BLEU:
+
+```python
+BLEU(max_ngram_order=4, tokenize="13a").corpus_score(predictions, [references]).score
 ```
 
 BLEU measures n-gram overlap between the prediction and the reference. An n-gram is a contiguous
@@ -187,8 +197,10 @@ where:
 - `c` is the prediction length;
 - `r` is the reference length.
 
-The code uses `BLEU(effective_order=True)`, so SacreBLEU adapts the effective maximum n-gram order
-for sentence-level scoring when the text is too short to support all normal n-gram orders.
+The row-level code uses `BLEU(effective_order=True)`, so SacreBLEU adapts the effective maximum
+n-gram order for sentence-level scoring when the text is too short to support all normal n-gram
+orders. The printed language summary recomputes BLEU over the full list of predictions and
+references using corpus-level SacreBLEU.
 
 Intuition:
 
@@ -208,17 +220,24 @@ Limitations:
 - BLEU rewards lexical overlap, not necessarily semantic correctness;
 - a chemically correct translation can score lower if it uses a valid synonym;
 - a chemically wrong translation can score higher if it shares many reference words;
-- sentence-level BLEU is noisier than corpus-level BLEU, especially on small samples.
+- row-level sentence BLEU is noisier than corpus BLEU, especially on small samples. Use the printed
+  summary for WMT-style reporting.
 
 ### chrF
 
 Status: **implemented** as `chrf` in `compute_translation_metrics`, but not included in the default
 metric set. Use it explicitly when backwards comparison with plain chrF is needed.
 
-`chrf` is computed with `sacrebleu.metrics.CHRF` using sentence-level scoring:
+`chrf` is computed with `sacrebleu.metrics.CHRF`. Row-level JSON reports use sentence scoring:
 
 ```python
 CHRF().sentence_score(prediction, [reference]).score
+```
+
+Language-level benchmark summaries use corpus scoring:
+
+```python
+CHRF().corpus_score(predictions, [references]).score
 ```
 
 chrF compares character n-gram overlap between the prediction and the reference. Instead of only
@@ -272,6 +291,8 @@ Limitations:
 - chrF is still based on surface overlap;
 - it does not know chemistry;
 - it can reward strings that look similar but mean different things;
+- row-level sentence chrF is noisier than corpus chrF. Use the printed language summary for
+  WMT-style reporting;
 - it does not validate formulas, identifiers, stereochemistry, units, or reaction roles.
 
 ### chrF2++ / WMT-Style chrF
@@ -286,6 +307,9 @@ CHRF(char_order=6, word_order=2)
 
 This differs from plain `CHRF()` because chrF2++ includes word n-gram overlap in addition to
 character n-gram overlap.
+
+Row-level JSON reports use `sentence_score`. Benchmark summaries use `corpus_score`, matching the
+way WMT reports corpus-level system quality.
 
 Project default:
 
@@ -429,7 +453,8 @@ Project status:
 
 ## Report-Level Aggregation
 
-The benchmark scripts compute metrics per row and then average each metric by target language.
+The benchmark scripts store metrics per row for inspection. Printed summaries are grouped by target
+language.
 
 For example, `scripts/evaluate_epo.py` writes rows like:
 
@@ -447,19 +472,21 @@ For example, `scripts/evaluate_epo.py` writes rows like:
 }
 ```
 
-Then the script prints language-level means:
+Then the script prints language-level summaries:
 
 ```text
 German: n=50, bleu=46.01, chrf2++=72.24, comet=0.81, sequence_similarity=46.70
 ```
 
-These are simple arithmetic averages over the evaluated rows.
+For BLEU, chrF, and chrF2++, the printed summary recomputes the metric over the full language-level
+corpus with SacreBLEU `corpus_score`, which is closer to WMT reporting. Sequence similarity, COMET,
+terminology success rate, and FSP/MQM fields are averaged over the evaluated rows.
 
 ## Domain-Specific Metrics
 
-Domain-specific metrics are not implemented in `compute_translation_metrics` yet. However, the
-dataset builders now create the terminology data needed to implement them. These metrics should
-evaluate chemical and patent translation behavior more directly.
+Some domain-specific metrics are now implemented in `compute_translation_metrics`, and the dataset
+builders create the manifest terminology data needed by those metrics. These metrics should evaluate
+chemical and patent translation behavior more directly.
 
 Planned domain-specific metrics include:
 
@@ -550,11 +577,22 @@ shape per row is:
 }
 ```
 
-Row-level terminology success can be binary:
+The current implementation follows the WMT Track 2 idea more closely than the earlier binary
+prototype. A manifest term is applicable only if:
+
+- it is not marked with `decision = "drop"`;
+- it has at least one accepted target term, or it is a `preserve` term;
+- its `source_term` appears in the source text when source text is available;
+- at least one accepted target term appears in the reference translation when a reference is
+  available.
+
+For an applicable term `t`, the row-level success contribution is count-based and capped:
 
 ```text
-success_t = 1 if any accepted target term for source_term_t appears in prediction
-success_t = 0 otherwise
+source_count_t = count_normalized(source_text, source_term_t)
+prediction_count_t = sum_j count_normalized(prediction, target_term_tj)
+
+success_t = min(prediction_count_t / source_count_t, 1)
 ```
 
 where:
@@ -562,6 +600,7 @@ where:
 - `source_term_t` is the manifest source term;
 - accepted target terms are `target_terms`;
 - preserve terms use the source term itself as the expected target text;
+- terms whose accepted target terms are absent from the reference are skipped for that row;
 - terms with `decision = "drop"` should not be included in the metric.
 
 Macro terminology success rate over a row is:
@@ -572,10 +611,10 @@ term_success_rate_row = (1 / |T_row|) * sum_t success_t
 
 where `T_row` is the set of accepted terminology items attached to that manifest row.
 
-System-level terminology accuracy should be a macro-average over rows or over terms:
+The project reports this on a `0` to `100` scale:
 
 ```text
-term_success_rate_system = (1 / N) * sum_i term_success_rate_row_i
+terminology_success_rate_row = 100 * term_success_rate_row
 ```
 
 For rows with no accepted terminology, the metric should return no score for that row rather than
@@ -590,14 +629,14 @@ Before matching, terms should usually be normalized:
 normalize(text) = NFKC(casefold(collapse_whitespace(text)))
 ```
 
-The simple implementation can use conservative word-boundary matching:
+The current implementation uses normalized substring counts:
 
 ```text
-(?<!\w)term(?!\w)
+count_normalized(text, term) = count(normalize(text), normalize(term))
 ```
 
-This works reasonably for English, French, and German glossary terms, but languages without
-whitespace-based tokenization need language-specific matching.
+This is closer to WMT Track 2's count-based implementation than conservative word-boundary matching.
+It is still lighter than WMT Track 1 because it does not run Stanza lemmatization.
 
 Possible report fields:
 
@@ -606,7 +645,7 @@ Possible report fields:
   "terminology": {
     "applicable_terms": 10,
     "matched_terms": 8,
-    "term_success_rate": 0.8,
+    "term_success_rate": 80.0,
     "missing_terms": [
       {
         "source_term": "phosphate-binder(s)",
@@ -627,7 +666,7 @@ Useful for:
 Why it is good:
 
 - it directly measures the thing our terminology layer is supposed to improve;
-- it is interpretable: `0.80` means roughly 80% of applicable terms were found;
+- it is interpretable: `80.0` means roughly 80% of applicable terms were found;
 - it can be computed per row, per language, per glossary source, and per term category;
 - it is much cheaper than LLM judging.
 

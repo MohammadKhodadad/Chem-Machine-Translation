@@ -17,6 +17,7 @@ from chem_machine_translation.evaluation.metrics import (
     MQM_DEFAULT_MODEL,
     OpenAIMqmJudge,
     UnbabelCometScorer,
+    compute_corpus_overlap_metrics,
     compute_translation_metrics,
     parse_metric_names,
 )
@@ -240,8 +241,13 @@ def print_summary(rows: list[dict], skipped_languages: list[str], output: Path) 
             for metric_name, value in row["metrics"].items():
                 metrics[metric_name].append(value)
 
+        corpus_metrics = compute_corpus_overlap_metrics(
+            predictions=[row["predicted_translation"] for row in language_rows],
+            references=[row["ground_truth_translation"] for row in language_rows],
+            metric_names=tuple(metrics),
+        )
         metric_summary = ", ".join(
-            f"{metric_name}={sum(values) / len(values):.2f}"
+            f"{metric_name}={corpus_metrics.get(metric_name, sum(values) / len(values)):.2f}"
             for metric_name, values in sorted(metrics.items())
         )
         print(f"{language}: n={len(language_rows)}, {metric_summary}")

@@ -216,7 +216,12 @@ def compute_translation_metrics(
         )
 
     if "terminology_success_rate" in selected_metrics:
-        terminology_score = compute_terminology_success_rate(prediction, terminology or [])
+        terminology_score = compute_terminology_success_rate(
+            prediction=prediction,
+            terminology=terminology or [],
+            source=source,
+            reference=reference,
+        )
         if terminology_score is not None:
             metrics["terminology_success_rate"] = terminology_score
 
@@ -242,27 +247,47 @@ def compute_translation_metrics(
 def compute_terminology_success_rate(
     prediction: str,
     terminology: list[dict[str, Any]],
+    source: str | None = None,
+    reference: str | None = None,
 ) -> float | None:
-    """Return percent of accepted manifest terms found in the prediction."""
-    accepted_terms = [
-        term
-        for term in terminology
-        if isinstance(term, dict)
-        and str(term.get("decision", "")).strip().lower() != "drop"
-        and accepted_target_terms(term)
-    ]
-    if not accepted_terms:
+    """Return WMT-style percent of applicable manifest terms found in the prediction."""
+    applicable_scores = []
+    for term in terminology:
+        if not isinstance(term, dict):
+            continue
+        if str(term.get("decision", "")).strip().lower() == "drop":
+            continue
+        target_terms = accepted_target_terms(term)
+        if not target_terms:
+            continue
+
+        source_count = applicable_source_count(term, source)
+        if source_count == 0:
+            continue
+        if reference is not None and not any(
+            count_normalized_occurrences(reference, target_term) > 0 for target_term in target_terms
+        ):
+            continue
+
+        output_count = sum(
+            count_normalized_occurrences(prediction, target_term)
+            for target_term in target_terms
+        )
+        applicable_scores.append(min(output_count / source_count, 1.0))
+
+    if not applicable_scores:
         return None
 
-    matched_terms = sum(
-        1
-        for term in accepted_terms
-        if any(
-            contains_normalized_term(prediction, target_term)
-            for target_term in accepted_target_terms(term)
-        )
-    )
-    return 100 * matched_terms / len(accepted_terms)
+    return 100 * sum(applicable_scores) / len(applicable_scores)
+
+
+def applicable_source_count(term: dict[str, Any], source: str | None) -> int:
+    if source is None:
+        return 1
+    source_term = str(term.get("source_term", "")).strip()
+    if not source_term:
+        return 0
+    return count_normalized_occurrences(source, source_term)
 
 
 def accepted_target_terms(term: dict[str, Any]) -> tuple[str, ...]:
@@ -284,22 +309,42 @@ def accepted_target_terms(term: dict[str, Any]) -> tuple[str, ...]:
 
 
 def contains_normalized_term(text: str, term: str) -> bool:
+    return count_normalized_occurrences(text, term) > 0
+
+
+def count_normalized_occurrences(text: str, term: str) -> int:
     normalized_text = normalize_metric_text(text)
     normalized_term = normalize_metric_text(term)
     if not normalized_term:
-        return False
-
-    pattern = re.escape(normalized_term)
-    if normalized_term[0].isalnum():
-        pattern = rf"(?<!\w){pattern}"
-    if normalized_term[-1].isalnum():
-        pattern = rf"{pattern}(?!\w)"
-    return re.search(pattern, normalized_text) is not None
+        return 0
+    return normalized_text.count(normalized_term)
 
 
 def normalize_metric_text(text: str) -> str:
     normalized = unicodedata.normalize("NFKC", text).casefold()
     return re.sub(r"\s+", " ", normalized).strip()
+
+
+def compute_corpus_overlap_metrics(
+    predictions: list[str],
+    references: list[str],
+    metric_names: list[str] | tuple[str, ...],
+) -> dict[str, float]:
+    """Compute WMT-style corpus BLEU/chrF metrics for report summaries."""
+    metrics = {}
+    if "bleu" in metric_names and BLEU:
+        metrics["bleu"] = BLEU(max_ngram_order=4, tokenize="13a").corpus_score(
+            predictions,
+            [references],
+        ).score
+    if "chrf" in metric_names and CHRF:
+        metrics["chrf"] = CHRF().corpus_score(predictions, [references]).score
+    if "chrf2++" in metric_names and CHRF:
+        metrics["chrf2++"] = CHRF(char_order=6, word_order=2).corpus_score(
+            predictions,
+            [references],
+        ).score
+    return metrics
 
 
 def parse_mqm_judge_response(text: str) -> MqmJudgeResult:
