@@ -2,7 +2,7 @@
 
 This project computes automatic reference-based metrics for benchmark scripts such as
 `scripts/evaluate_google_patents.py` and `scripts/evaluate_epo.py`. By default, benchmark scripts
-compute `sequence_similarity`, BLEU, chrF2++, COMET, and `terminology_success_rate`. Use repeated
+compute `sequence_similarity`, BLEU, chrF2++, COMET, and `target_term_coverage`. Use repeated
 `--metric` flags to override the default set.
 
 The implementation lives in `src/chem_machine_translation/evaluation/metrics.py`:
@@ -35,9 +35,14 @@ We separate metrics into two groups:
   things like formula preservation, terminology consistency, and chemical identity.
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
-reference-based COMET, manifest-based `terminology_success_rate`, and optional `fsp_mqm` LLM judging.
-The benchmark builders can generate terminology mappings in manifest rows. Terminology consistency is
-not wired into `compute_translation_metrics` yet.
+reference-based COMET, target-side `target_term_coverage`, source-conditioned
+`terminology_success_rate`, and optional `fsp_mqm` LLM judging. The benchmark builders can generate
+terminology mappings in manifest rows. Terminology consistency is not wired into
+`compute_translation_metrics` yet.
+
+Terminology metrics can filter manifest terms by `term_group`. The supported groups are `verified`,
+`llm`, and `algorithmic`. The default for target terminology evaluation is `verified`, meaning terms
+with PubChem, IATE, or Wikipedia/Wikidata evidence.
 
 ## Current Status
 
@@ -49,8 +54,10 @@ Implemented in code:
 - `chrf2++`: WMT-style chrF with word bigrams. Row reports use sentence chrF2++; printed summaries
   use corpus chrF2++.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
-- `terminology_success_rate`: manifest-based terminology accuracy. It is included in defaults, but
-  only produces a row score when manifest terminology exists for that row.
+- `target_term_coverage`: manifest-based target terminology coverage. It is included in defaults,
+  but only produces a row score when manifest terminology exists for that row.
+- `terminology_success_rate`: source-conditioned WMT-style terminology accuracy. It is still
+  available explicitly, but is not in defaults.
 - `fsp_mqm`: optional LLM-as-judge MQM-style metric. It is implemented, but not included in defaults
   because it requires extra API calls.
 
@@ -75,10 +82,11 @@ Current terminology data status:
 - `scripts/build_google_patents_eval_subset.py` and `scripts/build_epo_eval_subset.py` can generate
   terminology-bearing manifests.
 - Each manifest term can include `source_term`, final accepted `target_terms`,
-  `reference_candidates`, `external_candidates`, `category`, `confidence`, `decision`, and `reason`.
+  `reference_candidates`, `external_candidates`, `term_group`, `verified_by`, `category`,
+  `confidence`, `decision`, and `reason`.
 - The latest terminology flow is documented in `docs/terminology-extraction.md`.
-- `terminology_success_rate` consumes these manifest terms directly instead of extracting
-  terminology during evaluation.
+- `target_term_coverage` and `terminology_success_rate` consume these manifest terms instead of
+  extracting terminology during evaluation.
 
 ## General Metrics
 
@@ -480,7 +488,8 @@ German: n=50, bleu=46.01, chrf2++=72.24, comet=0.81, sequence_similarity=46.70
 
 For BLEU, chrF, and chrF2++, the printed summary recomputes the metric over the full language-level
 corpus with SacreBLEU `corpus_score`, which is closer to WMT reporting. Sequence similarity, COMET,
-terminology success rate, and FSP/MQM fields are averaged over the evaluated rows.
+target term coverage, terminology success rate, and FSP/MQM fields are averaged over the evaluated
+rows.
 
 ## Domain-Specific Metrics
 
@@ -492,8 +501,11 @@ Planned domain-specific metrics include:
 
 - **Formula/entity preservation rate**: **not implemented**. This should check whether formulas,
   units, sequence IDs, and identifiers from the source are preserved in the translation.
-- **Terminology accuracy / terminology success rate**: **implemented** as
-  `terminology_success_rate`. It consumes manifest `terminology` rows and is included in defaults.
+- **Target terminology coverage**: **implemented** as `target_term_coverage`. It consumes manifest
+  `terminology` rows and is included in defaults.
+- **Source-conditioned terminology accuracy / terminology success rate**: **implemented** as
+  `terminology_success_rate`. It consumes manifest `terminology` rows and can be selected
+  explicitly.
 - **Terminology consistency**: **not implemented**. This should check consistency across repeated
   manifest terms.
 - **Chemical name/structure validation**: **not implemented**. This should compare parsed or
@@ -508,6 +520,43 @@ Planned domain-specific metrics include:
 These metrics should complement the general metrics, not replace them. BLEU, chrF2++, COMET, and
 sequence similarity tell us how close the output is to the reference wording or meaning;
 domain-specific metrics tell us whether chemically important information survived the translation.
+
+### Target Term Coverage
+
+Status: **implemented** as `target_term_coverage` in `compute_translation_metrics` and included in
+the default metric set.
+
+Target term coverage measures whether approved target-language terminology from the benchmark
+reference appears in the generated translation. It does not require source terms, so it fits
+reference-first or target-only benchmark terminology.
+
+For each manifest term `t`, the metric uses the accepted `target_terms`. Terms marked with
+`decision = "drop"` are ignored. If none of the accepted target terms appear in the reference, the
+term is skipped for that row.
+
+For an applicable term:
+
+```text
+reference_count_t = sum_j count_normalized(reference, target_term_tj)
+prediction_count_t = sum_j count_normalized(prediction, target_term_tj)
+
+coverage_t = min(prediction_count_t / reference_count_t, 1)
+```
+
+Row-level target term coverage is:
+
+```text
+target_term_coverage_row = 100 * (1 / |T_row|) * sum_t coverage_t
+```
+
+This answers a simpler benchmark question than source-conditioned terminology accuracy:
+
+```text
+Of the important target-reference terms, how many did the generated translation reproduce?
+```
+
+It is useful when benchmark terminology is extracted from target references or external
+target-language resources and we do not want the metric to depend on source-term extraction.
 
 ## WMT25 Terminology Metrics Review
 
@@ -534,8 +583,10 @@ their source-language terms appear in the source text.
 This is a domain-specific metric because it evaluates controlled chemistry or patent terminology,
 not general translation fluency.
 
-Status: **implemented** as `terminology_success_rate` in `compute_translation_metrics` and included
-in the default metric set. It is omitted for rows that have no accepted manifest terminology.
+Status: **implemented** as `terminology_success_rate` in `compute_translation_metrics`, but no longer
+included in the default metric set. Use `--metric terminology_success_rate` to enable it when the
+benchmark has reliable source terms. It is omitted for rows that have no accepted manifest
+terminology.
 
 There is no single standard Python package equivalent to `unbabel-comet`. The WMT25 Terminology
 Shared Task repository provides research-code implementations:

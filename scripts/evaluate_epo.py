@@ -15,6 +15,7 @@ from chem_machine_translation.evaluation.metrics import (
     COMET_DEFAULT_MODEL,
     GENERAL_METRIC_NAMES,
     MQM_DEFAULT_MODEL,
+    TERMINOLOGY_TERM_GROUPS,
     OpenAIMqmJudge,
     UnbabelCometScorer,
     compute_corpus_overlap_metrics,
@@ -50,7 +51,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Metric to compute. Repeat to select multiple metrics. "
-            "Defaults to sequence_similarity, BLEU, chrF2++, COMET, and terminology success rate."
+            "Defaults to sequence_similarity, BLEU, chrF2++, COMET, and target term coverage."
         ),
     )
     parser.add_argument("--comet-model", default=COMET_DEFAULT_MODEL)
@@ -58,6 +59,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--comet-gpus", type=int, default=0)
     parser.add_argument("--fsp-mqm-model", default=MQM_DEFAULT_MODEL)
     parser.add_argument("--fsp-mqm-timeout", type=float, default=120.0)
+    parser.add_argument(
+        "--terminology-term-group",
+        action="append",
+        choices=TERMINOLOGY_TERM_GROUPS,
+        default=None,
+        help=(
+            "Terminology groups used by target terminology metrics. Repeat to include multiple. "
+            "Defaults to verified."
+        ),
+    )
     parser.add_argument("--terminology-prompt", type=Path, default=None)
     parser.add_argument(
         "--extract-terminology",
@@ -203,6 +214,7 @@ def main() -> None:
                     metric_names=metric_names,
                     comet_scorer=comet_scorer,
                     terminology=document.metadata.get("terminology"),
+                    terminology_term_groups=args.terminology_term_group,
                     mqm_judge=mqm_judge,
                 )
                 row = {

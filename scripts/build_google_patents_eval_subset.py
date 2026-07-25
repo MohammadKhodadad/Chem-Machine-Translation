@@ -39,8 +39,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--terminology-max-terms", type=int, default=20)
     parser.add_argument("--iate-terminology", action="store_true")
     parser.add_argument("--wikidata-terminology", action="store_true")
-    parser.add_argument("--refine-terminology", action="store_true")
-    parser.add_argument("--terminology-confidence-threshold", type=float, default=0.85)
+    parser.add_argument("--wikipedia-terminology", action="store_true")
+    parser.add_argument("--pubchem-terminology", action="store_true")
     parser.add_argument("--terminology-cache", type=Path, default=None)
     parser.add_argument("--terminology-workers", type=int, default=1)
     parser.add_argument("--openai-timeout", type=float, default=120.0)
@@ -268,24 +268,28 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         args.extract_terminology
         or args.iate_terminology
         or args.wikidata_terminology
-        or args.refine_terminology
+        or args.wikipedia_terminology
+        or args.pubchem_terminology
     ):
         return None
-    settings = load_settings()
-    if not settings.openai_api_key:
-        raise ValueError("OPENAI_API_KEY is required to generate dataset terminology.")
-    return DatasetTerminologyGenerator(
-        client=OpenAI(
+    client = None
+    if args.extract_terminology:
+        settings = load_settings()
+        if not settings.openai_api_key:
+            raise ValueError("OPENAI_API_KEY is required for LLM target terminology extraction.")
+        client = OpenAI(
             api_key=settings.openai_api_key,
             base_url=settings.openai_base_url,
             timeout=args.openai_timeout,
-        ),
+        )
+    return DatasetTerminologyGenerator(
+        client=client,
         model=args.terminology_model,
         max_terms=args.terminology_max_terms,
+        use_llm=args.extract_terminology,
         use_iate=args.iate_terminology,
-        use_wikidata=args.wikidata_terminology,
-        refine_terms=args.refine_terminology,
-        confidence_threshold=args.terminology_confidence_threshold,
+        use_wikidata=args.wikidata_terminology or args.wikipedia_terminology,
+        use_pubchem=args.pubchem_terminology,
         cache_path=args.terminology_cache,
     )
 

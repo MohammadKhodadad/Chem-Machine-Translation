@@ -20,6 +20,7 @@ GENERAL_METRIC_NAMES = (
     "chrf2++",
     "comet",
     "terminology_success_rate",
+    "target_term_coverage",
     "fsp_mqm",
 )
 DEFAULT_METRIC_NAMES = (
@@ -27,8 +28,10 @@ DEFAULT_METRIC_NAMES = (
     "bleu",
     "chrf2++",
     "comet",
-    "terminology_success_rate",
+    "target_term_coverage",
 )
+TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified")
+DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
 MQM_DEFAULT_MODEL = "gpt-4.1-mini"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
@@ -182,6 +185,7 @@ def compute_translation_metrics(
     metric_names: list[str] | tuple[str, ...] | None = None,
     comet_scorer: CometScorer | None = None,
     terminology: list[dict[str, Any]] | None = None,
+    terminology_term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
     mqm_judge: MqmJudge | None = None,
 ) -> dict[str, float]:
     selected_metrics = parse_metric_names(metric_names)
@@ -221,9 +225,20 @@ def compute_translation_metrics(
             terminology=terminology or [],
             source=source,
             reference=reference,
+            term_groups=terminology_term_groups,
         )
         if terminology_score is not None:
             metrics["terminology_success_rate"] = terminology_score
+
+    if "target_term_coverage" in selected_metrics:
+        target_term_coverage = compute_target_term_coverage(
+            prediction=prediction,
+            reference=reference,
+            terminology=terminology or [],
+            term_groups=terminology_term_groups,
+        )
+        if target_term_coverage is not None:
+            metrics["target_term_coverage"] = target_term_coverage
 
     if "fsp_mqm" in selected_metrics:
         if source is None:
@@ -249,6 +264,7 @@ def compute_terminology_success_rate(
     terminology: list[dict[str, Any]],
     source: str | None = None,
     reference: str | None = None,
+    term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
 ) -> float | None:
     """Return WMT-style percent of applicable manifest terms found in the prediction."""
     applicable_scores = []
@@ -256,6 +272,8 @@ def compute_terminology_success_rate(
         if not isinstance(term, dict):
             continue
         if str(term.get("decision", "")).strip().lower() == "drop":
+            continue
+        if not terminology_term_group_matches(term, term_groups):
             continue
         target_terms = accepted_target_terms(term)
         if not target_terms:
@@ -274,6 +292,44 @@ def compute_terminology_success_rate(
             for target_term in target_terms
         )
         applicable_scores.append(min(output_count / source_count, 1.0))
+
+    if not applicable_scores:
+        return None
+
+    return 100 * sum(applicable_scores) / len(applicable_scores)
+
+
+def compute_target_term_coverage(
+    prediction: str,
+    reference: str,
+    terminology: list[dict[str, Any]],
+    term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
+) -> float | None:
+    """Return percent of reference target-term occurrences covered by the prediction."""
+    applicable_scores = []
+    for term in terminology:
+        if not isinstance(term, dict):
+            continue
+        if str(term.get("decision", "")).strip().lower() == "drop":
+            continue
+        if not terminology_term_group_matches(term, term_groups):
+            continue
+        target_terms = accepted_target_terms(term)
+        if not target_terms:
+            continue
+
+        reference_count = sum(
+            count_normalized_occurrences(reference, target_term)
+            for target_term in target_terms
+        )
+        if reference_count == 0:
+            continue
+
+        prediction_count = sum(
+            count_normalized_occurrences(prediction, target_term)
+            for target_term in target_terms
+        )
+        applicable_scores.append(min(prediction_count / reference_count, 1.0))
 
     if not applicable_scores:
         return None
@@ -306,6 +362,33 @@ def accepted_target_terms(term: dict[str, Any]) -> tuple[str, ...]:
         source_term = str(term.get("source_term", "")).strip()
         return (source_term,) if source_term else ()
     return ()
+
+
+def terminology_term_group_matches(
+    term: dict[str, Any],
+    term_groups: list[str] | tuple[str, ...] | None,
+) -> bool:
+    if term_groups is None:
+        term_groups = DEFAULT_TERMINOLOGY_TERM_GROUPS
+    allowed_groups = {group.strip().lower() for group in term_groups if group.strip()}
+    if not allowed_groups:
+        return True
+    return terminology_term_group(term) in allowed_groups
+
+
+def terminology_term_group(term: dict[str, Any]) -> str:
+    explicit_group = str(term.get("term_group", "")).strip().lower()
+    if explicit_group:
+        return explicit_group
+    external_candidates = term.get("external_candidates") or term.get("candidates") or {}
+    if isinstance(external_candidates, dict) and external_candidates:
+        return "verified"
+    source = str(term.get("source", "")).strip().lower()
+    if source == "llm_target" or source.startswith("llm_target+"):
+        return "llm"
+    if source:
+        return "algorithmic"
+    return "verified"
 
 
 def contains_normalized_term(text: str, term: str) -> bool:

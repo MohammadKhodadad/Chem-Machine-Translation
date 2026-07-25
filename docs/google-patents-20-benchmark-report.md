@@ -62,13 +62,12 @@ the focus of the experiment.
 
 The dataset terminology is generated before translation/evaluation:
 
-1. An LLM extracts strict technical source terms from the source text.
-2. A reference-candidate LLM finds likely target-language spans in the human reference.
-3. IATE is used as an external validation/candidate source where available.
-4. Wikidata is used as a fallback external source.
-5. A refinement LLM keeps, updates, combines, preserves, or drops terms.
-6. The final accepted terms are stored in the manifest row and consumed by
-   `terminology_success_rate`.
+1. A target-only LLM proposes strict technical spans from the human reference.
+2. The code verifies that each proposed span appears in the target/reference text.
+3. Regex/NER fallback captures compact formulas, identifiers, numeric units, and common chemistry
+   terms.
+4. PubChem, IATE, and Wikipedia/Wikidata provide external lookup evidence where available.
+5. Final target-side terms are stored in the manifest row and consumed by `target_term_coverage`.
 
 In this benchmark, the terminology manifest is the important artifact. The generated translation is
 only used as input for the metrics.

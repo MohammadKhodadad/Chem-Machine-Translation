@@ -2,46 +2,97 @@ import json
 from pathlib import Path
 
 from chem_machine_translation.data.terminology import (
-    DATASET_REFERENCE_CANDIDATE_SYSTEM_PROMPT,
-    DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT,
-    DATASET_TERM_REFINER_SYSTEM_PROMPT,
+    TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT,
     DatasetTerminologyGenerator,
     DatasetTerminologyTerm,
+    LLMTargetCandidateExtractor,
+    TargetTerminologyExtractor,
     append_terminology_cache,
     dataset_term_from_json,
+    extract_with_regexes,
     load_manifest_terminology,
     load_terminology_cache,
-    parse_dataset_extracted_terms,
-    parse_reference_candidate_terms,
-    parse_refined_dataset_terms,
+    parse_llm_target_candidates,
     select_dataset_terms,
     should_preserve_dataset_term,
 )
 
 
-def test_dataset_term_prompts_are_strict_and_language_pair_neutral() -> None:
-    assert "source text may be in any language" in DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT
-    assert "Use only spans that appear in the target reference" in (
-        DATASET_REFERENCE_CANDIDATE_SYSTEM_PROMPT
+class _FakePubChemClient:
+    def lookup_synonyms(self, term: str) -> list[str]:
+        return ["sodium chloride", "chlorure de sodium"] if term == "chlorure de sodium" else []
+
+
+class _FakeExtractor:
+    def extract(self, text: str, max_terms: int) -> list[DatasetTerminologyTerm]:
+        assert text
+        assert max_terms == 5
+        return [
+            DatasetTerminologyTerm(
+                source_term="",
+                target_terms=("chlorure de sodium",),
+                reference_candidates=("chlorure de sodium",),
+                category="chemical",
+                source="fake_ner",
+                confidence=0.8,
+                decision="keep_reference",
+            )
+        ]
+
+
+class _FakeResponses:
+    def create(self, **kwargs: object) -> object:
+        assert kwargs["temperature"] == 0.0
+        return type(
+            "Response",
+            (),
+            {
+                "output_text": json.dumps(
+                    {
+                        "terms": [
+                            {
+                                "target_term": "chlorure de sodium",
+                                "category": "chemical",
+                                "confidence": 0.91,
+                                "reason": "Compound name",
+                            },
+                            {
+                                "target_term": "hallucinated term",
+                                "category": "chemical",
+                                "confidence": 0.99,
+                                "reason": "Not in text",
+                            },
+                        ]
+                    }
+                )
+            },
+        )()
+
+
+class _FakeClient:
+    responses = _FakeResponses()
+
+
+def test_target_candidate_prompt_requires_exact_target_spans() -> None:
+    assert "exact spans that appear in the provided target text" in (
+        TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT
     )
-    assert "source and target texts may be any language pair" in DATASET_TERM_REFINER_SYSTEM_PROMPT
-    assert "External candidates are validation/canonicalization evidence only" in (
-        DATASET_TERM_REFINER_SYSTEM_PROMPT
-    )
-    assert "Do not extract generic patent scaffolding" in DATASET_TERM_EXTRACTOR_SYSTEM_PROMPT
-    assert "language-neutral" in DATASET_TERM_REFINER_SYSTEM_PROMPT
+    assert "Do not translate" in TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT
 
 
 def test_dataset_term_round_trips_json_shape() -> None:
     term = DatasetTerminologyTerm(
-        source_term="solid electrolyte",
-        target_terms=("Festelektrolyt",),
-        category="material",
-        source="llm+iate",
+        source_term="",
+        target_terms=("chlorure de sodium",),
+        reference_candidates=("chlorure de sodium",),
+        category="chemical",
+        source="target_ner+pubchem",
+        term_group="verified",
+        verified_by=("pubchem",),
         confidence=0.91,
-        decision="keep",
-        reason="Standard term",
-        candidates={"iate": ["Festelektrolyt"]},
+        decision="keep_reference",
+        reason="Target-side term",
+        candidates={"pubchem": ["sodium chloride"]},
     )
 
     loaded = dataset_term_from_json(term.to_json())
@@ -49,319 +100,146 @@ def test_dataset_term_round_trips_json_shape() -> None:
     assert loaded == term
 
 
-def test_parse_dataset_extracted_terms_ignores_invalid_rows() -> None:
-    terms = parse_dataset_extracted_terms(
+def test_parse_llm_target_candidates_drops_terms_missing_from_reference() -> None:
+    terms = parse_llm_target_candidates(
         json.dumps(
             {
                 "terms": [
                     {
-                        "source_term": "Mo",
+                        "target_term": "chlorure de sodium",
                         "category": "chemical",
-                        "reason": "element symbol",
+                        "confidence": 0.92,
+                        "reason": "Compound name",
                     },
-                    {"source_term": ""},
+                    {
+                        "target_term": "not in the text",
+                        "category": "chemical",
+                        "confidence": 0.99,
+                    },
                 ]
             }
-        )
+        ),
+        reference_text="La solution contient du chlorure de sodium.",
+    )
+
+    assert [term.target_terms[0] for term in terms] == ["chlorure de sodium"]
+    assert terms[0].source == "llm_target"
+    assert terms[0].term_group == "llm"
+
+
+def test_llm_target_candidate_extractor_uses_target_text_only() -> None:
+    extractor = LLMTargetCandidateExtractor(client=_FakeClient(), model="gpt-test")
+
+    terms = extractor.extract(
+        text="La solution contient du chlorure de sodium.",
+        target_language="French",
+        max_terms=5,
+    )
+
+    assert [term.target_terms[0] for term in terms] == ["chlorure de sodium"]
+
+
+def test_regex_extractor_finds_target_side_chemical_terms() -> None:
+    terms = extract_with_regexes(
+        "La solution contient du chlorure de sodium, 25 °C et Li2O."
+    )
+
+    target_terms = {term.target_terms[0] for term in terms}
+    assert "chlorure de sodium" in target_terms
+    assert "25 °C" in target_terms
+    assert "Li2O" in target_terms
+
+
+def test_target_terminology_extractor_deduplicates_terms() -> None:
+    extractor = TargetTerminologyExtractor()
+
+    terms = extractor.extract(
+        "Li2O et Li2O sont présents avec chlorure de sodium.",
+        max_terms=10,
+    )
+
+    target_terms = [term.target_terms[0] for term in terms]
+    assert len(target_terms) == len(set(target_terms))
+
+
+def test_generator_uses_target_reference_and_pubchem_without_llm() -> None:
+    generator = DatasetTerminologyGenerator(
+        max_terms=5,
+        use_pubchem=True,
+        pubchem_client=_FakePubChemClient(),
+        extractor=_FakeExtractor(),
+    )
+
+    terms = generator.generate(
+        source_text="The source can be ignored by target-only extraction.",
+        reference_text="La solution contient du chlorure de sodium.",
+        target_language="French",
     )
 
     assert len(terms) == 1
-    assert terms[0].source_term == "Mo"
-    assert terms[0].category == "chemical"
+    assert terms[0].source_term == ""
+    assert terms[0].target_terms == ("chlorure de sodium",)
+    assert terms[0].source == "fake_ner+pubchem"
+    assert terms[0].term_group == "verified"
+    assert terms[0].verified_by == ("pubchem",)
+    assert terms[0].candidates == {"pubchem": ["sodium chloride", "chlorure de sodium"]}
 
 
-def test_parse_refined_dataset_terms_applies_confidence_gate() -> None:
-    original_terms = [
-        DatasetTerminologyTerm(
-            source_term="solid electrolyte",
-            target_terms=("Festelektrolyt",),
-            reference_candidates=("Festelektrolyt",),
-            category="material",
-            source="llm+iate",
-            confidence=0.75,
-        ),
-        DatasetTerminologyTerm(
-            source_term="method",
-            target_terms=("Verfahren",),
-            category="other",
-            source="llm+iate",
-            confidence=0.75,
-        ),
-    ]
-
-    refined = parse_refined_dataset_terms(
-        json.dumps(
-            {
-                "terms": [
-                    {
-                        "source_term": "solid electrolyte",
-                        "decision": "keep",
-                        "target_terms": ["Festelektrolyt"],
-                        "confidence": 0.93,
-                        "reason": "Context-relevant material term",
-                    },
-                    {
-                        "source_term": "method",
-                        "decision": "drop",
-                        "target_terms": [],
-                        "confidence": 0.2,
-                        "reason": "Too generic",
-                    },
-                ]
-            }
-        ),
-        original_terms,
-        confidence_threshold=0.85,
+def test_generator_uses_llm_target_candidates_before_database_checks() -> None:
+    generator = DatasetTerminologyGenerator(
+        client=_FakeClient(),
+        model="gpt-test",
         max_terms=5,
+        use_llm=True,
+        use_pubchem=True,
+        pubchem_client=_FakePubChemClient(),
+        extractor=TargetTerminologyExtractor(),
     )
 
-    assert [term.source_term for term in refined] == ["solid electrolyte"]
-    assert refined[0].target_terms == ("Festelektrolyt",)
-    assert refined[0].decision == "keep"
+    terms = generator.generate(
+        source_text="Ignored source text.",
+        reference_text="La solution contient du chlorure de sodium.",
+        target_language="French",
+    )
+
+    assert terms[0].target_terms == ("chlorure de sodium",)
+    assert terms[0].source == "llm_target+pubchem"
+    assert terms[0].term_group == "verified"
+    assert terms[0].verified_by == ("pubchem",)
 
 
-def test_refiner_drop_decision_filters_generic_and_clause_like_terms() -> None:
+def test_select_dataset_terms_keeps_target_terms_by_confidence() -> None:
     terms = [
-        DatasetTerminologyTerm(
-            source_term="gastrointestinal tract",
-            target_terms=("tube digestif",),
-            reference_candidates=("tube digestif",),
-            category="other",
-            source="reference+refined",
-            confidence=0.95,
-            decision="keep_reference",
-        ),
-        DatasetTerminologyTerm(
-            source_term="cow",
-            target_terms=("une vache",),
-            reference_candidates=("une vache",),
-            category="other",
-            source="reference+refined",
-            confidence=0.99,
-            decision="drop",
-        ),
-        DatasetTerminologyTerm(
-            source_term="working amount",
-            target_terms=("une quantité de travail",),
-            reference_candidates=("une quantité de travail",),
-            category="other",
-            source="reference+refined",
-            confidence=0.99,
-            decision="drop",
-        ),
-        DatasetTerminologyTerm(
-            source_term="one or more nutrients selected from minerals, vitamins and amino acids",
-            target_terms=(
-                "un ou plusieurs nutriments choisis parmi des minéraux, des vitamines et "
-                "des acides aminés",
-            ),
-            reference_candidates=(
-                "un ou plusieurs nutriments choisis parmi des minéraux, des vitamines et "
-                "des acides aminés",
-            ),
-            category="other",
-            source="reference+refined",
-            confidence=0.99,
-            decision="drop",
-        ),
-        DatasetTerminologyTerm(
-            source_term="starch is at least 40% of the weight of the starch product",
-            target_terms=("l'amidon représente au moins 40 % du poids du produit d'amidon",),
-            reference_candidates=(
-                "l'amidon représente au moins 40 % du poids du produit d'amidon",
-            ),
-            category="unit",
-            source="reference+refined",
-            confidence=0.99,
-            decision="drop",
-        ),
+        DatasetTerminologyTerm(target_terms=("low",), confidence=0.1),
+        DatasetTerminologyTerm(target_terms=("high",), confidence=0.9),
+        DatasetTerminologyTerm(target_terms=(), confidence=1.0),
+        DatasetTerminologyTerm(target_terms=("drop",), confidence=1.0, decision="drop"),
     ]
 
-    selected = select_dataset_terms(terms, confidence_threshold=0.85, max_terms=10)
+    selected = select_dataset_terms(terms, max_terms=2, confidence_threshold=0.0)
 
-    assert [term.source_term for term in selected] == ["gastrointestinal tract"]
-
-
-def test_select_dataset_terms_keeps_refiner_approved_terms_without_english_filters() -> None:
-    terms = [
-        DatasetTerminologyTerm(
-            source_term="55 to 65 °C",
-            target_terms=("55 à 65 °C",),
-            reference_candidates=("55 à 65 °C",),
-            category="unit",
-            source="reference+refined",
-            confidence=0.95,
-            decision="keep_reference",
-        ),
-        DatasetTerminologyTerm(
-            source_term="marker assisted selection",
-            target_terms=("sélection assistée par marqueur",),
-            reference_candidates=("sélection assistée par marqueur",),
-            category="process",
-            source="reference+refined",
-            confidence=0.94,
-            decision="keep_reference",
-        ),
-        DatasetTerminologyTerm(
-            source_term="quantitative trait locus (QTL)",
-            target_terms=("locus de caractère quantitatif (QTL)",),
-            reference_candidates=("locus de caractère quantitatif (QTL)",),
-            category="identifier",
-            source="reference+refined",
-            confidence=0.93,
-            decision="keep_reference",
-        ),
-        DatasetTerminologyTerm(
-            source_term="valid non-English technical phrase",
-            target_terms=("terme technique valide",),
-            reference_candidates=("terme technique valide",),
-            category="other",
-            source="reference+refined",
-            confidence=0.92,
-            decision="keep_reference",
-        ),
-    ]
-
-    selected = select_dataset_terms(terms, confidence_threshold=0.85, max_terms=10)
-
-    assert [term.source_term for term in selected] == [
-        "55 to 65 °C",
-        "marker assisted selection",
-        "quantitative trait locus (QTL)",
-        "valid non-English technical phrase",
-    ]
-
-
-def test_parse_reference_candidate_terms_adds_reference_spans() -> None:
-    original_terms = [
-        DatasetTerminologyTerm(
-            source_term="gastrointestinal tract",
-            category="other",
-            source="llm",
-        )
-    ]
-
-    terms = parse_reference_candidate_terms(
-        json.dumps(
-            {
-                "terms": [
-                    {
-                        "source_term": "gastrointestinal tract",
-                        "reference_candidates": ["tractus gastro-intestinal"],
-                        "confidence": 0.96,
-                        "reason": "Exact target reference span.",
-                    }
-                ]
-            }
-        ),
-        original_terms,
-    )
-
-    assert terms[0].target_terms == ("tractus gastro-intestinal",)
-    assert terms[0].reference_candidates == ("tractus gastro-intestinal",)
-    assert terms[0].source == "reference"
-
-
-def test_refinement_can_keep_reference_and_external_candidates_separate() -> None:
-    original_terms = [
-        DatasetTerminologyTerm(
-            source_term="gastrointestinal tract",
-            target_terms=("tube digestif",),
-            reference_candidates=("tube digestif",),
-            category="other",
-            source="reference+iate",
-            confidence=0.85,
-            candidates={"iate": ["tractus gastro-intestinal"]},
-        )
-    ]
-
-    refined = parse_refined_dataset_terms(
-        json.dumps(
-            {
-                "terms": [
-                    {
-                        "source_term": "gastrointestinal tract",
-                        "decision": "keep_both",
-                        "target_terms": [],
-                        "confidence": 0.94,
-                        "reason": "Reference and external candidates are valid variants.",
-                    }
-                ]
-            }
-        ),
-        original_terms,
-        confidence_threshold=0.85,
-        max_terms=5,
-    )
-
-    assert refined[0].target_terms == ("tube digestif", "tractus gastro-intestinal")
-    assert refined[0].reference_candidates == ("tube digestif",)
-    assert refined[0].candidates == {"iate": ["tractus gastro-intestinal"]}
-
-
-def test_lookup_miss_is_kept_as_llm_only_candidate() -> None:
-    generator = DatasetTerminologyGenerator()
-    term = DatasetTerminologyTerm(
-        source_term="ion-conductive polymer matrix",
-        category="material",
-        source="llm",
-        reason="Technical patent phrase",
-    )
-
-    enriched = generator.add_target_candidates(
-        term=term,
-        source_language="English",
-        target_language="German",
-    )
-
-    assert enriched.source == "llm_only"
-    assert enriched.target_terms == ()
-    assert enriched.confidence == 0.5
-
-
-def test_llm_only_terms_survive_refinement_when_no_decision_is_returned() -> None:
-    original_terms = [
-        DatasetTerminologyTerm(
-            source_term="ion-conductive polymer matrix",
-            category="material",
-            source="llm_only",
-            confidence=0.5,
-        )
-    ]
-
-    refined = parse_refined_dataset_terms(
-        json.dumps({"terms": []}),
-        original_terms,
-        confidence_threshold=0.85,
-        max_terms=5,
-    )
-
-    assert len(refined) == 1
-    assert refined[0].source == "llm_only"
-    assert refined[0].decision == "llm_only"
+    assert [term.target_terms[0] for term in selected] == ["high", "low"]
 
 
 def test_preserve_detection_only_keeps_compact_units_and_identifiers() -> None:
     assert should_preserve_dataset_term("55 to 65 °C", "unit")
-    assert should_preserve_dataset_term("700 ppm or less", "unit")
+    assert should_preserve_dataset_term("700 ppm", "unit")
     assert should_preserve_dataset_term("SEQ ID NO: 10", "identifier")
     assert should_preserve_dataset_term("Li2O", "chemical")
 
     assert not should_preserve_dataset_term("one or more dosages per day", "unit")
     assert not should_preserve_dataset_term("40% of the weight of the starch product", "unit")
-    assert not should_preserve_dataset_term("moisture level of about 20-30%", "unit")
     assert not should_preserve_dataset_term("quantitative trait locus (QTL)", "identifier")
-    assert not should_preserve_dataset_term("specific markers", "identifier")
 
 
 def test_terminology_cache_round_trip(tmp_path: Path) -> None:
     cache_path = tmp_path / "terminology-cache.jsonl"
     term = DatasetTerminologyTerm(
-        source_term="Mo",
-        target_terms=("Mo",),
-        category="chemical",
-        source="preserve",
-        confidence=1.0,
+        source_term="",
+        target_terms=("Li2O",),
+        category="identifier",
+        source="regex",
+        confidence=0.85,
         decision="preserve",
     )
 
@@ -376,7 +254,7 @@ def test_load_manifest_terminology_indexes_by_source_language_and_text_field(
     manifest_path = tmp_path / "epo-subset-2-manifest.jsonl"
     terminology = [
         DatasetTerminologyTerm(
-            source_term="solid electrolyte",
+            source_term="",
             target_terms=("Festelektrolyt",),
             category="material",
         ).to_json()

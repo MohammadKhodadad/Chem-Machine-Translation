@@ -27,12 +27,14 @@ from chem_machine_translation.data.google_patents import (
     normalize_language_code,
 )
 from chem_machine_translation.data.terminology import (
+    TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT,
     DatasetTerminologyGenerator,
     DatasetTerminologyTerm,
+    LLMTargetCandidateExtractor,
+    PubChemClient,
+    TargetTerminologyExtractor,
     dataset_term_from_json,
     load_manifest_terminology,
-    parse_dataset_extracted_terms,
-    parse_refined_dataset_terms,
 )
 
 __all__ = [
@@ -45,6 +47,10 @@ __all__ = [
     "DatasetName",
     "DatasetTerminologyGenerator",
     "DatasetTerminologyTerm",
+    "LLMTargetCandidateExtractor",
+    "PubChemClient",
+    "TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT",
+    "TargetTerminologyExtractor",
     "dataset_term_from_json",
     "iter_epo_translation_documents",
     "iter_documents",
@@ -55,7 +61,5 @@ __all__ = [
     "load_streaming_dataset",
     "normalize_epo_language_code",
     "normalize_language_code",
-    "parse_dataset_extracted_terms",
-    "parse_refined_dataset_terms",
     "row_to_document",
 ]

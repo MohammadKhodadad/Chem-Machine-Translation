@@ -55,11 +55,14 @@ To add terminology mappings during subset generation, include:
 
 ```powershell
   --extract-terminology `
+  --pubchem-terminology `
   --iate-terminology `
-  --wikidata-terminology `
-  --refine-terminology `
+  --wikipedia-terminology `
   --terminology-cache reports/epo-terminology-cache.jsonl
 ```
+
+`--extract-terminology` uses an LLM only to propose target-reference spans. The builder verifies
+that each span appears in the target text before PubChem, IATE, or Wikipedia/Wikidata checks.
 
 Rerun the full 100-example dry-run evaluation:
 
@@ -90,8 +93,11 @@ The command writes predictions, EPO references, per-row metrics, review metadata
 
 ## Terminology Pipeline Evaluation
 
-To run the same evaluation with LLM-extracted terminology, IATE candidate labels first, Wikidata as
-backup, and confidence-gated refinement:
+The benchmark manifest can contain target-side terminology extracted during subset generation. The
+evaluation scripts consume those manifest terms for terminology metrics such as
+`target_term_coverage`.
+
+Runtime translation terminology prompting is still available separately:
 
 ```powershell
 uv run python scripts/evaluate_epo.py `

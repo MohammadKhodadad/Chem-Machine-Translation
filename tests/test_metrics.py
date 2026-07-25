@@ -2,12 +2,16 @@ import pytest
 
 from chem_machine_translation.evaluation.metrics import (
     DEFAULT_METRIC_NAMES,
+    DEFAULT_TERMINOLOGY_TERM_GROUPS,
+    TERMINOLOGY_TERM_GROUPS,
     MqmJudgeResult,
     compute_corpus_overlap_metrics,
+    compute_target_term_coverage,
     compute_terminology_success_rate,
     compute_translation_metrics,
     parse_metric_names,
     parse_mqm_judge_response,
+    terminology_term_group,
 )
 
 
@@ -39,8 +43,11 @@ def test_parse_metric_names_defaults_to_all_general_metrics() -> None:
     assert parse_metric_names(None) == DEFAULT_METRIC_NAMES
     assert "chrf2++" in DEFAULT_METRIC_NAMES
     assert "chrf" not in DEFAULT_METRIC_NAMES
-    assert "terminology_success_rate" in DEFAULT_METRIC_NAMES
+    assert "target_term_coverage" in DEFAULT_METRIC_NAMES
+    assert "terminology_success_rate" not in DEFAULT_METRIC_NAMES
     assert "fsp_mqm" not in DEFAULT_METRIC_NAMES
+    assert DEFAULT_TERMINOLOGY_TERM_GROUPS == ("verified",)
+    assert set(TERMINOLOGY_TERM_GROUPS) == {"llm", "algorithmic", "verified"}
 
 
 def test_parse_metric_names_rejects_unknown_metric() -> None:
@@ -206,6 +213,177 @@ def test_compute_translation_metrics_can_select_terminology_success_rate() -> No
     )
 
     assert metrics == {"terminology_success_rate": 100}
+
+
+def test_compute_target_term_coverage_counts_reference_target_terms() -> None:
+    terminology = [
+        {
+            "source_term": "",
+            "target_terms": ["acide gras"],
+            "decision": "keep_reference",
+        },
+        {
+            "source_term": "",
+            "target_terms": ["polymère soluble dans l'eau"],
+            "decision": "keep_reference",
+        },
+        {
+            "source_term": "",
+            "target_terms": ["terme absent"],
+            "decision": "keep_reference",
+        },
+    ]
+
+    score = compute_target_term_coverage(
+        prediction="acide gras est répété: acide gras.",
+        reference="acide gras et polymère soluble dans l'eau",
+        terminology=terminology,
+    )
+
+    assert score == 50
+
+
+def test_target_term_coverage_defaults_to_verified_terms() -> None:
+    terminology = [
+        {
+            "target_terms": ["acide gras"],
+            "term_group": "verified",
+            "decision": "keep_reference",
+        },
+        {
+            "target_terms": ["polymère"],
+            "term_group": "llm",
+            "decision": "keep_reference",
+        },
+        {
+            "target_terms": ["25 °C"],
+            "term_group": "algorithmic",
+            "decision": "keep_reference",
+        },
+    ]
+
+    score = compute_target_term_coverage(
+        prediction="acide gras",
+        reference="acide gras polymère 25 °C",
+        terminology=terminology,
+    )
+
+    assert score == 100
+
+
+def test_target_term_coverage_can_select_multiple_term_groups() -> None:
+    terminology = [
+        {
+            "target_terms": ["acide gras"],
+            "term_group": "verified",
+            "decision": "keep_reference",
+        },
+        {
+            "target_terms": ["polymère"],
+            "term_group": "llm",
+            "decision": "keep_reference",
+        },
+        {
+            "target_terms": ["25 °C"],
+            "term_group": "algorithmic",
+            "decision": "keep_reference",
+        },
+    ]
+
+    score = compute_target_term_coverage(
+        prediction="acide gras polymère",
+        reference="acide gras polymère 25 °C",
+        terminology=terminology,
+        term_groups=("verified", "llm"),
+    )
+
+    assert score == 100
+
+
+def test_compute_translation_metrics_passes_terminology_term_groups() -> None:
+    metrics = compute_translation_metrics(
+        prediction="polymère",
+        reference="acide gras polymère",
+        metric_names=["target_term_coverage"],
+        terminology=[
+            {
+                "target_terms": ["acide gras"],
+                "term_group": "verified",
+                "decision": "keep_reference",
+            },
+            {
+                "target_terms": ["polymère"],
+                "term_group": "llm",
+                "decision": "keep_reference",
+            },
+        ],
+        terminology_term_groups=("llm",),
+    )
+
+    assert metrics == {"target_term_coverage": 100}
+
+
+def test_terminology_term_group_infers_legacy_terms() -> None:
+    assert terminology_term_group({"external_candidates": {"iate": ["glycérides"]}}) == "verified"
+    assert terminology_term_group({"source": "llm_target"}) == "llm"
+    assert terminology_term_group({"source": "regex"}) == "algorithmic"
+    assert terminology_term_group({"target_terms": ["legacy"]}) == "verified"
+
+
+def test_compute_target_term_coverage_uses_reference_occurrence_counts() -> None:
+    terminology = [
+        {
+            "target_terms": ["acide gras"],
+            "decision": "keep_reference",
+        }
+    ]
+
+    score = compute_target_term_coverage(
+        prediction="acide gras.",
+        reference="acide gras et acide gras.",
+        terminology=terminology,
+    )
+
+    assert score == 50
+
+
+def test_compute_target_term_coverage_ignores_drop_terms_and_absent_reference_terms() -> None:
+    terminology = [
+        {
+            "target_terms": ["terme générique"],
+            "decision": "drop",
+        },
+        {
+            "target_terms": ["absent de la référence"],
+            "decision": "keep_reference",
+        },
+    ]
+
+    assert (
+        compute_target_term_coverage(
+            prediction="terme générique",
+            reference="référence sans terme",
+            terminology=terminology,
+        )
+        is None
+    )
+
+
+def test_compute_translation_metrics_can_select_target_term_coverage() -> None:
+    metrics = compute_translation_metrics(
+        prediction="Le tube digestif est mentionné.",
+        reference="Le tube digestif est mentionné.",
+        metric_names=["target_term_coverage"],
+        terminology=[
+            {
+                "source_term": "",
+                "target_terms": ["tube digestif"],
+                "decision": "keep_reference",
+            }
+        ],
+    )
+
+    assert metrics == {"target_term_coverage": 100}
 
 
 def test_compute_translation_metrics_omits_terminology_score_without_terms() -> None:

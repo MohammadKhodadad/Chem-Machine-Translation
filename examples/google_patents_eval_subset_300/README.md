@@ -57,11 +57,14 @@ To add terminology mappings during subset generation, include:
 
 ```powershell
   --extract-terminology `
+  --pubchem-terminology `
   --iate-terminology `
-  --wikidata-terminology `
-  --refine-terminology `
+  --wikipedia-terminology `
   --terminology-cache reports/google-patents-terminology-cache.jsonl
 ```
+
+`--extract-terminology` uses an LLM only to propose target-reference spans. The builder verifies
+that each span appears in the target text before PubChem, IATE, or Wikipedia/Wikidata checks.
 
 Rerun the full 300-example agentic evaluation:
 
@@ -80,8 +83,11 @@ The command writes predictions, Google Patents references, per-row metrics, and 
 
 ## Terminology Pipeline Evaluation
 
-To run the same evaluation with LLM-extracted terminology, IATE candidate labels first, and Wikidata
-as backup:
+The benchmark manifest can contain target-side terminology extracted during subset generation. The
+evaluation scripts consume those manifest terms for terminology metrics such as
+`target_term_coverage`.
+
+Runtime translation terminology prompting is still available separately:
 
 ```powershell
 uv run python scripts/evaluate_google_patents.py `
@@ -99,10 +105,8 @@ uv run python scripts/evaluate_google_patents.py `
   --output reports/google-patents-agentic-terminology-refined-de-5.jsonl
 ```
 
-The command writes the injected `terminology_section` for each evaluated row so the terminology
-candidate list can be audited alongside the prediction and metrics. The refinement agent can keep,
-replace, update, preserve, or drop retrieved candidates before they reach the translator prompt.
-Only high-confidence rows are injected.
+The command writes any injected `terminology_section` for each evaluated row so runtime prompt
+terminology can be audited alongside the prediction and metrics.
 
 Recent smoke-test result for German with `--limit 5`:
 
