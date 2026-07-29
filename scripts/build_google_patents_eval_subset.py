@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("examples/google_patents_eval_subset_300"),
+        default=Path("benchmark_datasets/google_patents_eval_subset_generated"),
     )
     parser.add_argument("--limit", type=int, default=50)
     parser.add_argument(

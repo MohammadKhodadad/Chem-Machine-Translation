@@ -18,7 +18,11 @@ from chem_machine_translation.utils.text import approximate_token_count, normali
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build an EPO evaluation subset.")
     parser.add_argument("--source-csv", type=Path, default=Path("data/EPO.csv"))
-    parser.add_argument("--output-dir", type=Path, default=Path("examples/epo_eval_subset_100"))
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("benchmark_datasets/epo_eval_subset_generated"),
+    )
     parser.add_argument("--limit", type=int, default=50)
     parser.add_argument(
         "--language",

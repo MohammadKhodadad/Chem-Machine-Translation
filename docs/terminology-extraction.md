@@ -132,26 +132,19 @@ and numeric/unit expressions, for example:
 Broad phrases should not be preserved only because they contain an abbreviation or were labeled as
 identifiers.
 
-## Builder Usage
+## Benchmark Usage
 
-Terminology is generated when building benchmark subsets:
+The current benchmark dataset lives in:
 
-```powershell
-uv run --no-sync python scripts/build_google_patents_eval_subset.py `
-  --source-dir data/preprocessed `
-  --output-dir examples/google_patents_eval_subset_50 `
-  --limit 50 `
-  --language fr `
-  --extract-terminology `
-  --pubchem-terminology `
-  --iate-terminology `
-  --wikipedia-terminology `
-  --terminology-workers 4
-```
+`benchmark_datasets/google_patents_eval_subset_60_multidirectional`
 
-The EPO builder exposes the same terminology flags. `OPENAI_API_KEY` is required only when
-`--extract-terminology` is enabled. Database-only terminology generation can still run without an
-LLM.
+It already contains target-side terminology generated with the flow above. See
+`benchmark_datasets/README.md` for commands that run the benchmark with `verified`, `llm`,
+`algorithmic`, or combined terminology groups.
+
+`OPENAI_API_KEY` is required only when generating new LLM target candidates or running OpenAI
+translation strategies. Metrics over existing manifest terminology can run without generating new
+terminology.
 
 ## Current Quality Notes
 

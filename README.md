@@ -138,12 +138,37 @@ uv run pytest
 uv run ruff check .
 ```
 
-Google Patents evaluation examples live in `examples/google_patents_eval_subset_300`.
-EPO evaluation examples live in `examples/epo_eval_subset_100`.
-Regenerate those subsets with `scripts/build_google_patents_eval_subset.py` and
-`scripts/build_epo_eval_subset.py`. Both builders can add structured `terminology` mappings to the
-manifest before evaluation, which keeps terminology accuracy metrics separate from translation-time
-prompt injection.
+Benchmark datasets live in `benchmark_datasets/`.
+
+The current benchmark dataset is:
+
+`benchmark_datasets/google_patents_eval_subset_60_multidirectional`
+
+It contains 60 Google Patents title+abstract translation pairs across English, German, and French:
+`en-de`, `de-en`, `en-fr`, `fr-en`, `de-fr`, and `fr-de`.
+
+Run a direction with:
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir benchmark_datasets/google_patents_eval_subset_60_multidirectional/en-de `
+  --strategy openai `
+  --model gpt-5.4-mini `
+  --metric sequence_similarity `
+  --metric bleu `
+  --metric chrf2++ `
+  --metric target_term_coverage `
+  --terminology-term-group verified `
+  --output reports/google-patents-en-de-verified.jsonl
+```
+
+Terminology benchmark groups:
+
+- `verified`: PubChem, IATE, or Wikipedia/Wikidata-backed terms. This is the default trusted group.
+- `llm`: target-only LLM candidates verified to appear in the target reference text.
+- `algorithmic`: regex/NER/algorithmic candidates.
+
+Repeat `--terminology-term-group` to evaluate combinations, for example `verified` + `llm`.
 
 ## Current Strategies
 

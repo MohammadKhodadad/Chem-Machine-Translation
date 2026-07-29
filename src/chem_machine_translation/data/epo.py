@@ -50,7 +50,7 @@ def load_epo_rows_by_publication(
 
 
 def iter_epo_translation_documents(
-    data_dir: Path = Path("examples/epo_eval_subset_100"),
+    data_dir: Path = Path("benchmark_datasets/epo_eval_subset_generated"),
     target_language: str = "French",
     limit: int = 10,
     min_input_tokens: int = 128,

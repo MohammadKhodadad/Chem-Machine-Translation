@@ -33,7 +33,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Evaluate generated translations against EPO ground truth.",
     )
-    parser.add_argument("--data-dir", type=Path, default=Path("examples/epo_eval_subset_100"))
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default=Path("benchmark_datasets/epo_eval_subset_generated"),
+    )
     parser.add_argument("--output", type=Path, default=Path("reports/epo-eval.jsonl"))
     parser.add_argument("--language", action="append", dest="languages", default=None)
     parser.add_argument("--limit", type=int, default=50, help="Aligned documents per language.")
