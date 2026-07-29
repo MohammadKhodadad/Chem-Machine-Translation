@@ -530,6 +530,14 @@ Target term coverage measures whether approved target-language terminology from 
 reference appears in the generated translation. It does not require source terms, so it fits
 reference-first or target-only benchmark terminology.
 
+This is the project-specific modification to the terminology metric. WMT-style
+`terminology_success_rate` is source-conditioned: first the source term must appear in the source
+text, then the metric checks whether the approved target term appears in the output. Our default
+`target_term_coverage` removes the source-side condition and only evaluates target-language terms
+that are present in the human reference. In practice, this makes the metric usable when terminology
+was extracted from the target reference or from target-language databases, and when the benchmark
+does not have reliable source-term extraction.
+
 For each manifest term `t`, the metric uses the accepted `target_terms`. Terms marked with
 `decision = "drop"` are ignored. If none of the accepted target terms appear in the reference, the
 term is skipped for that row.
@@ -557,6 +565,18 @@ Of the important target-reference terms, how many did the generated translation 
 
 It is useful when benchmark terminology is extracted from target references or external
 target-language resources and we do not want the metric to depend on source-term extraction.
+
+Operationally, the target-only version works like this:
+
+1. Filter manifest terminology by `term_group`; by default only `verified` terms are evaluated.
+2. Ignore dropped terms and terms without accepted `target_terms`.
+3. Keep only terms whose accepted target form appears in the reference text.
+4. Count normalized matches of those target forms in the prediction.
+5. Cap each term's contribution at `1.0`, so repeated hallucinated terms cannot receive extra credit.
+
+This is stricter than a pure "does any glossary term appear" check because reference absence makes a
+term non-applicable for that row. It is also simpler than WMT Track 1 because it does not use
+lemmatization or source-term matching.
 
 ## WMT25 Terminology Metrics Review
 
