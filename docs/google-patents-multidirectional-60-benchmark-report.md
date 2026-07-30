@@ -38,6 +38,32 @@ Only `term_group=verified` terms were used for `target_term_coverage` in this be
 
 The run selected all implemented metrics: sequence similarity, BLEU, chrF, chrF2++, COMET, source-conditioned terminology success rate, target term coverage, and FSP/MQM. `terminology_success_rate` does not appear in row outputs because this target-only terminology dataset stores empty `source_term` values, so the source-conditioned metric has no applicable terms.
 
+## Estimated Cost And Time
+
+The artifacts do not store exact OpenAI token usage or wall-clock timings, so these are planning
+estimates. Here, one benchmark query means one evaluated source-target row. For dataset creation,
+the terminology generator is not called once per benchmark row; it is called once per unique
+target/reference text plus target language and generation settings, then reused through the
+terminology cache. In this 60-row multidirectional dataset, the cache contains 24
+terminology-generation calls.
+
+The estimate uses the 60-row output file, 24 cached terminology-generation calls, average source
+length of about 110 tokens, average generated translation length of about 186 tokens, and an assumed
+mini-model planning price of `$0.40 / 1M input tokens` and `$1.60 / 1M output tokens`. Replace those
+prices with the exact account rate for precise accounting.
+
+| Phase | What Ran | Estimated Total Time | Estimated Time / Query | Estimated API Cost | Estimated Cost / Query |
+|---|---|---:|---:|---:|---:|
+| Dataset creation | Local dataset selection plus 24 cached target-only terminology generations, external lookups, and manifest writing | 8-12 min | 8-12 sec amortized over 60 rows; ~20-30 sec per unique target call | ~$0.03 | ~$0.0005 amortized over 60 rows; ~$0.0013 per unique target call |
+| Benchmark run | 60 translations, local/reference metrics, COMET scoring, and 60 FSP/MQM judge calls | 15-25 min | 15-25 sec | ~$0.09 | ~$0.0015 |
+
+The dataset creation cost is low because the same target reference can be reused in multiple
+directions. For example, a German reference can serve both `en-de` and `fr-de`, so its target-side
+terminology only needs to be generated once. External PubChem, IATE, and Wikipedia/Wikidata lookups
+do not add LLM cost, but they can add latency. The benchmark run is more expensive because each row
+uses one translation call and one FSP/MQM judge call; COMET is local model inference and has runtime
+cost but no API cost.
+
 ## Results By Direction
 
 | Direction | n | BLEU | chrF | chrF2++ | Seq. Sim. | COMET | Target Term Coverage | FSP/MQM | MQM Error |
