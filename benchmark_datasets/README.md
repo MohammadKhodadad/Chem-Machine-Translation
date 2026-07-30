@@ -94,3 +94,28 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
 
 The default target terminology evaluation group is `verified`. Include `llm` or `algorithmic` only
 when you want broader, lower-trust diagnostic coverage.
+
+## Build A EuroLex Dataset
+
+Use `scripts/build_eurolex_eval_subset.py` for local MultiEURLEX/EuroLex JSONL exports. The script
+expects rows with the standard MultiEURLEX shape: `celex_id`, multilingual `text`, and
+`eurovoc_concepts` or `labels`.
+
+EuroVoc labels are document-level metadata keywords/descriptors. They are not guaranteed to appear
+as literal spans inside the source or target text. The builder preserves them in the manifest as
+`eurovoc_labels` and `eurovoc_descriptors`. If a descriptor map is provided, descriptor terms are
+added to terminology only when the target-language descriptor appears exactly in the target/reference
+text. Pass `--no-eurovoc-terminology` to keep descriptors as metadata only.
+
+Example:
+
+```powershell
+uv run --no-sync python scripts/build_eurolex_eval_subset.py `
+  --source-jsonl data/multi_eurlex/train.jsonl `
+  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
+  --output-dir benchmark_datasets/eurolex_eval_subset_generated `
+  --source-language en `
+  --target-language de `
+  --target-language fr `
+  --limit 50
+```

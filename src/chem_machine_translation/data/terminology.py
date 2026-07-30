@@ -589,6 +589,44 @@ def normalize_term_key(term: str) -> str:
     return " ".join(term.casefold().split())
 
 
+def build_eurolex_descriptor_terms(
+    descriptors_by_concept_id: dict[str, dict[str, str]],
+    target_language_code: str,
+    target_text: str,
+) -> list[DatasetTerminologyTerm]:
+    """Create EuroLex terminology from EuroVoc descriptors found in target text.
+
+    EuroVoc labels are document-level metadata, not guaranteed in-text terms. This helper only
+    promotes a descriptor to benchmark terminology when the target-language descriptor appears as a
+    normalized substring in the target/reference text.
+    """
+
+    terms = []
+    normalized_target = normalize_term_key(target_text)
+    for concept_id, labels_by_language in descriptors_by_concept_id.items():
+        descriptor = labels_by_language.get(target_language_code) or labels_by_language.get("en")
+        if not descriptor:
+            continue
+        descriptor = " ".join(descriptor.split())
+        if normalize_term_key(descriptor) not in normalized_target:
+            continue
+        terms.append(
+            DatasetTerminologyTerm(
+                target_terms=(descriptor,),
+                reference_candidates=(descriptor,),
+                category="other",
+                source="eurovoc_label",
+                term_group="verified",
+                verified_by=("eurovoc",),
+                confidence=1.0,
+                decision="keep_reference",
+                reason=f"EuroVoc descriptor {concept_id} appears in the target reference text.",
+                candidates={"eurovoc": [descriptor]},
+            )
+        )
+    return terms
+
+
 def infer_term_group_from_source(source: str, candidates: dict[str, list[str]]) -> str:
     if candidates:
         return "verified"
