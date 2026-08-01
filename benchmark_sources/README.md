@@ -20,7 +20,14 @@ uv run --no-sync python scripts/build_google_patents_eval_subset.py `
   --output-dir benchmark_datasets/google_patents_from_source_pairs `
   --limit 250 `
   --min-input-tokens 1 `
-  --max-input-tokens 2048
+  --max-input-tokens 2048 `
+  --extract-terminology `
+  --terminology-model gpt-5.4-mini `
+  --pubchem-terminology `
+  --wikipedia-terminology `
+  --iate-terminology `
+  --terminology-cache data/google_patents_source_pairs_terminology_cache.jsonl `
+  --terminology-workers 4
 ```
 
 ## EuroLex

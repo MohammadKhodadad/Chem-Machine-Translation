@@ -30,6 +30,8 @@ Each direction folder contains:
   and `zh-fr`.
 - Most directions have 10 rows. `zh-de` has 1 row because the tracked source file only contains
   one `zh-de` pair.
+- Chemistry terminology is generated during the benchmark build. All rows have terminology; 59 rows
+  have at least one externally verified term for default `target_term_coverage`.
 - Combined manifest:
   `benchmark_datasets/google_patents_source_pairs_10_per_pair/google-patents-9-directions-81-manifest.jsonl`
 
@@ -41,7 +43,14 @@ uv run --no-sync python scripts/build_google_patents_eval_subset.py `
   --output-dir benchmark_datasets/google_patents_source_pairs_10_per_pair `
   --limit 10 `
   --min-input-tokens 1 `
-  --max-input-tokens 2048
+  --max-input-tokens 2048 `
+  --extract-terminology `
+  --terminology-model gpt-5.4-mini `
+  --pubchem-terminology `
+  --wikipedia-terminology `
+  --iate-terminology `
+  --terminology-cache data/google_patents_source_pairs_10_terminology_cache.jsonl `
+  --terminology-workers 4
 ```
 
 `eurolex_source_pairs_10_per_pair`

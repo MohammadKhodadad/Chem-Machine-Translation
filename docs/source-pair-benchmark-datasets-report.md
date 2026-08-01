@@ -38,6 +38,8 @@ Google Patents benchmark:
 - Directions: `de-es`, `de-fr`, `en-de`, `en-es`, `en-fr`, `en-zh`, `fr-es`, `zh-de`, `zh-fr`.
 - Most directions have 10 rows. `zh-de` has only 1 row because the tracked source file only has
   one available `zh-de` pair.
+- Terminology: all 81 rows include generated chemistry terminology. The manifest has 1,121 terms:
+  296 `verified`, 711 `llm`, and 114 `algorithmic`.
 
 Build command:
 
@@ -47,7 +49,14 @@ uv run --no-sync python scripts/build_google_patents_eval_subset.py `
   --output-dir benchmark_datasets/google_patents_source_pairs_10_per_pair `
   --limit 10 `
   --min-input-tokens 1 `
-  --max-input-tokens 2048
+  --max-input-tokens 2048 `
+  --extract-terminology `
+  --terminology-model gpt-5.4-mini `
+  --pubchem-terminology `
+  --wikipedia-terminology `
+  --iate-terminology `
+  --terminology-cache data/google_patents_source_pairs_10_terminology_cache.jsonl `
+  --terminology-workers 4
 ```
 
 EuroLex benchmark:
@@ -99,8 +108,9 @@ Terminology metrics:
 - `target_term_coverage` works when manifest terminology exists.
 - EuroLex supports `target_term_coverage` directly because EuroVoc target terms are stored in the
   manifest.
-- Google Patents source-pair manifests currently have no terminology unless rebuilt with chemistry
-  terminology generation flags, so `target_term_coverage` is not meaningful for this dataset yet.
+- Google Patents source-pair manifests include generated chemistry terminology. Default
+  `target_term_coverage` uses only `verified` terms, so rows that only have `llm` or `algorithmic`
+  terms are not applicable for the default terminology score.
 - `terminology_success_rate` is still available explicitly for source-conditioned terminology
   experiments, but it is not the default metric.
 
@@ -130,9 +140,9 @@ Model run configuration:
 
 - Strategy: `openai`
 - Model: `gpt-5.4-mini`
-- Google output: `reports/google-patents-source-pairs-10-gpt-5.4-mini.jsonl`
+- Google output: `reports/google-patents-source-pairs-10-gpt-5.4-mini-with-terminology.jsonl`
 - EuroLex output: `reports/eurolex-source-pairs-10-gpt-5.4-mini.jsonl`
-- Google metrics: `sequence_similarity`, `bleu`, `chrf2++`
+- Google metrics: `sequence_similarity`, `bleu`, `chrf2++`, `target_term_coverage`
 - EuroLex metrics: `sequence_similarity`, `bleu`, `chrf2++`, `target_term_coverage`
 
 `bleu` and `chrf2++` below are corpus-level summaries. `sequence_similarity` and
@@ -144,19 +154,19 @@ Google Patents overall:
 - Corpus BLEU: 24.73.
 - Corpus chrF2++: 47.23.
 - Mean sequence similarity: 29.08.
-- Terminology coverage: not reported because this dataset was built without chemistry terminology.
+- Mean verified target-term coverage: 55.71 over the 59 rows with at least one verified term.
 
 Google Patents by direction:
 
-- `de-es`: n=10, BLEU 9.88, chrF2++ 20.43, sequence similarity 7.91.
-- `de-fr`: n=10, BLEU 30.99, chrF2++ 61.21, sequence similarity 45.55.
-- `en-de`: n=10, BLEU 17.20, chrF2++ 48.46, sequence similarity 27.20.
-- `en-es`: n=10, BLEU 2.24, chrF2++ 2.76, sequence similarity 4.32.
-- `en-fr`: n=10, BLEU 10.79, chrF2++ 41.55, sequence similarity 11.99.
-- `en-zh`: n=10, BLEU 3.34, chrF2++ 35.61, sequence similarity 62.57.
-- `fr-es`: n=10, BLEU 58.69, chrF2++ 75.80, sequence similarity 56.10.
-- `zh-de`: n=1, BLEU 0.00, chrF2++ 11.35, sequence similarity 29.09.
-- `zh-fr`: n=10, BLEU 17.69, chrF2++ 52.35, sequence similarity 16.99.
+- `de-es`: n=10, BLEU 9.88, chrF2++ 20.43, target-term coverage 0.00 over 1 applicable row.
+- `de-fr`: n=10, BLEU 30.99, chrF2++ 61.21, target-term coverage 70.81 over 10 applicable rows.
+- `en-de`: n=10, BLEU 17.20, chrF2++ 48.46, target-term coverage 63.19 over 9 applicable rows.
+- `en-es`: n=10, BLEU 2.24, chrF2++ 2.76, target-term coverage 46.95 over 10 applicable rows.
+- `en-fr`: n=10, BLEU 10.79, chrF2++ 41.55, target-term coverage 38.69 over 10 applicable rows.
+- `en-zh`: n=10, BLEU 3.34, chrF2++ 35.61, target-term coverage not applicable for verified terms.
+- `fr-es`: n=10, BLEU 58.69, chrF2++ 75.80, target-term coverage 69.01 over 9 applicable rows.
+- `zh-de`: n=1, BLEU 0.00, chrF2++ 11.35, target-term coverage not applicable for verified terms.
+- `zh-fr`: n=10, BLEU 17.69, chrF2++ 52.35, target-term coverage 53.28 over 10 applicable rows.
 
 EuroLex overall:
 
@@ -187,8 +197,8 @@ Interpretation:
   the model preserves many EuroVoc terms.
 - Google Patents is harder and more uneven, especially for Chinese and Spanish directions. These
   results should be read as a benchmark smoke run, not as a final model-quality claim.
-- Google terminology metrics should be added only after rebuilding the dataset with chemistry
-  terminology generation enabled.
+- Google terminology is now present, but default terminology scoring only uses externally verified
+  terms. Coverage is therefore reported over the 59 rows where verified terms exist.
 
 ## Notes
 
