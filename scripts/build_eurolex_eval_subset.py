@@ -53,6 +53,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--source-jsonl", type=Path, default=Path("data/multi_eurlex/train.jsonl"))
     parser.add_argument(
+        "--source-pairs-jsonl",
+        type=Path,
+        default=None,
+        help=(
+            "Optional JSONL of preselected source-target pairs with source_text, "
+            "target_text, and EuroVoc metadata."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("benchmark_datasets/eurolex_eval_subset_generated"),
@@ -114,12 +123,28 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    pairs = language_pairs(args)
     descriptors = load_descriptor_map(args.descriptor_json)
     legal_generator = build_legal_generator(args)
+    if args.source_pairs_jsonl:
+        pair_rows = select_source_pair_rows(
+            source_pairs_jsonl=args.source_pairs_jsonl,
+            languages=args.languages,
+            limit=args.limit,
+            min_input_tokens=args.min_input_tokens,
+            max_input_tokens=args.max_input_tokens,
+        )
+        write_source_pair_dataset(
+            output_dir=args.output_dir,
+            pair_rows=pair_rows,
+            include_eurovoc_terminology=not args.no_eurovoc_terminology,
+            legal_generator=legal_generator,
+            legal_terminology_workers=max(1, args.legal_terminology_workers),
+        )
+        return
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     combined_rows = []
+    pairs = language_pairs(args)
     for source_language, target_language in pairs:
         selections = select_records(
             source_jsonl=args.source_jsonl,
@@ -163,6 +188,150 @@ def main() -> None:
     write_manifest(combined_path, combined_rows)
     print(f"Wrote {len(pairs)} directions and {len(combined_rows)} pairs.")
     print(f"Combined manifest: {combined_path}")
+
+
+def select_source_pair_rows(
+    *,
+    source_pairs_jsonl: Path,
+    languages: list[str] | None,
+    limit: int,
+    min_input_tokens: int,
+    max_input_tokens: int,
+) -> dict[str, list[dict[str, Any]]]:
+    selected: dict[str, list[dict[str, Any]]] = {}
+    language_filter = set(languages or [])
+    with source_pairs_jsonl.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            row = normalize_source_pair_row(json.loads(line))
+            if language_filter and (
+                row["source_language"] not in language_filter
+                or row["target_language"] not in language_filter
+            ):
+                continue
+            token_count = approximate_token_count(row["source_text"])
+            if (
+                not row["source_text"]
+                or not row["target_text"]
+                or token_count < min_input_tokens
+                or token_count > max_input_tokens
+            ):
+                continue
+            direction = row["language_pair"]
+            selected.setdefault(direction, [])
+            if len(selected[direction]) < limit:
+                selected[direction].append(row)
+    return {direction: rows for direction, rows in selected.items() if rows}
+
+
+def normalize_source_pair_row(row: dict[str, Any]) -> dict[str, Any]:
+    source_language = str(row.get("source_language") or "").strip().lower()
+    target_language = str(row.get("target_language") or "").strip().lower()
+    if not source_language or not target_language:
+        language_pair = str(row.get("language_pair") or "")
+        source_language, _, target_language = language_pair.partition("-")
+    direction = f"{source_language}-{target_language}"
+    if source_language not in LANGUAGE_NAMES:
+        raise ValueError(f"Unsupported source language in pair JSONL: {source_language}")
+    if target_language not in LANGUAGE_NAMES:
+        raise ValueError(f"Unsupported target language in pair JSONL: {target_language}")
+    return {
+        **row,
+        "language_pair": direction,
+        "source_language": source_language,
+        "target_language": target_language,
+        "source_text": normalize_text(str(row.get("source_text") or "")),
+        "target_text": normalize_text(str(row.get("target_text") or "")),
+    }
+
+
+def write_source_pair_dataset(
+    *,
+    output_dir: Path,
+    pair_rows: dict[str, list[dict[str, Any]]],
+    include_eurovoc_terminology: bool,
+    legal_generator: LegalTerminologyGenerator | None,
+    legal_terminology_workers: int,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    combined_rows = []
+    for direction, rows in sorted(pair_rows.items()):
+        direction_dir = output_dir / direction
+        direction_dir.mkdir(parents=True, exist_ok=True)
+        manifest_rows = [
+            build_source_pair_manifest_row(
+                row=row,
+                include_eurovoc_terminology=include_eurovoc_terminology,
+            )
+            for row in rows
+        ]
+        manifest_rows = add_legal_terms_parallel(
+            rows=manifest_rows,
+            generator=legal_generator,
+            workers=legal_terminology_workers,
+        )
+        write_rows(direction_dir / "source.csv", [row["_source_row"] for row in manifest_rows])
+        write_rows(direction_dir / "target.csv", [row["_target_row"] for row in manifest_rows])
+        manifest_path = direction_dir / f"eurolex-{direction}-{len(manifest_rows)}-manifest.jsonl"
+        write_manifest(manifest_path, manifest_rows)
+        combined_rows.extend(manifest_rows)
+
+    combined_path = (
+        output_dir
+        / f"eurolex-{len(pair_rows)}-directions-{len(combined_rows)}-manifest.jsonl"
+    )
+    write_manifest(combined_path, combined_rows)
+    print(f"Wrote {len(pair_rows)} directions and {len(combined_rows)} pairs.")
+    print(f"Combined manifest: {combined_path}")
+
+
+def build_source_pair_manifest_row(
+    *,
+    row: dict[str, Any],
+    include_eurovoc_terminology: bool,
+) -> dict[str, Any]:
+    celex_id = str(row["doc_id"])
+    source_language = str(row["source_language"])
+    target_language = str(row["target_language"])
+    example_id = str(row.get("example_id") or f"{source_language}-{target_language}:{celex_id}")
+    source_row = {
+        "id": f"{example_id}_source",
+        "celex_id": celex_id,
+        "language": source_language,
+        "context": str(row["source_text"]),
+    }
+    target_row = {
+        "id": f"{example_id}_target",
+        "celex_id": celex_id,
+        "language": target_language,
+        "context": str(row["target_text"]),
+    }
+    terminology = row.get("eurovoc_target_terms", []) if include_eurovoc_terminology else []
+    return {
+        "dataset": "eurolex",
+        "source_id": example_id,
+        "direction": str(row["language_pair"]),
+        "source_language": LANGUAGE_NAMES[source_language],
+        "source_language_code": source_language,
+        "target_language": LANGUAGE_NAMES[target_language],
+        "target_language_code": target_language,
+        "source_row_id": source_row["id"],
+        "target_row_id": target_row["id"],
+        "celex_id": celex_id,
+        "example_id": example_id,
+        "eurovoc_labels": row.get("eurovoc_labels", []),
+        "eurovoc_descriptors": row.get("eurovoc_descriptors", {}),
+        "eurovoc_target_term_count": row.get("eurovoc_target_term_count", 0),
+        "approx_source_tokens": approximate_token_count(str(row["source_text"])),
+        "text_field": "context",
+        "selection": str(row.get("selection_rule") or "preselected_source_target_pair"),
+        "terminology": terminology,
+        "_source_text": str(row["source_text"]),
+        "_target_text": str(row["target_text"]),
+        "_source_row": source_row,
+        "_target_row": target_row,
+    }
 
 
 def language_pairs(args: argparse.Namespace) -> list[tuple[str, str]]:

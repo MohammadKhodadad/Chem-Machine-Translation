@@ -1,0 +1,16 @@
+{
+  "source_jsonl": "data\\multi_eurlex\\train.jsonl",
+  "descriptor_json": "data\\multi_eurlex\\eurovoc_descriptors.json",
+  "languages": [
+    "en",
+    "de",
+    "fr",
+    "sk"
+  ],
+  "selected_rows": 4000,
+  "candidate_rows": 8255,
+  "descriptor_count": 21,
+  "selection": "Rows with all selected languages and token counts within bounds, ranked by exact EuroVoc descriptor matches in selected-language text.",
+  "min_input_tokens": 32,
+  "max_input_tokens": 1024
+}

@@ -20,6 +20,50 @@ Each direction folder contains:
 - `target.csv`
 - `google-patents-<direction>-10-manifest.jsonl`
 
+## Source-Pair Benchmark Datasets
+
+`google_patents_source_pairs_10_per_pair`
+
+- Source: `benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl`
+- Rows: 81 total across 9 directions.
+- Directions: `de-es`, `de-fr`, `en-de`, `en-es`, `en-fr`, `en-zh`, `fr-es`, `zh-de`,
+  and `zh-fr`.
+- Most directions have 10 rows. `zh-de` has 1 row because the tracked source file only contains
+  one `zh-de` pair.
+- Combined manifest:
+  `benchmark_datasets/google_patents_source_pairs_10_per_pair/google-patents-9-directions-81-manifest.jsonl`
+
+Rebuild command:
+
+```powershell
+uv run --no-sync python scripts/build_google_patents_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/google_patents_source_pairs_10_per_pair `
+  --limit 10 `
+  --min-input-tokens 1 `
+  --max-input-tokens 2048
+```
+
+`eurolex_source_pairs_10_per_pair`
+
+- Source: `benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl`
+- Rows: 120 total across 12 directions.
+- Directions: all ordered pairs across `en`, `de`, `fr`, and `sk`.
+- EuroVoc terminology is included from exact target-side EuroVoc descriptor matches.
+- Combined manifest:
+  `benchmark_datasets/eurolex_source_pairs_10_per_pair/eurolex-12-directions-120-manifest.jsonl`
+
+Rebuild command:
+
+```powershell
+uv run --no-sync python scripts/build_eurolex_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/eurolex_source_pairs_10_per_pair `
+  --limit 10 `
+  --min-input-tokens 32 `
+  --max-input-tokens 1024
+```
+
 ## Terminology Groups
 
 Each manifest terminology item has a coarse `term_group` and detailed provenance.
@@ -95,7 +139,42 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
 The default target terminology evaluation group is `verified`. Include `llm` or `algorithmic` only
 when you want broader, lower-trust diagnostic coverage.
 
+## Build Google Patents From Source Pairs
+
+The tracked source file
+`benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl` already
+contains source-target patent pairs. Use `--source-pairs-jsonl` to convert it into benchmark
+direction folders with `source.csv`, `target.csv`, and manifest files:
+
+```powershell
+uv run --no-sync python scripts/build_google_patents_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/google_patents_from_source_pairs `
+  --limit 250 `
+  --min-input-tokens 1 `
+  --max-input-tokens 2048
+```
+
+Add `--extract-terminology` plus the desired database flags when you want the generated manifest
+to include benchmark terminology.
+
 ## Build A EuroLex Dataset
+
+For portable benchmark recreation, use the tracked EuroLex source-pair snapshot:
+
+```powershell
+uv run --no-sync python scripts/build_eurolex_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/eurolex_from_source_pairs `
+  --limit 250 `
+  --min-input-tokens 32 `
+  --max-input-tokens 1024
+```
+
+The source-pair snapshot contains 3,000 rows: 250 per ordered pair across `en`, `de`, `fr`,
+and `sk`. Each pair stores `source_text`, `target_text`, EuroVoc labels/descriptors, and exact
+target-side EuroVoc term matches. Use the ignored `data/` download only when you want to
+regenerate a different source snapshot or build from the full archive.
 
 Use `scripts/download_eurolex_data.py` to download the public MultiEURLEX archive and EuroVoc
 descriptor map into the ignored `data/` folder:
@@ -139,8 +218,8 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
   --language en `
   --language de `
   --language fr `
-  --language es `
-  --language it `
+  --language el `
+  --language sk `
   --limit 250
 ```
 

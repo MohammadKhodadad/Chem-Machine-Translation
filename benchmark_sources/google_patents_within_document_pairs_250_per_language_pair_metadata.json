@@ -1,0 +1,40 @@
+{
+  "source_file": "benchmark_sources\\google_patents_within_document_pairs_250_per_language_pair.jsonl",
+  "rows": 1769,
+  "language_pairs": {
+    "de-es": 18,
+    "de-fr": 250,
+    "en-de": 250,
+    "en-es": 250,
+    "en-fr": 250,
+    "en-zh": 250,
+    "fr-es": 250,
+    "zh-de": 1,
+    "zh-fr": 250
+  },
+  "fields": {
+    "abstract": 1767,
+    "title": 2
+  },
+  "sources": {
+    "AP": 1,
+    "AT": 8,
+    "BE": 251,
+    "CH": 244,
+    "CL": 72,
+    "CN": 250,
+    "CO": 178,
+    "EP": 379,
+    "HK": 1,
+    "MX": 1,
+    "WO": 384
+  },
+  "schema": {
+    "id": "example_id",
+    "document_id": "doc_id",
+    "source_language": "source_language",
+    "target_language": "target_language",
+    "source_text": "source_text",
+    "target_text": "target_text"
+  }
+}

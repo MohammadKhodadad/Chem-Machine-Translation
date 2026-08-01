@@ -1,0 +1,39 @@
+{
+  "source_jsonl": "benchmark_sources\\eurolex_4000.jsonl",
+  "descriptor_json": "benchmark_sources\\eurovoc_descriptors_subset.json",
+  "rows": 3000,
+  "language_pairs": {
+    "de-en": 250,
+    "de-fr": 250,
+    "de-sk": 250,
+    "en-de": 250,
+    "en-fr": 250,
+    "en-sk": 250,
+    "fr-de": 250,
+    "fr-en": 250,
+    "fr-sk": 250,
+    "sk-de": 250,
+    "sk-en": 250,
+    "sk-fr": 250
+  },
+  "languages": [
+    "en",
+    "de",
+    "fr",
+    "sk"
+  ],
+  "limit_per_pair": 250,
+  "schema": {
+    "id": "example_id",
+    "document_id": "doc_id",
+    "source_language": "source_language",
+    "target_language": "target_language",
+    "source_text": "source_text",
+    "target_text": "target_text",
+    "eurovoc_descriptors": "eurovoc_descriptors",
+    "eurovoc_target_terms": "eurovoc_target_terms"
+  },
+  "selection": "Same EuroLex document, selected per ordered language pair by descending target-language EuroVoc descriptor matches.",
+  "min_input_tokens": 32,
+  "max_input_tokens": 1024
+}
