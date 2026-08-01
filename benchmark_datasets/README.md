@@ -97,8 +97,16 @@ when you want broader, lower-trust diagnostic coverage.
 
 ## Build A EuroLex Dataset
 
-Use `scripts/build_eurolex_eval_subset.py` for local MultiEURLEX/EuroLex JSONL exports. The script
-expects rows with the standard MultiEURLEX shape: `celex_id`, multilingual `text`, and
+Use `scripts/download_eurolex_data.py` to download the public MultiEURLEX archive and EuroVoc
+descriptor map into the ignored `data/` folder:
+
+```powershell
+uv run --no-sync python scripts/download_eurolex_data.py `
+  --output-dir data/multi_eurlex
+```
+
+Then use `scripts/build_eurolex_eval_subset.py` for local MultiEURLEX/EuroLex JSONL exports. The
+script expects rows with the standard MultiEURLEX shape: `celex_id`, multilingual `text`, and
 `eurovoc_concepts` or `labels`.
 
 EuroVoc labels are document-level metadata keywords/descriptors. They are not guaranteed to appear
@@ -118,4 +126,66 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
   --target-language de `
   --target-language fr `
   --limit 50
+```
+
+For a larger all-pairs dataset, repeat `--language`. This creates every ordered pair among the
+selected languages, with `--limit` rows per direction:
+
+```powershell
+uv run --no-sync python scripts/build_eurolex_eval_subset.py `
+  --source-jsonl data/multi_eurlex/train.jsonl `
+  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
+  --output-dir benchmark_datasets/eurolex_eval_subset_5_lang_250 `
+  --language en `
+  --language de `
+  --language fr `
+  --language es `
+  --language it `
+  --limit 250
+```
+
+For a terminology-focused EuroLex benchmark, require at least one target-language EuroVoc descriptor
+match and rank candidates by the number of matched target terms:
+
+```powershell
+uv run --no-sync python scripts/build_eurolex_eval_subset.py `
+  --source-jsonl data/multi_eurlex/train.jsonl `
+  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
+  --output-dir data/eurolex_eval_subset_4_lang_250_term_rich `
+  --language en `
+  --language de `
+  --language fr `
+  --language sk `
+  --limit 250 `
+  --min-target-terms 1 `
+  --rank-by-target-terms
+```
+
+To add legal LLM candidates and verify them with IATE, Wikipedia/Wikidata, UNTERM, and EuroVoc
+evidence, enable the legal terminology flags. EuroLex legal terminology uses only two groups:
+`llm` for exact target spans proposed by the legal LLM, and `verified` for spans with external
+evidence.
+
+UNTERM has no documented public API, so the code treats it as best-effort evidence and fails closed
+unless the public search page reports a positive result range.
+
+```powershell
+uv run --no-sync python scripts/build_eurolex_eval_subset.py `
+  --source-jsonl data/multi_eurlex/train.jsonl `
+  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
+  --output-dir data/eurolex_eval_subset_4_lang_10_legal_terms `
+  --language en `
+  --language de `
+  --language fr `
+  --language sk `
+  --limit 10 `
+  --min-target-terms 1 `
+  --rank-by-target-terms `
+  --extract-legal-terms `
+  --legal-terminology-model gpt-5.4-mini `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology `
+  --legal-terminology-workers 4 `
+  --legal-terminology-cache data/eurolex_legal_terminology_cache.jsonl
 ```

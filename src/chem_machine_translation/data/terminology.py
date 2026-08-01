@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from chem_machine_translation.translation.iate import IATEClient, iate_language_code
@@ -73,6 +73,33 @@ Return only valid JSON with this shape:
     {
       "target_term": "exact target text span",
       "category": "chemical|material|process|method|unit|identifier|hazard|other",
+      "confidence": 0.0,
+      "reason": "short reason"
+    }
+  ]
+}
+"""
+
+LEGAL_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT = """You extract legal terminology candidates from
+target/reference translations for legal machine-translation benchmarks.
+
+The text may be in any language. Return only exact spans that appear in the provided target text.
+Do not translate, normalize, rewrite, explain, or invent terms.
+
+Extract strict legal or regulatory terminology candidates:
+- legal instruments, procedures, institutions, rights, obligations, restrictions, sanctions;
+- regulatory domains, administrative bodies, legal acts, committees, programmes, funds;
+- multi-word noun phrases and named legal entities that would matter for translation quality.
+
+Avoid common prose, dates, article numbers, names of people, whole clauses, generic single words,
+and boilerplate unless the phrase is a recognized legal or institutional term.
+
+Return only valid JSON with this shape:
+{
+  "terms": [
+    {
+      "target_term": "exact target text span",
+      "category": "institution|legal_act|procedure|right|obligation|sanction|policy|other",
       "confidence": 0.0,
       "reason": "short reason"
     }
@@ -173,6 +200,73 @@ class LLMTargetCandidateExtractor:
             ],
         )
         return parse_llm_target_candidates(response.output_text, text)
+
+
+class LLMLegalCandidateExtractor:
+    """Uses an LLM only to propose exact target-side legal candidate spans."""
+
+    def __init__(self, client: Any, model: str = "gpt-4.1-mini") -> None:
+        self.client = client
+        self.model = model
+
+    def extract(
+        self,
+        text: str,
+        target_language: str,
+        max_terms: int,
+    ) -> list[DatasetTerminologyTerm]:
+        response = self.client.responses.create(
+            model=self.model,
+            temperature=0.0,
+            input=[
+                {"role": "system", "content": LEGAL_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": (
+                        f"Extract up to {max_terms} strict legal terminology candidates from "
+                        f"this {target_language} target/reference text.\n\nTarget text:\n{text}"
+                    ),
+                },
+            ],
+        )
+        return parse_llm_legal_candidates(response.output_text, text)
+
+
+class UNTERMClient:
+    """Best-effort UNTERM search-page verifier.
+
+    UNTERM does not provide a documented public API. This client fails closed: it only returns
+    evidence when the public search page is reachable and does not report an empty result set.
+    """
+
+    def __init__(
+        self,
+        endpoint: str = "https://unterm.un.org/unterm2",
+        timeout_seconds: float = 5.0,
+    ) -> None:
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout_seconds = timeout_seconds
+        self._cache: dict[tuple[str, str], bool] = {}
+
+    def term_exists(self, term: str, language_code: str) -> bool:
+        if language_code not in {"ar", "zh", "en", "fr", "ru", "es"}:
+            return False
+        cache_key = (normalize_term_key(term), language_code)
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+        payload = self._search(term, language_code)
+        exists = bool(re.search(r"Results\s+1-\d+\s+of\s+[1-9]\d*", payload))
+        self._cache[cache_key] = exists
+        return exists
+
+    def _search(self, term: str, language_code: str) -> str:
+        url = f"{self.endpoint}/{language_code}/search?{urlencode({'searchTerm': term})}"
+        request = Request(url, headers={"User-Agent": _USER_AGENT})
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                return response.read().decode("utf-8", errors="replace")
+        except (HTTPError, URLError, TimeoutError):
+            return ""
 
 
 class TargetTerminologyExtractor:
@@ -346,6 +440,141 @@ class DatasetTerminologyGenerator:
         return self.add_external_candidates(term, target_language, source_language)
 
 
+class LegalTerminologyGenerator:
+    """Generates target-side legal terminology for EuroLex-style benchmark manifests."""
+
+    def __init__(
+        self,
+        client: Any,
+        model: str = "gpt-4.1-mini",
+        max_terms: int = 20,
+        use_iate: bool = False,
+        use_wikidata: bool = False,
+        use_unterm: bool = False,
+        cache_path: Path | None = None,
+        iate_client: IATEClient | None = None,
+        wikidata_client: WikidataClient | None = None,
+        unterm_client: UNTERMClient | None = None,
+        llm_extractor: LLMLegalCandidateExtractor | None = None,
+    ) -> None:
+        self.model = model
+        self.max_terms = max_terms
+        self.use_iate = use_iate
+        self.use_wikidata = use_wikidata
+        self.use_unterm = use_unterm
+        self.cache_path = cache_path
+        self.iate_client = iate_client or (IATEClient() if use_iate else None)
+        self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
+        self.unterm_client = unterm_client or (UNTERMClient() if use_unterm else None)
+        self.llm_extractor = llm_extractor or LLMLegalCandidateExtractor(client, model)
+        self._cache = load_terminology_cache(cache_path)
+        self._cache_lock = threading.Lock()
+
+    def generate(
+        self,
+        target_language: str,
+        reference_text: str,
+        eurovoc_descriptors: dict[str, dict[str, str]] | None = None,
+    ) -> list[DatasetTerminologyTerm]:
+        cache_key = legal_terminology_cache_key(
+            reference_text=reference_text,
+            target_language=target_language,
+            model=self.model,
+            max_terms=self.max_terms,
+            use_iate=self.use_iate,
+            use_wikidata=self.use_wikidata,
+            use_unterm=self.use_unterm,
+            eurovoc_descriptors=eurovoc_descriptors or {},
+        )
+        with self._cache_lock:
+            cached_terms = self._cache.get(cache_key)
+        if cached_terms is not None:
+            return [dataset_term_from_json(term) for term in cached_terms]
+
+        terms = self.llm_extractor.extract(
+            text=reference_text,
+            target_language=target_language,
+            max_terms=self.max_terms,
+        )
+        terms = [
+            self.add_legal_evidence(
+                term=term,
+                target_language=target_language,
+                eurovoc_descriptors=eurovoc_descriptors or {},
+            )
+            for term in terms
+        ]
+        terms = select_legal_terms(terms, max_terms=self.max_terms)
+
+        with self._cache_lock:
+            if cache_key not in self._cache:
+                self._cache[cache_key] = [term.to_json() for term in terms]
+                append_terminology_cache(self.cache_path, cache_key, terms)
+        return terms
+
+    def add_legal_evidence(
+        self,
+        term: DatasetTerminologyTerm,
+        target_language: str,
+        eurovoc_descriptors: dict[str, dict[str, str]],
+    ) -> DatasetTerminologyTerm:
+        if not term.target_terms:
+            return term
+        target_term = term.target_terms[0]
+        iate_code = iate_language_code(target_language)
+        wikidata_code = wikidata_language_code(target_language)
+        language_code = iate_code or wikidata_code
+        candidates: dict[str, list[str]] = {}
+        source_parts = [term.source]
+
+        if self.iate_client and iate_code:
+            translation = self.iate_client.translate_term(
+                source_term=target_term,
+                source_language_code=iate_code,
+                target_language_code=iate_code,
+            )
+            if translation:
+                candidates["iate"] = [translation.target_label]
+                source_parts.append("iate")
+
+        if self.wikidata_client and wikidata_code:
+            translation = self.wikidata_client.translate_term(
+                source_term=target_term,
+                source_language_code=wikidata_code,
+                target_language_code=wikidata_code,
+            )
+            if translation:
+                candidates["wikipedia"] = [translation.target_label]
+                source_parts.append("wikipedia")
+
+        if self.unterm_client and language_code and self.unterm_client.term_exists(
+            target_term,
+            language_code,
+        ):
+            candidates["unterm"] = [target_term]
+            source_parts.append("unterm")
+
+        eurovoc_match = matching_eurovoc_descriptor(
+            target_term=target_term,
+            target_language_code=language_code or "",
+            descriptors_by_concept_id=eurovoc_descriptors,
+        )
+        if eurovoc_match:
+            candidates["eurovoc"] = [eurovoc_match]
+            source_parts.append("eurovoc")
+
+        if not candidates:
+            return term
+        return replace_dataset_term(
+            term,
+            source="+".join(dict.fromkeys(source_parts)),
+            term_group="verified",
+            verified_by=tuple(candidates),
+            confidence=min(1.0, term.confidence + 0.05 * len(candidates)),
+            candidates=candidates,
+        )
+
+
 def parse_llm_target_candidates(text: str, reference_text: str) -> list[DatasetTerminologyTerm]:
     match = _JSON_OBJECT_RE.search(text)
     try:
@@ -369,6 +598,38 @@ def parse_llm_target_candidates(text: str, reference_text: str) -> list[DatasetT
                 confidence=max(parse_confidence(raw_term.get("confidence")), 0.8),
                 reason=str(raw_term.get("reason", "")).strip()
                 or "LLM-proposed exact target span verified in reference text.",
+            )
+        )
+    return terms
+
+
+def parse_llm_legal_candidates(text: str, reference_text: str) -> list[DatasetTerminologyTerm]:
+    match = _JSON_OBJECT_RE.search(text)
+    try:
+        payload = json.loads(match.group(0) if match else text)
+    except json.JSONDecodeError:
+        return []
+
+    terms = []
+    for raw_term in payload.get("terms", []):
+        if not isinstance(raw_term, dict):
+            continue
+        candidate = clean_candidate_term(str(raw_term.get("target_term", "")))
+        verified_span = find_exact_text_span(reference_text, candidate)
+        if not verified_span:
+            continue
+        terms.append(
+            DatasetTerminologyTerm(
+                source_term="",
+                target_terms=(verified_span,),
+                reference_candidates=(verified_span,),
+                category=str(raw_term.get("category", "other")).strip() or "other",
+                source="legal_llm",
+                term_group="llm",
+                confidence=max(parse_confidence(raw_term.get("confidence")), 0.8),
+                decision="keep_reference",
+                reason=str(raw_term.get("reason", "")).strip()
+                or "Legal LLM-proposed exact target span verified in reference text.",
             )
         )
     return terms
@@ -627,6 +888,37 @@ def build_eurolex_descriptor_terms(
     return terms
 
 
+def matching_eurovoc_descriptor(
+    target_term: str,
+    target_language_code: str,
+    descriptors_by_concept_id: dict[str, dict[str, str]],
+) -> str:
+    normalized_term = normalize_term_key(target_term)
+    if not normalized_term:
+        return ""
+    for labels_by_language in descriptors_by_concept_id.values():
+        descriptor = labels_by_language.get(target_language_code) or labels_by_language.get("en")
+        if descriptor and normalize_term_key(descriptor) == normalized_term:
+            return " ".join(descriptor.split())
+    return ""
+
+
+def select_legal_terms(
+    terms: list[DatasetTerminologyTerm],
+    max_terms: int,
+) -> list[DatasetTerminologyTerm]:
+    deduplicated = deduplicate_terms(terms)
+    return sorted(
+        deduplicated,
+        key=lambda term: (
+            term.term_group == "verified",
+            term.confidence,
+            len(term.target_terms[0]) if term.target_terms else 0,
+        ),
+        reverse=True,
+    )[:max_terms]
+
+
 def infer_term_group_from_source(source: str, candidates: dict[str, list[str]]) -> str:
     if candidates:
         return "verified"
@@ -655,6 +947,31 @@ def terminology_cache_key(
         "use_wikidata": use_wikidata,
         "use_pubchem": use_pubchem,
         "pipeline_version": _TERMINOLOGY_PIPELINE_VERSION,
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def legal_terminology_cache_key(
+    reference_text: str,
+    target_language: str,
+    model: str,
+    max_terms: int,
+    use_iate: bool,
+    use_wikidata: bool,
+    use_unterm: bool,
+    eurovoc_descriptors: dict[str, dict[str, str]],
+) -> str:
+    payload = {
+        "reference_text": reference_text,
+        "target_language": target_language,
+        "model": model,
+        "max_terms": max_terms,
+        "use_iate": use_iate,
+        "use_wikidata": use_wikidata,
+        "use_unterm": use_unterm,
+        "eurovoc_descriptors": eurovoc_descriptors,
+        "pipeline_version": "legal-target-llm-candidate-v2",
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
