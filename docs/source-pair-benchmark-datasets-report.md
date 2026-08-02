@@ -73,8 +73,10 @@ EuroLex benchmark:
   `benchmark_datasets/eurolex_source_pairs_10_per_pair/eurolex-12-directions-120-manifest.jsonl`
 - Rows: 120.
 - Directions: all ordered pairs across `en`, `de`, `fr`, and `sk`.
-- Terminology: all 120 rows include EuroVoc-derived verified target terminology. The manifest has
-  261 target-side EuroVoc terms in total.
+- Terminology: all 120 rows include legal target terminology generated from exact target/reference
+  spans. The manifest has 2,571 terms: 963 `verified` and 1,608 `llm`.
+- Verification sources used in this dataset: IATE, EuroVoc, and Wikipedia/Wikidata. UNTERM is also
+  enabled in the build and fails closed when the public search page does not report a positive result.
 
 Build command:
 
@@ -84,7 +86,14 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
   --output-dir benchmark_datasets/eurolex_source_pairs_10_per_pair `
   --limit 10 `
   --min-input-tokens 32 `
-  --max-input-tokens 1024
+  --max-input-tokens 1024 `
+  --extract-legal-terms `
+  --legal-terminology-model gpt-5.4-mini `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology `
+  --legal-terminology-workers 4 `
+  --legal-terminology-cache data/eurolex_source_pairs_10_legal_terminology_cache.jsonl
 ```
 
 ## Dataset Format
@@ -139,8 +148,8 @@ General metrics available for both datasets:
 Terminology metrics:
 
 - `target_term_coverage` works when manifest terminology exists.
-- EuroLex supports `target_term_coverage` directly because EuroVoc target terms are stored in the
-  manifest.
+- EuroLex supports `target_term_coverage` directly because verified legal target terms are stored in
+  the manifest.
 - Google Patents source-pair manifests include generated chemistry terminology. Default
   `target_term_coverage` uses only `verified` terms, so rows that only have `llm` or `algorithmic`
   terms are not applicable for the default terminology score.
@@ -174,7 +183,7 @@ Model run configuration:
 - Strategy: `openai`
 - Model: `gpt-5.4-mini`
 - Google output: `reports/google-patents-source-pairs-10-gpt-5.4-mini-expanded-terminology.jsonl`
-- EuroLex output: `reports/eurolex-source-pairs-10-gpt-5.4-mini.jsonl`
+- EuroLex output: `reports/eurolex-source-pairs-10-gpt-5.4-mini-legal-terminology.jsonl`
 - Google metrics: `sequence_similarity`, `bleu`, `chrf2++`, `target_term_coverage`
 - EuroLex metrics: `sequence_similarity`, `bleu`, `chrf2++`, `target_term_coverage`
 
@@ -207,27 +216,28 @@ EuroLex overall:
 - Corpus BLEU: 66.38.
 - Corpus chrF2++: 79.74.
 - Mean sequence similarity: 64.66.
-- Mean verified target-term coverage: 85.41.
+- Mean verified target-term coverage: 82.24 over all 120 rows.
 
 EuroLex by direction:
 
-- `de-en`: n=10, BLEU 64.87, chrF2++ 83.90, target-term coverage 100.00.
-- `de-fr`: n=10, BLEU 59.55, chrF2++ 76.89, target-term coverage 66.42.
-- `de-sk`: n=10, BLEU 53.88, chrF2++ 73.81, target-term coverage 96.67.
-- `en-de`: n=10, BLEU 65.00, chrF2++ 79.07, target-term coverage 83.33.
-- `en-fr`: n=10, BLEU 59.89, chrF2++ 75.25, target-term coverage 60.58.
-- `en-sk`: n=10, BLEU 73.95, chrF2++ 84.46, target-term coverage 90.00.
-- `fr-de`: n=10, BLEU 67.36, chrF2++ 85.32, target-term coverage 90.00.
-- `fr-en`: n=10, BLEU 64.02, chrF2++ 84.73, target-term coverage 100.00.
-- `fr-sk`: n=10, BLEU 58.39, chrF2++ 76.67, target-term coverage 89.17.
-- `sk-de`: n=10, BLEU 64.32, chrF2++ 78.29, target-term coverage 85.00.
-- `sk-en`: n=10, BLEU 79.19, chrF2++ 89.06, target-term coverage 100.00.
-- `sk-fr`: n=10, BLEU 55.91, chrF2++ 73.14, target-term coverage 63.77.
+- `de-en`: n=10, BLEU 64.87, chrF2++ 83.90, target-term coverage 94.88 over 10 applicable rows.
+- `de-fr`: n=10, BLEU 59.55, chrF2++ 76.89, target-term coverage 65.58 over 10 applicable rows.
+- `de-sk`: n=10, BLEU 53.88, chrF2++ 73.81, target-term coverage 92.35 over 10 applicable rows.
+- `en-de`: n=10, BLEU 65.00, chrF2++ 79.07, target-term coverage 76.61 over 10 applicable rows.
+- `en-fr`: n=10, BLEU 59.89, chrF2++ 75.25, target-term coverage 61.90 over 10 applicable rows.
+- `en-sk`: n=10, BLEU 73.95, chrF2++ 84.46, target-term coverage 91.19 over 10 applicable rows.
+- `fr-de`: n=10, BLEU 67.36, chrF2++ 85.32, target-term coverage 89.15 over 10 applicable rows.
+- `fr-en`: n=10, BLEU 64.02, chrF2++ 84.73, target-term coverage 91.93 over 10 applicable rows.
+- `fr-sk`: n=10, BLEU 58.39, chrF2++ 76.67, target-term coverage 88.63 over 10 applicable rows.
+- `sk-de`: n=10, BLEU 64.32, chrF2++ 78.29, target-term coverage 78.34 over 10 applicable rows.
+- `sk-en`: n=10, BLEU 79.19, chrF2++ 89.06, target-term coverage 96.87 over 10 applicable rows.
+- `sk-fr`: n=10, BLEU 55.91, chrF2++ 73.14, target-term coverage 59.51 over 10 applicable rows.
 
 Interpretation:
 
 - EuroLex scores are much higher because the source-target pairs are close legal translations and
-  the model preserves many EuroVoc terms.
+  the model preserves many verified legal terms. The expanded terminology run is stricter than the
+  EuroVoc-only run because it evaluates many more verified spans.
 - Google Patents is harder and more uneven, especially for Chinese and Spanish directions. These
   results should be read as a benchmark smoke run, not as a final model-quality claim.
 - Google terminology is now present, but default terminology scoring only uses externally verified

@@ -63,7 +63,10 @@ uv run --no-sync python scripts/build_google_patents_eval_subset.py `
 - Source: `benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl`
 - Rows: 120 total across 12 directions.
 - Directions: all ordered pairs across `en`, `de`, `fr`, and `sk`.
-- EuroVoc terminology is included from exact target-side EuroVoc descriptor matches.
+- Legal terminology is generated during the benchmark build. All rows have terminology; all 120 rows
+  have at least one externally verified term for default `target_term_coverage`.
+- Verification sources include IATE, EuroVoc, and Wikipedia/Wikidata. UNTERM is enabled as
+  best-effort evidence and fails closed when the public search page does not report a positive result.
 - Combined manifest:
   `benchmark_datasets/eurolex_source_pairs_10_per_pair/eurolex-12-directions-120-manifest.jsonl`
 
@@ -75,7 +78,14 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
   --output-dir benchmark_datasets/eurolex_source_pairs_10_per_pair `
   --limit 10 `
   --min-input-tokens 32 `
-  --max-input-tokens 1024
+  --max-input-tokens 1024 `
+  --extract-legal-terms `
+  --legal-terminology-model gpt-5.4-mini `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology `
+  --legal-terminology-workers 4 `
+  --legal-terminology-cache data/eurolex_source_pairs_10_legal_terminology_cache.jsonl
 ```
 
 ## Terminology Groups

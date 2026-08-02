@@ -6,7 +6,9 @@ We added a EuroLex/MultiEURLEX benchmark path for legal translation experiments.
 from the chemistry terminology pipeline. The goal is to create legal-domain source-target pairs and
 attach target-side legal terminology to the manifest before evaluation.
 
-No translation benchmark results have been run yet for this dataset.
+The current portable benchmark dataset is
+`benchmark_datasets/eurolex_source_pairs_10_per_pair`, with 120 rows across 12 ordered directions.
+It is built with legal terminology enabled by default.
 
 ## Data Source
 
@@ -54,6 +56,13 @@ Generated local datasets so far:
   - 10 rows per direction;
   - 120 total pairs;
   - legal LLM terminology extraction enabled.
+- `benchmark_datasets/eurolex_source_pairs_10_per_pair`
+  - tracked portable benchmark dataset built from
+    `benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl`;
+  - 12 ordered directions;
+  - 10 rows per direction;
+  - 120 total pairs;
+  - legal LLM terminology extraction and external verification enabled.
 
 These datasets are local only because `data/` is ignored by Git.
 
@@ -86,21 +95,21 @@ target/reference text.
 - **UNTERM**: best-effort only. UNTERM has no documented public API, so the code fails closed unless
   the public search page reports a positive result range.
 
-## Small Sample Check
+## Current Sample Check
 
 The 10-per-pair legal terminology sample produced:
 
 - 120 rows;
 - 120 rows with terms;
-- 2,586 total terms;
-- 1,027 `verified` terms;
-- 1,559 `llm` terms.
+- 2,571 total terms;
+- 963 `verified` terms;
+- 1,608 `llm` terms.
 
 Verifier contribution:
 
-- IATE: 749;
-- EuroVoc: 278;
-- Wikipedia/Wikidata: 4;
+- IATE: 702;
+- EuroVoc: 261;
+- Wikipedia/Wikidata: 6;
 - UNTERM: 0 after conservative filtering.
 
 Example legal terms:
@@ -110,7 +119,5 @@ Example legal terms:
 - `zolltarifliche und statistische Nomenklatur` verified by IATE;
 - `VERORDNUNG (EWG) Nr. 1056/91` kept as an exact LLM term.
 
-## Next Step
-
-Run an actual translation benchmark over a small EuroLex subset and report the metrics separately
-from the Google Patents chemistry benchmark.
+The current `gpt-5.4-mini` benchmark metrics for this dataset are reported in
+`docs/source-pair-benchmark-datasets-report.md`.

@@ -92,5 +92,12 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
   --output-dir benchmark_datasets/eurolex_from_source_pairs `
   --limit 250 `
   --min-input-tokens 32 `
-  --max-input-tokens 1024
+  --max-input-tokens 1024 `
+  --extract-legal-terms `
+  --legal-terminology-model gpt-5.4-mini `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology `
+  --legal-terminology-workers 4 `
+  --legal-terminology-cache data/eurolex_legal_terminology_cache.jsonl
 ```
