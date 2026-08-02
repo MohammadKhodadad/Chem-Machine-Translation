@@ -49,8 +49,13 @@ _CHEMICAL_PREFIX_SCAN_RE = re.compile(
     re.IGNORECASE,
 )
 _PUBCHEM_ENDPOINT = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name"
+_CHEBI_ENDPOINT = "https://www.ebi.ac.uk/chebi/backend/api/public"
+_CHEMBL_ENDPOINT = "https://www.ebi.ac.uk/chembl/api/data"
+_MESH_LOOKUP_ENDPOINT = "https://id.nlm.nih.gov/mesh/lookup/descriptor"
+_NCI_ENDPOINT = "https://api-evsrest.nci.nih.gov/api/v1"
+_AGROVOC_ENDPOINT = "https://agrovoc.fao.org/browse/rest/v1"
 _USER_AGENT = "chem-machine-translation/0.1 (benchmark terminology lookup)"
-_TERMINOLOGY_PIPELINE_VERSION = "target-llm-candidate-v1"
+_TERMINOLOGY_PIPELINE_VERSION = "target-llm-candidate-v2"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT = """You extract terminology candidates from target
@@ -170,6 +175,188 @@ class PubChemClient:
                 synonyms.extend(str(synonym).strip() for synonym in raw_synonyms if synonym)
         self._cache[key] = list(dict.fromkeys(synonyms[:20]))
         return self._cache[key]
+
+
+class ChEBIClient:
+    """Best-effort ChEBI verifier using the public EBI search API."""
+
+    def __init__(self, endpoint: str = _CHEBI_ENDPOINT, timeout_seconds: float = 5.0) -> None:
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout_seconds = timeout_seconds
+        self._cache: dict[str, list[str]] = {}
+
+    def lookup_synonyms(self, term: str) -> list[str]:
+        key = term.casefold()
+        if key in self._cache:
+            return self._cache[key]
+        payload = get_json(
+            f"{self.endpoint}/es_search/?{urlencode({'query': term})}",
+            self.timeout_seconds,
+        )
+        names = collect_string_values(
+            payload,
+            {"name", "ascii_name", "chebi_accession"},
+        )
+        self._cache[key] = names[:20] if term_matches_any(term, names) else []
+        return self._cache[key]
+
+
+class ChEMBLClient:
+    """Best-effort ChEMBL verifier for molecules and synonyms."""
+
+    def __init__(self, endpoint: str = _CHEMBL_ENDPOINT, timeout_seconds: float = 5.0) -> None:
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout_seconds = timeout_seconds
+        self._cache: dict[str, list[str]] = {}
+
+    def lookup_synonyms(self, term: str) -> list[str]:
+        key = term.casefold()
+        if key in self._cache:
+            return self._cache[key]
+        payload = get_json(
+            f"{self.endpoint}/molecule/search.json?{urlencode({'q': term})}",
+            self.timeout_seconds,
+        )
+        names = collect_string_values(
+            payload,
+            {"pref_name", "molecule_synonym", "synonyms", "molecule_chembl_id"},
+        )
+        self._cache[key] = names[:20] if term_matches_any(term, names) else []
+        return self._cache[key]
+
+
+class MeSHClient:
+    """Best-effort MeSH RDF verifier via the NLM lookup API."""
+
+    def __init__(
+        self,
+        endpoint: str = _MESH_LOOKUP_ENDPOINT,
+        timeout_seconds: float = 5.0,
+    ) -> None:
+        self.endpoint = endpoint
+        self.timeout_seconds = timeout_seconds
+        self._cache: dict[str, list[str]] = {}
+
+    def lookup_synonyms(self, term: str) -> list[str]:
+        key = term.casefold()
+        if key in self._cache:
+            return self._cache[key]
+        payload = get_json(
+            f"{self.endpoint}?{urlencode({'label': term, 'match': 'contains', 'limit': 10})}",
+            self.timeout_seconds,
+        )
+        names = collect_string_values(payload, {"label", "resource"})
+        self._cache[key] = names[:20] if term_matches_any(term, names) else []
+        return self._cache[key]
+
+
+class NCIThesaurusClient:
+    """Best-effort NCI Thesaurus verifier using EVS REST."""
+
+    def __init__(self, endpoint: str = _NCI_ENDPOINT, timeout_seconds: float = 5.0) -> None:
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout_seconds = timeout_seconds
+        self._cache: dict[str, list[str]] = {}
+
+    def lookup_synonyms(self, term: str) -> list[str]:
+        key = term.casefold()
+        if key in self._cache:
+            return self._cache[key]
+        payload = get_json(
+            f"{self.endpoint}/concept/ncit/search?"
+            f"{urlencode({'term': term, 'type': 'match', 'include': 'minimal', 'pageSize': 10})}",
+            self.timeout_seconds,
+        )
+        names = collect_string_values(payload, {"name", "label", "termName"})
+        self._cache[key] = names[:20] if term_matches_any(term, names) else []
+        return self._cache[key]
+
+
+class AGROVOCClient:
+    """Best-effort multilingual AGROVOC verifier via Skosmos REST."""
+
+    def __init__(self, endpoint: str = _AGROVOC_ENDPOINT, timeout_seconds: float = 5.0) -> None:
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout_seconds = timeout_seconds
+        self._cache: dict[tuple[str, str], list[str]] = {}
+
+    def lookup_synonyms(self, term: str, language_code: str = "") -> list[str]:
+        key = (term.casefold(), language_code)
+        if key in self._cache:
+            return self._cache[key]
+        query = {
+            "query": f"*{term}*",
+            "lang": language_code or "en",
+        }
+        payload = get_json(
+            f"{self.endpoint}/search/?{urlencode(query)}",
+            self.timeout_seconds,
+        )
+        names = collect_string_values(payload, {"prefLabel", "altLabel", "label"})
+        self._cache[key] = names[:20] if term_matches_any(term, names) else []
+        return self._cache[key]
+
+
+def get_json(url: str, timeout_seconds: float) -> Any:
+    request = Request(url, headers={"User-Agent": _USER_AGENT, "Accept": "application/json"})
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        return {}
+
+
+def post_json(url: str, payload: dict[str, Any], timeout_seconds: float) -> Any:
+    data = json.dumps(payload).encode("utf-8")
+    request = Request(
+        url,
+        data=data,
+        headers={
+            "User-Agent": _USER_AGENT,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        return {}
+
+
+def collect_string_values(payload: Any, keys: set[str]) -> list[str]:
+    values: list[str] = []
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            if key in keys:
+                values.extend(flatten_strings(value))
+            elif isinstance(value, dict | list):
+                values.extend(collect_string_values(value, keys))
+    elif isinstance(payload, list):
+        for item in payload:
+            values.extend(collect_string_values(item, keys))
+    return list(dict.fromkeys(value.strip() for value in values if value.strip()))
+
+
+def flatten_strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return collect_string_values(value, set(value))
+    if isinstance(value, list):
+        values: list[str] = []
+        for item in value:
+            values.extend(flatten_strings(item))
+        return values
+    return []
+
+
+def term_matches_any(term: str, names: list[str]) -> bool:
+    key = normalize_term_key(term)
+    return any(
+        key and (key == normalize_term_key(name) or key in normalize_term_key(name))
+        for name in names
+    )
 
 
 class LLMTargetCandidateExtractor:
@@ -307,10 +494,20 @@ class DatasetTerminologyGenerator:
         use_iate: bool = False,
         use_wikidata: bool = False,
         use_pubchem: bool = False,
+        use_chebi: bool = False,
+        use_chembl: bool = False,
+        use_mesh: bool = False,
+        use_nci: bool = False,
+        use_agrovoc: bool = False,
         cache_path: Path | None = None,
         iate_client: IATEClient | None = None,
         wikidata_client: WikidataClient | None = None,
         pubchem_client: PubChemClient | None = None,
+        chebi_client: ChEBIClient | None = None,
+        chembl_client: ChEMBLClient | None = None,
+        mesh_client: MeSHClient | None = None,
+        nci_client: NCIThesaurusClient | None = None,
+        agrovoc_client: AGROVOCClient | None = None,
         llm_extractor: LLMTargetCandidateExtractor | None = None,
         extractor: TargetTerminologyExtractor | None = None,
     ) -> None:
@@ -320,10 +517,20 @@ class DatasetTerminologyGenerator:
         self.use_iate = use_iate
         self.use_wikidata = use_wikidata
         self.use_pubchem = use_pubchem
+        self.use_chebi = use_chebi
+        self.use_chembl = use_chembl
+        self.use_mesh = use_mesh
+        self.use_nci = use_nci
+        self.use_agrovoc = use_agrovoc
         self.cache_path = cache_path
         self.iate_client = iate_client or (IATEClient() if use_iate else None)
         self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
         self.pubchem_client = pubchem_client or (PubChemClient() if use_pubchem else None)
+        self.chebi_client = chebi_client or (ChEBIClient() if use_chebi else None)
+        self.chembl_client = chembl_client or (ChEMBLClient() if use_chembl else None)
+        self.mesh_client = mesh_client or (MeSHClient() if use_mesh else None)
+        self.nci_client = nci_client or (NCIThesaurusClient() if use_nci else None)
+        self.agrovoc_client = agrovoc_client or (AGROVOCClient() if use_agrovoc else None)
         self.llm_extractor = llm_extractor or (
             LLMTargetCandidateExtractor(client=client, model=model)
             if use_llm and client is not None
@@ -350,6 +557,11 @@ class DatasetTerminologyGenerator:
             use_iate=self.use_iate,
             use_wikidata=self.use_wikidata,
             use_pubchem=self.use_pubchem,
+            use_chebi=self.use_chebi,
+            use_chembl=self.use_chembl,
+            use_mesh=self.use_mesh,
+            use_nci=self.use_nci,
+            use_agrovoc=self.use_agrovoc,
         )
         with self._cache_lock:
             cached_terms = self._cache.get(cache_key)
@@ -395,6 +607,39 @@ class DatasetTerminologyGenerator:
             if synonyms:
                 candidates["pubchem"] = synonyms
                 source_parts.append("pubchem")
+
+        if self.chebi_client:
+            synonyms = self.chebi_client.lookup_synonyms(target_term)
+            if synonyms:
+                candidates["chebi"] = synonyms
+                source_parts.append("chebi")
+
+        if self.chembl_client:
+            synonyms = self.chembl_client.lookup_synonyms(target_term)
+            if synonyms:
+                candidates["chembl"] = synonyms
+                source_parts.append("chembl")
+
+        if self.mesh_client:
+            synonyms = self.mesh_client.lookup_synonyms(target_term)
+            if synonyms:
+                candidates["mesh"] = synonyms
+                source_parts.append("mesh")
+
+        if self.nci_client:
+            synonyms = self.nci_client.lookup_synonyms(target_term)
+            if synonyms:
+                candidates["nci"] = synonyms
+                source_parts.append("nci")
+
+        if self.agrovoc_client:
+            language_code = wikidata_language_code(target_language) or iate_language_code(
+                target_language,
+            )
+            synonyms = self.agrovoc_client.lookup_synonyms(target_term, language_code)
+            if synonyms:
+                candidates["agrovoc"] = synonyms
+                source_parts.append("agrovoc")
 
         if self.iate_client:
             language_code = iate_language_code(target_language)
@@ -936,6 +1181,11 @@ def terminology_cache_key(
     use_iate: bool,
     use_wikidata: bool,
     use_pubchem: bool,
+    use_chebi: bool = False,
+    use_chembl: bool = False,
+    use_mesh: bool = False,
+    use_nci: bool = False,
+    use_agrovoc: bool = False,
 ) -> str:
     payload = {
         "reference_text": reference_text,
@@ -946,6 +1196,11 @@ def terminology_cache_key(
         "use_iate": use_iate,
         "use_wikidata": use_wikidata,
         "use_pubchem": use_pubchem,
+        "use_chebi": use_chebi,
+        "use_chembl": use_chembl,
+        "use_mesh": use_mesh,
+        "use_nci": use_nci,
+        "use_agrovoc": use_agrovoc,
         "pipeline_version": _TERMINOLOGY_PIPELINE_VERSION,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")

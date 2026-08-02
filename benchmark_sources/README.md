@@ -26,7 +26,12 @@ uv run --no-sync python scripts/build_google_patents_eval_subset.py `
   --pubchem-terminology `
   --wikipedia-terminology `
   --iate-terminology `
-  --terminology-cache data/google_patents_source_pairs_terminology_cache.jsonl `
+  --chebi-terminology `
+  --chembl-terminology `
+  --mesh-terminology `
+  --nci-terminology `
+  --agrovoc-terminology `
+  --terminology-cache data/google_patents_source_pairs_expanded_terminology_cache.jsonl `
   --terminology-workers 4
 ```
 

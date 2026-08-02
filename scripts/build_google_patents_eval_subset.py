@@ -53,6 +53,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--wikidata-terminology", action="store_true")
     parser.add_argument("--wikipedia-terminology", action="store_true")
     parser.add_argument("--pubchem-terminology", action="store_true")
+    parser.add_argument("--chebi-terminology", action="store_true")
+    parser.add_argument("--chembl-terminology", action="store_true")
+    parser.add_argument("--mesh-terminology", action="store_true")
+    parser.add_argument("--nci-terminology", action="store_true")
+    parser.add_argument("--agrovoc-terminology", action="store_true")
     parser.add_argument("--terminology-cache", type=Path, default=None)
     parser.add_argument("--terminology-workers", type=int, default=1)
     parser.add_argument("--openai-timeout", type=float, default=120.0)
@@ -459,6 +464,11 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         or args.wikidata_terminology
         or args.wikipedia_terminology
         or args.pubchem_terminology
+        or args.chebi_terminology
+        or args.chembl_terminology
+        or args.mesh_terminology
+        or args.nci_terminology
+        or args.agrovoc_terminology
     ):
         return None
     client = None
@@ -479,6 +489,11 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         use_iate=args.iate_terminology,
         use_wikidata=args.wikidata_terminology or args.wikipedia_terminology,
         use_pubchem=args.pubchem_terminology,
+        use_chebi=args.chebi_terminology,
+        use_chembl=args.chembl_terminology,
+        use_mesh=args.mesh_terminology,
+        use_nci=args.nci_terminology,
+        use_agrovoc=args.agrovoc_terminology,
         cache_path=args.terminology_cache,
     )
 

@@ -38,8 +38,10 @@ Google Patents benchmark:
 - Directions: `de-es`, `de-fr`, `en-de`, `en-es`, `en-fr`, `en-zh`, `fr-es`, `zh-de`, `zh-fr`.
 - Most directions have 10 rows. `zh-de` has only 1 row because the tracked source file only has
   one available `zh-de` pair.
-- Terminology: all 81 rows include generated chemistry terminology. The manifest has 1,121 terms:
-  296 `verified`, 711 `llm`, and 114 `algorithmic`.
+- Terminology: all 81 rows include generated chemistry terminology. The manifest has 1,143 terms:
+  377 `verified`, 671 `llm`, and 95 `algorithmic`.
+- Verification sources: PubChem, IATE, Wikipedia/Wikidata, ChEBI, ChEMBL, MeSH RDF,
+  NCI Thesaurus, and AGROVOC.
 
 Build command:
 
@@ -55,7 +57,12 @@ uv run --no-sync python scripts/build_google_patents_eval_subset.py `
   --pubchem-terminology `
   --wikipedia-terminology `
   --iate-terminology `
-  --terminology-cache data/google_patents_source_pairs_10_terminology_cache.jsonl `
+  --chebi-terminology `
+  --chembl-terminology `
+  --mesh-terminology `
+  --nci-terminology `
+  --agrovoc-terminology `
+  --terminology-cache data/google_patents_source_pairs_10_expanded_terminology_cache.jsonl `
   --terminology-workers 4
 ```
 
@@ -91,6 +98,32 @@ Both generated benchmark datasets use the same direction-folder architecture:
   `target_row_id`, `text_field`, and optional `terminology`.
 
 This format is consumed by `scripts/evaluate_parallel_manifest.py`.
+
+## Google Patents Pair Quality Issues
+
+The Google source-pair dataset is useful for exercising the benchmark pipeline, but the Spanish
+directions need cleanup before they should be treated as reliable benchmark evidence.
+
+Observed issues:
+
+- `de-es` is likely mislabeled or corrupted. It has 10 rows, but 9 rows have source-target
+  similarity above `0.99`; the target text is often German rather than Spanish. Example terms
+  extracted from this direction include German spans such as `Plasmabeschichtung`,
+  `Beschichtungsvorrichtung`, and `Reaktor`.
+- `en-de` has one exact duplicate-style row: `within-document:abstract:en-de:AT-519409-A1`.
+  The source and target are both English for that row.
+- `zh-de` only has one row in the tracked source file, so it is not a meaningful 10-row direction.
+- `en-es` target text is valid Spanish, but several source rows are all-caps patent abstracts. This
+  interacts badly with formula/regex extraction and can produce noisy candidates such as `LA`,
+  `QUE`, `PARA`, and `CON` unless regex filtering is tightened.
+- Some rows contain mojibake/replacement characters such as `�`, inherited from the source export.
+
+Recommended cleanup:
+
+- remove or regenerate `de-es`;
+- remove exact duplicate-language rows such as the affected `en-de` row;
+- either drop `zh-de` from the benchmark or add more valid `zh-de` pairs;
+- tighten uppercase regex filtering before using Spanish terminology scores as strong evidence.
 
 ## Metrics
 
@@ -140,7 +173,7 @@ Model run configuration:
 
 - Strategy: `openai`
 - Model: `gpt-5.4-mini`
-- Google output: `reports/google-patents-source-pairs-10-gpt-5.4-mini-with-terminology.jsonl`
+- Google output: `reports/google-patents-source-pairs-10-gpt-5.4-mini-expanded-terminology.jsonl`
 - EuroLex output: `reports/eurolex-source-pairs-10-gpt-5.4-mini.jsonl`
 - Google metrics: `sequence_similarity`, `bleu`, `chrf2++`, `target_term_coverage`
 - EuroLex metrics: `sequence_similarity`, `bleu`, `chrf2++`, `target_term_coverage`
@@ -154,19 +187,19 @@ Google Patents overall:
 - Corpus BLEU: 24.73.
 - Corpus chrF2++: 47.23.
 - Mean sequence similarity: 29.08.
-- Mean verified target-term coverage: 55.71 over the 59 rows with at least one verified term.
+- Mean verified target-term coverage: 61.90 over the 72 rows with at least one verified term.
 
 Google Patents by direction:
 
-- `de-es`: n=10, BLEU 9.88, chrF2++ 20.43, target-term coverage 0.00 over 1 applicable row.
-- `de-fr`: n=10, BLEU 30.99, chrF2++ 61.21, target-term coverage 70.81 over 10 applicable rows.
-- `en-de`: n=10, BLEU 17.20, chrF2++ 48.46, target-term coverage 63.19 over 9 applicable rows.
-- `en-es`: n=10, BLEU 2.24, chrF2++ 2.76, target-term coverage 46.95 over 10 applicable rows.
-- `en-fr`: n=10, BLEU 10.79, chrF2++ 41.55, target-term coverage 38.69 over 10 applicable rows.
-- `en-zh`: n=10, BLEU 3.34, chrF2++ 35.61, target-term coverage not applicable for verified terms.
-- `fr-es`: n=10, BLEU 58.69, chrF2++ 75.80, target-term coverage 69.01 over 9 applicable rows.
+- `de-es`: n=10, BLEU 9.88, chrF2++ 20.43, target-term coverage 50.00 over 4 applicable rows.
+- `de-fr`: n=10, BLEU 30.99, chrF2++ 61.21, target-term coverage 73.67 over 10 applicable rows.
+- `en-de`: n=10, BLEU 17.20, chrF2++ 48.46, target-term coverage 61.82 over 10 applicable rows.
+- `en-es`: n=10, BLEU 2.24, chrF2++ 2.76, target-term coverage 49.93 over 10 applicable rows.
+- `en-fr`: n=10, BLEU 10.79, chrF2++ 41.55, target-term coverage 41.33 over 10 applicable rows.
+- `en-zh`: n=10, BLEU 3.34, chrF2++ 35.61, target-term coverage 81.06 over 10 applicable rows.
+- `fr-es`: n=10, BLEU 58.69, chrF2++ 75.80, target-term coverage 72.41 over 9 applicable rows.
 - `zh-de`: n=1, BLEU 0.00, chrF2++ 11.35, target-term coverage not applicable for verified terms.
-- `zh-fr`: n=10, BLEU 17.69, chrF2++ 52.35, target-term coverage 53.28 over 10 applicable rows.
+- `zh-fr`: n=10, BLEU 17.69, chrF2++ 52.35, target-term coverage 58.60 over 9 applicable rows.
 
 EuroLex overall:
 
@@ -198,7 +231,8 @@ Interpretation:
 - Google Patents is harder and more uneven, especially for Chinese and Spanish directions. These
   results should be read as a benchmark smoke run, not as a final model-quality claim.
 - Google terminology is now present, but default terminology scoring only uses externally verified
-  terms. Coverage is therefore reported over the 59 rows where verified terms exist.
+  terms. Adding ChEBI, ChEMBL, MeSH RDF, NCI Thesaurus, and AGROVOC increased applicable Google
+  rows from 59 to 72 and made `en-zh` terminology coverage measurable.
 
 ## Notes
 
