@@ -25,6 +25,31 @@ DEFAULT_LANGUAGES = ("en", "es", "de", "fr", "pt")
 DEFAULT_BASE_URL = "https://object.pouta.csc.fi/OPUS-JRC-Acquis/v3.0/moses"
 USER_AGENT = "chem-machine-translation/0.1 (JRC-Acquis benchmark source builder)"
 _WORD_RE = re.compile(r"\w", re.UNICODE)
+SECTION_TYPES = ("all", "article", "definition")
+_ARTICLE_MARKER_RE = re.compile(
+    r"\b(article|artikel|art[ií]culo|artigo)\s+\d+[a-z]?\b",
+    re.IGNORECASE,
+)
+_DEFINITION_MARKER_RE = re.compile(
+    "|".join(
+        [
+            r"\bfor the purposes of (this|the present)\b",
+            r"\bshall mean\b",
+            r'"[^"]+"\s+(means|refers to)\b',
+            r'\bexpression\s+"[^"]+".{0,120}\b(means|refers to)\b',
+            r"\bmeans\s+(any|the|a|an)\b",
+            r"\baux fins\b",
+            r"\bon entend par\b",
+            r"\bim sinne\b.{0,120}\bbedeutet\b",
+            r"\bbegriffsbestimmungen\b",
+            r"\ba efectos de\b",
+            r"\bse entender[aá] por\b",
+            r"\bpara efeitos\b",
+            r"\bentende-se por\b",
+        ],
+    ),
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -86,6 +111,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-segment-tokens", type=int, default=180)
     parser.add_argument("--max-token-ratio", type=float, default=3.0)
     parser.add_argument(
+        "--section-type",
+        choices=SECTION_TYPES,
+        default="all",
+        help=(
+            "Filter chunks by coarse legal section type. Use 'article' for operative "
+            "provisions or 'definition' for definition-heavy chunks."
+        ),
+    )
+    parser.add_argument(
         "--max-chunks-per-doc",
         type=int,
         default=1,
@@ -118,6 +152,7 @@ def main() -> None:
                 min_segment_tokens=args.min_segment_tokens,
                 max_segment_tokens=args.max_segment_tokens,
                 max_token_ratio=args.max_token_ratio,
+                section_type=args.section_type,
                 max_chunks_per_doc=args.max_chunks_per_doc,
             )
         )
@@ -126,6 +161,7 @@ def main() -> None:
                 chunk=chunk,
                 source_language=source_language,
                 target_language=target_language,
+                section_type=args.section_type,
             )
             for chunk in chunks
         )
@@ -148,6 +184,7 @@ def source_pair_row(
     chunk: Any,
     source_language: str,
     target_language: str,
+    section_type: str,
 ) -> dict[str, Any]:
     direction = f"{source_language}-{target_language}"
     return {
@@ -162,6 +199,7 @@ def source_pair_row(
         "approx_source_tokens": chunk.source_tokens,
         "approx_target_tokens": chunk.target_tokens,
         "segment_count": chunk.segment_count,
+        "section_type": section_type,
         "selection": "jrc_acquis_opus_aligned_segments_chunked_by_document",
     }
 
@@ -190,6 +228,7 @@ def write_metadata(
         "languages": list(languages),
         "language_pair_counts": dict(sorted(by_direction.items())),
         "limit_per_direction": args.limit,
+        "section_type": args.section_type,
         "chunking": {
             "min_chunk_tokens": args.min_chunk_tokens,
             "target_chunk_tokens": args.target_chunk_tokens,
@@ -216,6 +255,7 @@ def write_metadata(
             "approx_source_tokens",
             "approx_target_tokens",
             "segment_count",
+            "section_type",
             "selection",
         ],
     }
@@ -251,6 +291,7 @@ def select_chunks_for_direction(
     min_segment_tokens: int,
     max_segment_tokens: int,
     max_token_ratio: float,
+    section_type: str,
     max_chunks_per_doc: int | None = 1,
 ) -> Iterator[ChunkCandidate]:
     pair_languages = canonical_pair(source_language, target_language)
@@ -278,6 +319,8 @@ def select_chunks_for_direction(
         target_chunk_tokens=target_chunk_tokens,
         max_chunk_tokens=max_chunk_tokens,
     ):
+        if not chunk_matches_section_type(chunk, section_type):
+            continue
         doc_chunk_count = chunks_by_doc.get(chunk.doc_id, 0)
         if max_chunks_per_doc is not None and doc_chunk_count >= max_chunks_per_doc:
             continue
@@ -286,6 +329,18 @@ def select_chunks_for_direction(
         yielded += 1
         if yielded >= limit:
             return
+
+
+def chunk_matches_section_type(chunk: ChunkCandidate, section_type: str) -> bool:
+    if section_type == "all":
+        return True
+    text = f"{chunk.source_text}\n{chunk.target_text}"
+    if section_type == "article":
+        start_window = text[:500]
+        return bool(_ARTICLE_MARKER_RE.search(start_window))
+    if section_type == "definition":
+        return bool(_DEFINITION_MARKER_RE.search(text))
+    raise ValueError(f"Unsupported section type: {section_type}")
 
 
 def canonical_pair(source_language: str, target_language: str) -> tuple[str, str]:

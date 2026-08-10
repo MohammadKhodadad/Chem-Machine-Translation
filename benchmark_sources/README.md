@@ -104,41 +104,66 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
 
 ## JRC-Acquis / OPUS
 
-`jrc_acquis_chunks_5_per_language_pair.jsonl` is a review-sized source-pair snapshot built from
-public OPUS JRC-Acquis v3.0 Moses aligned segment zips.
+The JRC-Acquis sources are source-pair snapshots built from public OPUS JRC-Acquis v3.0 Moses
+aligned segment zips.
 
 `scripts/create_jrc_acquis_source_pairs.py` downloads pair zips into the ignored
 `data/opus_jrc_acquis` cache, then concatenates already-aligned segment pairs within document
-boundaries and writes a portable source JSONL plus metadata.
+boundaries and writes a portable source JSONL plus metadata. Use `--section-type article` or
+`--section-type definition` to create separate benchmark sources for operative articles and
+definition-heavy text.
 
 This path is preferred when we need `en`, `es`, `de`, `fr`, and `pt` legal benchmark data with
 larger chunks and without relying on EuroVoc labels.
 
-Current review source:
+Current exploration sources:
 
-- `jrc_acquis_chunks_5_per_language_pair.jsonl`: 100 source-target chunks.
-- `jrc_acquis_chunks_5_per_language_pair_metadata.json`: language-pair counts and chunk settings.
+- `jrc_acquis_articles_250_per_language_pair.jsonl`: 5,000 article/provision-focused chunks.
+- `jrc_acquis_articles_250_per_language_pair_metadata.json`: article source metadata.
+- `jrc_acquis_definitions_250_per_language_pair.jsonl`: 5,000 definition-focused chunks.
+- `jrc_acquis_definitions_250_per_language_pair_metadata.json`: definition source metadata.
 - Languages: `en`, `es`, `de`, `fr`, and `pt`.
-- Directions: all 20 ordered pairs, 5 chunks per direction.
+- Directions: all 20 ordered pairs, 250 chunks per direction.
 
-Create the review source:
+Create the article-focused source:
 
 ```powershell
 uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
-  --output-jsonl benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl `
-  --metadata-output benchmark_sources/jrc_acquis_chunks_5_per_language_pair_metadata.json `
+  --output-jsonl benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_articles_250_per_language_pair_metadata.json `
   --cache-dir data/opus_jrc_acquis `
   --language en `
   --language es `
   --language de `
   --language fr `
   --language pt `
-  --limit 5 `
+  --limit 250 `
   --min-chunk-tokens 250 `
   --target-chunk-tokens 450 `
   --max-chunk-tokens 700 `
+  --section-type article `
   --max-chunks-per-doc 1
 ```
 
-For the full source snapshot, use the same command with `--limit 250` and change the output file
-name to `jrc_acquis_chunks_250_per_language_pair.jsonl`.
+Create the definition-focused source:
+
+```powershell
+uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
+  --output-jsonl benchmark_sources/jrc_acquis_definitions_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_definitions_250_per_language_pair_metadata.json `
+  --cache-dir data/opus_jrc_acquis `
+  --language en `
+  --language es `
+  --language de `
+  --language fr `
+  --language pt `
+  --limit 250 `
+  --min-chunk-tokens 250 `
+  --target-chunk-tokens 450 `
+  --max-chunk-tokens 700 `
+  --section-type definition `
+  --max-chunks-per-doc 1
+```
+
+To create a generic unfiltered source snapshot, use the same command with `--section-type all` and
+change the output file name to `jrc_acquis_chunks_250_per_language_pair.jsonl`.

@@ -12,6 +12,7 @@ SPEC.loader.exec_module(source_builder)
 AlignedSegment = source_builder.AlignedSegment
 canonical_pair = source_builder.canonical_pair
 chunk_segments = source_builder.chunk_segments
+chunk_matches_section_type = source_builder.chunk_matches_section_type
 doc_id_from_link_group = source_builder.doc_id_from_link_group
 
 
@@ -67,3 +68,34 @@ def test_chunk_segments_keeps_document_boundaries() -> None:
     assert chunks[0].source_text == "alpha beta gamma delta epsilon zeta"
     assert chunks[0].target_text == "eins zwei drei vier fünf sechs"
     assert chunks[0].segment_count == 2
+
+
+def test_chunk_matches_article_section_type() -> None:
+    chunk = source_builder.ChunkCandidate(
+        chunk_id="en-fr:doc:chunk-0001",
+        doc_id="doc",
+        source_text="Article 4 The contracting parties shall notify the committee.",
+        target_text="Article 4 Les parties contractantes notifient le comité.",
+        source_tokens=8,
+        target_tokens=8,
+        segment_count=1,
+    )
+
+    assert chunk_matches_section_type(chunk, "article")
+    assert chunk_matches_section_type(chunk, "all")
+    assert not chunk_matches_section_type(chunk, "definition")
+
+
+def test_chunk_matches_definition_section_type() -> None:
+    chunk = source_builder.ChunkCandidate(
+        chunk_id="en-es:doc:chunk-0001",
+        doc_id="doc",
+        source_text='For the purposes of this Agreement, "goods" means products.',
+        target_text='A efectos del presente Acuerdo, "mercancías" significa productos.',
+        source_tokens=9,
+        target_tokens=9,
+        segment_count=1,
+    )
+
+    assert chunk_matches_section_type(chunk, "definition")
+    assert not chunk_matches_section_type(chunk, "article")

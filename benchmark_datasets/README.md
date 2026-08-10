@@ -90,47 +90,50 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
 
 `jrc_acquis_chunks`
 
-- Source: `benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl` for the current review
-  sample. The full source snapshot should use the same command with `--limit 250`.
+- Sources:
+  `benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl` for operative legal
+  provisions and `benchmark_sources/jrc_acquis_definitions_250_per_language_pair.jsonl` for
+  definition-heavy passages.
 - Languages: defaults to `en`, `es`, `de`, `fr`, and `pt`.
 - Directions: all ordered pairs across the selected languages.
-- Rows: controlled by the source snapshot; the current review source has 5 chunks per ordered
-  direction.
+- Rows: controlled by the source snapshot; the current exploration sources have 250 chunks per
+  ordered direction.
 - Chunking: already-aligned source-target segments are concatenated within document boundaries.
 - Terminology: legal terminology can be generated from the target/reference chunk with IATE,
   Wikipedia/Wikidata, and UNTERM evidence.
 
-Create the source-pair snapshot first:
+Create the article source-pair snapshot first:
 
 ```powershell
 uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
-  --output-jsonl benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl `
-  --metadata-output benchmark_sources/jrc_acquis_chunks_5_per_language_pair_metadata.json `
+  --output-jsonl benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_articles_250_per_language_pair_metadata.json `
   --cache-dir data/opus_jrc_acquis `
   --language en `
   --language es `
   --language de `
   --language fr `
   --language pt `
-  --limit 5 `
+  --limit 250 `
   --min-chunk-tokens 250 `
   --target-chunk-tokens 450 `
   --max-chunk-tokens 700 `
+  --section-type article `
   --max-chunks-per-doc 1
 ```
 
-Then build a benchmark dataset from that tracked source snapshot:
+Then build a benchmark dataset from either tracked source snapshot:
 
 ```powershell
 uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
-  --source-pairs-jsonl benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl `
-  --output-dir benchmark_datasets/jrc_acquis_chunks_5_per_pair `
+  --source-pairs-jsonl benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/jrc_acquis_articles_250_per_pair `
   --language en `
   --language es `
   --language de `
   --language fr `
   --language pt `
-  --limit 5 `
+  --limit 250 `
   --extract-legal-terms `
   --legal-terminology-model gpt-5.4-mini `
   --iate-terminology `
