@@ -10,6 +10,11 @@ The current portable benchmark dataset is
 `benchmark_datasets/eurolex_source_pairs_10_per_pair`, with 120 rows across 12 ordered directions.
 It is built with legal terminology enabled by default.
 
+For the next legal benchmark iteration, use `scripts/create_jrc_acquis_source_pairs.py` first. It
+builds larger source-pair chunks from OPUS JRC-Acquis aligned segments and supports `en`, `es`,
+`de`, `fr`, and `pt`. Then use `scripts/build_jrc_acquis_eval_subset.py` to turn that source
+snapshot into a benchmark dataset with terminology.
+
 ## Data Source
 
 The data comes from the public MultiEURLEX archive:
@@ -25,37 +30,59 @@ The downloaded archive contains English originals plus translated text streams s
 
 ## Dataset Builder
 
-The main builder is:
+EuroLex follows the same two-step source-first architecture as Google Patents and JRC-Acquis:
+
+1. `scripts/create_eurolex_source_snapshot.py` downloads/selects raw MultiEURLEX rows into a tracked
+   source snapshot.
+2. `scripts/create_eurolex_source_pairs.py` converts that snapshot into source-target pair JSONL.
+3. `scripts/build_eurolex_eval_subset.py` consumes only the source-pair JSONL and writes
+   `source.csv`, `target.csv`, and manifest files with terminology.
+
+The current portable EuroLex benchmark is rebuilt with:
 
 ```powershell
-uv run --no-sync python scripts/build_eurolex_eval_subset.py
+uv run --no-sync python scripts/build_eurolex_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/eurolex_source_pairs_10_per_pair `
+  --language en `
+  --language de `
+  --language fr `
+  --language sk `
+  --limit 10 `
+  --extract-legal-terms `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology
 ```
 
-It can build:
+The newer JRC-Acquis source builder is:
 
-- one source language into selected target languages;
-- all ordered pairs among repeated `--language` values;
-- term-rich subsets by requiring at least one target-language terminology match.
+```powershell
+uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py
+```
 
-Generated local datasets so far:
+It downloads public OPUS JRC-Acquis Moses zips into `data/opus_jrc_acquis`, reads already-aligned
+source-target segments, and concatenates them into larger document-bounded chunks. The resulting
+source-pair JSONL is stored under `benchmark_sources/` and can be reviewed before creating a
+benchmark dataset. This avoids scraping EUR-Lex and avoids the EuroVoc-only limitation.
 
-- `data/eurolex_eval_subset_5_lang_250`
-  - 5 languages: `en`, `de`, `el`, `fr`, `sk`;
-  - 20 ordered directions;
-  - 250 rows per direction;
-  - 5,000 total pairs.
-- `data/eurolex_eval_subset_4_lang_250_term_rich`
-  - 4 languages: `en`, `de`, `fr`, `sk`;
+The matching benchmark dataset builder is:
+
+```powershell
+uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl
+```
+
+Generated source-first artifacts so far:
+
+- `benchmark_sources/eurolex_4000.jsonl`
+  - tracked raw-row source snapshot selected from MultiEURLEX;
+  - includes `en`, `de`, `fr`, and `sk` text where available.
+- `benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl`
+  - source-target pair snapshot built from the raw-row source;
   - 12 ordered directions;
   - 250 rows per direction;
-  - 3,000 total pairs;
-  - every row has at least one target-side EuroVoc descriptor match.
-- `data/eurolex_eval_subset_4_lang_10_legal_terms`
-  - 4 languages: `en`, `de`, `fr`, `sk`;
-  - 12 ordered directions;
-  - 10 rows per direction;
-  - 120 total pairs;
-  - legal LLM terminology extraction enabled.
+  - 3,000 total source-target pairs.
 - `benchmark_datasets/eurolex_source_pairs_10_per_pair`
   - tracked portable benchmark dataset built from
     `benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl`;
@@ -63,8 +90,16 @@ Generated local datasets so far:
   - 10 rows per direction;
   - 120 total pairs;
   - legal LLM terminology extraction and external verification enabled.
+- `benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl`
+  - review source snapshot built from OPUS JRC-Acquis aligned segments;
+  - 5 languages: `en`, `es`, `de`, `fr`, `pt`;
+  - 20 ordered directions;
+  - 5 chunks per direction;
+  - 100 total source-target chunks.
 
-These datasets are local only because `data/` is ignored by Git.
+The large upstream downloads remain local only because `data/` is ignored by Git. The small source
+snapshots in `benchmark_sources/` are tracked so benchmark datasets can be recreated without
+redownloading raw archives.
 
 ## Legal Terminology Flow
 

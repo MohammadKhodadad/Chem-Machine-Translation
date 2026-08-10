@@ -5,7 +5,8 @@
 - `chem_machine_translation.cli`: Typer-based command line interface.
 - `chem_machine_translation.core`: shared domain schemas such as `Document` and
   `TranslationResult`.
-- `chem_machine_translation.data`: Hugging Face and Google Patents dataset loaders.
+- `chem_machine_translation.data`: generic Hugging Face loaders and dataset terminology generation
+  utilities. Dataset-specific source-pair builders live under `scripts/`.
 - `chem_machine_translation.translation`: prompts, terminology layers, OpenAI agents, and
   translation strategy implementations.
 - `chem_machine_translation.evaluation`: metric computation and JSONL/CSV report writers.

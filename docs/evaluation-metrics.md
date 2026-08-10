@@ -1,9 +1,9 @@
 # Evaluation Metrics
 
-This project computes automatic reference-based metrics for benchmark scripts such as
-`scripts/evaluate_google_patents.py` and `scripts/evaluate_epo.py`. By default, benchmark scripts
-compute `sequence_similarity`, BLEU, chrF2++, COMET, and `target_term_coverage`. Use repeated
-`--metric` flags to override the default set.
+This project computes automatic reference-based metrics for source-pair benchmark datasets using
+`scripts/evaluate_parallel_manifest.py`. By default, benchmark evaluation can compute
+`sequence_similarity`, BLEU, chrF2++, COMET, and `target_term_coverage`. Use repeated `--metric`
+flags to override the default set.
 
 The implementation lives in `src/chem_machine_translation/evaluation/metrics.py`:
 
@@ -79,8 +79,8 @@ terms, symbols, units, and identifiers survived correctly.
 
 Current terminology data status:
 
-- `scripts/build_google_patents_eval_subset.py` and `scripts/build_epo_eval_subset.py` can generate
-  terminology-bearing manifests.
+- Source-pair dataset builders can generate terminology-bearing manifests from tracked
+  `benchmark_sources/*.jsonl` files.
 - Each manifest term can include `source_term`, final accepted `target_terms`,
   `reference_candidates`, `external_candidates`, `term_group`, `verified_by`, `category`,
   `confidence`, `decision`, and `reason`.
@@ -400,7 +400,8 @@ The current code path uses reference-based COMET by default:
 To skip COMET for a faster run, explicitly select only the cheaper metrics:
 
 ```powershell
-uv run python scripts/evaluate_epo.py `
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir benchmark_datasets/jrc_acquis_chunks_5_per_pair `
   --metric sequence_similarity `
   --metric bleu `
   --metric chrf2++
@@ -455,7 +456,7 @@ Project status:
 
 - implemented with `unbabel-comet`;
 - default model is `Unbabel/wmt22-comet-da`;
-- tested on a one-row EPO smoke run under Python `3.12`;
+- tested under Python `3.12`;
 - project Python is constrained to `<3.13` because the COMET dependency stack is not currently
   reliable on Python `3.13` on Windows.
 
@@ -464,7 +465,7 @@ Project status:
 The benchmark scripts store metrics per row for inspection. Printed summaries are grouped by target
 language.
 
-For example, `scripts/evaluate_epo.py` writes rows like:
+For example, `scripts/evaluate_parallel_manifest.py` writes rows like:
 
 ```json
 {
@@ -863,7 +864,8 @@ Why it is expensive:
 Usage:
 
 ```powershell
-uv run --no-sync python scripts/evaluate_epo.py `
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir benchmark_datasets/jrc_acquis_chunks_5_per_pair `
   --metric fsp_mqm `
   --fsp-mqm-model gpt-4.1-mini
 ```
@@ -905,9 +907,9 @@ Risky uses:
 - comparing scores across different datasets or different sample sizes without context;
 - using a small sample as a final decision.
 
-For recent experiments, the EPO benchmark has larger evaluation subsets for translation quality,
-while the Google Patents `n=20` subset is mainly useful for inspecting terminology extraction
-quality. Both still need chemistry-specific metrics before drawing strong product conclusions.
+For recent experiments, source-pair benchmark datasets are the preferred path because they separate
+portable source snapshots from terminology-bearing benchmark manifests. They still need
+domain-specific metrics before drawing strong product conclusions.
 
 ## Recommended Next Metrics
 

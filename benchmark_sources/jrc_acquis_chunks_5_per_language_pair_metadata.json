@@ -1,0 +1,63 @@
+{
+  "source": "OPUS JRC-Acquis v3.0 Moses aligned segment files",
+  "source_url": "https://object.pouta.csc.fi/OPUS-JRC-Acquis/v3.0/moses",
+  "rows": 100,
+  "languages": [
+    "en",
+    "es",
+    "de",
+    "fr",
+    "pt"
+  ],
+  "language_pair_counts": {
+    "de-en": 5,
+    "de-es": 5,
+    "de-fr": 5,
+    "de-pt": 5,
+    "en-de": 5,
+    "en-es": 5,
+    "en-fr": 5,
+    "en-pt": 5,
+    "es-de": 5,
+    "es-en": 5,
+    "es-fr": 5,
+    "es-pt": 5,
+    "fr-de": 5,
+    "fr-en": 5,
+    "fr-es": 5,
+    "fr-pt": 5,
+    "pt-de": 5,
+    "pt-en": 5,
+    "pt-es": 5,
+    "pt-fr": 5
+  },
+  "limit_per_direction": 5,
+  "chunking": {
+    "min_chunk_tokens": 250,
+    "target_chunk_tokens": 450,
+    "max_chunk_tokens": 700,
+    "min_segment_tokens": 3,
+    "max_segment_tokens": 180,
+    "max_token_ratio": 3.0,
+    "max_chunks_per_doc": 1
+  },
+  "source_token_stats": {
+    "min": 308,
+    "max": 526,
+    "mean": 464.3
+  },
+  "schema": [
+    "source",
+    "example_id",
+    "doc_id",
+    "language_pair",
+    "source_language",
+    "target_language",
+    "source_text",
+    "target_text",
+    "approx_source_tokens",
+    "approx_target_tokens",
+    "segment_count",
+    "selection"
+  ]
+}

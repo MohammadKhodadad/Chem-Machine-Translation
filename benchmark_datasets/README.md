@@ -88,6 +88,58 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
   --legal-terminology-cache data/eurolex_source_pairs_10_legal_terminology_cache.jsonl
 ```
 
+`jrc_acquis_chunks`
+
+- Source: `benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl` for the current review
+  sample. The full source snapshot should use the same command with `--limit 250`.
+- Languages: defaults to `en`, `es`, `de`, `fr`, and `pt`.
+- Directions: all ordered pairs across the selected languages.
+- Rows: controlled by the source snapshot; the current review source has 5 chunks per ordered
+  direction.
+- Chunking: already-aligned source-target segments are concatenated within document boundaries.
+- Terminology: legal terminology can be generated from the target/reference chunk with IATE,
+  Wikipedia/Wikidata, and UNTERM evidence.
+
+Create the source-pair snapshot first:
+
+```powershell
+uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
+  --output-jsonl benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_chunks_5_per_language_pair_metadata.json `
+  --cache-dir data/opus_jrc_acquis `
+  --language en `
+  --language es `
+  --language de `
+  --language fr `
+  --language pt `
+  --limit 5 `
+  --min-chunk-tokens 250 `
+  --target-chunk-tokens 450 `
+  --max-chunk-tokens 700 `
+  --max-chunks-per-doc 1
+```
+
+Then build a benchmark dataset from that tracked source snapshot:
+
+```powershell
+uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/jrc_acquis_chunks_5_per_pair `
+  --language en `
+  --language es `
+  --language de `
+  --language fr `
+  --language pt `
+  --limit 5 `
+  --extract-legal-terms `
+  --legal-terminology-model gpt-5.4-mini `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology `
+  --legal-terminology-workers 4 `
+  --legal-terminology-cache data/jrc_acquis_legal_terminology_cache.jsonl
+```
+
 ## Terminology Groups
 
 Each manifest terminology item has a coarse `term_group` and detailed provenance.
@@ -197,93 +249,32 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
 
 The source-pair snapshot contains 3,000 rows: 250 per ordered pair across `en`, `de`, `fr`,
 and `sk`. Each pair stores `source_text`, `target_text`, EuroVoc labels/descriptors, and exact
-target-side EuroVoc term matches. Use the ignored `data/` download only when you want to
-regenerate a different source snapshot or build from the full archive.
+target-side EuroVoc term matches. Raw MultiEURLEX download and pair-source creation are documented
+in `benchmark_sources/README.md`.
 
-Use `scripts/download_eurolex_data.py` to download the public MultiEURLEX archive and EuroVoc
-descriptor map into the ignored `data/` folder:
-
-```powershell
-uv run --no-sync python scripts/download_eurolex_data.py `
-  --output-dir data/multi_eurlex
-```
-
-Then use `scripts/build_eurolex_eval_subset.py` for local MultiEURLEX/EuroLex JSONL exports. The
-script expects rows with the standard MultiEURLEX shape: `celex_id`, multilingual `text`, and
-`eurovoc_concepts` or `labels`.
-
-EuroVoc labels are document-level metadata keywords/descriptors. They are not guaranteed to appear
-as literal spans inside the source or target text. The builder preserves them in the manifest as
-`eurovoc_labels` and `eurovoc_descriptors`. If a descriptor map is provided, descriptor terms are
-added to terminology only when the target-language descriptor appears exactly in the target/reference
-text. Pass `--no-eurovoc-terminology` to keep descriptors as metadata only.
-
-Example:
-
-```powershell
-uv run --no-sync python scripts/build_eurolex_eval_subset.py `
-  --source-jsonl data/multi_eurlex/train.jsonl `
-  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
-  --output-dir benchmark_datasets/eurolex_eval_subset_generated `
-  --source-language en `
-  --target-language de `
-  --target-language fr `
-  --limit 50
-```
-
-For a larger all-pairs dataset, repeat `--language`. This creates every ordered pair among the
-selected languages, with `--limit` rows per direction:
-
-```powershell
-uv run --no-sync python scripts/build_eurolex_eval_subset.py `
-  --source-jsonl data/multi_eurlex/train.jsonl `
-  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
-  --output-dir benchmark_datasets/eurolex_eval_subset_5_lang_250 `
-  --language en `
-  --language de `
-  --language fr `
-  --language el `
-  --language sk `
-  --limit 250
-```
-
-For a terminology-focused EuroLex benchmark, require at least one target-language EuroVoc descriptor
-match and rank candidates by the number of matched target terms:
-
-```powershell
-uv run --no-sync python scripts/build_eurolex_eval_subset.py `
-  --source-jsonl data/multi_eurlex/train.jsonl `
-  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
-  --output-dir data/eurolex_eval_subset_4_lang_250_term_rich `
-  --language en `
-  --language de `
-  --language fr `
-  --language sk `
-  --limit 250 `
-  --min-target-terms 1 `
-  --rank-by-target-terms
-```
+EuroVoc labels are document-level metadata keywords/descriptors. The dataset builder preserves them
+in the manifest and can seed terminology from `eurovoc_target_terms`, which are already exact
+target-side matches stored in the source JSONL. Pass `--no-eurovoc-terminology` to keep descriptors
+as metadata only.
 
 To add legal LLM candidates and verify them with IATE, Wikipedia/Wikidata, UNTERM, and EuroVoc
-evidence, enable the legal terminology flags. EuroLex legal terminology uses only two groups:
-`llm` for exact target spans proposed by the legal LLM, and `verified` for spans with external
-evidence.
+evidence, enable the legal terminology flags. EuroLex legal terminology uses only two groups: `llm`
+for exact target spans proposed by the legal LLM, and `verified` for spans with external evidence.
 
 UNTERM has no documented public API, so the code treats it as best-effort evidence and fails closed
 unless the public search page reports a positive result range.
 
 ```powershell
 uv run --no-sync python scripts/build_eurolex_eval_subset.py `
-  --source-jsonl data/multi_eurlex/train.jsonl `
-  --descriptor-json data/multi_eurlex/eurovoc_descriptors.json `
-  --output-dir data/eurolex_eval_subset_4_lang_10_legal_terms `
+  --source-pairs-jsonl benchmark_sources/eurolex_within_document_pairs_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/eurolex_source_pairs_10_per_pair `
   --language en `
   --language de `
   --language fr `
   --language sk `
   --limit 10 `
-  --min-target-terms 1 `
-  --rank-by-target-terms `
+  --min-input-tokens 32 `
+  --max-input-tokens 1024 `
   --extract-legal-terms `
   --legal-terminology-model gpt-5.4-mini `
   --iate-terminology `

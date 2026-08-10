@@ -101,3 +101,44 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
   --legal-terminology-workers 4 `
   --legal-terminology-cache data/eurolex_legal_terminology_cache.jsonl
 ```
+
+## JRC-Acquis / OPUS
+
+`jrc_acquis_chunks_5_per_language_pair.jsonl` is a review-sized source-pair snapshot built from
+public OPUS JRC-Acquis v3.0 Moses aligned segment zips.
+
+`scripts/create_jrc_acquis_source_pairs.py` downloads pair zips into the ignored
+`data/opus_jrc_acquis` cache, then concatenates already-aligned segment pairs within document
+boundaries and writes a portable source JSONL plus metadata.
+
+This path is preferred when we need `en`, `es`, `de`, `fr`, and `pt` legal benchmark data with
+larger chunks and without relying on EuroVoc labels.
+
+Current review source:
+
+- `jrc_acquis_chunks_5_per_language_pair.jsonl`: 100 source-target chunks.
+- `jrc_acquis_chunks_5_per_language_pair_metadata.json`: language-pair counts and chunk settings.
+- Languages: `en`, `es`, `de`, `fr`, and `pt`.
+- Directions: all 20 ordered pairs, 5 chunks per direction.
+
+Create the review source:
+
+```powershell
+uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
+  --output-jsonl benchmark_sources/jrc_acquis_chunks_5_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_chunks_5_per_language_pair_metadata.json `
+  --cache-dir data/opus_jrc_acquis `
+  --language en `
+  --language es `
+  --language de `
+  --language fr `
+  --language pt `
+  --limit 5 `
+  --min-chunk-tokens 250 `
+  --target-chunk-tokens 450 `
+  --max-chunk-tokens 700 `
+  --max-chunks-per-doc 1
+```
+
+For the full source snapshot, use the same command with `--limit 250` and change the output file
+name to `jrc_acquis_chunks_250_per_language_pair.jsonl`.
