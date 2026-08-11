@@ -113,19 +113,82 @@ boundaries and writes a portable source JSONL plus metadata. Use `--section-type
 `--section-type definition` to create separate benchmark sources for operative articles and
 definition-heavy text.
 
+The script supports two selection modes:
+
+- `pairwise`: the original mode. Each ordered direction is selected independently.
+- `anchored`: the preferred benchmark mode. The script first finds documents present across all
+  selected language pairs, picks document anchors, then creates every ordered pair for each anchor.
+  Reverse rows are exact source/target swaps from the same unordered pair chunk.
+
 This path is preferred when we need `en`, `es`, `de`, `fr`, and `pt` legal benchmark data with
 larger chunks and without relying on EuroVoc labels.
 
 Current exploration sources:
 
-- `jrc_acquis_articles_250_per_language_pair.jsonl`: 5,000 article/provision-focused chunks.
-- `jrc_acquis_articles_250_per_language_pair_metadata.json`: article source metadata.
-- `jrc_acquis_definitions_250_per_language_pair.jsonl`: 5,000 definition-focused chunks.
-- `jrc_acquis_definitions_250_per_language_pair_metadata.json`: definition source metadata.
+- `jrc_acquis_articles_250_per_language_pair.jsonl`: 5,000 pairwise article/provision-focused
+  chunks.
+- `jrc_acquis_articles_250_per_language_pair_metadata.json`: pairwise article source metadata.
+- `jrc_acquis_definitions_250_per_language_pair.jsonl`: 5,000 pairwise definition-focused chunks.
+- `jrc_acquis_definitions_250_per_language_pair_metadata.json`: pairwise definition source
+  metadata.
+- `jrc_acquis_anchored_articles_250_per_language_pair.jsonl`: 5,000 anchored article/provision
+  chunks.
+- `jrc_acquis_anchored_articles_250_per_language_pair_metadata.json`: anchored article source
+  metadata.
+- `jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`: 5,000 anchored definition chunks.
+- `jrc_acquis_anchored_definitions_250_per_language_pair_metadata.json`: anchored definition source
+  metadata.
 - Languages: `en`, `es`, `de`, `fr`, and `pt`.
 - Directions: all 20 ordered pairs, 250 chunks per direction.
 
-Create the article-focused source:
+Create the preferred anchored article-focused source:
+
+```powershell
+uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
+  --output-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair_metadata.json `
+  --cache-dir data/opus_jrc_acquis `
+  --language en `
+  --language es `
+  --language de `
+  --language fr `
+  --language pt `
+  --limit 250 `
+  --min-chunk-tokens 250 `
+  --target-chunk-tokens 450 `
+  --max-chunk-tokens 700 `
+  --section-type article `
+  --selection-mode anchored `
+  --anchor-language en `
+  --anchor-search-multiplier 20
+```
+
+Create the preferred anchored definition-focused source:
+
+```powershell
+uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
+  --output-jsonl benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair_metadata.json `
+  --cache-dir data/opus_jrc_acquis `
+  --language en `
+  --language es `
+  --language de `
+  --language fr `
+  --language pt `
+  --limit 250 `
+  --min-chunk-tokens 250 `
+  --target-chunk-tokens 450 `
+  --max-chunk-tokens 700 `
+  --section-type definition `
+  --selection-mode anchored `
+  --anchor-language en `
+  --anchor-search-multiplier 20
+```
+
+`--limit 250` in anchored mode means 250 document anchors. Because each anchor expands to all 20
+ordered directions, this produces 250 rows per direction and 5,000 rows total.
+
+Create the original pairwise article-focused source:
 
 ```powershell
 uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `

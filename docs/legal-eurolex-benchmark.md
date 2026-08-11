@@ -65,13 +65,15 @@ It downloads public OPUS JRC-Acquis Moses zips into `data/opus_jrc_acquis`, read
 source-target segments, and concatenates them into larger document-bounded chunks. The resulting
 source-pair JSONL is stored under `benchmark_sources/` and can be reviewed before creating a
 benchmark dataset. This avoids scraping EUR-Lex and avoids the EuroVoc-only limitation. Current JRC
-source snapshots are split into article/provision-focused and definition-focused files.
+source snapshots are split into article/provision-focused and definition-focused files. The
+preferred JRC snapshots use anchored selection: documents are selected first, then each document
+anchor is expanded to every ordered language pair with exact reverse rows.
 
 The matching benchmark dataset builder is:
 
 ```powershell
 uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
-  --source-pairs-jsonl benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl
+  --source-pairs-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl
 ```
 
 Generated source-first artifacts so far:
@@ -91,17 +93,19 @@ Generated source-first artifacts so far:
   - 10 rows per direction;
   - 120 total pairs;
   - legal LLM terminology extraction and external verification enabled.
-- `benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl`
-  - article/provision-focused source snapshot built from OPUS JRC-Acquis aligned segments;
+- `benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl`
+  - anchored article/provision-focused source snapshot built from OPUS JRC-Acquis aligned segments;
   - 5 languages: `en`, `es`, `de`, `fr`, `pt`;
   - 20 ordered directions;
   - 250 chunks per direction;
+  - 250 complete document anchors;
   - 5,000 total source-target chunks.
-- `benchmark_sources/jrc_acquis_definitions_250_per_language_pair.jsonl`
-  - definition-focused source snapshot built from OPUS JRC-Acquis aligned segments;
+- `benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`
+  - anchored definition-focused source snapshot built from OPUS JRC-Acquis aligned segments;
   - 5 languages: `en`, `es`, `de`, `fr`, `pt`;
   - 20 ordered directions;
   - 250 chunks per direction;
+  - 250 complete document anchors;
   - 5,000 total source-target chunks.
 
 The large upstream downloads remain local only because `data/` is ignored by Git. The small source

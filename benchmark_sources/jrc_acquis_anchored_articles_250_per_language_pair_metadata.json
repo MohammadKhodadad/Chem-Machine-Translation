@@ -1,0 +1,70 @@
+{
+  "source": "OPUS JRC-Acquis v3.0 Moses aligned segment files",
+  "source_url": "https://object.pouta.csc.fi/OPUS-JRC-Acquis/v3.0/moses",
+  "rows": 5000,
+  "languages": [
+    "en",
+    "es",
+    "de",
+    "fr",
+    "pt"
+  ],
+  "language_pair_counts": {
+    "de-en": 250,
+    "de-es": 250,
+    "de-fr": 250,
+    "de-pt": 250,
+    "en-de": 250,
+    "en-es": 250,
+    "en-fr": 250,
+    "en-pt": 250,
+    "es-de": 250,
+    "es-en": 250,
+    "es-fr": 250,
+    "es-pt": 250,
+    "fr-de": 250,
+    "fr-en": 250,
+    "fr-es": 250,
+    "fr-pt": 250,
+    "pt-de": 250,
+    "pt-en": 250,
+    "pt-es": 250,
+    "pt-fr": 250
+  },
+  "limit_per_direction": 250,
+  "section_type": "article",
+  "selection_mode": "anchored",
+  "anchor_language": "en",
+  "anchor_search_multiplier": 20,
+  "chunking": {
+    "min_chunk_tokens": 250,
+    "target_chunk_tokens": 450,
+    "max_chunk_tokens": 700,
+    "min_segment_tokens": 3,
+    "max_segment_tokens": 180,
+    "max_token_ratio": 3.0,
+    "max_chunks_per_doc": 1
+  },
+  "source_token_stats": {
+    "min": 251,
+    "max": 777,
+    "mean": 427.6
+  },
+  "schema": [
+    "source",
+    "example_id",
+    "doc_id",
+    "language_pair",
+    "source_language",
+    "target_language",
+    "source_text",
+    "target_text",
+    "approx_source_tokens",
+    "approx_target_tokens",
+    "segment_count",
+    "section_type",
+    "selection_mode",
+    "selection",
+    "anchor_id"
+  ]
+}

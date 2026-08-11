@@ -26,6 +26,7 @@ DEFAULT_BASE_URL = "https://object.pouta.csc.fi/OPUS-JRC-Acquis/v3.0/moses"
 USER_AGENT = "chem-machine-translation/0.1 (JRC-Acquis benchmark source builder)"
 _WORD_RE = re.compile(r"\w", re.UNICODE)
 SECTION_TYPES = ("all", "article", "definition")
+SELECTION_MODES = ("pairwise", "anchored")
 _ARTICLE_MARKER_RE = re.compile(
     r"\b(article|artikel|art[ií]culo|artigo)\s+\d+[a-z]?\b",
     re.IGNORECASE,
@@ -125,6 +126,27 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Maximum chunks selected from the same JRC document per ordered direction.",
     )
+    parser.add_argument(
+        "--selection-mode",
+        choices=SELECTION_MODES,
+        default="pairwise",
+        help=(
+            "Use 'pairwise' for independent direction selection or 'anchored' to pick "
+            "common document anchors and expand them into every ordered language pair."
+        ),
+    )
+    parser.add_argument(
+        "--anchor-language",
+        choices=sorted(LANGUAGE_NAMES),
+        default="en",
+        help="Pivot language used to order anchored document selection.",
+    )
+    parser.add_argument(
+        "--anchor-search-multiplier",
+        type=int,
+        default=20,
+        help="Candidate multiplier used when searching for common anchored documents.",
+    )
     return parser.parse_args()
 
 
@@ -136,6 +158,28 @@ def main() -> None:
     args.output_jsonl.parent.mkdir(parents=True, exist_ok=True)
     args.cache_dir.mkdir(parents=True, exist_ok=True)
 
+    if args.selection_mode == "anchored" and args.anchor_language not in languages:
+        raise ValueError("--anchor-language must be included in --language values.")
+
+    rows = (
+        build_anchored_rows(languages=languages, args=args)
+        if args.selection_mode == "anchored"
+        else build_pairwise_rows(languages=languages, args=args)
+    )
+
+    write_jsonl(args.output_jsonl, rows)
+    metadata_output = args.metadata_output or default_metadata_path(args.output_jsonl)
+    write_metadata(
+        metadata_output,
+        rows=rows,
+        languages=languages,
+        args=args,
+    )
+    print(f"Wrote {len(rows)} source pairs to {args.output_jsonl}")
+    print(f"Wrote metadata to {metadata_output}")
+
+
+def build_pairwise_rows(*, languages: tuple[str, ...], args: argparse.Namespace) -> list[dict]:
     rows = []
     for source_language, target_language in ordered_language_pairs(languages):
         direction = f"{source_language}-{target_language}"
@@ -162,21 +206,191 @@ def main() -> None:
                 source_language=source_language,
                 target_language=target_language,
                 section_type=args.section_type,
+                selection_mode="pairwise",
+                selection="jrc_acquis_opus_aligned_segments_chunked_by_document",
             )
             for chunk in chunks
         )
         print(f"Selected {len(chunks)} source pairs for {direction}.", flush=True)
+    return rows
 
-    write_jsonl(args.output_jsonl, rows)
-    metadata_output = args.metadata_output or default_metadata_path(args.output_jsonl)
-    write_metadata(
-        metadata_output,
-        rows=rows,
+
+def build_anchored_rows(*, languages: tuple[str, ...], args: argparse.Namespace) -> list[dict]:
+    language_pairs = list(canonical_language_pairs(languages))
+    common_doc_order = common_document_ids_for_languages(
         languages=languages,
-        args=args,
+        cache_dir=args.cache_dir,
+        base_url=args.base_url,
+        anchor_language=args.anchor_language,
     )
-    print(f"Wrote {len(rows)} source pairs to {args.output_jsonl}")
-    print(f"Wrote metadata to {metadata_output}")
+    candidate_pool = common_doc_order[: args.limit * max(args.anchor_search_multiplier, 1)]
+    candidate_doc_ids = set(candidate_pool)
+    if len(candidate_pool) < args.limit:
+        raise ValueError(
+            f"Only found {len(candidate_pool)} documents present across all language pairs; "
+            f"requested {args.limit}."
+        )
+
+    chunks_by_pair: dict[tuple[str, str], dict[str, ChunkCandidate]] = {}
+
+    for source_language, target_language in language_pairs:
+        pair = (source_language, target_language)
+        chunks = list(
+            select_chunks_for_direction(
+                source_language=source_language,
+                target_language=target_language,
+                limit=len(candidate_pool),
+                cache_dir=args.cache_dir,
+                base_url=args.base_url,
+                min_chunk_tokens=args.min_chunk_tokens,
+                target_chunk_tokens=args.target_chunk_tokens,
+                max_chunk_tokens=args.max_chunk_tokens,
+                min_segment_tokens=args.min_segment_tokens,
+                max_segment_tokens=args.max_segment_tokens,
+                max_token_ratio=args.max_token_ratio,
+                section_type=args.section_type,
+                max_chunks_per_doc=1,
+                candidate_doc_ids=candidate_doc_ids,
+            )
+        )
+        chunks_by_pair[pair], _ = chunks_by_doc(chunks)
+        print(
+            f"Found {len(chunks_by_pair[pair])} chunks for {source_language}-{target_language} "
+            "from the common document pool.",
+            flush=True,
+        )
+
+    common_doc_ids = set.intersection(
+        *(
+            set(chunks_by_doc_for_pair)
+            for chunks_by_doc_for_pair in chunks_by_pair.values()
+        )
+    )
+    ordered_doc_ids = [doc_id for doc_id in candidate_pool if doc_id in common_doc_ids]
+    selected_doc_ids = ordered_doc_ids[: args.limit]
+    if len(selected_doc_ids) < args.limit:
+        raise ValueError(
+            f"Only found {len(selected_doc_ids)} anchored documents with all directions; "
+            f"requested {args.limit}. Increase --anchor-search-multiplier or loosen filters."
+        )
+
+    rows = []
+    for doc_id in selected_doc_ids:
+        anchor_id = f"{args.anchor_language}:{doc_id}"
+        for source_language, target_language in language_pairs:
+            chunk = chunks_by_pair[(source_language, target_language)][doc_id]
+            rows.append(
+                source_pair_row(
+                    chunk=chunk,
+                    source_language=source_language,
+                    target_language=target_language,
+                    section_type=args.section_type,
+                    selection_mode="anchored",
+                    selection=(
+                        "jrc_acquis_opus_common_document_anchors_expanded_to_all_pairs"
+                    ),
+                    anchor_id=anchor_id,
+                )
+            )
+            rows.append(
+                source_pair_row(
+                    chunk=reverse_chunk(chunk, f"{target_language}-{source_language}"),
+                    source_language=target_language,
+                    target_language=source_language,
+                    section_type=args.section_type,
+                    selection_mode="anchored",
+                    selection=(
+                        "jrc_acquis_opus_common_document_anchors_expanded_to_all_pairs"
+                    ),
+                    anchor_id=anchor_id,
+                )
+            )
+
+    print(
+        f"Selected {len(selected_doc_ids)} anchored documents and expanded to {len(rows)} rows.",
+        flush=True,
+    )
+    return rows
+
+
+def reverse_chunk(chunk: ChunkCandidate, direction: str) -> ChunkCandidate:
+    chunk_suffix = chunk.chunk_id.rsplit(":", 1)[-1]
+    return ChunkCandidate(
+        chunk_id=f"{direction}:{chunk.doc_id}:{chunk_suffix}",
+        doc_id=chunk.doc_id,
+        source_text=chunk.target_text,
+        target_text=chunk.source_text,
+        source_tokens=chunk.target_tokens,
+        target_tokens=chunk.source_tokens,
+        segment_count=chunk.segment_count,
+    )
+
+
+def chunks_by_doc(chunks: list[ChunkCandidate]) -> tuple[dict[str, ChunkCandidate], list[str]]:
+    by_doc = {}
+    order = []
+    for chunk in chunks:
+        if chunk.doc_id in by_doc:
+            continue
+        by_doc[chunk.doc_id] = chunk
+        order.append(chunk.doc_id)
+    return by_doc, order
+
+
+def common_document_ids_for_languages(
+    *,
+    languages: tuple[str, ...],
+    cache_dir: Path,
+    base_url: str,
+    anchor_language: str,
+) -> list[str]:
+    doc_orders_by_pair = []
+    doc_sets = []
+    for left_language, right_language in canonical_language_pairs(languages):
+        zip_path = download_pair_zip(
+            left_language=left_language,
+            right_language=right_language,
+            cache_dir=cache_dir,
+            base_url=base_url,
+        )
+        doc_order = doc_ids_for_pair_zip(zip_path, left_language, right_language)
+        doc_orders_by_pair.append(((left_language, right_language), doc_order))
+        doc_sets.append(set(doc_order))
+
+    common_doc_ids = set.intersection(*doc_sets)
+    anchor_pair = first_anchor_pair(languages, anchor_language)
+    for pair, doc_order in doc_orders_by_pair:
+        if pair == anchor_pair:
+            return [doc_id for doc_id in doc_order if doc_id in common_doc_ids]
+    return [doc_id for doc_id in doc_orders_by_pair[0][1] if doc_id in common_doc_ids]
+
+
+def canonical_language_pairs(languages: tuple[str, ...]) -> Iterator[tuple[str, str]]:
+    for index, source_language in enumerate(languages):
+        for target_language in languages[index + 1 :]:
+            yield canonical_pair(source_language, target_language)
+
+
+def first_anchor_pair(languages: tuple[str, ...], anchor_language: str) -> tuple[str, str]:
+    for target_language in languages:
+        if target_language != anchor_language:
+            return canonical_pair(anchor_language, target_language)
+    raise ValueError("At least two languages are required for anchored selection.")
+
+
+def doc_ids_for_pair_zip(zip_path: Path, left_language: str, right_language: str) -> list[str]:
+    pair = f"{left_language}-{right_language}"
+    metadata_member = f"JRC-Acquis.{pair}.xml"
+    seen = set()
+    doc_order = []
+    with zipfile.ZipFile(zip_path) as archive:
+        with archive.open(metadata_member) as metadata_raw:
+            for doc_id in iter_doc_ids(metadata_raw, left_language, right_language):
+                if doc_id in seen:
+                    continue
+                seen.add(doc_id)
+                doc_order.append(doc_id)
+    return doc_order
 
 
 def source_pair_row(
@@ -185,9 +399,12 @@ def source_pair_row(
     source_language: str,
     target_language: str,
     section_type: str,
+    selection_mode: str,
+    selection: str,
+    anchor_id: str | None = None,
 ) -> dict[str, Any]:
     direction = f"{source_language}-{target_language}"
-    return {
+    row = {
         "source": "jrc_acquis_opus",
         "example_id": chunk.chunk_id,
         "doc_id": chunk.doc_id,
@@ -200,8 +417,12 @@ def source_pair_row(
         "approx_target_tokens": chunk.target_tokens,
         "segment_count": chunk.segment_count,
         "section_type": section_type,
-        "selection": "jrc_acquis_opus_aligned_segments_chunked_by_document",
+        "selection_mode": selection_mode,
+        "selection": selection,
     }
+    if anchor_id:
+        row["anchor_id"] = anchor_id
+    return row
 
 
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -229,6 +450,11 @@ def write_metadata(
         "language_pair_counts": dict(sorted(by_direction.items())),
         "limit_per_direction": args.limit,
         "section_type": args.section_type,
+        "selection_mode": args.selection_mode,
+        "anchor_language": args.anchor_language if args.selection_mode == "anchored" else None,
+        "anchor_search_multiplier": (
+            args.anchor_search_multiplier if args.selection_mode == "anchored" else None
+        ),
         "chunking": {
             "min_chunk_tokens": args.min_chunk_tokens,
             "target_chunk_tokens": args.target_chunk_tokens,
@@ -256,7 +482,9 @@ def write_metadata(
             "approx_target_tokens",
             "segment_count",
             "section_type",
+            "selection_mode",
             "selection",
+            "anchor_id",
         ],
     }
     temp_path = path.with_suffix(path.suffix + ".tmp")
@@ -293,6 +521,7 @@ def select_chunks_for_direction(
     max_token_ratio: float,
     section_type: str,
     max_chunks_per_doc: int | None = 1,
+    candidate_doc_ids: set[str] | None = None,
 ) -> Iterator[ChunkCandidate]:
     pair_languages = canonical_pair(source_language, target_language)
     zip_path = download_pair_zip(
@@ -319,6 +548,8 @@ def select_chunks_for_direction(
         target_chunk_tokens=target_chunk_tokens,
         max_chunk_tokens=max_chunk_tokens,
     ):
+        if candidate_doc_ids is not None and chunk.doc_id not in candidate_doc_ids:
+            continue
         if not chunk_matches_section_type(chunk, section_type):
             continue
         doc_chunk_count = chunks_by_doc.get(chunk.doc_id, 0)

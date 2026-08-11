@@ -401,7 +401,7 @@ To skip COMET for a faster run, explicitly select only the cheaper metrics:
 
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
-  --dataset-dir benchmark_datasets/jrc_acquis_articles_250_per_pair `
+  --dataset-dir benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair `
   --metric sequence_similarity `
   --metric bleu `
   --metric chrf2++
@@ -865,7 +865,7 @@ Usage:
 
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
-  --dataset-dir benchmark_datasets/jrc_acquis_articles_250_per_pair `
+  --dataset-dir benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair `
   --metric fsp_mqm `
   --fsp-mqm-model gpt-4.1-mini
 ```

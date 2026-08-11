@@ -28,16 +28,22 @@ concatenates those aligned segments into larger document-bounded chunks.
 
 Current tracked exploration sources:
 
+- `benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl`
+  - preferred anchored article/provision-focused legal chunks;
+  - 5,000 source-target pairs;
+  - 20 ordered directions;
+  - 250 chunks per direction;
+  - 250 document anchors, each expanded to all ordered language pairs.
+- `benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`
+  - preferred anchored definition-containing legal chunks;
+  - 5,000 source-target pairs;
+  - 20 ordered directions;
+  - 250 chunks per direction;
+  - 250 document anchors, each expanded to all ordered language pairs.
 - `benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl`
-  - article/provision-focused legal chunks;
-  - 5,000 source-target pairs;
-  - 20 ordered directions;
-  - 250 chunks per direction.
+  - original pairwise article/provision-focused legal chunks.
 - `benchmark_sources/jrc_acquis_definitions_250_per_language_pair.jsonl`
-  - definition-containing legal chunks;
-  - 5,000 source-target pairs;
-  - 20 ordered directions;
-  - 250 chunks per direction.
+  - original pairwise definition-containing legal chunks.
 
 Each row stores `source_text`, `target_text`, `doc_id`, `language_pair`, language codes,
 approximate token counts, `segment_count`, and `section_type`.
@@ -46,12 +52,12 @@ approximate token counts, `segment_count`, and `section_type`.
 
 Use `scripts/create_jrc_acquis_source_pairs.py`.
 
-Article source:
+Preferred anchored article source:
 
 ```powershell
 uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
-  --output-jsonl benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl `
-  --metadata-output benchmark_sources/jrc_acquis_articles_250_per_language_pair_metadata.json `
+  --output-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair_metadata.json `
   --cache-dir data/opus_jrc_acquis `
   --language en `
   --language es `
@@ -63,15 +69,17 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
   --target-chunk-tokens 450 `
   --max-chunk-tokens 700 `
   --section-type article `
-  --max-chunks-per-doc 1
+  --selection-mode anchored `
+  --anchor-language en `
+  --anchor-search-multiplier 20
 ```
 
-Definition source:
+Preferred anchored definition source:
 
 ```powershell
 uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
-  --output-jsonl benchmark_sources/jrc_acquis_definitions_250_per_language_pair.jsonl `
-  --metadata-output benchmark_sources/jrc_acquis_definitions_250_per_language_pair_metadata.json `
+  --output-jsonl benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair_metadata.json `
   --cache-dir data/opus_jrc_acquis `
   --language en `
   --language es `
@@ -83,8 +91,15 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
   --target-chunk-tokens 450 `
   --max-chunk-tokens 700 `
   --section-type definition `
-  --max-chunks-per-doc 1
+  --selection-mode anchored `
+  --anchor-language en `
+  --anchor-search-multiplier 20
 ```
+
+`--selection-mode pairwise` keeps the original behavior where each ordered direction is selected
+independently. `--selection-mode anchored` first finds documents present across all selected
+language pairs, then expands each selected document anchor to all ordered directions. For five
+languages, `--limit 250` means 250 anchors and 5,000 source-target rows.
 
 `--section-type all` can be used for a generic unfiltered source.
 
@@ -92,6 +107,16 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
 
 The builder reads aligned OPUS segments in file order, filters unusable segment pairs, and joins
 adjacent pairs from the same document. It does not cross document boundaries.
+
+In anchored mode, document selection is doc-first:
+
+1. Find document IDs that appear across all selected unordered language pairs.
+2. Keep a common document pool ordered by the anchor language.
+3. Build one chunk per selected document for each unordered language pair.
+4. Emit both directions for that pair by swapping source and target.
+
+This guarantees that every selected anchor has all 20 ordered directions and that each reverse row
+is an exact source/target swap.
 
 Current chunk settings:
 
@@ -109,19 +134,36 @@ explicit legal-definition wording such as “For the purposes of this Convention
 
 ## Quality Check
 
-The early automated quality check on both 250-per-pair sources found:
+The automated quality check on both anchored 250-per-pair sources found:
 
 - no empty source/target rows;
 - no corrupt replacement characters;
 - no identical source/target pairs;
 - no source/target token ratio above 2.0;
-- exactly 250 rows for every ordered direction.
+- exactly 250 rows for every ordered direction;
+- exactly 250 anchors per source;
+- no incomplete anchors;
+- no reverse-pair mismatches.
+
+Concrete anchored audit results:
+
+- `jrc_acquis_anchored_articles_250_per_language_pair.jsonl`
+  - rows: 5,000;
+  - directions: 20, with 250 rows each;
+  - anchors: 250;
+  - mean source tokens: 427.6.
+- `jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`
+  - rows: 5,000;
+  - directions: 20, with 250 rows each;
+  - anchors: 250;
+  - mean source tokens: 484.8.
 
 Manual samples looked aligned and suitable for legal translation evaluation. Article chunks are the
 stronger source for immediate benchmarking because they mostly contain operative legal provisions.
 Definition chunks are usable, but they should be treated as definition-containing rather than
 definition-only: some chunks include preamble or surrounding legal context before the definition
-phrase appears.
+phrase appears. Some older JRC source texts also contain historical OCR/normalization artifacts, so
+manual spot checks are still useful before publishing final benchmark results.
 
 ## Benchmark Dataset Builder
 
@@ -129,8 +171,8 @@ Use `scripts/build_jrc_acquis_eval_subset.py` to turn either source JSONL into a
 
 ```powershell
 uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
-  --source-pairs-jsonl benchmark_sources/jrc_acquis_articles_250_per_language_pair.jsonl `
-  --output-dir benchmark_datasets/jrc_acquis_articles_250_per_pair `
+  --source-pairs-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair `
   --language en `
   --language es `
   --language de `
@@ -154,7 +196,7 @@ Evaluate a direction with the legal prompt and verified manifest terminology:
 
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
-  --dataset-dir benchmark_datasets/jrc_acquis_articles_250_per_pair/en-es `
+  --dataset-dir benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair/en-es `
   --translator one-shot `
   --provider openai `
   --model gpt-5.4-mini `
