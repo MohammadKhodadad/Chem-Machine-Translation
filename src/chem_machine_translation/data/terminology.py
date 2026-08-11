@@ -55,29 +55,43 @@ _MESH_LOOKUP_ENDPOINT = "https://id.nlm.nih.gov/mesh/lookup/descriptor"
 _NCI_ENDPOINT = "https://api-evsrest.nci.nih.gov/api/v1"
 _AGROVOC_ENDPOINT = "https://agrovoc.fao.org/browse/rest/v1"
 _USER_AGENT = "chem-machine-translation/0.1 (benchmark terminology lookup)"
-_TERMINOLOGY_PIPELINE_VERSION = "target-llm-candidate-v2"
+_TERMINOLOGY_PIPELINE_VERSION = "target-llm-candidate-v4"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT = """You extract terminology candidates from target
 reference translations for chemistry and patent machine-translation benchmarks.
 
 The text may be in any language. Return only exact spans that appear in the provided target text.
-Do not translate, normalize, rewrite, explain, or invent terms.
+Do not translate, normalize, rewrite, lemmatize, abbreviate, explain, or invent terms.
 
-Extract strict technical terminology candidates:
+Extract only terms that a domain translator should preserve consistently:
 - chemical names, compounds, materials, formulas, reagents, solvents, polymers, proteins;
-- domain-specific processes, methods, analytical terms, properties, hazards, identifiers;
-- compact numeric/unit expressions when they carry technical meaning.
+- technical processes, methods, assay/analytical terms, properties, hazards, identifiers;
+- compact numeric/unit expressions only when the quantity itself is technically meaningful.
 
-Avoid common prose, generic patent scaffolding, sentence fragments, whole clauses, and broad field
-labels. Prefer the smallest target-text span that carries the technical meaning.
+Reject:
+- common prose, generic verbs/adjectives, boilerplate patent wording, and broad field labels;
+- whole clauses, sentence fragments, headings, dates, citations, inventor/applicant names;
+- single common words unless they are unambiguous domain terms in the target language.
+
+Prefer the smallest exact span that carries the technical meaning. If a longer phrase contains a
+specific chemical/material term, return the specific term, not the whole phrase. Return no terms
+when the text does not contain strong technical terminology.
+
+Confidence calibration:
+- 0.90-1.00: precise named chemical/material/process/identifier.
+- 0.70-0.89: likely domain term but context-dependent.
+- below 0.70: do not return it.
+
+Allowed categories: chemical, material, formulation, process, method, property, unit, identifier,
+hazard, biological, equipment, other.
 
 Return only valid JSON with this shape:
 {
   "terms": [
     {
       "target_term": "exact target text span",
-      "category": "chemical|material|process|method|unit|identifier|hazard|other",
+      "category": "allowed category",
       "confidence": 0.0,
       "reason": "short reason"
     }
@@ -89,22 +103,38 @@ LEGAL_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT = """You extract legal terminology candi
 target/reference translations for legal machine-translation benchmarks.
 
 The text may be in any language. Return only exact spans that appear in the provided target text.
-Do not translate, normalize, rewrite, explain, or invent terms.
+Do not translate, normalize, rewrite, lemmatize, abbreviate, explain, or invent terms.
 
-Extract strict legal or regulatory terminology candidates:
-- legal instruments, procedures, institutions, rights, obligations, restrictions, sanctions;
-- regulatory domains, administrative bodies, legal acts, committees, programmes, funds;
-- multi-word noun phrases and named legal entities that would matter for translation quality.
+Extract only terms that a legal translator should preserve consistently:
+- legal instruments, institutions, committees, agencies, programmes, funds, and named bodies;
+- procedures, rights, obligations, restrictions, sanctions, remedies, legal effects;
+- regulatory domains and named legal acts when they are not just generic prose;
+- defined terms introduced by definition wording, such as "shall mean" or "for the purposes of".
 
-Avoid common prose, dates, article numbers, names of people, whole clauses, generic single words,
-and boilerplate unless the phrase is a recognized legal or institutional term.
+Reject:
+- dates, article numbers alone, paragraph references alone, names of people, signatures;
+- whole clauses, sentence fragments, generic single words, and ordinary administrative prose;
+- repeated treaty boilerplate unless the phrase is a recognized legal or institutional term;
+- full titles when a shorter legal act, institution, or defined term inside the title is better.
+
+Prefer the smallest exact span that carries the legal meaning. In definition-heavy text, prefer the
+defined term itself over the full definition. Return no terms when the text does not contain strong
+legal terminology.
+
+Confidence calibration:
+- 0.90-1.00: precise legal/institutional term or explicit defined term.
+- 0.70-0.89: likely legal term but context-dependent.
+- below 0.70: do not return it.
+
+Allowed categories: institution, legal_act, defined_term, procedure, right, obligation,
+restriction, sanction, remedy, policy, regulatory_domain, programme, fund, other.
 
 Return only valid JSON with this shape:
 {
   "terms": [
     {
       "target_term": "exact target text span",
-      "category": "institution|legal_act|procedure|right|obligation|sanction|policy|other",
+      "category": "allowed category",
       "confidence": 0.0,
       "reason": "short reason"
     }
@@ -1226,7 +1256,7 @@ def legal_terminology_cache_key(
         "use_wikidata": use_wikidata,
         "use_unterm": use_unterm,
         "eurovoc_descriptors": eurovoc_descriptors,
-        "pipeline_version": "legal-target-llm-candidate-v2",
+        "pipeline_version": "legal-target-llm-candidate-v4",
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
