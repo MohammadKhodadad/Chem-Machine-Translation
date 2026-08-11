@@ -150,6 +150,24 @@ The benchmark builder writes direction folders with `source.csv`, `target.csv`, 
 Legal terminology is generated from the target/reference side and can be verified with IATE,
 Wikipedia/Wikidata, and UNTERM evidence.
 
+Evaluate a direction with the legal prompt and verified manifest terminology:
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir benchmark_datasets/jrc_acquis_articles_250_per_pair/en-es `
+  --translator one-shot `
+  --provider openai `
+  --model gpt-5.4-mini `
+  --translation-domain legal `
+  --use-manifest-terminology `
+  --terminology-term-group verified `
+  --metric sequence_similarity `
+  --metric bleu `
+  --metric chrf2++ `
+  --metric target_term_coverage `
+  --output reports/jrc-acquis-articles-en-es.jsonl
+```
+
 ## Known Caveats
 
 - JRC-Acquis is legal text, not patent text. It has articles, recitals, annexes, protocols, and

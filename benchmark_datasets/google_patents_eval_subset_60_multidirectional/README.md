@@ -49,8 +49,11 @@ Use the generic parallel-manifest evaluator for each direction folder.
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --dataset-dir benchmark_datasets/google_patents_eval_subset_60_multidirectional/en-de `
-  --strategy openai `
+  --translator one-shot `
+  --provider openai `
   --model gpt-5.4-mini `
+  --translation-domain chemistry `
+  --use-manifest-terminology `
   --metric sequence_similarity `
   --metric bleu `
   --metric chrf2++ `

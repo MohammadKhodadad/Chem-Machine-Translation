@@ -41,8 +41,9 @@ steps for the translation benchmark and system design.
 
 ### Baseline Translation Strategies
 
-- Keep `openai` as the simple one-pass LLM baseline.
-- Keep `openai-agentic` as the reviewer-assisted baseline for higher-fidelity runs.
+- Keep `one-shot` as the simple provider-backed LLM baseline.
+- Keep provider selection separate from translation behavior so OpenAI-compatible local/internal
+  endpoints can be evaluated with the same runner.
 - Add a classic encoder-decoder MT baseline so LLM outputs can be compared against a conventional
   translation model.
 - Add a dry-run or copy baseline to validate metric behavior on protected spans.
@@ -97,8 +98,8 @@ steps for the translation benchmark and system design.
 5. Add retrieval-augmented examples for patent and scientific prose.
 6. Add optional structure validation with OPSIN, RDKit, and InChI.
 7. Add candidate reranking for high-risk or low-confidence translations.
-8. Compare `openai`, `openai-agentic`, retrieval-augmented, encoder-decoder, and fine-tuned
-   strategies on the same benchmark.
+8. Compare one-shot provider-backed LLMs, retrieval-augmented variants, encoder-decoder baselines,
+   and fine-tuned systems on the same benchmark.
 
 ## Open Decisions
 

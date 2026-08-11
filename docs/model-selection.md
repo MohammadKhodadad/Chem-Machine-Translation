@@ -9,8 +9,8 @@ languages and review chemistry preservation.
 Use the same sampled documents for every candidate model:
 
 ```powershell
-uv run chem-translate translate --language German --strategy openai-agentic --model gpt-4.1-mini --limit 20
-uv run chem-translate translate --language German --strategy openai-agentic --model gpt-4.1 --limit 20
+uv run chem-translate translate --language German --translator one-shot --provider openai --model gpt-4.1-mini --limit 20
+uv run chem-translate translate --language German --translator one-shot --provider openai --model gpt-4.1 --limit 20
 ```
 
 Review outputs for:

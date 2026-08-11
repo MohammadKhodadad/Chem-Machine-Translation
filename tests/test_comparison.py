@@ -17,7 +17,7 @@ def test_reports_include_terminology_section(tmp_path) -> None:
         source_language="English",
         target_language="German",
         translated_text="Der Katalysator war stabil.",
-        strategy="openai",
+        strategy="one-shot",
         model="gpt-4.1-mini",
         terminology_section="Approved terminology instructions:\ncatalyst -> Katalysator",
     )

@@ -7,8 +7,8 @@
   `TranslationResult`.
 - `chem_machine_translation.data`: generic Hugging Face loaders and dataset terminology generation
   utilities. Dataset-specific source-pair builders live under `scripts/`.
-- `chem_machine_translation.translation`: prompts, terminology layers, OpenAI agents, and
-  translation strategy implementations.
+- `chem_machine_translation.translation`: prompts, terminology layers, provider adapters, and
+  one-shot translation implementation.
 - `chem_machine_translation.evaluation`: metric computation and JSONL/CSV report writers.
 - `chem_machine_translation.integrations`: external service integrations such as Hugging Face
   uploads.
@@ -27,18 +27,22 @@
 
 Default target languages are French, German, Portuguese, Chinese, and Spanish.
 
-## Agentic Translation
+## One-Shot Translation
 
-The `openai-agentic` strategy uses two roles:
+The active translation path is one-shot translation. The translator builds one domain-aware prompt,
+injects optional terminology instructions, and sends the request through a text-generation provider.
 
-- Translator: produces the initial target-language translation and later revisions.
-- Reviewer: checks the candidate translation against the source and returns structured approval,
-  issues, required changes, and rationale.
+Translator behavior and provider backend are separate:
 
-The workflow is capped at 3 review rounds by default. If the reviewer rejects a candidate, the
-translator receives the source text, current translation, and required changes before revising. The
-final report records whether the reviewer approved the final translation, how many rounds ran, and
-the review notes.
+- `dry-run`: returns the source text unchanged for pipeline checks.
+- `one-shot`: sends a single translation request through a provider.
+- `openai` / `openai-compatible`: provider adapters for the OpenAI Responses API shape, including
+  local or internal services exposed through an OpenAI-compatible endpoint.
+
+Prompt domain is explicit and reproducible. Benchmark runs can use `--translation-domain chemistry`,
+`legal`, `generic`, or `auto`; `auto` maps Google Patents to chemistry prompts and JRC/EuroLex to
+legal prompts. When `--use-manifest-terminology` is set, selected manifest terms are injected into
+the prompt. The default terminology group remains `verified`.
 
 ## Dataset Mapping
 

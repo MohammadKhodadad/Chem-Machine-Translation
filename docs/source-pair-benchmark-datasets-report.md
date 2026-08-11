@@ -161,7 +161,7 @@ Example evaluation command:
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --dataset-dir benchmark_datasets/eurolex_source_pairs_10_per_pair `
-  --strategy dry-run `
+  --translator dry-run `
   --metric sequence_similarity `
   --metric target_term_coverage `
   --terminology-term-group verified `

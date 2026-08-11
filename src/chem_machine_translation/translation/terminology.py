@@ -4,7 +4,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 from openai import OpenAI
 
@@ -270,6 +270,64 @@ class StaticTerminologyLayer:
         if not text:
             return ""
         return "Approved terminology instructions:\n" + text
+
+
+@dataclass(frozen=True)
+class ManifestTerminologyLayer:
+    """Injects target-side benchmark terminology stored on Document.metadata."""
+
+    term_groups: tuple[str, ...] = ("verified",)
+    max_terms: int | None = None
+
+    def build_prompt_section(self, context: TerminologyContext) -> str:
+        rows = context.document.metadata.get("terminology")
+        if not isinstance(rows, list):
+            return ""
+
+        selected_terms = []
+        allowed_groups = set(self.term_groups)
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            term_group = str(row.get("term_group") or "verified")
+            if allowed_groups and term_group not in allowed_groups:
+                continue
+            for target_term in manifest_target_terms(row):
+                selected_terms.append(
+                    (
+                        target_term,
+                        str(row.get("category") or "other"),
+                        term_group,
+                    )
+                )
+                break
+            if self.max_terms is not None and len(selected_terms) >= self.max_terms:
+                break
+
+        if not selected_terms:
+            return ""
+
+        lines = [
+            "Approved target terminology from the benchmark manifest:",
+            (
+                "Use these exact target-language terms where they match the source meaning. "
+                "Do not force a term when the concept is absent."
+            ),
+        ]
+        lines.extend(
+            f"- {target_term} [{category}; {term_group}]"
+            for target_term, category, term_group in selected_terms
+        )
+        return "\n".join(lines)
+
+
+def manifest_target_terms(row: dict[str, Any]) -> list[str]:
+    values = row.get("target_terms") or row.get("reference_candidates") or row.get("target")
+    if isinstance(values, str):
+        values = [values]
+    if not isinstance(values, list):
+        return []
+    return [str(value).strip() for value in values if str(value).strip()]
 
 
 @dataclass(frozen=True)

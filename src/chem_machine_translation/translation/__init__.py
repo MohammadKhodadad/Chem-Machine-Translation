@@ -1,19 +1,20 @@
-from chem_machine_translation.translation.agents import (
-    OpenAITranslationAgents,
-    format_review_note,
-    parse_translation_review,
-)
 from chem_machine_translation.translation.iate import (
     IATEClient,
     IATETermTranslation,
     iate_language_code,
     parse_iate_translation,
 )
+from chem_machine_translation.translation.providers import (
+    OpenAIResponsesProvider,
+    TextGenerationProvider,
+    build_text_generation_provider,
+)
 from chem_machine_translation.translation.terminology import (
     CompositeTerminologyLayer,
     EmptyTerminologyLayer,
     ExtractedTerm,
     LLMTerminologyLayer,
+    ManifestTerminologyLayer,
     StaticTerminologyLayer,
     TerminologyContext,
     TerminologyLayer,
@@ -24,12 +25,11 @@ from chem_machine_translation.translation.terminology import (
     parse_refined_terms,
 )
 from chem_machine_translation.translation.translators import (
-    BaseOpenAITranslator,
     DryRunTranslator,
-    OpenAIAgenticTranslator,
-    OpenAITranslator,
+    OneShotTranslator,
     Translator,
     build_translator,
+    normalize_translator_name,
 )
 from chem_machine_translation.translation.wikidata import (
     WikidataClient,
@@ -38,7 +38,6 @@ from chem_machine_translation.translation.wikidata import (
 )
 
 __all__ = [
-    "BaseOpenAITranslator",
     "CompositeTerminologyLayer",
     "DryRunTranslator",
     "EmptyTerminologyLayer",
@@ -46,24 +45,25 @@ __all__ = [
     "IATEClient",
     "IATETermTranslation",
     "LLMTerminologyLayer",
-    "OpenAIAgenticTranslator",
-    "OpenAITranslationAgents",
-    "OpenAITranslator",
+    "ManifestTerminologyLayer",
+    "OneShotTranslator",
+    "OpenAIResponsesProvider",
     "StaticTerminologyLayer",
     "TerminologyContext",
     "TerminologyLayer",
+    "TextGenerationProvider",
     "Translator",
     "WikidataClient",
     "WikidataTermTranslation",
     "build_terminology_layer",
     "build_translator",
+    "build_text_generation_provider",
     "format_extracted_terms",
-    "format_review_note",
     "iate_language_code",
     "load_static_terminology_layer",
+    "normalize_translator_name",
     "parse_extracted_terms",
     "parse_iate_translation",
     "parse_refined_terms",
-    "parse_translation_review",
     "wikidata_language_code",
 ]

@@ -189,13 +189,37 @@ def translate(
         list[str] | None,
         typer.Option("--dataset", "-d", help="Dataset alias. Repeatable; defaults to both."),
     ] = None,
-    strategy: Annotated[
+    translator: Annotated[
         str,
         typer.Option(
-            help="Translation strategy: dry-run, openai, or openai-agentic",
+            "--translator",
+            help="Translator: dry-run, one-shot, or openai alias.",
             rich_help_panel="Translation",
         ),
-    ] = "openai-agentic",
+    ] = "one-shot",
+    provider: Annotated[
+        str,
+        typer.Option(
+            help="Text generation provider: openai or openai-compatible.",
+            rich_help_panel="Translation",
+        ),
+    ] = "openai",
+    provider_base_url: Annotated[
+        str | None,
+        typer.Option(
+            "--provider-base-url",
+            help="Override OPENAI_BASE_URL for OpenAI-compatible providers.",
+            rich_help_panel="Translation",
+        ),
+    ] = None,
+    provider_timeout: Annotated[
+        float | None,
+        typer.Option(
+            "--provider-timeout",
+            help="Provider request timeout in seconds.",
+            rich_help_panel="Translation",
+        ),
+    ] = None,
     dry_run: Annotated[
         bool,
         typer.Option(
@@ -237,13 +261,6 @@ def translate(
     temperature: Annotated[
         float, typer.Option(help="Generation temperature.", rich_help_panel="Advanced")
     ] = 0.0,
-    max_review_rounds: Annotated[
-        int,
-        typer.Option(
-            help="Maximum review/revision rounds for agentic strategies.",
-            rich_help_panel="Advanced",
-        ),
-    ] = 3,
     terminology_prompt: Annotated[
         Path | None,
         typer.Option(
@@ -341,7 +358,7 @@ def translate(
     """Translate filtered English chemistry documents."""
 
     settings = load_settings()
-    selected_strategy = "dry-run" if dry_run else strategy
+    selected_translator = "dry-run" if dry_run else translator
     terminology_layer = build_terminology_layer(
         settings=settings,
         static_prompt_path=terminology_prompt,
@@ -351,7 +368,7 @@ def translate(
             or iate_terminology
             or refine_terminology
         )
-        and selected_strategy != "dry-run",
+        and selected_translator != "dry-run",
         extraction_model=terminology_model or model,
         max_terms=terminology_max_terms,
         use_wikidata=wikidata_terminology,
@@ -361,12 +378,15 @@ def translate(
         max_refined_terms=terminology_max_refined_terms,
     )
     translator = build_translator(
-        strategy=selected_strategy,
+        translator=selected_translator,
         settings=settings,
         model=model,
         temperature=temperature,
-        max_rounds=max_review_rounds,
         terminology_layer=terminology_layer,
+        provider=provider,
+        provider_base_url=provider_base_url,
+        provider_timeout=provider_timeout,
+        translation_domain="chemistry",
     )
     results = []
 
@@ -415,7 +435,7 @@ def translate_sample(
         typer.Option("--target-language", help="Target language. Repeatable."),
     ] = None,
     datasets: Annotated[list[str] | None, typer.Option("--dataset")] = None,
-    strategy: Annotated[str, typer.Option()] = "dry-run",
+    translator: Annotated[str, typer.Option("--translator")] = "dry-run",
     limit_per_dataset: Annotated[int, typer.Option()] = 10,
 ) -> None:
     """Legacy alias for translate."""
@@ -423,7 +443,7 @@ def translate_sample(
     translate(
         target_languages=target_languages,
         datasets=datasets,
-        strategy=strategy,
+        translator=translator,
         dry_run=False,
         limit_per_dataset=limit_per_dataset,
     )

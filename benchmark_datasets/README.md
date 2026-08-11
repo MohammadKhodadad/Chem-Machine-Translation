@@ -165,8 +165,11 @@ Verified terminology only:
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --dataset-dir benchmark_datasets/google_patents_eval_subset_60_multidirectional/en-de `
-  --strategy openai `
+  --translator one-shot `
+  --provider openai `
   --model gpt-5.4-mini `
+  --translation-domain chemistry `
+  --use-manifest-terminology `
   --metric sequence_similarity `
   --metric bleu `
   --metric chrf2++ `
@@ -180,7 +183,8 @@ LLM-only terminology:
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --dataset-dir benchmark_datasets/google_patents_eval_subset_60_multidirectional/en-de `
-  --strategy openai `
+  --translator one-shot `
+  --provider openai `
   --model gpt-5.4-mini `
   --metric target_term_coverage `
   --terminology-term-group llm `
@@ -192,7 +196,8 @@ Algorithmic-only terminology:
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --dataset-dir benchmark_datasets/google_patents_eval_subset_60_multidirectional/en-de `
-  --strategy openai `
+  --translator one-shot `
+  --provider openai `
   --model gpt-5.4-mini `
   --metric target_term_coverage `
   --terminology-term-group algorithmic `
@@ -204,7 +209,8 @@ All terminology groups:
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --dataset-dir benchmark_datasets/google_patents_eval_subset_60_multidirectional/en-de `
-  --strategy openai `
+  --translator one-shot `
+  --provider openai `
   --model gpt-5.4-mini `
   --metric target_term_coverage `
   --terminology-term-group verified `

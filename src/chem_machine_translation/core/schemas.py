@@ -26,10 +26,3 @@ class TranslationResult:
     review_notes: list[str] = field(default_factory=list)
     terminology_section: str = ""
 
-
-@dataclass(frozen=True)
-class TranslationReview:
-    approved: bool
-    issues: list[str]
-    required_changes: list[str]
-    rationale: str

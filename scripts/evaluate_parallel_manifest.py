@@ -19,6 +19,7 @@ from chem_machine_translation.evaluation.metrics import (
     compute_translation_metrics,
     parse_metric_names,
 )
+from chem_machine_translation.translation.terminology import ManifestTerminologyLayer
 from chem_machine_translation.translation.translators import build_translator
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
@@ -34,12 +35,39 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--manifest", type=Path, default=None)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
+        "--translator",
+        default=None,
+        choices=["dry-run", "one-shot"],
+        help="Translation behavior. Defaults to dry-run for pipeline checks.",
+    )
+    parser.add_argument(
         "--strategy",
-        default="dry-run",
-        choices=["dry-run", "openai", "openai-agentic"],
+        default=None,
+        choices=["dry-run", "openai", "one-shot"],
+        help="Deprecated alias for --translator. 'openai' maps to one-shot.",
+    )
+    parser.add_argument(
+        "--provider",
+        default="openai",
+        choices=["openai", "openai-compatible"],
+        help="Text generation provider used by one-shot translation.",
     )
     parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--max-review-rounds", type=int, default=3)
+    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--provider-base-url", default=None)
+    parser.add_argument("--provider-timeout", type=float, default=None)
+    parser.add_argument(
+        "--translation-domain",
+        default="auto",
+        choices=["auto", "chemistry", "legal", "generic"],
+        help="Prompt domain. Auto maps Google Patents to chemistry and legal corpora to legal.",
+    )
+    parser.add_argument(
+        "--use-manifest-terminology",
+        action="store_true",
+        help="Inject selected manifest terminology into one-shot translation prompts.",
+    )
+    parser.add_argument("--max-manifest-terminology-terms", type=int, default=None)
     parser.add_argument(
         "--metric",
         action="append",
@@ -66,6 +94,16 @@ def main() -> None:
     args = parse_args()
     settings = load_settings()
     metric_names = parse_metric_names(args.metric)
+    manifest_rows = load_manifest_rows(args.manifest or discover_manifest(args.dataset_dir))
+    translation_domain = resolve_translation_domain(args.translation_domain, manifest_rows)
+    terminology_layer = (
+        ManifestTerminologyLayer(
+            term_groups=tuple(args.terminology_term_group or ("verified",)),
+            max_terms=args.max_manifest_terminology_terms,
+        )
+        if args.use_manifest_terminology
+        else None
+    )
     comet_scorer = (
         UnbabelCometScorer(
             model_name=args.comet_model,
@@ -86,14 +124,17 @@ def main() -> None:
         else None
     )
     translator = build_translator(
-        strategy=args.strategy,
+        translator=resolve_translator(args.translator, args.strategy),
         settings=settings,
         model=args.model,
-        max_rounds=args.max_review_rounds,
-        terminology_layer=None,
+        temperature=args.temperature,
+        terminology_layer=terminology_layer,
+        provider=args.provider,
+        provider_base_url=args.provider_base_url,
+        provider_timeout=args.provider_timeout,
+        translation_domain=translation_domain,
     )
 
-    manifest_rows = load_manifest_rows(args.manifest or discover_manifest(args.dataset_dir))
     row_loader = ParallelRowsLoader(args.dataset_dir)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -133,6 +174,7 @@ def main() -> None:
                 "source_language": manifest_row.get("source_language"),
                 "target_language": manifest_row.get("target_language"),
                 "strategy": result.strategy,
+                "provider": args.provider if result.strategy == "one-shot" else "",
                 "model": result.model,
                 "approved": result.approved,
                 "review_rounds": result.review_rounds,
@@ -197,6 +239,28 @@ def load_manifest_rows(manifest_path: Path) -> list[dict]:
         for line in manifest_path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
+
+
+def resolve_translator(translator: str | None, strategy: str | None) -> str:
+    if translator and strategy:
+        raise ValueError("Use either --translator or deprecated --strategy, not both.")
+    selected = translator or strategy or "dry-run"
+    if selected == "openai":
+        return "one-shot"
+    return selected
+
+
+def resolve_translation_domain(requested: str, manifest_rows: list[dict]) -> str:
+    if requested != "auto":
+        return requested
+    datasets = {str(row.get("dataset") or "").lower() for row in manifest_rows}
+    directions = {str(row.get("direction") or "").lower() for row in manifest_rows}
+    combined = " ".join(sorted(datasets | directions))
+    if "google" in combined or "patent" in combined:
+        return "chemistry"
+    if "eurolex" in combined or "jrc" in combined or "acquis" in combined:
+        return "legal"
+    return "generic"
 
 
 def print_summary(rows: list[dict], output: Path) -> None:

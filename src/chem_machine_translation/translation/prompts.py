@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from chem_machine_translation.core.schemas import Document, TranslationReview
+from typing import Literal
 
-TRANSLATOR_SYSTEM_PROMPT = """You are a senior scientific translator specializing in chemistry,
-materials science, chemical engineering, catalysis, polymers, analytical chemistry, and
+from chem_machine_translation.core.schemas import Document
+
+TranslationDomain = Literal["chemistry", "legal", "generic"]
+
+CHEMISTRY_TRANSLATOR_SYSTEM_PROMPT = """You are a senior scientific translator specializing in
+chemistry, materials science, chemical engineering, catalysis, polymers, analytical chemistry, and
 biochemistry.
 
 Your job is to translate the source text accurately, not to improve, summarize, explain, or
@@ -29,31 +33,45 @@ Chemistry-specific requirements:
 Return only the translated text.
 """
 
+LEGAL_TRANSLATOR_SYSTEM_PROMPT = """You are a senior legal translator specializing in EU law,
+international agreements, regulations, decisions, protocols, annexes, and institutional texts.
 
-REVIEWER_SYSTEM_PROMPT = """You are a strict chemistry translation reviewer.
-You compare the source text and candidate translation for scientific fidelity.
+Your job is to translate the source text accurately, not to improve, summarize, explain, or
+reinterpret it.
 
-Approve only if the translation preserves the source meaning and chemistry details. Reject for:
-- changed, dropped, or invented chemical formulas, catalysts, reagents, proteins, materials, or
-  abbreviations;
-- changed, dropped, converted, or rounded numbers, units, temperatures, pressures, pH values,
-  concentrations, yields, conversion rates, reaction times, wavelengths, or dimensions;
-- mistranslated mechanistic or analytical terms;
-- added explanations, summaries, or facts absent from the source;
-- omitted qualifiers, negations, comparisons, uncertainty, or scope;
-- missing or altered approved terminology when terminology instructions are provided;
-- target-language text that is ungrammatical enough to obscure the scientific meaning.
+Legal translation requirements:
+- Preserve legal effect, obligations, prohibitions, permissions, conditions, exceptions, and scope.
+- Preserve article, paragraph, annex, protocol, treaty, regulation, decision, and directive
+  references exactly.
+- Preserve institution names, committee names, programme/fund names, document identifiers, dates,
+  numbers, currencies, percentages, and legal citations.
+- Preserve defined terms consistently, especially terms introduced by wording such as "shall mean"
+  or "for the purposes of".
+- When approved terminology instructions are provided in the user prompt, follow them exactly.
+- Do not add missing context, modernize wording, simplify legal structure, or fix apparent source
+  mistakes.
 
-Return only valid JSON with this exact shape:
-{
-  "approved": true or false,
-  "issues": ["specific issue 1"],
-  "required_changes": ["specific required change 1"],
-  "rationale": "one concise sentence"
-}
-
-If approved, use empty arrays for issues and required_changes.
+Return only the translated text.
 """
+
+GENERIC_TRANSLATOR_SYSTEM_PROMPT = """You are a senior professional translator.
+
+Your job is to translate the source text accurately, not to improve, summarize, explain, or
+reinterpret it.
+
+Preserve names, identifiers, numbers, units, citations, document references, formatting cues, and
+domain-specific terminology. When approved terminology instructions are provided in the user prompt,
+follow them exactly.
+
+Return only the translated text.
+"""
+
+TRANSLATOR_SYSTEM_PROMPT = CHEMISTRY_TRANSLATOR_SYSTEM_PROMPT
+TRANSLATION_DOMAIN_LABELS: dict[TranslationDomain, str] = {
+    "chemistry": "chemistry document",
+    "legal": "legal document",
+    "generic": "document",
+}
 
 
 def build_initial_translation_prompt(
@@ -61,50 +79,14 @@ def build_initial_translation_prompt(
     target_language: str,
     source_language: str,
     terminology_section: str = "",
+    translation_domain: TranslationDomain = "chemistry",
 ) -> str:
     terminology_block = _format_terminology_section(terminology_section)
+    domain_label = TRANSLATION_DOMAIN_LABELS[translation_domain]
     return (
-        f"Translate this {source_language} chemistry document into {target_language}.\n\n"
+        f"Translate this {source_language} {domain_label} into {target_language}.\n\n"
         f"{terminology_block}"
         f"Source document:\n{document.text}"
-    )
-
-
-def build_revision_prompt(
-    document: Document,
-    current_translation: str,
-    review: TranslationReview,
-    target_language: str,
-    source_language: str,
-    terminology_section: str = "",
-) -> str:
-    issues = "\n".join(f"- {issue}" for issue in review.issues) or "- None"
-    required_changes = "\n".join(f"- {change}" for change in review.required_changes) or "- None"
-    terminology_block = _format_terminology_section(terminology_section)
-    return (
-        f"Revise the {target_language} translation of this {source_language} chemistry document.\n"
-        "Address every reviewer issue while preserving all chemistry details exactly.\n\n"
-        f"{terminology_block}"
-        f"Source document:\n{document.text}\n\n"
-        f"Current translation:\n{current_translation}\n\n"
-        f"Reviewer issues:\n{issues}\n\n"
-        f"Required changes:\n{required_changes}"
-    )
-
-
-def build_review_prompt(
-    document: Document,
-    candidate_translation: str,
-    target_language: str,
-    source_language: str,
-    terminology_section: str = "",
-) -> str:
-    terminology_block = _format_terminology_section(terminology_section)
-    return (
-        f"Review this {target_language} translation against the {source_language} source.\n\n"
-        f"{terminology_block}"
-        f"Source document:\n{document.text}\n\n"
-        f"Candidate translation:\n{candidate_translation}"
     )
 
 
@@ -113,3 +95,19 @@ def _format_terminology_section(terminology_section: str) -> str:
     if not text:
         return ""
     return f"{text}\n\n"
+
+
+def translator_system_prompt(domain: str) -> str:
+    normalized = normalize_translation_domain(domain)
+    if normalized == "legal":
+        return LEGAL_TRANSLATOR_SYSTEM_PROMPT
+    if normalized == "generic":
+        return GENERIC_TRANSLATOR_SYSTEM_PROMPT
+    return CHEMISTRY_TRANSLATOR_SYSTEM_PROMPT
+
+
+def normalize_translation_domain(domain: str | None) -> TranslationDomain:
+    normalized = (domain or "chemistry").strip().lower()
+    if normalized in {"chemistry", "legal", "generic"}:
+        return normalized  # type: ignore[return-value]
+    raise ValueError(f"Unknown translation domain: {domain}")

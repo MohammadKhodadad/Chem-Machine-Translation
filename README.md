@@ -54,7 +54,8 @@ Run OpenAI translation:
 
 ```powershell
 uv run chem-translate translate `
-  --strategy openai-agentic `
+  --translator one-shot `
+  --provider openai `
   --model gpt-4.1-mini `
   --output-format jsonl
 ```
@@ -67,7 +68,8 @@ Optionally inject terminology instructions from a text or markdown file:
 
 ```powershell
 uv run chem-translate translate `
-  --strategy openai-agentic `
+  --translator one-shot `
+  --provider openai `
   --language German `
   --terminology-prompt data/terminology/german.md
 ```
@@ -78,7 +80,8 @@ You can also ask an LLM to extract terminology from each source document before 
 
 ```powershell
 uv run chem-translate translate `
-  --strategy openai-agentic `
+  --translator one-shot `
+  --provider openai `
   --language German `
   --extract-terminology `
   --terminology-max-terms 20
@@ -91,7 +94,8 @@ To enrich those extracted source terms with Wikidata candidate labels in the tar
 
 ```powershell
 uv run chem-translate translate `
-  --strategy openai-agentic `
+  --translator one-shot `
+  --provider openai `
   --language German `
   --wikidata-terminology
 ```
@@ -103,7 +107,8 @@ To use IATE first and fall back to Wikidata when IATE does not produce a target-
 
 ```powershell
 uv run chem-translate translate `
-  --strategy openai-agentic `
+  --translator one-shot `
+  --provider openai `
   --language German `
   --iate-terminology `
   --wikidata-terminology
@@ -117,7 +122,8 @@ before translation:
 
 ```powershell
 uv run chem-translate translate `
-  --strategy openai-agentic `
+  --translator one-shot `
+  --provider openai `
   --language German `
   --iate-terminology `
   --wikidata-terminology `
@@ -152,7 +158,8 @@ Run a direction with:
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --dataset-dir benchmark_datasets/google_patents_eval_subset_60_multidirectional/en-de `
-  --strategy openai `
+  --translator one-shot `
+  --provider openai `
   --model gpt-5.4-mini `
   --metric sequence_similarity `
   --metric bleu `
@@ -170,11 +177,14 @@ Terminology benchmark groups:
 
 Repeat `--terminology-term-group` to evaluate combinations, for example `verified` + `llm`.
 
-## Current Strategies
+## Current Translators
 
 - `dry-run`: returns the source text unchanged. Use this to validate loading, truncation, and report generation without API cost.
-- `openai`: single-pass OpenAI translation with a chemistry-specific prompt.
-- `openai-agentic`: translator agent plus strict chemistry reviewer agent. The reviewer approves or sends issues back for revision for up to 3 rounds by default.
+- `one-shot`: single-pass translation through a configurable text-generation provider.
+
+Providers are selected separately from translator behavior. The current provider is `openai`, which
+also supports OpenAI-compatible local/internal endpoints through `OPENAI_BASE_URL` or
+`--provider-base-url`.
 
 ## Model Notes
 

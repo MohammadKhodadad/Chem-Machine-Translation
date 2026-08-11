@@ -1,23 +1,23 @@
 from chem_machine_translation.core.schemas import Document
-from chem_machine_translation.translation.agents import (
-    OpenAITranslationAgents,
-    parse_translation_review,
-)
 from chem_machine_translation.translation.iate import (
     IATETermTranslation,
     iate_language_code,
     parse_iate_translation,
 )
-from chem_machine_translation.translation.prompts import build_initial_translation_prompt
+from chem_machine_translation.translation.prompts import (
+    build_initial_translation_prompt,
+    translator_system_prompt,
+)
 from chem_machine_translation.translation.terminology import (
     ExtractedTerm,
     LLMTerminologyLayer,
+    ManifestTerminologyLayer,
     StaticTerminologyLayer,
     TerminologyContext,
     parse_extracted_terms,
     parse_refined_terms,
 )
-from chem_machine_translation.translation.translators import DryRunTranslator
+from chem_machine_translation.translation.translators import DryRunTranslator, OneShotTranslator
 from chem_machine_translation.translation.wikidata import (
     WikidataTermTranslation,
     wikidata_language_code,
@@ -59,6 +59,18 @@ class _FakeClient:
         self.responses = _FakeResponses(outputs)
 
 
+class _FakeProvider:
+    name = "fake"
+
+    def __init__(self, output: str) -> None:
+        self.output = output
+        self.calls = []
+
+    def generate(self, **kwargs) -> str:
+        self.calls.append(kwargs)
+        return self.output
+
+
 class _FakeWikidataClient:
     def __init__(self, translations: dict[str, WikidataTermTranslation | None]) -> None:
         self.translations = translations
@@ -89,56 +101,28 @@ class _FakeIATEClient:
         return self.translations.get(source_term)
 
 
-def test_parse_translation_review_from_json() -> None:
-    review = parse_translation_review(
-        '{"approved": false, "issues": ["CO2 changed"], '
-        '"required_changes": ["Restore CO2"], "rationale": "Formula changed."}'
-    )
-
-    assert review.approved is False
-    assert review.issues == ["CO2 changed"]
-    assert review.required_changes == ["Restore CO2"]
-
-
-def test_agentic_translation_revises_until_approved() -> None:
+def test_one_shot_translator_uses_provider_and_terminology() -> None:
     document = Document(
         dataset="dolma",
         source_id="1",
         text="CO2 hydrogenation to formate at 80 °C.",
         metadata={},
     )
-    client = _FakeClient(
-        [
-            "Bad German translation with changed CO2.",
-            (
-                '{"approved": false, "issues": ["CO2 was mistranslated"], '
-                '"required_changes": ["Preserve CO2 exactly"], "rationale": "Formula changed."}'
-            ),
-            "Good German translation preserving CO2.",
-            '{"approved": true, "issues": [], "required_changes": [], "rationale": "Accurate."}',
-        ]
-    )
-    agents = OpenAITranslationAgents(
-        client=client,
-        model="gpt-4.1-mini",
+    provider = _FakeProvider("German translation preserving CO2.")
+    translator = OneShotTranslator(
+        provider=provider,
+        model="model-a",
         terminology_layer=StaticTerminologyLayer("CO2 -> CO2"),
     )
 
-    translation, review, rounds, notes = agents.translate_with_review(
-        document=document,
-        target_language="German",
-        source_language="English",
-        max_rounds=3,
-    )
+    result = translator.translate(document, target_language="German", source_language="English")
 
-    assert translation == "Good German translation preserving CO2."
-    assert review.approved is True
-    assert rounds == 2
-    assert "rejected" in notes[0]
-    assert "approved" in notes[1]
-    assert "CO2 -> CO2" in client.responses.calls[0]["input"][1]["content"]
-    assert "CO2 -> CO2" in client.responses.calls[1]["input"][1]["content"]
-    assert "CO2 -> CO2" in client.responses.calls[2]["input"][1]["content"]
+    assert result.translated_text == "German translation preserving CO2."
+    assert result.strategy == "one-shot"
+    assert result.model == "model-a"
+    assert "CO2 -> CO2" in result.terminology_section
+    assert provider.calls[0]["model"] == "model-a"
+    assert "CO2 -> CO2" in provider.calls[0]["user_prompt"]
 
 
 def test_empty_terminology_section_is_not_added_to_prompt() -> None:
@@ -159,29 +143,59 @@ def test_empty_terminology_section_is_not_added_to_prompt() -> None:
     assert "Source document:" in prompt
 
 
-def test_openai_agent_injects_terminology_layer_output() -> None:
+def test_one_shot_translator_can_use_legal_prompt() -> None:
     document = Document(
-        dataset="dolma",
+        dataset="jrc_acquis",
         source_id="1",
-        text="The catalyst was stable.",
+        text="Article 1 This Regulation shall apply.",
         metadata={},
     )
-    client = _FakeClient(["Der Katalysator war stabil."])
-    agents = OpenAITranslationAgents(
-        client=client,
-        model="gpt-4.1-mini",
-        terminology_layer=StaticTerminologyLayer("catalyst -> Katalysator"),
+    provider = _FakeProvider("Legal translation.")
+    translator = OneShotTranslator(
+        provider=provider,
+        model="model-a",
+        translation_domain="legal",
     )
 
-    agents.translate_once(
-        document=document,
-        target_language="German",
-        source_language="English",
+    translator.translate(document, target_language="Spanish", source_language="English")
+
+    assert "senior legal translator" in provider.calls[0]["system_prompt"]
+    assert "legal document" in provider.calls[0]["user_prompt"]
+    assert translator_system_prompt("generic").startswith("You are a senior professional")
+
+
+def test_manifest_terminology_layer_filters_term_groups() -> None:
+    document = Document(
+        dataset="parallel_manifest",
+        source_id="1",
+        text="Agreement text.",
+        metadata={
+            "terminology": [
+                {
+                    "target_terms": ["Comité mixto del EEE"],
+                    "category": "institution",
+                    "term_group": "verified",
+                },
+                {
+                    "target_terms": ["texto común"],
+                    "category": "other",
+                    "term_group": "llm",
+                },
+            ]
+        },
+    )
+    layer = ManifestTerminologyLayer(term_groups=("verified",))
+
+    section = layer.build_prompt_section(
+        TerminologyContext(
+            document=document,
+            target_language="Spanish",
+            source_language="English",
+        )
     )
 
-    user_prompt = client.responses.calls[0]["input"][1]["content"]
-    assert "Approved terminology instructions:" in user_prompt
-    assert "catalyst -> Katalysator" in user_prompt
+    assert "Comité mixto del EEE [institution; verified]" in section
+    assert "texto común" not in section
 
 
 def test_parse_extracted_terms_from_json() -> None:
