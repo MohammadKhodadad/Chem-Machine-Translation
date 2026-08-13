@@ -10,6 +10,8 @@ older EuroLex/MultiEURLEX setup. The source-first flow is:
 3. Build benchmark datasets from the selected source JSONL with legal terminology in the manifest.
 4. Evaluate with `scripts/evaluate_parallel_manifest.py`.
 
+For a Mermaid diagram of this flow, see `docs/jrc-acquis-pipeline.md`.
+
 The current tracked JRC sources cover `en`, `es`, `de`, `fr`, and `pt`.
 
 ## Data Source

@@ -107,6 +107,8 @@ uv run --no-sync python scripts/build_eurolex_eval_subset.py `
 The JRC-Acquis sources are source-pair snapshots built from public OPUS JRC-Acquis v3.0 Moses
 aligned segment zips.
 
+For the full source-to-dataset pipeline diagram, see `docs/jrc-acquis-pipeline.md`.
+
 `scripts/create_jrc_acquis_source_pairs.py` downloads pair zips into the ignored
 `data/opus_jrc_acquis` cache, then concatenates already-aligned segment pairs within document
 boundaries and writes a portable source JSONL plus metadata. Use `--section-type article` or
