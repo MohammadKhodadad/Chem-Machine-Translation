@@ -77,6 +77,15 @@ Two section types are supported:
 - `definition`: chunks containing explicit legal-definition wording, such as "for the purposes of
   this Regulation" or "shall mean".
 
+Both tracked anchored JRC sources are regenerated with the same preprocessing gate:
+
+- `--clean-legacy-markup` removes legacy OPUS/JRC inline tags before normalization.
+- `--quality-mode strict` rejects residual tag-like markup, control characters, replacement
+  characters, high all-caps blocks, obvious list-continuation starts, bare-date starts, and
+  incomplete trailing fragments.
+- Strict mode intentionally does not perform full language identification; language coverage still
+  comes from the OPUS bilingual file structure.
+
 The quality check on the anchored 250-per-pair article and definition sources found no empty rows,
 no corrupt replacement characters, no identical source/target pairs, no source/target token ratio
 above 2.0, exactly 250 rows for each ordered direction, 250 complete anchors per source, and zero
@@ -88,9 +97,9 @@ historical OCR/normalization artifacts, which should be noted in final benchmark
 Anchored audit snapshot:
 
 - Articles: 5,000 rows, 20 directions, 250 anchors, 250 rows per direction, mean source length
-  427.6 approximate tokens.
+  418.6 approximate tokens, with strict text-quality filtering.
 - Definitions: 5,000 rows, 20 directions, 250 anchors, 250 rows per direction, mean source length
-  484.8 approximate tokens.
+  487.9 approximate tokens, with legacy OPUS markup cleaned and strict text-quality filtering.
 
 ### Anchored Word Coverage
 
@@ -104,15 +113,15 @@ Article source coverage:
 - anchors: 250;
 - ordered directions: 20;
 - rows per direction: 250;
-- total source words: 2,138,058;
-- total target words: 2,138,058;
-- source words per row: min 251, mean 427.6, median 448.0, max 777;
+- total source words: 2,093,130;
+- total target words: 2,093,130;
+- source words per row: min 251, mean 418.6, median 432.0, max 679;
 - source-language mean words:
-  - `de`: 392.3;
-  - `en`: 423.5;
-  - `es`: 459.9;
-  - `fr`: 424.0;
-  - `pt`: 438.4.
+  - `de`: 382.0;
+  - `en`: 413.3;
+  - `es`: 451.7;
+  - `fr`: 413.6;
+  - `pt`: 432.5.
 
 Definition source coverage:
 
@@ -120,15 +129,15 @@ Definition source coverage:
 - anchors: 250;
 - ordered directions: 20;
 - rows per direction: 250;
-- total source words: 2,424,153;
-- total target words: 2,424,153;
-- source words per row: min 254, mean 484.8, median 471.0, max 783;
+- total source words: 2,439,471;
+- total target words: 2,439,471;
+- source words per row: min 246, mean 487.9, median 474.0, max 756;
 - source-language mean words:
-  - `de`: 462.8;
-  - `en`: 481.6;
-  - `es`: 518.2;
-  - `fr`: 488.5;
-  - `pt`: 473.1.
+  - `de`: 463.6;
+  - `en`: 483.3;
+  - `es`: 516.7;
+  - `fr`: 491.2;
+  - `pt`: 484.6.
 
 ### My Quality Evaluation
 
@@ -151,9 +160,9 @@ section.
 Known data-quality caveats:
 
 - Some older JRC texts contain historical normalization/OCR artifacts, especially missing accents,
-  all-caps source text, spacing around punctuation, and occasional misspellings.
-- Chunk boundaries are document-bounded but not section-perfect; article chunks can start in the
-  middle of a provision and definition chunks can include surrounding legal context.
+  spacing around punctuation, and occasional misspellings.
+- Strict mode now rejects obvious bad starts and bad endings, but definition chunks can still include
+  surrounding legal context before or after the definition content.
 - For non-English language pairs such as `de-fr` or `pt-es`, the row is a direct OPUS bilingual
   chunk for that unordered pair, not a translation generated through English. This is good for
   evaluation quality. The reverse row is then created by exact swapping.
@@ -188,14 +197,11 @@ Duplicate checks:
 Near-duplicate checks:
 
 - Article source:
-  - near-duplicate source pairs within the same direction: 6;
+  - near-duplicate source pairs within the same direction: 2;
   - examples include closely related documents such as `jrc22000A0411_01` and
-    `jrc22000A0411_02`, and repeated legal wording across `jrc21987A0207_03` and
-    `jrc21987A0207_06`.
+    `jrc22000A0411_02`.
 - Definition source:
-  - near-duplicate source pairs within the same direction: 12;
-  - examples include related document parts such as `jrc22006A0622_02` and
-    `jrc22006A0622_03`.
+  - near-duplicate source pairs within the same direction: 0.
 
 These near duplicates look like real legal boilerplate or adjacent related instruments rather than
 accidental duplicated rows. They are acceptable for a legal benchmark, but if the goal is maximum
@@ -210,18 +216,19 @@ Noise checks:
   - HTML/XML-tag-like rows: 0;
   - control-character rows: 0;
   - rows with source/target word ratio above 2.0: 0;
-  - high-uppercase source rows: 4 English-source rows, all from the same historical all-caps
-    document anchor.
+  - bad-start rows: 0;
+  - bad-end rows: 0;
+  - high-uppercase source rows: 0.
 - Definition source:
   - empty rows: 0;
   - identical source/target rows: 0;
   - replacement-character rows: 0;
   - control-character rows: 0;
   - rows with source/target word ratio above 2.0: 0;
-  - HTML/XML-tag-like rows: 10, all caused by legacy OPUS markup such as
-    `<(BLK0)LA ORG="CCF">EN</(BLK0)LA>` in document `jrc31985D0377`;
-  - high-uppercase source rows: 24 German-source rows, 28 English-source rows, and 28
-    French-source rows.
+  - HTML/XML-tag-like rows: 0 after applying `--clean-legacy-markup`;
+  - bad-start rows: 0;
+  - bad-end rows: 0;
+  - high-uppercase source rows: 0.
 
 Language hint checks:
 
@@ -232,12 +239,10 @@ Language hint checks:
 My quality conclusion from the deeper audit:
 
 - The anchored article source is clean enough to use as the primary legal benchmark source now.
-- The anchored definition source is useful and structurally valid, but before using it for a final
-  presentation benchmark I would either remove the `jrc31985D0377` markup rows or add a small text
-  cleanup step for legacy OPUS markup.
+- The anchored definition source is now usable as a secondary terminology-focused legal benchmark
+  source after applying the legacy OPUS markup cleanup and strict quality filtering.
 - The near-duplicate rate is low in both files and mostly reflects normal legal repetition.
-- The high-uppercase rows are not alignment failures; they are source-format artifacts in older
-  legal texts.
+- The high-uppercase rows and obvious bad chunk starts were removed by strict quality filtering.
 
 ## Prompt Updates
 

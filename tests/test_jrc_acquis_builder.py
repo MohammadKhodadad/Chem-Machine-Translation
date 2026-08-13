@@ -17,7 +17,9 @@ build_anchored_rows = source_builder.build_anchored_rows
 canonical_pair = source_builder.canonical_pair
 chunk_segments = source_builder.chunk_segments
 chunk_matches_section_type = source_builder.chunk_matches_section_type
+chunk_passes_quality_mode = source_builder.chunk_passes_quality_mode
 doc_id_from_link_group = source_builder.doc_id_from_link_group
+preprocess_jrc_text = source_builder.preprocess_jrc_text
 
 
 def _segment(doc_id: str, source_text: str, target_text: str) -> AlignedSegment:
@@ -105,6 +107,63 @@ def test_chunk_matches_definition_section_type() -> None:
     assert not chunk_matches_section_type(chunk, "article")
 
 
+def test_preprocess_jrc_text_removes_legacy_opus_markup() -> None:
+    text = (
+        'Decision establishing holdings<(BLK0)LA ORG="CCF">EN</(BLK0)LA> '
+        "CHAPTER I Community typology"
+    )
+
+    cleaned = preprocess_jrc_text(text, clean_legacy_markup=True)
+
+    assert "<(BLK0)" not in cleaned
+    assert "</(BLK0)" not in cleaned
+    assert "Decision establishing holdings CHAPTER I Community typology" == cleaned
+    assert preprocess_jrc_text(text, clean_legacy_markup=False) == text
+
+
+def test_strict_quality_rejects_mid_list_article_chunk() -> None:
+    chunk = ChunkCandidate(
+        chunk_id="en-fr:doc:chunk-0001",
+        doc_id="doc",
+        source_text="(g) this starts in the middle of a legal list.",
+        target_text="(g) ceci commence au milieu d'une liste juridique.",
+        source_tokens=10,
+        target_tokens=10,
+        segment_count=1,
+    )
+
+    assert chunk_passes_quality_mode(chunk, "article", "loose")
+    assert not chunk_passes_quality_mode(chunk, "article", "strict")
+
+
+def test_strict_quality_accepts_clean_article_chunk() -> None:
+    chunk = ChunkCandidate(
+        chunk_id="en-fr:doc:chunk-0001",
+        doc_id="doc",
+        source_text="Article 4 The contracting parties shall notify the committee.",
+        target_text="Article 4 Les parties contractantes notifient le comité.",
+        source_tokens=8,
+        target_tokens=8,
+        segment_count=1,
+    )
+
+    assert chunk_passes_quality_mode(chunk, "article", "strict")
+
+
+def test_strict_quality_rejects_residual_markup() -> None:
+    chunk = ChunkCandidate(
+        chunk_id="en-de:doc:chunk-0001",
+        doc_id="doc",
+        source_text='For the purposes of this Agreement <bad>tag</bad> "goods" shall mean goods.',
+        target_text='Im Sinne dieses Abkommens bedeutet "Waren" Waren.',
+        source_tokens=11,
+        target_tokens=7,
+        segment_count=1,
+    )
+
+    assert not chunk_passes_quality_mode(chunk, "definition", "strict")
+
+
 def test_build_anchored_rows_expands_common_docs_to_all_ordered_pairs(monkeypatch) -> None:
     languages = ("en", "de", "fr")
     doc_ids = ["doc-a", "doc-b", "doc-c"]
@@ -147,6 +206,8 @@ def test_build_anchored_rows_expands_common_docs_to_all_ordered_pairs(monkeypatc
         max_segment_tokens=20,
         max_token_ratio=3.0,
         section_type="article",
+        clean_legacy_markup=False,
+        quality_mode="loose",
     )
 
     rows = build_anchored_rows(languages=languages, args=args)

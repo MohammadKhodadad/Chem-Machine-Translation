@@ -27,6 +27,25 @@ USER_AGENT = "chem-machine-translation/0.1 (JRC-Acquis benchmark source builder)
 _WORD_RE = re.compile(r"\w", re.UNICODE)
 SECTION_TYPES = ("all", "article", "definition")
 SELECTION_MODES = ("pairwise", "anchored")
+QUALITY_MODES = ("loose", "strict")
+_LEGACY_OPUS_TAG_WITH_CONTENT_RE = re.compile(
+    r"<\(?BLK\d+\)[^>]*>[^<]{0,20}</\(?BLK\d+\)[^>]*>",
+    re.IGNORECASE,
+)
+_LEGACY_OPUS_TAG_RE = re.compile(r"</?\(?BLK\d+\)[^>]*>", re.IGNORECASE)
+_TAG_LIKE_RE = re.compile(r"<[^>]+>")
+_CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+_BARE_DATE_START_RE = re.compile(
+    r"^\d{1,2}\s+"
+    r"(january|february|march|april|may|june|july|august|september|october|"
+    r"november|december)\b",
+    re.IGNORECASE,
+)
+_LIST_CONTINUATION_START_RE = re.compile(
+    r"^\s*(?:[-;,:]|\(?[a-z]\)|[a-z]\s*\))",
+    re.IGNORECASE,
+)
+_PARAGRAPH_START_RE = re.compile(r"^\s*(?:\(?\d+[a-z]?\)?\s*[.)]|chapter\b|section\b|title\b)")
 _ARTICLE_MARKER_RE = re.compile(
     r"\b(article|artikel|art[ií]culo|artigo)\s+\d+[a-z]?\b",
     re.IGNORECASE,
@@ -147,6 +166,17 @@ def parse_args() -> argparse.Namespace:
         default=20,
         help="Candidate multiplier used when searching for common anchored documents.",
     )
+    parser.add_argument(
+        "--clean-legacy-markup",
+        action="store_true",
+        help="Remove legacy OPUS/JRC markup tags before normalization.",
+    )
+    parser.add_argument(
+        "--quality-mode",
+        choices=QUALITY_MODES,
+        default="loose",
+        help="Use strict text-quality and boundary filtering for benchmark-ready chunks.",
+    )
     return parser.parse_args()
 
 
@@ -198,6 +228,8 @@ def build_pairwise_rows(*, languages: tuple[str, ...], args: argparse.Namespace)
                 max_token_ratio=args.max_token_ratio,
                 section_type=args.section_type,
                 max_chunks_per_doc=args.max_chunks_per_doc,
+                clean_legacy_markup=args.clean_legacy_markup,
+                quality_mode=args.quality_mode,
             )
         )
         rows.extend(
@@ -251,6 +283,8 @@ def build_anchored_rows(*, languages: tuple[str, ...], args: argparse.Namespace)
                 section_type=args.section_type,
                 max_chunks_per_doc=1,
                 candidate_doc_ids=candidate_doc_ids,
+                clean_legacy_markup=args.clean_legacy_markup,
+                quality_mode=args.quality_mode,
             )
         )
         chunks_by_pair[pair], _ = chunks_by_doc(chunks)
@@ -455,6 +489,8 @@ def write_metadata(
         "anchor_search_multiplier": (
             args.anchor_search_multiplier if args.selection_mode == "anchored" else None
         ),
+        "clean_legacy_markup": args.clean_legacy_markup,
+        "quality_mode": args.quality_mode,
         "chunking": {
             "min_chunk_tokens": args.min_chunk_tokens,
             "target_chunk_tokens": args.target_chunk_tokens,
@@ -522,6 +558,8 @@ def select_chunks_for_direction(
     section_type: str,
     max_chunks_per_doc: int | None = 1,
     candidate_doc_ids: set[str] | None = None,
+    clean_legacy_markup: bool = False,
+    quality_mode: str = "loose",
 ) -> Iterator[ChunkCandidate]:
     pair_languages = canonical_pair(source_language, target_language)
     zip_path = download_pair_zip(
@@ -538,6 +576,7 @@ def select_chunks_for_direction(
         min_segment_tokens=min_segment_tokens,
         max_segment_tokens=max_segment_tokens,
         max_token_ratio=max_token_ratio,
+        clean_legacy_markup=clean_legacy_markup,
     )
     yielded = 0
     chunks_by_doc: dict[str, int] = {}
@@ -551,6 +590,8 @@ def select_chunks_for_direction(
         if candidate_doc_ids is not None and chunk.doc_id not in candidate_doc_ids:
             continue
         if not chunk_matches_section_type(chunk, section_type):
+            continue
+        if not chunk_passes_quality_mode(chunk, section_type, quality_mode):
             continue
         doc_chunk_count = chunks_by_doc.get(chunk.doc_id, 0)
         if max_chunks_per_doc is not None and doc_chunk_count >= max_chunks_per_doc:
@@ -572,6 +613,75 @@ def chunk_matches_section_type(chunk: ChunkCandidate, section_type: str) -> bool
     if section_type == "definition":
         return bool(_DEFINITION_MARKER_RE.search(text))
     raise ValueError(f"Unsupported section type: {section_type}")
+
+
+def chunk_passes_quality_mode(
+    chunk: ChunkCandidate,
+    section_type: str,
+    quality_mode: str,
+) -> bool:
+    if quality_mode == "loose":
+        return True
+    if quality_mode != "strict":
+        raise ValueError(f"Unsupported quality mode: {quality_mode}")
+
+    return (
+        text_side_passes_strict_quality(chunk.source_text, section_type)
+        and text_side_passes_strict_quality(chunk.target_text, section_type)
+    )
+
+
+def text_side_passes_strict_quality(text: str, section_type: str) -> bool:
+    if not text or _TAG_LIKE_RE.search(text) or _CONTROL_CHAR_RE.search(text) or "\ufffd" in text:
+        return False
+    if uppercase_fraction(text) > 0.9 and approximate_token_count(text) > 80:
+        return False
+    if not has_clean_start(text, section_type):
+        return False
+    if not has_clean_end(text):
+        return False
+    return True
+
+
+def uppercase_fraction(text: str) -> float:
+    letters = [character for character in text if character.isalpha()]
+    if not letters:
+        return 0.0
+    uppercase = sum(
+        1
+        for character in letters
+        if character.upper() == character and character.lower() != character.upper()
+    )
+    return uppercase / len(letters)
+
+
+def has_clean_start(text: str, section_type: str) -> bool:
+    stripped = text.lstrip()
+    if not stripped:
+        return False
+    if _BARE_DATE_START_RE.search(stripped):
+        return False
+    if _LIST_CONTINUATION_START_RE.search(stripped):
+        return False
+    if stripped[0].islower():
+        return False
+    if section_type == "article":
+        return bool(
+            _ARTICLE_MARKER_RE.search(stripped[:500])
+            or _PARAGRAPH_START_RE.search(stripped[:80])
+        )
+    if section_type == "definition":
+        return True
+    return True
+
+
+def has_clean_end(text: str) -> bool:
+    stripped = text.rstrip()
+    if not stripped:
+        return False
+    if stripped[-1] in {",", "-", "–", "—"}:
+        return False
+    return True
 
 
 def canonical_pair(source_language: str, target_language: str) -> tuple[str, str]:
@@ -610,6 +720,7 @@ def iter_aligned_segments(
     min_segment_tokens: int,
     max_segment_tokens: int,
     max_token_ratio: float,
+    clean_legacy_markup: bool = False,
 ) -> Iterator[AlignedSegment]:
     left_language, right_language = pair_languages
     pair = f"{left_language}-{right_language}"
@@ -633,8 +744,14 @@ def iter_aligned_segments(
             ):
                 segment = build_segment(
                     doc_id=doc_id,
-                    source_text=normalize_text(source_line),
-                    target_text=normalize_text(target_line),
+                    source_text=preprocess_jrc_text(
+                        source_line,
+                        clean_legacy_markup=clean_legacy_markup,
+                    ),
+                    target_text=preprocess_jrc_text(
+                        target_line,
+                        clean_legacy_markup=clean_legacy_markup,
+                    ),
                 )
                 if segment and segment_is_usable(
                     segment,
@@ -648,6 +765,13 @@ def iter_aligned_segments(
 def iter_text_lines(raw_file: Any) -> Iterator[str]:
     for raw_line in raw_file:
         yield raw_line.decode("utf-8", errors="replace").strip()
+
+
+def preprocess_jrc_text(text: str, *, clean_legacy_markup: bool = False) -> str:
+    if clean_legacy_markup:
+        text = _LEGACY_OPUS_TAG_WITH_CONTENT_RE.sub(" ", text)
+        text = _LEGACY_OPUS_TAG_RE.sub(" ", text)
+    return normalize_text(text)
 
 
 def iter_doc_ids(raw_file: Any, left_language: str, right_language: str) -> Iterator[str]:

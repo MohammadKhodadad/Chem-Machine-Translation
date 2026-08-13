@@ -71,7 +71,9 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
   --section-type article `
   --selection-mode anchored `
   --anchor-language en `
-  --anchor-search-multiplier 20
+  --anchor-search-multiplier 20 `
+  --clean-legacy-markup `
+  --quality-mode strict
 ```
 
 Preferred anchored definition source:
@@ -93,7 +95,9 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
   --section-type definition `
   --selection-mode anchored `
   --anchor-language en `
-  --anchor-search-multiplier 20
+  --anchor-search-multiplier 20 `
+  --clean-legacy-markup `
+  --quality-mode strict
 ```
 
 `--selection-mode pairwise` keeps the original behavior where each ordered direction is selected
@@ -102,6 +106,18 @@ language pairs, then expands each selected document anchor to all ordered direct
 languages, `--limit 250` means 250 anchors and 5,000 source-target rows.
 
 `--section-type all` can be used for a generic unfiltered source.
+
+Use `--quality-mode strict` for benchmark-ready sources. It rejects residual markup, control
+characters, all-caps blocks, obvious list-continuation starts, bare-date starts, and incomplete
+trailing fragments. It does not perform language identification.
+
+Both preferred anchored article and definition snapshots are regenerated with the same preprocessing
+gate:
+
+- `--clean-legacy-markup` removes legacy OPUS/JRC inline tags before text normalization.
+- `--quality-mode strict` applies the benchmark-quality noise and boundary filters.
+- Language coverage is still inherited from the OPUS bilingual file structure; no full language
+  identifier is run in strict mode.
 
 ## What Gets Selected
 
@@ -140,6 +156,9 @@ The automated quality check on both anchored 250-per-pair sources found:
 - no corrupt replacement characters;
 - no identical source/target pairs;
 - no source/target token ratio above 2.0;
+- no residual HTML/XML-like tags;
+- no bad-start or bad-end rows under the strict boundary heuristic;
+- no high-uppercase source rows;
 - exactly 250 rows for every ordered direction;
 - exactly 250 anchors per source;
 - no incomplete anchors;
@@ -151,19 +170,19 @@ Concrete anchored audit results:
   - rows: 5,000;
   - directions: 20, with 250 rows each;
   - anchors: 250;
-  - mean source tokens: 427.6.
+  - mean source tokens: 418.6.
 - `jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`
   - rows: 5,000;
   - directions: 20, with 250 rows each;
   - anchors: 250;
-  - mean source tokens: 484.8.
+  - mean source tokens: 487.9.
 
 Manual samples looked aligned and suitable for legal translation evaluation. Article chunks are the
 stronger source for immediate benchmarking because they mostly contain operative legal provisions.
 Definition chunks are usable, but they should be treated as definition-containing rather than
 definition-only: some chunks include preamble or surrounding legal context before the definition
-phrase appears. Some older JRC source texts also contain historical OCR/normalization artifacts, so
-manual spot checks are still useful before publishing final benchmark results.
+phrase appears. Strict mode removes obvious boundary and formatting problems, but manual spot
+checks are still useful before publishing final benchmark results.
 
 ## Benchmark Dataset Builder
 

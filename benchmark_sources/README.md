@@ -132,10 +132,11 @@ Current exploration sources:
 - `jrc_acquis_definitions_250_per_language_pair_metadata.json`: pairwise definition source
   metadata.
 - `jrc_acquis_anchored_articles_250_per_language_pair.jsonl`: 5,000 anchored article/provision
-  chunks.
+  chunks generated with strict text-quality filtering.
 - `jrc_acquis_anchored_articles_250_per_language_pair_metadata.json`: anchored article source
   metadata.
-- `jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`: 5,000 anchored definition chunks.
+- `jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`: 5,000 anchored definition chunks
+  generated with legacy markup cleanup and strict text-quality filtering.
 - `jrc_acquis_anchored_definitions_250_per_language_pair_metadata.json`: anchored definition source
   metadata.
 - Languages: `en`, `es`, `de`, `fr`, and `pt`.
@@ -160,7 +161,9 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
   --section-type article `
   --selection-mode anchored `
   --anchor-language en `
-  --anchor-search-multiplier 20
+  --anchor-search-multiplier 20 `
+  --clean-legacy-markup `
+  --quality-mode strict
 ```
 
 Create the preferred anchored definition-focused source:
@@ -182,11 +185,21 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
   --section-type definition `
   --selection-mode anchored `
   --anchor-language en `
-  --anchor-search-multiplier 20
+  --anchor-search-multiplier 20 `
+  --clean-legacy-markup `
+  --quality-mode strict
 ```
 
 `--limit 250` in anchored mode means 250 document anchors. Because each anchor expands to all 20
 ordered directions, this produces 250 rows per direction and 5,000 rows total.
+
+`--quality-mode strict` rejects residual markup, control characters, all-caps blocks, obvious
+list-continuation starts, bare-date starts, and incomplete trailing fragments. It does not perform
+language identification.
+
+Both preferred anchored article and definition snapshots use `--clean-legacy-markup` plus
+`--quality-mode strict`. The first step removes legacy OPUS/JRC inline tags before normalization;
+the second step applies benchmark-quality noise and boundary filters.
 
 Create the original pairwise article-focused source:
 

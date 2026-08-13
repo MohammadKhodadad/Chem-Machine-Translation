@@ -36,6 +36,8 @@
   "selection_mode": "anchored",
   "anchor_language": "en",
   "anchor_search_multiplier": 20,
+  "clean_legacy_markup": true,
+  "quality_mode": "strict",
   "chunking": {
     "min_chunk_tokens": 250,
     "target_chunk_tokens": 450,
@@ -47,8 +49,8 @@
   },
   "source_token_stats": {
     "min": 251,
-    "max": 777,
-    "mean": 427.6
+    "max": 679,
+    "mean": 418.6
   },
   "schema": [
     "source",
