@@ -59,3 +59,6 @@ datasets by:
 
 This separation keeps raw source construction reproducible while allowing dataset-level terminology
 and evaluation settings to evolve independently.
+
+For the terminology extraction logic used in the dataset creation step, see
+`docs/terminology-extraction.md`.

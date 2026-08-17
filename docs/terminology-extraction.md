@@ -1,90 +1,151 @@
 # Terminology Extraction
 
-This project uses a target-only dataset terminology pipeline for benchmark artifacts. The goal is to
-extract target-side chemistry terminology from the human/reference translation, store it in the
-manifest, and let terminology metrics consume those approved target terms directly.
+This document explains how benchmark terminology is created and used. The important design decision
+is that terminology is generated during dataset creation, stored in each manifest row, and then reused
+by translation prompts and terminology metrics.
 
-The dataset terminology code lives in `src/chem_machine_translation/data/terminology.py`.
+The implementation lives in `src/chem_machine_translation/data/terminology.py`.
 
-## Why This Is Separate
+## Why We Extract Target-Side Terms
 
-Runtime terminology prompting and dataset terminology generation solve different problems.
+The benchmark datasets already contain a human/reference target translation. We use that target text
+as the terminology source of truth:
 
-Runtime prompting helps a translator preserve approved terms during a translation run. Dataset
-terminology generation prepares benchmark artifacts ahead of time, using the reference translation
-when it exists. That makes the benchmark terminology auditable and avoids extracting terms during
-evaluation.
+- it avoids asking a model to invent source-to-target term mappings;
+- every accepted term must be an exact span from the reference translation;
+- terminology can be audited once when building the dataset;
+- evaluation can score whether a translation preserved expected target terms without running a term
+  extractor again.
 
-## Current Flow
+For this reason, `source_term` is intentionally empty in the current manifest terminology records.
+The useful fields are `target_terms`, `reference_candidates`, `term_group`, `source`, and
+`verified_by`.
 
-The current dataset flow is target-side. The LLM, when enabled, is only a candidate extractor:
+## Pipeline Overview
 
-1. Extract target-side candidates from the reference translation.
+```mermaid
+flowchart TD
+    A["Benchmark source pair<br/>source_text + target/reference_text"] --> B["Dataset builder<br/>Google Patents, EuroLex, or JRC"]
+    B --> C{"Terminology enabled?"}
+    C -->|No| D["Write manifest<br/>terminology = []"]
+    C -->|Yes| E{"Dataset/domain"}
 
-   With `--extract-terminology`, the builder asks an LLM to return strict technical spans from the
-   target/reference text. The LLM must not translate or normalize terms. It returns candidate spans
-   only.
+    E -->|Chemistry / patents| F["Chemistry candidate extraction<br/>LLM exact spans + optional NER + regex fallback"]
+    E -->|Legal / EuroLex / JRC| G["Legal candidate extraction<br/>LLM exact spans + optional EuroVoc seed terms"]
 
-2. Verify LLM spans against the target text.
+    F --> H["Exact-span verification<br/>candidate must appear in target/reference text"]
+    G --> H
 
-   Every LLM candidate must appear in the target/reference text. Hallucinated or rewritten terms are
-   dropped before any database lookup happens.
+    H --> I["Deduplicate and rank<br/>casefold + whitespace normalization + confidence"]
+    I --> J["External evidence lookup"]
 
-3. Add no-LLM fallback candidates.
+    J --> K["Chemistry evidence<br/>PubChem, ChEBI, ChEMBL, MeSH, NCI, AGROVOC, IATE, Wikipedia/Wikidata"]
+    J --> L["Legal evidence<br/>IATE, Wikipedia/Wikidata, UNTERM, EuroVoc when available"]
 
-   The generator can also use optional chemistry NER adapters:
+    K --> M["Assign term group<br/>verified, llm, or algorithmic"]
+    L --> M
 
-   - ChemDataExtractor, when installed.
-   - A ChEMU/BioBERT-style Hugging Face token-classification pipeline, when `transformers` and the
-     model are available.
+    M --> N["Write manifest terminology<br/>target_terms + provenance + evidence"]
+    N --> O["Evaluation and prompting<br/>target-term coverage + optional manifest terminology injection"]
+```
 
-   If those optional packages are not installed, the generator falls back to lightweight chemistry
-   regexes for formulas, compact units, identifiers, and common chemistry phrase endings.
+## Dataset Builder Entry Points
 
-4. Deduplicate and rank terms.
+Terminology is attached when creating benchmark datasets from source-pair JSONL files:
 
-   Terms are normalized with case-folding and whitespace cleanup. Higher-confidence model outputs
-   outrank regex fallback terms.
+- `scripts/build_google_patents_eval_subset.py`
+  - chemistry/patent terminology;
+  - enabled with `--extract-terminology`;
+  - optional evidence flags include `--pubchem-terminology`, `--chebi-terminology`,
+    `--chembl-terminology`, `--mesh-terminology`, `--nci-terminology`,
+    `--agrovoc-terminology`, `--iate-terminology`, and `--wikipedia-terminology`.
+- `scripts/build_eurolex_eval_subset.py`
+  - legal terminology;
+  - enabled with `--extract-legal-terms`;
+  - can include EuroVoc descriptor terms unless `--no-eurovoc-terminology` is passed;
+  - optional evidence flags include `--iate-terminology`, `--wikipedia-terminology`, and
+    `--unterm-terminology`.
+- `scripts/build_jrc_acquis_eval_subset.py`
+  - legal terminology for JRC-Acquis;
+  - enabled with `--extract-legal-terms`;
+  - optional evidence flags include `--iate-terminology`, `--wikipedia-terminology`, and
+    `--unterm-terminology`.
 
-5. Check external terminology sources.
+The source-pair creation scripts do not extract terminology. They only create clean source/target
+pairs. Terminology belongs to the dataset creation step because it is stored in benchmark manifests.
 
-   External lookup evidence is stored in `external_candidates`:
+## Candidate Extraction Logic
 
-   - PubChem confirms compound names and returns synonyms.
-   - IATE checks terminology records in the target language.
-   - Wikipedia/Wikidata checks target-language encyclopedia labels.
+### Chemistry and Patent Datasets
 
-   These sources are evidence only. The final `target_terms` stay anchored to spans extracted from
-   the reference translation.
+`DatasetTerminologyGenerator` builds target-side terminology for chemistry-heavy benchmark rows.
+When enabled, it can combine:
 
-6. Write manifest terminology.
+- an LLM target candidate extractor that returns exact target/reference spans only;
+- optional `ChemDataExtractor` chemical entity mentions when installed;
+- optional Hugging Face token-classification chemical NER when available;
+- regex fallback candidates for formulas, compact units, identifiers, and chemistry phrase patterns.
 
-   The manifest row stores target-side terms in `target_terms` and `reference_candidates`. Because
-   this target-only process does not align terms back to source spans, `source_term` is intentionally
-   empty.
+The LLM is only a candidate extractor. It is instructed not to translate, normalize, rewrite,
+lemmatize, or invent terms. Any returned term that cannot be found exactly in the reference text is
+dropped.
 
-## Candidate Groups
+### Legal Datasets
+
+`LegalTerminologyGenerator` builds target-side terminology for EuroLex and JRC-Acquis rows. It uses:
+
+- an LLM legal candidate extractor that returns exact target/reference spans only;
+- optional EuroVoc descriptor terms for EuroLex when descriptor metadata is present;
+- external legal/encyclopedic evidence from IATE, Wikipedia/Wikidata, UNTERM, and EuroVoc.
+
+The legal extractor looks for terms that a legal translator should preserve consistently: legal
+acts, institutions, agencies, procedures, rights, obligations, restrictions, sanctions, remedies,
+programmes, funds, regulatory domains, and explicit defined terms.
+
+## External Evidence
+
+External terminology sources are used as evidence, not as replacement translations. The final
+`target_terms` remain exact spans from the reference text.
+
+Chemistry/patent evidence can come from:
+
+- PubChem;
+- ChEBI;
+- ChEMBL;
+- MeSH RDF;
+- NCI Thesaurus;
+- AGROVOC;
+- IATE;
+- Wikipedia/Wikidata.
+
+Legal evidence can come from:
+
+- IATE;
+- Wikipedia/Wikidata;
+- UNTERM;
+- EuroVoc descriptor matches when EuroLex metadata is available.
+
+When at least one external source confirms a term, the term becomes `term_group: "verified"` and the
+source names are recorded in `verified_by`.
+
+## Term Groups and Provenance
 
 Every manifest term has a coarse `term_group` and a detailed `source`.
 
-- `llm`: the term was proposed by the target-only LLM and verified to appear in the reference text.
-  The detailed source is usually `llm_target`.
-- `algorithmic`: the term came from regex, ChemDataExtractor, ChEMU/BioBERT, or another deterministic
-  or model-based extractor that is not an external terminology database.
-- `verified`: the candidate has evidence from PubChem, IATE, or Wikipedia/Wikidata. This is the main
-  trusted group for benchmark terminology.
+- `verified`: the term is an exact reference span with external evidence. This is the default group
+  used by terminology metrics.
+- `llm`: the term was proposed by the LLM and verified as an exact reference span, but no external
+  evidence source confirmed it.
+- `algorithmic`: the term came from regex or optional deterministic/model-based extractors rather
+  than external terminology databases.
 
-The `source` field keeps detailed provenance such as `llm_target+wikipedia`,
-`llm_target+iate`, `regex+pubchem`, or `chemdataextractor`. The `verified_by` field stores only the
-external evidence sources, for example `["wikipedia"]` or `["pubchem", "iate"]`.
+The detailed `source` field records provenance such as `llm_target+pubchem`, `legal_llm+iate`,
+`regex+chebi`, or `chemdataextractor`. The `verified_by` field stores only the evidence sources, for
+example `["pubchem"]`, `["iate"]`, or `["wikipedia", "unterm"]`.
 
-Target terminology metrics use `verified` terms by default. To include lower-trust groups during an
-evaluation run, pass `--terminology-term-group llm`, `--terminology-term-group algorithmic`, and/or
-`--terminology-term-group verified` to the benchmark evaluation script.
+## Manifest Shape
 
-## Manifest Fields
-
-Each manifest row can include a `terminology` list. Each term has this shape:
+Each manifest row can include a `terminology` list. A term record looks like this:
 
 ```json
 {
@@ -106,53 +167,77 @@ Each manifest row can include a `terminology` list. Each term has this shape:
 
 Important fields:
 
-- `source_term`: empty for the current target-only benchmark pipeline.
-- `reference_candidates`: target-language spans extracted from the reference translation.
-- `external_candidates`: PubChem, IATE, and Wikipedia/Wikidata evidence.
-- `target_terms`: final accepted target terms used by downstream metrics.
-- `term_group`: coarse grouping: `llm`, `algorithmic`, or `verified`.
-- `source`: detailed provenance, such as `llm_target+wikipedia`.
-- `verified_by`: external sources that validated the term.
-- `decision`: usually `keep_reference`; `preserve` is used for compact formulas and identifiers.
+- `source_term`: empty in the current target-side pipeline.
+- `target_terms`: final accepted target terms used by prompts and metrics.
+- `reference_candidates`: exact target/reference spans that were extracted.
+- `external_candidates`: evidence returned by external terminology sources.
+- `source`: detailed provenance of the extraction and evidence path.
+- `term_group`: `verified`, `llm`, or `algorithmic`.
+- `verified_by`: external sources that confirmed the term.
+- `decision`: usually `keep_reference`; `preserve` is reserved for compact formulas, identifiers,
+  symbols, and numeric/unit expressions.
 - `confidence`: extractor confidence, increased slightly when external evidence is found.
 
 The legacy `candidates` field is still written for compatibility and mirrors
 `external_candidates`.
 
-## Preserve Logic
+## Cache and Reproducibility
 
-`preserve` is intentionally narrow. It should only apply to compact formulas, symbols, identifiers,
-and numeric/unit expressions, for example:
+Terminology extraction can call LLMs and public terminology services, so dataset builders support
+cache files:
 
-- `Li2O`
-- `SEQ ID NO: 10`
-- `700 ppm`
-- `55 to 65 °C`
+- Google Patents: `--terminology-cache`;
+- EuroLex/JRC legal terms: `--legal-terminology-cache`.
 
-Broad phrases should not be preserved only because they contain an abbreviation or were labeled as
-identifiers.
+The cache key includes the reference text, target language, model, max term count, enabled evidence
+sources, and relevant descriptor metadata. Reusing the cache avoids repeated LLM/API calls and keeps
+dataset rebuilds stable.
 
-## Benchmark Usage
+## How Evaluation Uses Terminology
 
-The current benchmark dataset lives in:
+The evaluation script reads terminology from the manifest:
 
-`benchmark_datasets/google_patents_eval_subset_60_multidirectional`
+`scripts/evaluate_parallel_manifest.py`
 
-It already contains target-side terminology generated with the flow above. See
-`benchmark_datasets/README.md` for commands that run the benchmark with `verified`, `llm`,
-`algorithmic`, or combined terminology groups.
+By default, terminology metrics use only `verified` terms. To include other groups, pass
+`--terminology-term-group` one or more times, for example:
 
-`OPENAI_API_KEY` is required only when generating new LLM target candidates or running OpenAI
-translation strategies. Metrics over existing manifest terminology can run without generating new
-terminology.
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair `
+  --output results/jrc_articles_eval.jsonl `
+  --terminology-term-group verified `
+  --terminology-term-group llm
+```
 
-## Current Quality Notes
+The most appropriate terminology metric for this target-side setup is target-term coverage: it checks
+whether accepted target terms appear in the model output. Metrics that require source-to-target term
+alignment are less appropriate because `source_term` is intentionally empty.
 
-This is simpler than the previous LLM-based source/reference/refinement flow because the LLM no
-longer generates source terms, target mappings, or refinement decisions. The main tradeoff is that
-source-to-target term alignment is no longer generated. Use `target_term_coverage` for terminology
-benchmark scoring because it only needs approved target terms. `terminology_success_rate` is
-source-conditioned and is less suitable when `source_term` is empty.
+## How Translation Prompts Use Terminology
 
-The regex fallback is intentionally conservative. For higher-quality benchmark terminology, install
-or configure the chemistry NER models and keep PubChem/IATE/Wikipedia checks enabled.
+Terminology can also be injected into one-shot translation prompts with:
+
+```powershell
+--use-manifest-terminology
+```
+
+The `ManifestTerminologyLayer` reads selected manifest terms and adds them to the translation prompt.
+This is separate from terminology extraction itself:
+
+- extraction happens once during dataset creation;
+- prompt injection happens during evaluation/translation runs;
+- metrics then score whether the model used the expected target terms.
+
+## Current Limitations
+
+The pipeline is intentionally conservative, but it has tradeoffs:
+
+- it does not align source terms to target terms;
+- terms are only as good as the reference text and external evidence sources;
+- lower-resource languages may have less external terminology coverage;
+- legal/JRC terms are often terminology-heavy but not chemistry-specific;
+- full phrase-level legal concepts may be rejected if they are too broad or not exact spans.
+
+This is still the preferred benchmark approach because it gives us auditable, reference-anchored
+target terminology and avoids using hallucinated model translations as ground truth.
