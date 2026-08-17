@@ -10,7 +10,12 @@ from typing import Any
 from openai import OpenAI
 
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
-from chem_machine_translation.data.terminology import LegalTerminologyGenerator, deduplicate_terms
+from chem_machine_translation.data.terminology import (
+    DatasetTerminologyGenerator,
+    LegalTerminologyGenerator,
+    dataset_term_from_json,
+    deduplicate_terms,
+)
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
 TEXT_FIELD = "context"
@@ -52,9 +57,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--legal-terminology-max-terms", type=int, default=20)
     parser.add_argument("--legal-terminology-cache", type=Path, default=None)
     parser.add_argument("--legal-terminology-workers", type=int, default=1)
+    parser.add_argument("--extract-stanza-terms", action="store_true")
+    parser.add_argument("--stanza-terminology-max-terms", type=int, default=20)
+    parser.add_argument("--stanza-terminology-cache", type=Path, default=None)
     parser.add_argument("--iate-terminology", action="store_true")
     parser.add_argument("--wikipedia-terminology", action="store_true")
     parser.add_argument("--unterm-terminology", action="store_true")
+    parser.add_argument("--pubchem-terminology", action="store_true")
+    parser.add_argument("--chebi-terminology", action="store_true")
+    parser.add_argument("--chembl-terminology", action="store_true")
+    parser.add_argument("--mesh-terminology", action="store_true")
+    parser.add_argument("--nci-terminology", action="store_true")
+    parser.add_argument("--agrovoc-terminology", action="store_true")
     parser.add_argument("--openai-timeout", type=float, default=120.0)
     return parser.parse_args()
 
@@ -65,6 +79,7 @@ def main() -> None:
     if len(languages) < 2:
         raise ValueError("At least two languages are required.")
     legal_generator = build_legal_generator(args)
+    stanza_generator = build_stanza_generator(args)
     pair_rows = select_source_pair_rows(
         source_pairs_jsonl=args.source_pairs_jsonl,
         languages=languages,
@@ -74,6 +89,7 @@ def main() -> None:
         output_dir=args.output_dir,
         pair_rows=pair_rows,
         legal_generator=legal_generator,
+        stanza_generator=stanza_generator,
         legal_terminology_workers=max(1, args.legal_terminology_workers),
     )
 
@@ -97,6 +113,24 @@ def build_legal_generator(args: argparse.Namespace) -> LegalTerminologyGenerator
         use_wikidata=args.wikipedia_terminology,
         use_unterm=args.unterm_terminology,
         cache_path=args.legal_terminology_cache,
+    )
+
+
+def build_stanza_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | None:
+    if not args.extract_stanza_terms:
+        return None
+    return DatasetTerminologyGenerator(
+        max_terms=args.stanza_terminology_max_terms,
+        use_iate=args.iate_terminology,
+        use_wikidata=args.wikipedia_terminology,
+        use_pubchem=args.pubchem_terminology,
+        use_chebi=args.chebi_terminology,
+        use_chembl=args.chembl_terminology,
+        use_mesh=args.mesh_terminology,
+        use_nci=args.nci_terminology,
+        use_agrovoc=args.agrovoc_terminology,
+        use_unterm=args.unterm_terminology,
+        cache_path=args.stanza_terminology_cache,
     )
 
 
@@ -151,6 +185,7 @@ def write_source_pair_dataset(
     output_dir: Path,
     pair_rows: dict[str, list[dict[str, Any]]],
     legal_generator: LegalTerminologyGenerator | None,
+    stanza_generator: DatasetTerminologyGenerator | None,
     legal_terminology_workers: int,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -164,6 +199,7 @@ def write_source_pair_dataset(
             generator=legal_generator,
             workers=legal_terminology_workers,
         )
+        manifest_rows = add_stanza_terms(rows=manifest_rows, generator=stanza_generator)
         write_rows(direction_dir / "source.csv", [row["_source_row"] for row in manifest_rows])
         write_rows(direction_dir / "target.csv", [row["_target_row"] for row in manifest_rows])
         manifest_path = (
@@ -252,6 +288,39 @@ def add_legal_terms(
         eurovoc_descriptors={},
     )
     row["terminology"] = [term.to_json() for term in deduplicate_terms(legal_terms)]
+    return row
+
+
+def add_stanza_terms(
+    rows: list[dict[str, Any]],
+    generator: DatasetTerminologyGenerator | None,
+) -> list[dict[str, Any]]:
+    if generator is None:
+        return rows
+    return [add_stanza_terms_to_row(row, generator) for row in rows]
+
+
+def add_stanza_terms_to_row(
+    row: dict[str, Any],
+    generator: DatasetTerminologyGenerator,
+) -> dict[str, Any]:
+    print(
+        f"Generating Stanza terms for {row['chunk_id']} -> {row['target_language']}",
+        flush=True,
+    )
+    stanza_terms = generator.generate(
+        source_text=row["_source_text"],
+        target_language=row["target_language"],
+        reference_text=row["_target_text"],
+    )
+    existing_terms = [
+        dataset_term_from_json(term)
+        for term in row["terminology"]
+        if isinstance(term, dict)
+    ]
+    row["terminology"] = [
+        term.to_json() for term in deduplicate_terms(existing_terms + stanza_terms)
+    ]
     return row
 
 

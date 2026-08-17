@@ -5,6 +5,7 @@ import json
 import re
 import threading
 from dataclasses import dataclass, field
+from http.client import RemoteDisconnected
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -26,28 +27,6 @@ _SEQUENCE_IDENTIFIER_RE = re.compile(
     r"^(?:SEQ\s+ID\s+NO:\s*\d+|CAS\s+RN\s*[:\s]?\d[\d-]+)$",
     re.IGNORECASE,
 )
-_CHEMICAL_FORMULA_SCAN_RE = re.compile(r"\b(?:[A-Z][a-z]?\d*){2,}\b")
-_NUMERIC_UNIT_SCAN_RE = re.compile(
-    r"\b\d+(?:[.,]\d+)?(?:\s*(?:-|to|à|–|—)\s*\d+(?:[.,]\d+)?)?\s*"
-    r"(?:%|°C|K|ppm|ppb|mol%|wt%|mg|g|kg|mL|L|cm2|cm3|mm|cm|m|nm|µm|um)\b",
-    re.IGNORECASE,
-)
-_CHEMICAL_PHRASE_SCAN_RE = re.compile(
-    r"\b[\wα-ωΑ-Ωµμ°-]+(?:[- ][\wα-ωΑ-Ωµμ°-]+){0,5}\s+"
-    r"(?:acid|acide|oxide|oxyde|chloride|chlorure|sulfate|sulphate|phosphate|"
-    r"polymer|polym[eè]re|protein|prot[eé]ine|enzyme|catalyst|catalyseur|"
-    r"solvent|solvant|ester|amide|alcohol|alcool|emulsion|[eé]mulsion|"
-    r"surfactant|tensioactif|compound|compos[eé])s?\b",
-    re.IGNORECASE,
-)
-_CHEMICAL_PREFIX_SCAN_RE = re.compile(
-    r"\b(?:acid|acide|oxide|oxyde|chloride|chlorure|sulfate|sulphate|phosphate|"
-    r"polymer|polym[eè]re|protein|prot[eé]ine|enzyme|catalyst|catalyseur|"
-    r"solvent|solvant|ester|amide|alcohol|alcool|emulsion|[eé]mulsion|"
-    r"surfactant|tensioactif|compound|compos[eé])s?\s+"
-    r"(?:de|d'|of)?\s*[\wα-ωΑ-Ωµμ-]+(?:[- ][\wα-ωΑ-Ωµμ-]+){0,2}\b",
-    re.IGNORECASE,
-)
 _PUBCHEM_ENDPOINT = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name"
 _CHEBI_ENDPOINT = "https://www.ebi.ac.uk/chebi/backend/api/public"
 _CHEMBL_ENDPOINT = "https://www.ebi.ac.uk/chembl/api/data"
@@ -55,8 +34,21 @@ _MESH_LOOKUP_ENDPOINT = "https://id.nlm.nih.gov/mesh/lookup/descriptor"
 _NCI_ENDPOINT = "https://api-evsrest.nci.nih.gov/api/v1"
 _AGROVOC_ENDPOINT = "https://agrovoc.fao.org/browse/rest/v1"
 _USER_AGENT = "chem-machine-translation/0.1 (benchmark terminology lookup)"
-_TERMINOLOGY_PIPELINE_VERSION = "target-llm-candidate-v4"
+_TERMINOLOGY_PIPELINE_VERSION = "target-llm-stanza-ud-candidate-v5"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
+_UD_HEAD_UPOS = {"NOUN", "PROPN", "NUM", "SYM", "X"}
+_UD_CONTENT_UPOS = {"ADJ", "NOUN", "NUM", "PROPN", "SYM", "X"}
+_UD_EXPANSION_DEPRELS = {
+    "amod",
+    "appos",
+    "case",
+    "compound",
+    "fixed",
+    "flat",
+    "nmod",
+    "nummod",
+}
+_UD_BLOCKED_BOUNDARY_UPOS = {"ADP", "AUX", "CCONJ", "DET", "PART", "PRON", "SCONJ"}
 
 TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT = """You extract terminology candidates from target
 reference translations for chemistry and patent machine-translation benchmarks.
@@ -194,7 +186,14 @@ class PubChemClient:
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        except (
+            HTTPError,
+            URLError,
+            TimeoutError,
+            RemoteDisconnected,
+            OSError,
+            json.JSONDecodeError,
+        ):
             self._cache[key] = []
             return []
 
@@ -332,7 +331,14 @@ def get_json(url: str, timeout_seconds: float) -> Any:
     try:
         with urlopen(request, timeout=timeout_seconds) as response:
             return json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+    except (
+        HTTPError,
+        URLError,
+        TimeoutError,
+        RemoteDisconnected,
+        OSError,
+        json.JSONDecodeError,
+    ):
         return {}
 
 
@@ -482,34 +488,107 @@ class UNTERMClient:
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
                 return response.read().decode("utf-8", errors="replace")
-        except (HTTPError, URLError, TimeoutError):
+        except (HTTPError, URLError, TimeoutError, RemoteDisconnected, OSError):
             return ""
 
 
 class TargetTerminologyExtractor:
-    """Target-side terminology extractor using optional NER models plus regex fallback."""
+    """Target-side candidate extractor based on language-generic Universal Dependencies."""
 
-    def extract(self, text: str, max_terms: int) -> list[DatasetTerminologyTerm]:
-        candidates: list[DatasetTerminologyTerm] = []
-        candidates.extend(extract_with_chemdataextractor(text))
-        candidates.extend(extract_with_chemu_biobert(text))
-        candidates.extend(extract_with_regexes(text))
+    def __init__(self) -> None:
+        self._stanza_pipelines: dict[str, Any] = {}
 
-        by_key: dict[str, DatasetTerminologyTerm] = {}
-        for candidate in candidates:
-            key = normalize_term_key(candidate.target_terms[0] if candidate.target_terms else "")
-            if not key:
-                continue
-            existing = by_key.get(key)
-            if existing is None or candidate.confidence > existing.confidence:
-                by_key[key] = candidate
+    def extract(
+        self,
+        text: str,
+        max_terms: int,
+        target_language: str = "",
+    ) -> list[DatasetTerminologyTerm]:
+        language_code = terminology_language_code(target_language)
+        if not language_code:
+            return []
 
-        terms = sorted(
-            by_key.values(),
-            key=lambda term: (term.confidence, len(term.target_terms[0])),
-            reverse=True,
-        )
-        return terms[:max_terms]
+        doc = self.parse_with_stanza(text=text, language_code=language_code)
+        if doc is None:
+            return []
+
+        candidates = [
+            *self.ud_dependency_candidates(text=text, doc=doc),
+            *self.ud_relaxed_ngram_candidates(text=text, doc=doc),
+            *self.ud_proper_name_candidates(text=text, doc=doc),
+        ]
+        return deduplicate_terms(candidates)[:max_terms]
+
+    def parse_with_stanza(self, text: str, language_code: str) -> Any | None:
+        try:
+            import stanza
+        except ImportError:
+            return None
+
+        try:
+            if language_code not in self._stanza_pipelines:
+                self._stanza_pipelines[language_code] = stanza.Pipeline(
+                    lang=language_code,
+                    processors="tokenize,pos,lemma,depparse",
+                    verbose=False,
+                )
+            return self._stanza_pipelines[language_code](text)
+        except Exception:
+            return None
+
+    def ud_dependency_candidates(self, text: str, doc: Any) -> list[DatasetTerminologyTerm]:
+        candidates = []
+        for sentence in doc.sentences:
+            words = list(sentence.words)
+            for head in words:
+                if head.upos not in _UD_HEAD_UPOS:
+                    continue
+                candidates.extend(
+                    make_stanza_terms(
+                        text=text,
+                        words=dependency_span_words(head, words),
+                        source="stanza_ud_dependency",
+                        confidence=0.72,
+                        reason="Noun-headed Universal Dependencies span from target reference.",
+                    )
+                )
+        return candidates
+
+    def ud_relaxed_ngram_candidates(self, text: str, doc: Any) -> list[DatasetTerminologyTerm]:
+        candidates = []
+        for sentence in doc.sentences:
+            words = list(sentence.words)
+            for size in range(1, 7):
+                for index in range(0, max(len(words) - size + 1, 0)):
+                    span_words = words[index : index + size]
+                    if not stanza_ngram_is_plausible(span_words):
+                        continue
+                    candidates.extend(
+                        make_stanza_terms(
+                            text=text,
+                            words=span_words,
+                            source="stanza_ud_ngram",
+                            confidence=stanza_candidate_confidence(span_words),
+                            reason=(
+                                "Plausible Universal Dependencies content span "
+                                "from target reference."
+                            ),
+                        )
+                    )
+        return candidates
+
+    def ud_proper_name_candidates(self, text: str, doc: Any) -> list[DatasetTerminologyTerm]:
+        candidates = []
+        for sentence in doc.sentences:
+            current = []
+            for word in sentence.words:
+                if word.upos == "PROPN":
+                    current.append(word)
+                    continue
+                candidates.extend(make_proper_name_terms(text, current))
+                current = []
+            candidates.extend(make_proper_name_terms(text, current))
+        return candidates
 
 
 class DatasetTerminologyGenerator:
@@ -529,6 +608,7 @@ class DatasetTerminologyGenerator:
         use_mesh: bool = False,
         use_nci: bool = False,
         use_agrovoc: bool = False,
+        use_unterm: bool = False,
         cache_path: Path | None = None,
         iate_client: IATEClient | None = None,
         wikidata_client: WikidataClient | None = None,
@@ -538,6 +618,7 @@ class DatasetTerminologyGenerator:
         mesh_client: MeSHClient | None = None,
         nci_client: NCIThesaurusClient | None = None,
         agrovoc_client: AGROVOCClient | None = None,
+        unterm_client: UNTERMClient | None = None,
         llm_extractor: LLMTargetCandidateExtractor | None = None,
         extractor: TargetTerminologyExtractor | None = None,
     ) -> None:
@@ -552,6 +633,7 @@ class DatasetTerminologyGenerator:
         self.use_mesh = use_mesh
         self.use_nci = use_nci
         self.use_agrovoc = use_agrovoc
+        self.use_unterm = use_unterm
         self.cache_path = cache_path
         self.iate_client = iate_client or (IATEClient() if use_iate else None)
         self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
@@ -561,6 +643,7 @@ class DatasetTerminologyGenerator:
         self.mesh_client = mesh_client or (MeSHClient() if use_mesh else None)
         self.nci_client = nci_client or (NCIThesaurusClient() if use_nci else None)
         self.agrovoc_client = agrovoc_client or (AGROVOCClient() if use_agrovoc else None)
+        self.unterm_client = unterm_client or (UNTERMClient() if use_unterm else None)
         self.llm_extractor = llm_extractor or (
             LLMTargetCandidateExtractor(client=client, model=model)
             if use_llm and client is not None
@@ -592,6 +675,7 @@ class DatasetTerminologyGenerator:
             use_mesh=self.use_mesh,
             use_nci=self.use_nci,
             use_agrovoc=self.use_agrovoc,
+            use_unterm=self.use_unterm,
         )
         with self._cache_lock:
             cached_terms = self._cache.get(cache_key)
@@ -607,7 +691,13 @@ class DatasetTerminologyGenerator:
                     max_terms=self.max_terms,
                 )
             )
-        terms.extend(self.extractor.extract(reference_text, max_terms=self.max_terms))
+        terms.extend(
+            self.extractor.extract(
+                reference_text,
+                max_terms=self.max_terms,
+                target_language=target_language,
+            )
+        )
         terms = deduplicate_terms(terms)[: self.max_terms]
         terms = [
             self.add_external_candidates(term=term, target_language=target_language)
@@ -694,6 +784,12 @@ class DatasetTerminologyGenerator:
                 if translation:
                     candidates["wikipedia"] = [translation.target_label]
                     source_parts.append("wikipedia")
+
+        if self.unterm_client:
+            language_code = iate_language_code(target_language)
+            if language_code and self.unterm_client.term_exists(target_term, language_code):
+                candidates["unterm"] = [target_term]
+                source_parts.append("unterm")
 
         confidence = min(1.0, term.confidence + 0.05 * len(candidates))
         verified_by = tuple(candidates)
@@ -910,56 +1006,97 @@ def parse_llm_legal_candidates(text: str, reference_text: str) -> list[DatasetTe
     return terms
 
 
-def extract_with_chemdataextractor(text: str) -> list[DatasetTerminologyTerm]:
-    try:
-        from chemdataextractor.doc import Paragraph
-    except ImportError:
+def terminology_language_code(language: str) -> str:
+    language = language.strip()
+    if not language:
+        return ""
+    return iate_language_code(language) or language.lower()
+
+
+def dependency_span_words(head: Any, words: list[Any]) -> list[Any]:
+    selected = [head]
+    for word in words:
+        if word.head == head.id and dependency_relation(word.deprel) in _UD_EXPANSION_DEPRELS:
+            selected.append(word)
+            selected.extend(
+                child
+                for child in words
+                if child.head == word.id
+                and dependency_relation(child.deprel) in _UD_EXPANSION_DEPRELS
+            )
+    return sorted({word.id: word for word in selected}.values(), key=lambda word: word.id)
+
+
+def dependency_relation(deprel: str) -> str:
+    return deprel.split(":", 1)[0]
+
+
+def make_stanza_terms(
+    text: str,
+    words: list[Any],
+    source: str,
+    confidence: float,
+    reason: str,
+) -> list[DatasetTerminologyTerm]:
+    if not words:
         return []
-
-    terms = []
-    for mention in Paragraph(text).cems:
-        term = str(mention.text).strip()
-        if term:
-            terms.append(make_target_term(term, "chemical", "chemdataextractor", 0.9))
-    return terms
-
-
-def extract_with_chemu_biobert(text: str) -> list[DatasetTerminologyTerm]:
-    try:
-        from transformers import pipeline
-    except ImportError:
+    words = sorted(words, key=lambda word: word.id)
+    if len(words) > 8:
         return []
-
-    try:
-        ner = pipeline(
-            "token-classification",
-            model="kamalkraj/ChemBERTa-finetuned-chemical-ner",
-            aggregation_strategy="simple",
+    if words[0].upos in _UD_BLOCKED_BOUNDARY_UPOS or words[-1].upos in _UD_BLOCKED_BOUNDARY_UPOS:
+        return []
+    offsets = [
+        (word.start_char, word.end_char)
+        for word in words
+        if word.start_char is not None and word.end_char is not None
+    ]
+    if not offsets:
+        return []
+    start_char = min(start for start, _ in offsets)
+    end_char = max(end for _, end in offsets)
+    target_term = clean_candidate_term(text[start_char:end_char])
+    if not target_term:
+        return []
+    return [
+        make_target_term(
+            target_term=target_term,
+            category="other",
+            source=source,
+            confidence=confidence,
+            reason=reason,
         )
-        entities = ner(text[:4000])
-    except Exception:
+    ]
+
+
+def stanza_ngram_is_plausible(words: list[Any]) -> bool:
+    if not words:
+        return False
+    if words[0].upos in _UD_BLOCKED_BOUNDARY_UPOS or words[-1].upos in _UD_BLOCKED_BOUNDARY_UPOS:
+        return False
+    if any(word.upos in {"CCONJ", "SCONJ"} for word in words):
+        return False
+    if any(dependency_relation(word.deprel) == "punct" for word in words):
+        return False
+    if any(word.upos in {"VERB", "AUX"} for word in words):
+        return False
+    return any(word.upos in _UD_CONTENT_UPOS for word in words)
+
+
+def stanza_candidate_confidence(words: list[Any]) -> float:
+    content_words = sum(1 for word in words if word.upos in _UD_CONTENT_UPOS)
+    return min(0.7, 0.45 + 0.05 * content_words)
+
+
+def make_proper_name_terms(text: str, words: list[Any]) -> list[DatasetTerminologyTerm]:
+    if len(words) < 2:
         return []
-
-    terms = []
-    for entity in entities:
-        term = str(entity.get("word", "")).strip()
-        score = parse_confidence(entity.get("score"))
-        if term:
-            terms.append(make_target_term(term, "chemical", "chemu_biobert", max(score, 0.85)))
-    return terms
-
-
-def extract_with_regexes(text: str) -> list[DatasetTerminologyTerm]:
-    terms = []
-    for match in _CHEMICAL_FORMULA_SCAN_RE.finditer(text):
-        terms.append(make_target_term(match.group(0), "identifier", "regex", 0.85))
-    for match in _NUMERIC_UNIT_SCAN_RE.finditer(text):
-        terms.append(make_target_term(match.group(0), "unit", "regex", 0.8))
-    for match in _CHEMICAL_PREFIX_SCAN_RE.finditer(text):
-        terms.append(make_target_term(match.group(0), "chemical", "regex", 0.78))
-    for match in _CHEMICAL_PHRASE_SCAN_RE.finditer(text):
-        terms.append(make_target_term(match.group(0), "chemical", "regex", 0.75))
-    return terms
+    return make_stanza_terms(
+        text=text,
+        words=words,
+        source="stanza_ud_proper_name",
+        confidence=0.7,
+        reason="Proper-name sequence from target reference.",
+    )
 
 
 def make_target_term(
@@ -1216,6 +1353,7 @@ def terminology_cache_key(
     use_mesh: bool = False,
     use_nci: bool = False,
     use_agrovoc: bool = False,
+    use_unterm: bool = False,
 ) -> str:
     payload = {
         "reference_text": reference_text,
@@ -1231,6 +1369,7 @@ def terminology_cache_key(
         "use_mesh": use_mesh,
         "use_nci": use_nci,
         "use_agrovoc": use_agrovoc,
+        "use_unterm": use_unterm,
         "pipeline_version": _TERMINOLOGY_PIPELINE_VERSION,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")

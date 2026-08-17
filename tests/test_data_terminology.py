@@ -9,7 +9,6 @@ from chem_machine_translation.data.terminology import (
     TargetTerminologyExtractor,
     append_terminology_cache,
     dataset_term_from_json,
-    extract_with_regexes,
     load_manifest_terminology,
     load_terminology_cache,
     parse_llm_target_candidates,
@@ -24,9 +23,15 @@ class _FakePubChemClient:
 
 
 class _FakeExtractor:
-    def extract(self, text: str, max_terms: int) -> list[DatasetTerminologyTerm]:
+    def extract(
+        self,
+        text: str,
+        max_terms: int,
+        target_language: str = "",
+    ) -> list[DatasetTerminologyTerm]:
         assert text
         assert max_terms == 5
+        assert target_language == "French"
         return [
             DatasetTerminologyTerm(
                 source_term="",
@@ -139,27 +144,30 @@ def test_llm_target_candidate_extractor_uses_target_text_only() -> None:
     assert [term.target_terms[0] for term in terms] == ["chlorure de sodium"]
 
 
-def test_regex_extractor_finds_target_side_chemical_terms() -> None:
-    terms = extract_with_regexes(
-        "La solution contient du chlorure de sodium, 25 °C et Li2O."
-    )
-
-    target_terms = {term.target_terms[0] for term in terms}
-    assert "chlorure de sodium" in target_terms
-    assert "25 °C" in target_terms
-    assert "Li2O" in target_terms
-
-
 def test_target_terminology_extractor_deduplicates_terms() -> None:
-    extractor = TargetTerminologyExtractor()
+    class _DuplicateExtractor:
+        def extract(
+            self,
+            text: str,
+            max_terms: int,
+            target_language: str = "",
+        ) -> list[DatasetTerminologyTerm]:
+            del text, target_language
+            return [
+                DatasetTerminologyTerm(target_terms=("chlorure de sodium",), confidence=0.6),
+                DatasetTerminologyTerm(target_terms=("chlorure de sodium",), confidence=0.8),
+            ][:max_terms]
 
-    terms = extractor.extract(
-        "Li2O et Li2O sont présents avec chlorure de sodium.",
-        max_terms=10,
+    generator = DatasetTerminologyGenerator(max_terms=10, extractor=_DuplicateExtractor())
+    terms = generator.generate(
+        source_text="Ignored.",
+        reference_text="La solution contient du chlorure de sodium.",
+        target_language="French",
     )
 
     target_terms = [term.target_terms[0] for term in terms]
     assert len(target_terms) == len(set(target_terms))
+    assert terms[0].confidence == 0.8
 
 
 def test_generator_uses_target_reference_and_pubchem_without_llm() -> None:
