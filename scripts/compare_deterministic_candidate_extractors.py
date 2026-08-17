@@ -22,6 +22,40 @@ UD_EXPANSION_DEPRELS = {
     "nummod",
 }
 UD_BLOCKED_BOUNDARY_UPOS = {"ADP", "AUX", "CCONJ", "DET", "PART", "PRON", "SCONJ"}
+SPAN_SEPARATOR_RE = re.compile(r"[,;:]")
+LEGAL_CITATION_RE = re.compile(
+    r"\b(?:articles?|artikels?|articulos?|artículos?|artigos?|paragraphs?|"
+    r"paragraphes?|absatz|absätze|apartados?|sections?)\s+\d+\b|"
+    r"\b\d+\s+(?:of|de|del|des|do|du|von)\s+"
+    r"(?:this|the|present|cet|cette|dies(?:es|em|er)?|el|la|le|o)?\s*"
+    r"(?:articles?|artikels?|articulos?|artículos?|artigos?|paragraphs?|"
+    r"paragraphes?|absatz|absätze|apartados?)\b",
+    re.IGNORECASE,
+)
+DATE_FRAGMENT_RE = re.compile(
+    r"\b(?:from|of|de|del|des|do|du|von|vom)\s+\d{1,2}\b|"
+    r"\b\d{1,2}\.?\s+"
+    r"(?:january|february|march|april|may|june|july|august|september|october|"
+    r"november|december|janvier|fevrier|février|mars|avril|mai|juin|juillet|"
+    r"aout|août|septembre|octobre|novembre|decembre|décembre|januar|februar|"
+    r"marz|märz|april|mai|juni|juli|august|september|oktober|november|dezember|"
+    r"enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|"
+    r"noviembre|diciembre|janeiro|fevereiro|marco|março|abril|maio|junho|"
+    r"julho|agosto|setembro|outubro|novembro|dezembro)\b|"
+    r"\b(?:19|20)\d{2}\b",
+    re.IGNORECASE,
+)
+MONTH_NAME_RE = re.compile(
+    r"^(?:january|february|march|april|may|june|july|august|september|october|"
+    r"november|december|janvier|fevrier|février|mars|avril|mai|juin|juillet|"
+    r"aout|août|septembre|octobre|novembre|decembre|décembre|januar|februar|"
+    r"marz|märz|april|mai|juni|juli|august|september|oktober|november|dezember|"
+    r"enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|"
+    r"noviembre|diciembre|janeiro|fevereiro|marco|março|abril|maio|junho|"
+    r"julho|agosto|setembro|outubro|novembro|dezembro)$",
+    re.IGNORECASE,
+)
+MAX_STANZA_TERM_TOKENS = 6
 
 
 @dataclass(frozen=True)
@@ -303,7 +337,7 @@ def stanza_span_candidates(
     if not words:
         return []
     words = sorted(words, key=lambda word: word.id)
-    if len(words) > 8:
+    if len(words) > MAX_STANZA_TERM_TOKENS:
         return []
     if words[0].upos in UD_BLOCKED_BOUNDARY_UPOS or words[-1].upos in UD_BLOCKED_BOUNDARY_UPOS:
         return []
@@ -311,6 +345,8 @@ def stanza_span_candidates(
     end_char = max(word.end_char for word in words if word.end_char is not None)
     surface = clean_span(text[start_char:end_char])
     if not surface:
+        return []
+    if not stanza_candidate_surface_is_clean(surface):
         return []
     lemma = " ".join(word.lemma or word.text for word in words)
     return [
@@ -356,7 +392,30 @@ def proper_name_sequence(text: str, words: list[object], language: str) -> list[
 
 def stanza_candidate_score(words: list[object]) -> float:
     content_words = sum(1 for word in words if word.upos in UD_CONTENT_UPOS)
-    return min(1.0, content_words / max(len(words), 1))
+    score = min(1.0, content_words / max(len(words), 1))
+    if len(words) == 1:
+        surface = str(getattr(words[0], "text", "") or "")
+        score = 0.6 if "-" in surface and len(surface) > 4 else 0.5
+    score -= max(0, len(words) - 3) * 0.04
+    if len(words) > 1 and any(word.upos == "PROPN" for word in words):
+        score += 0.03
+    return max(0.4, min(1.0, score))
+
+
+def stanza_candidate_surface_is_clean(surface: str) -> bool:
+    if SPAN_SEPARATOR_RE.search(surface):
+        return False
+    if LEGAL_CITATION_RE.search(surface):
+        return False
+    if DATE_FRAGMENT_RE.search(surface):
+        return False
+    if surface.isdecimal():
+        return False
+    if MONTH_NAME_RE.match(surface):
+        return False
+    if len(surface) <= 3 and surface.isupper():
+        return False
+    return True
 
 
 def make_candidate(

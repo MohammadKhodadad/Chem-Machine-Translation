@@ -2,12 +2,19 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+NOBI_LABEL_MAP = {
+    "LABEL_0": "O",
+    "LABEL_1": "B",
+    "LABEL_2": "BN",
+    "LABEL_3": "IN",
+    "LABEL_4": "I",
+}
 
 
 @dataclass(frozen=True)
@@ -55,70 +62,6 @@ class XLMRNOBIExtractor:
         )
 
 
-class XLMRSpanEmbeddingExtractor:
-    """Experimental unsupervised span scorer over exact text spans.
-
-    This is not a trained ATE model. It enumerates exact spans and ranks them with contextual
-    XLM-R embeddings, so it is useful as a baseline for whether embeddings alone help.
-    """
-
-    def __init__(self, model_name: str, max_span_tokens: int) -> None:
-        import torch
-        from transformers import AutoModel, AutoTokenizer
-
-        self.torch = torch
-        self.max_span_tokens = max_span_tokens
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
-        self.model.eval()
-
-    def extract(self, text: str, language: str, max_candidates: int) -> ExtractorResult:
-        spans = enumerate_word_spans(text, max_span_tokens=self.max_span_tokens)
-        if not spans:
-            return ExtractorResult("xlmr_span_embedding", "ok", [])
-
-        encoded = self.tokenizer(
-            text,
-            return_offsets_mapping=True,
-            return_tensors="pt",
-            truncation=True,
-            max_length=512,
-        )
-        offsets = encoded.pop("offset_mapping")[0].tolist()
-        with self.torch.no_grad():
-            hidden = self.model(**encoded).last_hidden_state[0]
-
-        sentence_embedding = hidden.mean(dim=0)
-        candidates = []
-        for start_char, end_char, surface in spans:
-            token_indexes = [
-                index
-                for index, (token_start, token_end) in enumerate(offsets)
-                if token_start < end_char and token_end > start_char and token_end > token_start
-            ]
-            if not token_indexes:
-                continue
-            span_embedding = hidden[token_indexes].mean(dim=0)
-            score = cosine_similarity(span_embedding, sentence_embedding)
-            score *= min(1.0, 0.75 + 0.05 * len(surface.split()))
-            candidates.append(
-                Candidate(
-                    surface=surface,
-                    start_char=start_char,
-                    end_char=end_char,
-                    language=language,
-                    method="xlmr_span_embedding",
-                    score=float(score),
-                    candidate_type="embedding_ranked_span",
-                )
-            )
-        return ExtractorResult(
-            method="xlmr_span_embedding",
-            status="ok",
-            candidates=rank_candidates(candidates)[:max_candidates],
-        )
-
-
 class GLiNERExtractor:
     def __init__(self, model_name: str, labels: list[str]) -> None:
         from gliner import GLiNER
@@ -150,7 +93,7 @@ class GLiNERExtractor:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Compare neural and embedding-based terminology candidate extractors.",
+        description="Compare neural terminology candidate extractors.",
     )
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("--text", help="Text to extract candidates from.")
@@ -164,12 +107,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-candidates", type=int, default=15)
     parser.add_argument(
         "--methods",
-        default="xlmr-nobi,xlmr-span-embedding,gliner",
-        help="Comma-separated methods: xlmr-nobi,xlmr-span-embedding,gliner.",
+        default="xlmr-nobi,gliner",
+        help="Comma-separated methods: xlmr-nobi,gliner.",
     )
     parser.add_argument("--nobi-model", default="tthhanh/xlm-ate-nobi-en-nes")
-    parser.add_argument("--span-model", default="xlm-roberta-base")
-    parser.add_argument("--max-span-tokens", type=int, default=6)
     parser.add_argument("--gliner-model", default="urchade/gliner_multi-v2.1")
     parser.add_argument(
         "--gliner-labels",
@@ -226,11 +167,6 @@ def build_extractors(args: argparse.Namespace, methods: list[str]) -> dict[str, 
         try:
             if method == "xlmr-nobi":
                 extractors["xlmr_nobi"] = XLMRNOBIExtractor(args.nobi_model)
-            elif method == "xlmr-span-embedding":
-                extractors["xlmr_span_embedding"] = XLMRSpanEmbeddingExtractor(
-                    args.span_model,
-                    max_span_tokens=args.max_span_tokens,
-                )
             elif method == "gliner":
                 labels = [label.strip() for label in args.gliner_labels.split(",") if label.strip()]
                 extractors["gliner"] = GLiNERExtractor(args.gliner_model, labels)
@@ -297,7 +233,7 @@ def decode_token_classifier_spans(
         start_char = int(current[0]["start"])
         end_char = int(current[-1]["end"])
         surface = clean_span(text[start_char:end_char])
-        if surface:
+        if surface and candidate_has_word_boundaries(text, start_char, end_char):
             score = sum(float(token.get("score", 0.0)) for token in current) / len(current)
             candidates.append(
                 Candidate(
@@ -313,16 +249,26 @@ def decode_token_classifier_spans(
         current.clear()
 
     for output in outputs:
-        label = str(output.get("entity") or output.get("entity_group") or "").lower()
-        if label in {"o", "label_0"}:
+        raw_label = str(output.get("entity") or output.get("entity_group") or "")
+        label = NOBI_LABEL_MAP.get(raw_label, raw_label).upper()
+        is_subword_continuation = (
+            current
+            and not str(output.get("word", "")).startswith("▁")
+            and int(output.get("start", -1)) == int(current[-1].get("end", -2))
+        )
+        if label == "O":
             flush_current()
             continue
-        if "b" in label and current:
+        if label in {"B", "BN"} and current and not is_subword_continuation:
             flush_current()
         current.append(output)
-        if "bn" in label or "in" in label:
+        if label in {"BN", "IN"}:
             surface = clean_span(text[int(output["start"]) : int(output["end"])])
-            if surface:
+            if surface and candidate_has_word_boundaries(
+                text,
+                int(output["start"]),
+                int(output["end"]),
+            ):
                 candidates.append(
                     Candidate(
                         surface=surface,
@@ -338,30 +284,6 @@ def decode_token_classifier_spans(
     return deduplicate_candidates(candidates)
 
 
-def enumerate_word_spans(text: str, max_span_tokens: int) -> list[tuple[int, int, str]]:
-    tokens = [
-        (match.start(), match.end(), match.group(0))
-        for match in re.finditer(r"\b[^\W_]+(?:[-'][^\W_]+)*\b", text, flags=re.UNICODE)
-    ]
-    spans = []
-    for size in range(1, max_span_tokens + 1):
-        for index in range(0, max(len(tokens) - size + 1, 0)):
-            span_tokens = tokens[index : index + size]
-            start_char = span_tokens[0][0]
-            end_char = span_tokens[-1][1]
-            surface = clean_span(text[start_char:end_char])
-            if surface:
-                spans.append((start_char, end_char, surface))
-    return spans
-
-
-def cosine_similarity(left: Any, right: Any) -> float:
-    denominator = float(left.norm() * right.norm())
-    if math.isclose(denominator, 0.0):
-        return 0.0
-    return float((left @ right) / denominator)
-
-
 def rank_candidates(candidates: list[Candidate]) -> list[Candidate]:
     return sorted(
         deduplicate_candidates(candidates),
@@ -375,11 +297,9 @@ def rank_candidates(candidates: list[Candidate]) -> list[Candidate]:
 
 
 def deduplicate_candidates(candidates: list[Candidate]) -> list[Candidate]:
-    by_key: dict[tuple[int, int, str, str], Candidate] = {}
+    by_key: dict[tuple[str, str], Candidate] = {}
     for candidate in candidates:
         key = (
-            candidate.start_char,
-            candidate.end_char,
             candidate.surface.casefold(),
             candidate.method,
         )
@@ -387,6 +307,12 @@ def deduplicate_candidates(candidates: list[Candidate]) -> list[Candidate]:
         if existing is None or candidate.score > existing.score:
             by_key[key] = candidate
     return list(by_key.values())
+
+
+def candidate_has_word_boundaries(text: str, start_char: int, end_char: int) -> bool:
+    left_ok = start_char <= 0 or not text[start_char - 1].isalnum()
+    right_ok = end_char >= len(text) or not text[end_char].isalnum()
+    return left_ok and right_ok
 
 
 def clean_span(text: str) -> str:

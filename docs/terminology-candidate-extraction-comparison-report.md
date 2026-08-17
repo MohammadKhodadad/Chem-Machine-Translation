@@ -9,7 +9,6 @@ while preserving high recall and exact target-side spans.
 The tests focused on candidate generation only, plus one follow-up verifier trial:
 
 - deterministic Stanza/Universal Dependencies extraction;
-- unsupervised multilingual span-embedding ranking;
 - XLM-R/NOBI checkpoint loading;
 - GLiNER-style open extraction availability;
 - Stanza candidates followed by external verification, without LLM extraction.
@@ -90,42 +89,7 @@ Assessment: technically successful and high-recall, but too broad for legal/JRC 
 ranking or verification step. The method finds plausible legal noun phrases, but not all are useful
 benchmark terminology.
 
-## Method 2: Unsupervised Span-Embedding Ranking
-
-A separate experimental script was added:
-
-```text
-scripts/compare_neural_candidate_extractors.py
-```
-
-The span-embedding baseline enumerates exact spans and ranks them using multilingual Transformer
-embeddings. The tested run used:
-
-```text
-sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-```
-
-### Chemistry Smoke Test
-
-Input:
-
-```text
-The formulation contains sodium chloride solution and thermal decomposition products.
-```
-
-Top observed spans:
-
-```text
-contains sodium chloride solution and thermal
-formulation contains sodium chloride solution and
-The formulation contains sodium chloride solution
-chloride solution and thermal decomposition products
-```
-
-Assessment: poor boundary quality. The method ranked semantically central fragments, not clean
-terminology spans. This confirms that embeddings alone are not enough for automatic term extraction.
-
-## Method 3: XLM-R + NOBI
+## Method 2: XLM-R + NOBI
 
 The neural comparison script supports an XLM-R/NOBI extractor using a Hugging Face token
 classification checkpoint:
@@ -134,13 +98,14 @@ classification checkpoint:
 tthhanh/xlm-ate-nobi-en-nes
 ```
 
-Status: not evaluated successfully. The checkpoint did not finish downloading/loading within
-multiple timed runs in the current Windows environment.
+Status: evaluated successfully after explicitly downloading the checkpoint weights. The model card
+indicates the checkpoint was trained on English ACTER data, so multilingual behavior is cross-lingual
+rather than fully supervised for every target language.
 
-Assessment: still promising conceptually, especially for nested terms, but we do not yet have a
-local result. This remains a candidate for a later trained/neural extractor path.
+Assessment: promising as a precision-oriented extractor. It produced cleaner but lower-recall spans
+than Stanza/UD in the five-language JRC sample run.
 
-## Method 4: GLiNER-Style Extraction
+## Method 3: GLiNER-Style Extraction
 
 The neural comparison script also supports GLiNER-style open extraction.
 
@@ -153,7 +118,7 @@ No module named 'gliner'
 Assessment: useful to try later as an additional recall generator, but it should not be treated as
 the primary ATE method without boundary-quality testing.
 
-## Method 5: Stanza/UD + External Verification, No LLM
+## Method 4: Stanza/UD + External Verification, No LLM
 
 The JRC builder was extended so Stanza candidates can be sent through external verifiers without
 enabling LLM terminology extraction.
@@ -208,15 +173,30 @@ Assessment: the full non-LLM flow works, but verification coverage was low on th
 JRC direction. The main reason appears to be candidate quality: Stanza/UD produced broad legal noun
 phrases, and most did not exactly verify against the configured public sources.
 
+## Span-Based Methods Not Kept
+
+Two additional span-based architectures were checked:
+
+- Feature-less End-to-End Nested Term Extraction.
+- BINDER-style contrastive span/type extraction.
+
+Feature-less Nested ATE is conceptually a close match for our candidate-harvesting need, but the
+public implementation is training code rather than a ready multilingual checkpoint. BINDER has public
+training/evaluation code, and a biomedical-patent Hugging Face checkpoint was found, but a quick load
+test produced newly initialized weights and poor token-level outputs such as `contains` and `The`.
+
+Decision: do not keep either as a current extractor. They are worth revisiting only after training or
+obtaining a proper checkpoint.
+
 ## Recommendation
 
 For now:
 
 1. Keep Stanza/UD as the default deterministic non-LLM candidate generator.
 2. Always pair it with external verification for benchmark terminology.
-3. Do not use unsupervised embedding-span ranking as the main extractor.
-4. Treat XLM-R/NOBI, GLiNER, or a trained multilingual span classifier as future neural extractor
-   candidates.
+3. Use XLM-R/NOBI as a precision-oriented auxiliary extractor.
+4. Treat GLiNER, BINDER, or a trained multilingual span classifier as future neural extractor
+   candidates only when a usable checkpoint is available.
 
 The strongest next architecture is still:
 
@@ -225,4 +205,4 @@ candidate spans -> multilingual encoder -> trained termhood score -> low thresho
 ```
 
 That would preserve exact nested spans while avoiding the broad-span problem seen in plain Stanza/UD
-and embedding-similarity methods.
+while improving multilingual recall beyond the current English-trained NOBI checkpoint.

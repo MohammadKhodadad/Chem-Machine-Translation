@@ -49,6 +49,47 @@ _UD_EXPANSION_DEPRELS = {
     "nummod",
 }
 _UD_BLOCKED_BOUNDARY_UPOS = {"ADP", "AUX", "CCONJ", "DET", "PART", "PRON", "SCONJ"}
+_SPAN_SEPARATOR_RE = re.compile(r"[,;:]")
+_LEGAL_CITATION_RE = re.compile(
+    r"\b(?:articles?|artikels?|articulos?|artículos?|artigos?|paragraphs?|"
+    r"paragraphes?|absatz|absätze|apartados?|sections?)\s+\d+\b|"
+    r"\b\d+\s+(?:of|de|del|des|do|du|von)\s+"
+    r"(?:this|the|present|cet|cette|dies(?:es|em|er)?|el|la|le|o)?\s*"
+    r"(?:articles?|artikels?|articulos?|artículos?|artigos?|paragraphs?|"
+    r"paragraphes?|absatz|absätze|apartados?)\b",
+    re.IGNORECASE,
+)
+_DATE_FRAGMENT_RE = re.compile(
+    r"\b(?:from|of|de|del|des|do|du|von|vom)\s+\d{1,2}\b|"
+    r"\b\d{1,2}\.?\s+"
+    r"(?:january|february|march|april|may|june|july|august|september|october|"
+    r"november|december|janvier|fevrier|février|mars|avril|mai|juin|juillet|"
+    r"aout|août|septembre|octobre|novembre|decembre|décembre|januar|februar|"
+    r"marz|märz|april|mai|juni|juli|august|september|oktober|november|dezember|"
+    r"enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|"
+    r"noviembre|diciembre|janeiro|fevereiro|marco|março|abril|maio|junho|"
+    r"julho|agosto|setembro|outubro|novembro|dezembro)\b|"
+    r"\b(?:19|20)\d{2}\b",
+    re.IGNORECASE,
+)
+_MONTH_NAME_RE = re.compile(
+    r"^(?:january|february|march|april|may|june|july|august|september|october|"
+    r"november|december|janvier|fevrier|février|mars|avril|mai|juin|juillet|"
+    r"aout|août|septembre|octobre|novembre|decembre|décembre|januar|februar|"
+    r"marz|märz|april|mai|juni|juli|august|september|oktober|november|dezember|"
+    r"enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|"
+    r"noviembre|diciembre|janeiro|fevereiro|marco|março|abril|maio|junho|"
+    r"julho|agosto|setembro|outubro|novembro|dezembro)$",
+    re.IGNORECASE,
+)
+_MAX_STANZA_TERM_TOKENS = 6
+_NOBI_LABEL_MAP = {
+    "LABEL_0": "O",
+    "LABEL_1": "B",
+    "LABEL_2": "BN",
+    "LABEL_3": "IN",
+    "LABEL_4": "I",
+}
 
 TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT = """You extract terminology candidates from target
 reference translations for chemistry and patent machine-translation benchmarks.
@@ -591,6 +632,48 @@ class TargetTerminologyExtractor:
         return candidates
 
 
+class XLMRNOBITerminologyExtractor:
+    """XLM-R/NOBI token-classification candidate extractor."""
+
+    def __init__(self, model_name: str = "tthhanh/xlm-ate-nobi-en-nes") -> None:
+        self.model_name = model_name
+        self._pipeline: Any | None = None
+
+    def extract(
+        self,
+        text: str,
+        max_terms: int,
+        target_language: str = "",
+    ) -> list[DatasetTerminologyTerm]:
+        del target_language
+        pipeline = self.load_pipeline()
+        if pipeline is None:
+            return []
+        try:
+            outputs = pipeline(text[:4000])
+        except Exception:
+            return []
+        terms = decode_nobi_terms(text=text[:4000], outputs=outputs)
+        return deduplicate_terms(terms)[:max_terms]
+
+    def load_pipeline(self) -> Any | None:
+        if self._pipeline is not None:
+            return self._pipeline
+        try:
+            from transformers import pipeline
+        except ImportError:
+            return None
+        try:
+            self._pipeline = pipeline(
+                "token-classification",
+                model=self.model_name,
+                aggregation_strategy="none",
+            )
+        except Exception:
+            return None
+        return self._pipeline
+
+
 class DatasetTerminologyGenerator:
     """Generates target-side terminology mappings for benchmark manifests."""
 
@@ -621,6 +704,9 @@ class DatasetTerminologyGenerator:
         unterm_client: UNTERMClient | None = None,
         llm_extractor: LLMTargetCandidateExtractor | None = None,
         extractor: TargetTerminologyExtractor | None = None,
+        extractors: tuple[Any, ...] | None = None,
+        use_nobi_extractor: bool = False,
+        nobi_model: str = "tthhanh/xlm-ate-nobi-en-nes",
     ) -> None:
         self.model = model
         self.max_terms = max_terms
@@ -649,7 +735,14 @@ class DatasetTerminologyGenerator:
             if use_llm and client is not None
             else None
         )
-        self.extractor = extractor or TargetTerminologyExtractor()
+        if extractors is not None:
+            self.extractors = list(extractors)
+        else:
+            self.extractors = [extractor or TargetTerminologyExtractor()]
+        if use_nobi_extractor:
+            self.extractors.append(XLMRNOBITerminologyExtractor(model_name=nobi_model))
+        self.extractor = self.extractors[0] if self.extractors else TargetTerminologyExtractor()
+        self.extractor_names = tuple(type(extractor).__name__ for extractor in self.extractors)
         self._cache = load_terminology_cache(cache_path)
         self._cache_lock = threading.Lock()
 
@@ -676,6 +769,7 @@ class DatasetTerminologyGenerator:
             use_nci=self.use_nci,
             use_agrovoc=self.use_agrovoc,
             use_unterm=self.use_unterm,
+            extractor_names=self.extractor_names,
         )
         with self._cache_lock:
             cached_terms = self._cache.get(cache_key)
@@ -691,13 +785,14 @@ class DatasetTerminologyGenerator:
                     max_terms=self.max_terms,
                 )
             )
-        terms.extend(
-            self.extractor.extract(
-                reference_text,
-                max_terms=self.max_terms,
-                target_language=target_language,
+        for extractor in self.extractors:
+            terms.extend(
+                extractor.extract(
+                    reference_text,
+                    max_terms=self.max_terms,
+                    target_language=target_language,
+                )
             )
-        )
         terms = deduplicate_terms(terms)[: self.max_terms]
         terms = [
             self.add_external_candidates(term=term, target_language=target_language)
@@ -1041,7 +1136,7 @@ def make_stanza_terms(
     if not words:
         return []
     words = sorted(words, key=lambda word: word.id)
-    if len(words) > 8:
+    if len(words) > _MAX_STANZA_TERM_TOKENS:
         return []
     if words[0].upos in _UD_BLOCKED_BOUNDARY_UPOS or words[-1].upos in _UD_BLOCKED_BOUNDARY_UPOS:
         return []
@@ -1057,12 +1152,14 @@ def make_stanza_terms(
     target_term = clean_candidate_term(text[start_char:end_char])
     if not target_term:
         return []
+    if not stanza_candidate_surface_is_clean(target_term):
+        return []
     return [
         make_target_term(
             target_term=target_term,
             category="other",
             source=source,
-            confidence=confidence,
+            confidence=stanza_span_confidence(words, confidence),
             reason=reason,
         )
     ]
@@ -1087,6 +1184,33 @@ def stanza_candidate_confidence(words: list[Any]) -> float:
     return min(0.7, 0.45 + 0.05 * content_words)
 
 
+def stanza_candidate_surface_is_clean(surface: str) -> bool:
+    if _SPAN_SEPARATOR_RE.search(surface):
+        return False
+    if _LEGAL_CITATION_RE.search(surface):
+        return False
+    if _DATE_FRAGMENT_RE.search(surface):
+        return False
+    if surface.isdecimal():
+        return False
+    if _MONTH_NAME_RE.match(surface):
+        return False
+    if len(surface) <= 3 and surface.isupper():
+        return False
+    return True
+
+
+def stanza_span_confidence(words: list[Any], base_confidence: float) -> float:
+    token_count = len(words)
+    if token_count == 1:
+        surface = str(getattr(words[0], "text", "") or "")
+        base_confidence = 0.6 if "-" in surface and len(surface) > 4 else 0.5
+    confidence = base_confidence - max(0, token_count - 3) * 0.04
+    if token_count > 1 and any(word.upos == "PROPN" for word in words):
+        confidence += 0.03
+    return max(0.4, min(0.78, confidence))
+
+
 def make_proper_name_terms(text: str, words: list[Any]) -> list[DatasetTerminologyTerm]:
     if len(words) < 2:
         return []
@@ -1097,6 +1221,56 @@ def make_proper_name_terms(text: str, words: list[Any]) -> list[DatasetTerminolo
         confidence=0.7,
         reason="Proper-name sequence from target reference.",
     )
+
+
+def decode_nobi_terms(text: str, outputs: list[dict[str, Any]]) -> list[DatasetTerminologyTerm]:
+    terms = []
+    current: list[dict[str, Any]] = []
+
+    def flush_current() -> None:
+        if not current:
+            return
+        start_char = int(current[0]["start"])
+        end_char = int(current[-1]["end"])
+        surface = clean_candidate_term(text[start_char:end_char])
+        if surface and candidate_has_word_boundaries(text, start_char, end_char):
+            if stanza_candidate_surface_is_clean(surface):
+                score = sum(parse_confidence(token.get("score")) for token in current) / len(
+                    current
+                )
+                terms.append(
+                    make_target_term(
+                        target_term=surface,
+                        category="other",
+                        source="xlmr_nobi",
+                        confidence=score,
+                        reason="XLM-R/NOBI token-classification exact target span.",
+                    )
+                )
+        current.clear()
+
+    for output in outputs:
+        raw_label = str(output.get("entity") or output.get("entity_group") or "")
+        label = _NOBI_LABEL_MAP.get(raw_label, raw_label).upper()
+        is_subword_continuation = (
+            current
+            and not str(output.get("word", "")).startswith("▁")
+            and int(output.get("start", -1)) == int(current[-1].get("end", -2))
+        )
+        if label == "O":
+            flush_current()
+            continue
+        if label in {"B", "BN"} and current and not is_subword_continuation:
+            flush_current()
+        current.append(output)
+    flush_current()
+    return terms
+
+
+def candidate_has_word_boundaries(text: str, start_char: int, end_char: int) -> bool:
+    left_ok = start_char <= 0 or not text[start_char - 1].isalnum()
+    right_ok = end_char >= len(text) or not text[end_char].isalnum()
+    return left_ok and right_ok
 
 
 def make_target_term(
@@ -1354,6 +1528,7 @@ def terminology_cache_key(
     use_nci: bool = False,
     use_agrovoc: bool = False,
     use_unterm: bool = False,
+    extractor_names: tuple[str, ...] = (),
 ) -> str:
     payload = {
         "reference_text": reference_text,
@@ -1370,6 +1545,7 @@ def terminology_cache_key(
         "use_nci": use_nci,
         "use_agrovoc": use_agrovoc,
         "use_unterm": use_unterm,
+        "extractor_names": extractor_names,
         "pipeline_version": _TERMINOLOGY_PIPELINE_VERSION,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")

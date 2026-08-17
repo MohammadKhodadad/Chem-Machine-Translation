@@ -18,6 +18,7 @@ from chem_machine_translation.data.terminology import (
     NCIThesaurusClient,
     PubChemClient,
     TargetTerminologyExtractor,
+    XLMRNOBITerminologyExtractor,
     dataset_term_from_json,
     load_manifest_terminology,
 )
@@ -37,6 +38,7 @@ __all__ = [
     "PubChemClient",
     "TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT",
     "TargetTerminologyExtractor",
+    "XLMRNOBITerminologyExtractor",
     "dataset_term_from_json",
     "iter_documents",
     "load_manifest_terminology",

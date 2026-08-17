@@ -96,7 +96,7 @@ uv run --no-sync python scripts/compare_deterministic_candidate_extractors.py \
   --max-candidates 15
 ```
 
-## Experimental Neural/Embedding Candidate Path
+## Experimental Neural Candidate Path
 
 The neural comparison script is separate from the production terminology pipeline. It is for
 experimentation only.
@@ -107,12 +107,10 @@ The script is:
 scripts/compare_neural_candidate_extractors.py
 ```
 
-It currently supports three optional methods:
+It currently supports two optional methods:
 
 - `xlmr-nobi`: XLM-R token classification with NOBI-style nested term labels, using a Hugging Face
   checkpoint when available.
-- `xlmr-span-embedding`: enumerates exact spans and ranks them with multilingual Transformer
-  embeddings.
 - `gliner`: GLiNER-style open extraction when the `gliner` package and model are installed.
 
 ### XLM-R + NOBI
@@ -136,54 +134,14 @@ sodium chloride
 
 This matches our benchmark need: high recall and nested exact spans before verification.
 
-Current status: the script includes an `xlmr-nobi` runner, but the tested Hugging Face checkpoint
-did not finish downloading/loading in the current Windows environment during the timed test run.
-So we do not yet have a quality result for this method.
+Current status: the `xlmr-nobi` runner loads successfully after downloading the checkpoint weights.
+It produced cleaner but lower-recall spans than Stanza/UD on the five-language JRC sample run.
 
 Run command:
 
 ```bash
 uv run --no-sync python scripts/compare_neural_candidate_extractors.py \
   --methods xlmr-nobi \
-  --text "The formulation contains sodium chloride solution and thermal decomposition products." \
-  --language en \
-  --max-candidates 10
-```
-
-### XLM-R Span Embedding Baseline
-
-This method is not a trained ATE model. It is a baseline to test whether multilingual embeddings
-alone can rank candidate spans.
-
-It works like this:
-
-1. Enumerate all exact word spans up to a configurable length.
-2. Encode the full text with a multilingual Transformer.
-3. Pool contextual embeddings for each span.
-4. Score each span against the sentence/document embedding.
-5. Return the top ranked spans.
-
-This is useful as an experiment, but it is not enough as a serious candidate extractor.
-
-Smoke test result:
-
-```text
-contains sodium chloride solution and thermal
-formulation contains sodium chloride solution and
-The formulation contains sodium chloride solution
-chloride solution and thermal decomposition products
-```
-
-This result is too broad and fragment-like. It confirms that plain embedding similarity is not the
-right scoring objective for terminology extraction. Embeddings can represent text meaning, but they
-do not by themselves learn term boundaries.
-
-Run command:
-
-```bash
-uv run --no-sync python scripts/compare_neural_candidate_extractors.py \
-  --methods xlmr-span-embedding \
-  --span-model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
   --text "The formulation contains sodium chloride solution and thermal decomposition products." \
   --language en \
   --max-candidates 10
@@ -220,20 +178,31 @@ uv run --no-sync python scripts/compare_neural_candidate_extractors.py \
   --max-candidates 10
 ```
 
+### Feature-Less Nested ATE and BINDER
+
+Feature-less End-to-End Nested Term Extraction and BINDER are both strong architecture candidates
+for this project because they operate over spans and can represent nested terms. They were checked as
+possible additions, but they are not kept as runnable methods right now:
+
+- Feature-less Nested ATE has public training code, but no ready multilingual checkpoint for direct
+  testing on our samples.
+- BINDER has public training/evaluation code. A biomedical-patent Hugging Face checkpoint was tested
+  as a quick feasibility check, but it loaded with newly initialized weights in this environment and
+  produced poor token-level outputs such as `contains` and `The`.
+
+Both should be revisited only with a correctly trained/exported checkpoint, preferably trained from
+verified or silver-labeled terminology spans.
+
 ## Recommendation
 
 For now, use Stanza/UD as the default non-LLM candidate generator.
 
-Do not use plain embedding-span ranking as the main extractor. The first tests show that it
-captures semantic centrality, not terminology boundaries.
-
-The best next neural direction is not unsupervised embeddings. It is a trained multilingual span
-classifier or a working XLM-R/NOBI checkpoint:
+Use XLM-R/NOBI as a precision-oriented auxiliary extractor. The best next neural direction beyond
+the current NOBI checkpoint is a trained multilingual span classifier:
 
 ```text
 candidate spans -> multilingual encoder -> trained termhood score -> low threshold -> verifier
 ```
 
-That architecture matches the benchmark requirement better than BIO tagging and much better than
-plain embedding similarity, because it can keep nested exact spans and optimize directly for
-candidate recall.
+That architecture matches the benchmark requirement better than BIO tagging because it can keep
+nested exact spans and optimize directly for candidate recall.

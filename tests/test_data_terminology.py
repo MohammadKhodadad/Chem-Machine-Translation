@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from chem_machine_translation.data.terminology import (
     TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT,
@@ -11,9 +12,12 @@ from chem_machine_translation.data.terminology import (
     dataset_term_from_json,
     load_manifest_terminology,
     load_terminology_cache,
+    make_stanza_terms,
     parse_llm_target_candidates,
     select_dataset_terms,
     should_preserve_dataset_term,
+    stanza_candidate_surface_is_clean,
+    stanza_span_confidence,
 )
 
 
@@ -168,6 +172,111 @@ def test_target_terminology_extractor_deduplicates_terms() -> None:
     target_terms = [term.target_terms[0] for term in terms]
     assert len(target_terms) == len(set(target_terms))
     assert terms[0].confidence == 0.8
+
+
+def test_generator_unions_multiple_candidate_extractors() -> None:
+    class _ExtractorA:
+        def extract(
+            self,
+            text: str,
+            max_terms: int,
+            target_language: str = "",
+        ) -> list[DatasetTerminologyTerm]:
+            del text, max_terms, target_language
+            return [
+                DatasetTerminologyTerm(
+                    target_terms=("European Economic Community",),
+                    confidence=0.7,
+                )
+            ]
+
+    class _ExtractorB:
+        def extract(
+            self,
+            text: str,
+            max_terms: int,
+            target_language: str = "",
+        ) -> list[DatasetTerminologyTerm]:
+            del text, max_terms, target_language
+            return [DatasetTerminologyTerm(target_terms=("Council of Europe",), confidence=0.8)]
+
+    generator = DatasetTerminologyGenerator(
+        max_terms=10,
+        extractors=(_ExtractorA(), _ExtractorB()),
+    )
+
+    terms = generator.generate(
+        source_text="Ignored.",
+        reference_text="European Economic Community and Council of Europe.",
+        target_language="English",
+    )
+
+    assert [term.target_terms[0] for term in terms] == [
+        "Council of Europe",
+        "European Economic Community",
+    ]
+
+
+def test_stanza_candidate_cleanup_rejects_internal_separators_and_citations() -> None:
+    assert not stanza_candidate_surface_is_clean(
+        "containment, recovery, recycling or destruction of controlled substances"
+    )
+    assert not stanza_candidate_surface_is_clean("paragraph 1 of this Article")
+    assert not stanza_candidate_surface_is_clean("European Agreement of 14 May 1962")
+    assert not stanza_candidate_surface_is_clean("Artikels 2")
+    assert not stanza_candidate_surface_is_clean("Übereinkommens vom 14")
+    assert not stanza_candidate_surface_is_clean("May")
+    assert not stanza_candidate_surface_is_clean("5")
+    assert not stanza_candidate_surface_is_clean("DEM")
+
+
+def test_make_stanza_terms_rejects_punctuation_crossing_span() -> None:
+    word = SimpleNamespace(id=1, upos="NOUN", start_char=0, end_char=47)
+
+    terms = make_stanza_terms(
+        text="containment, recovery, recycling of substances",
+        words=[word],
+        source="stanza_ud_dependency",
+        confidence=0.72,
+        reason="test",
+    )
+
+    assert terms == []
+
+
+def test_stanza_span_confidence_penalizes_longer_spans() -> None:
+    short_words = [
+        SimpleNamespace(upos="PROPN"),
+        SimpleNamespace(upos="PROPN"),
+        SimpleNamespace(upos="PROPN"),
+    ]
+    long_words = [
+        SimpleNamespace(upos="PROPN"),
+        SimpleNamespace(upos="PROPN"),
+        SimpleNamespace(upos="PROPN"),
+        SimpleNamespace(upos="ADP"),
+        SimpleNamespace(upos="DET"),
+        SimpleNamespace(upos="PROPN"),
+    ]
+
+    assert stanza_span_confidence(short_words, 0.72) > stanza_span_confidence(
+        long_words,
+        0.72,
+    )
+
+
+def test_stanza_span_confidence_downranks_single_tokens() -> None:
+    single_word = [SimpleNamespace(upos="PROPN", text="Agreement")]
+    phrase = [
+        SimpleNamespace(upos="PROPN", text="European"),
+        SimpleNamespace(upos="PROPN", text="Economic"),
+        SimpleNamespace(upos="PROPN", text="Community"),
+    ]
+
+    assert stanza_span_confidence(single_word, 0.72) < stanza_span_confidence(
+        phrase,
+        0.72,
+    )
 
 
 def test_generator_uses_target_reference_and_pubchem_without_llm() -> None:
