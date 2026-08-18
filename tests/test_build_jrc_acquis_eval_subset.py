@@ -92,3 +92,47 @@ def test_add_stanza_terms_reuses_terms_for_same_target_language_and_text() -> No
         "English term",
         "German term",
     ]
+
+
+def test_collect_stanza_term_jobs_keeps_only_uncached_unique_targets() -> None:
+    rows = [
+        _manifest_row(
+            chunk_id="de-en:doc-a:chunk-0001",
+            target_language="English",
+            target_language_code="en",
+            target_text="The same English target chunk.",
+        ),
+        _manifest_row(
+            chunk_id="fr-en:doc-a:chunk-0001",
+            target_language="English",
+            target_language_code="en",
+            target_text="The same English target chunk.",
+        ),
+        _manifest_row(
+            chunk_id="en-de:doc-a:chunk-0001",
+            target_language="German",
+            target_language_code="de",
+            target_text="The same German target chunk.",
+        ),
+    ]
+    term_cache = {
+        ("de", "The same German target chunk."): [
+            make_target_term(
+                target_term="German cached term",
+                category="other",
+                source="test",
+                confidence=1.0,
+            ).to_json()
+        ]
+    }
+    config = dataset_builder.StanzaTerminologyConfig(max_terms=10)
+
+    jobs = dataset_builder.collect_stanza_term_jobs(
+        rows=rows,
+        term_cache=term_cache,
+        config=config,
+    )
+
+    assert len(jobs) == 1
+    assert jobs[0].cache_key == ("en", "The same English target chunk.")
+    assert jobs[0].target_language == "English"

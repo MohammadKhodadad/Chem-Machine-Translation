@@ -200,18 +200,26 @@ uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
   --language fr `
   --language pt `
   --limit 250 `
-  --extract-legal-terms `
-  --legal-terminology-model gpt-5.4-mini `
+  --extract-stanza-terms `
+  --use-nobi-extractor `
+  --stanza-terminology-workers 2 `
   --iate-terminology `
   --wikipedia-terminology `
   --unterm-terminology `
-  --legal-terminology-workers 4 `
-  --legal-terminology-cache data/jrc_acquis_legal_terminology_cache.jsonl
+  --pubchem-terminology `
+  --chebi-terminology `
+  --chembl-terminology `
+  --mesh-terminology `
+  --nci-terminology `
+  --agrovoc-terminology
 ```
 
 The benchmark builder writes direction folders with `source.csv`, `target.csv`, and manifest files.
-Legal terminology is generated from the target/reference side and can be verified with IATE,
-Wikipedia/Wikidata, and UNTERM evidence.
+Non-LLM terminology is generated from the target/reference side with Stanza/UD and optionally
+XLM-R/NOBI. Verifier flags add external evidence from IATE, Wikipedia/Wikidata, UNTERM, and the
+chemistry/biomedical sources. Progress bars show direction, unique target-term generation, and row
+attachment progress. In anchored mode, repeated target chunks are extracted once and reused across
+matching directions.
 
 Evaluate a direction with the legal prompt and verified manifest terminology:
 

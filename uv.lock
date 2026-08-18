@@ -229,6 +229,7 @@ dependencies = [
     { name = "sacrebleu" },
     { name = "setuptools" },
     { name = "stanza" },
+    { name = "tqdm" },
     { name = "typer" },
     { name = "unbabel-comet" },
 ]
@@ -256,6 +257,7 @@ requires-dist = [
     { name = "setuptools", specifier = ">=70.0.0,<81.0.0" },
     { name = "stanza", specifier = ">=1.14.0" },
     { name = "tiktoken", marker = "extra == 'tokens'", specifier = ">=0.7.0" },
+    { name = "tqdm", specifier = ">=4.67.3" },
     { name = "typer", specifier = ">=0.12.3" },
     { name = "unbabel-comet", specifier = ">=2.2.0" },
 ]

@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import threading
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from http.client import RemoteDisconnected
 from pathlib import Path
@@ -1318,13 +1319,88 @@ def deduplicate_terms(terms: list[DatasetTerminologyTerm]) -> list[DatasetTermin
         if not key:
             continue
         existing = by_key.get(key)
-        if existing is None or term.confidence > existing.confidence:
+        if existing is None:
             by_key[key] = term
+        else:
+            by_key[key] = merge_duplicate_dataset_terms(existing, term)
     return sorted(
         by_key.values(),
         key=lambda term: (term.confidence, len(term.target_terms[0])),
         reverse=True,
     )
+
+
+def merge_duplicate_dataset_terms(
+    left: DatasetTerminologyTerm,
+    right: DatasetTerminologyTerm,
+) -> DatasetTerminologyTerm:
+    base = left if left.confidence >= right.confidence else right
+    source = "+".join(merge_source_tags(left.source, right.source))
+    verified_by = merge_unique_strings(left.verified_by, right.verified_by)
+    candidates = merge_external_candidate_maps(left.candidates, right.candidates)
+    term_group = merged_term_group(left, right, verified_by)
+    decision = "preserve" if "preserve" in {left.decision, right.decision} else base.decision
+    return replace_dataset_term(
+        base,
+        target_terms=merge_unique_strings(base.target_terms, left.target_terms, right.target_terms),
+        reference_candidates=merge_unique_strings(
+            base.reference_candidates,
+            left.reference_candidates,
+            right.reference_candidates,
+        ),
+        source=source,
+        term_group=term_group,
+        verified_by=verified_by,
+        confidence=max(left.confidence, right.confidence),
+        decision=decision,
+        candidates=candidates,
+    )
+
+
+def merge_source_tags(*sources: str) -> tuple[str, ...]:
+    tags: list[str] = []
+    for source in sources:
+        tags.extend(part.strip() for part in source.split("+") if part.strip())
+    return merge_unique_strings(tags)
+
+
+def merge_unique_strings(*groups: Iterable[str]) -> tuple[str, ...]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        for value in group:
+            stripped = str(value).strip()
+            if not stripped:
+                continue
+            key = stripped.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(stripped)
+    return tuple(merged)
+
+
+def merge_external_candidate_maps(
+    left: dict[str, list[str]],
+    right: dict[str, list[str]],
+) -> dict[str, list[str]]:
+    merged: dict[str, list[str]] = {}
+    for source, terms in [*left.items(), *right.items()]:
+        existing = merged.get(source, [])
+        merged[source] = list(merge_unique_strings(existing, terms))
+    return merged
+
+
+def merged_term_group(
+    left: DatasetTerminologyTerm,
+    right: DatasetTerminologyTerm,
+    verified_by: tuple[str, ...],
+) -> str:
+    if verified_by:
+        return "verified"
+    if "llm" in {left.term_group, right.term_group}:
+        return "llm"
+    return left.term_group if left.confidence >= right.confidence else right.term_group
 
 
 def select_dataset_terms(

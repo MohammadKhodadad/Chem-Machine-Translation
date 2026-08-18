@@ -10,6 +10,7 @@ from chem_machine_translation.data.terminology import (
     TargetTerminologyExtractor,
     append_terminology_cache,
     dataset_term_from_json,
+    deduplicate_terms,
     load_manifest_terminology,
     load_terminology_cache,
     make_stanza_terms,
@@ -107,6 +108,43 @@ def test_dataset_term_round_trips_json_shape() -> None:
     loaded = dataset_term_from_json(term.to_json())
 
     assert loaded == term
+
+
+def test_deduplicate_terms_merges_extractor_and_verifier_tags() -> None:
+    stanza_term = DatasetTerminologyTerm(
+        target_terms=("sodium chloride",),
+        reference_candidates=("sodium chloride",),
+        category="chemical",
+        source="stanza_ud_dependency+pubchem",
+        term_group="verified",
+        verified_by=("pubchem",),
+        confidence=0.82,
+        decision="keep_reference",
+        candidates={"pubchem": ["sodium chloride"]},
+    )
+    nobi_term = DatasetTerminologyTerm(
+        target_terms=("sodium chloride",),
+        reference_candidates=("sodium chloride", "Sodium chloride"),
+        category="chemical",
+        source="xlmr_nobi+chebi",
+        term_group="verified",
+        verified_by=("chebi",),
+        confidence=0.76,
+        decision="keep_reference",
+        candidates={"chebi": ["sodium chloride", "NaCl"]},
+    )
+
+    merged = deduplicate_terms([stanza_term, nobi_term])
+
+    assert len(merged) == 1
+    assert merged[0].source == "stanza_ud_dependency+pubchem+xlmr_nobi+chebi"
+    assert merged[0].term_group == "verified"
+    assert merged[0].verified_by == ("pubchem", "chebi")
+    assert merged[0].candidates == {
+        "pubchem": ["sodium chloride"],
+        "chebi": ["sodium chloride", "NaCl"],
+    }
+    assert merged[0].confidence == 0.82
 
 
 def test_parse_llm_target_candidates_drops_terms_missing_from_reference() -> None:
@@ -320,7 +358,7 @@ def test_generator_uses_llm_target_candidates_before_database_checks() -> None:
     )
 
     assert terms[0].target_terms == ("chlorure de sodium",)
-    assert terms[0].source == "llm_target+pubchem"
+    assert terms[0].source == "llm_target+stanza_ud_dependency+stanza_ud_ngram+pubchem"
     assert terms[0].term_group == "verified"
     assert terms[0].verified_by == ("pubchem",)
 

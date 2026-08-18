@@ -73,7 +73,13 @@ The matching benchmark dataset builder is:
 
 ```powershell
 uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
-  --source-pairs-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl
+  --source-pairs-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl `
+  --extract-stanza-terms `
+  --use-nobi-extractor `
+  --stanza-terminology-workers 2 `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology
 ```
 
 Generated source-first artifacts so far:

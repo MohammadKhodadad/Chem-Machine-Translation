@@ -67,9 +67,13 @@ Terminology is attached when creating benchmark datasets from source-pair JSONL 
     `--unterm-terminology`.
 - `scripts/build_jrc_acquis_eval_subset.py`
   - legal terminology for JRC-Acquis;
-  - enabled with `--extract-legal-terms`;
-  - optional evidence flags include `--iate-terminology`, `--wikipedia-terminology`, and
-    `--unterm-terminology`.
+  - non-LLM target-side extraction is enabled with `--extract-stanza-terms`;
+  - XLM-R/NOBI can be added with `--use-nobi-extractor`;
+  - unique anchored target chunks can be parallelized with `--stanza-terminology-workers`;
+  - optional evidence flags include `--iate-terminology`, `--wikipedia-terminology`,
+    `--unterm-terminology`, `--pubchem-terminology`, `--chebi-terminology`,
+    `--chembl-terminology`, `--mesh-terminology`, `--nci-terminology`, and
+    `--agrovoc-terminology`.
 
 The source-pair creation scripts do not extract terminology. They only create clean source/target
 pairs. Terminology belongs to the dataset creation step because it is stored in benchmark manifests.
@@ -78,15 +82,15 @@ pairs. Terminology belongs to the dataset creation step because it is stored in 
 
 ### Chemistry and Patent Datasets
 
-`DatasetTerminologyGenerator` builds target-side terminology for chemistry-heavy benchmark rows.
+`DatasetTerminologyGenerator` builds target-side terminology for chemistry, patent, and JRC rows.
 When enabled, it can combine:
 
 - an LLM target candidate extractor that returns exact target/reference spans only;
-- optional `ChemDataExtractor` chemical entity mentions when installed;
-- optional Hugging Face token-classification chemical NER when available;
-- regex fallback candidates for formulas, compact units, identifiers, and chemistry phrase patterns.
+- Stanza/Universal Dependencies candidates from exact target/reference spans;
+- optional XLM-R/NOBI token-classification candidates;
+- external verifier evidence from chemistry, biomedical, legal, and multilingual terminology sources.
 
-The LLM is only a candidate extractor. It is instructed not to translate, normalize, rewrite,
+The LLM is only a candidate extractor when explicitly enabled. It is instructed not to translate, normalize, rewrite,
 lemmatize, or invent terms. Any returned term that cannot be found exactly in the reference text is
 dropped.
 

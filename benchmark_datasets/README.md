@@ -137,14 +137,23 @@ uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
   --language fr `
   --language pt `
   --limit 250 `
-  --extract-legal-terms `
-  --legal-terminology-model gpt-5.4-mini `
+  --extract-stanza-terms `
+  --use-nobi-extractor `
+  --stanza-terminology-workers 2 `
   --iate-terminology `
   --wikipedia-terminology `
   --unterm-terminology `
-  --legal-terminology-workers 4 `
-  --legal-terminology-cache data/jrc_acquis_legal_terminology_cache.jsonl
+  --pubchem-terminology `
+  --chebi-terminology `
+  --chembl-terminology `
+  --mesh-terminology `
+  --nci-terminology `
+  --agrovoc-terminology
 ```
+
+The JRC builder shows progress bars and reuses terminology for repeated anchored target chunks.
+`--stanza-terminology-workers` parallelizes unique target chunk extraction with separate worker
+processes. Use modest values when `--use-nobi-extractor` or many public verifier sources are enabled.
 
 ## Terminology Groups
 
@@ -154,10 +163,11 @@ Each manifest terminology item has a coarse `term_group` and detailed provenance
   benchmark terminology group.
 - `llm`: target-only LLM candidate that was verified to appear in the target/reference text, but has
   no external database evidence.
-- `algorithmic`: regex, NER, or other non-database extractor output.
+- `algorithmic`: Stanza/UD, XLM-R/NOBI, or other non-database extractor output.
 
-The detailed `source` field keeps provenance such as `llm_target+iate`, `regex+pubchem`, or
-`llm_target+wikipedia`. The `verified_by` field stores just the external evidence sources.
+The detailed `source` field keeps all candidate and verifier provenance, such as
+`stanza_ud_dependency+xlmr_nobi+pubchem+chebi`. The `verified_by` field stores just the external
+evidence sources.
 
 ## Run A Direction
 

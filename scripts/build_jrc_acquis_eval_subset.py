@@ -3,11 +3,13 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from openai import OpenAI
+from tqdm import tqdm
 
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
 from chem_machine_translation.data.terminology import (
@@ -27,6 +29,31 @@ LANGUAGE_NAMES = {
     "pt": "Portuguese",
 }
 DEFAULT_LANGUAGES = ("en", "es", "de", "fr", "pt")
+
+
+@dataclass(frozen=True)
+class StanzaTerminologyConfig:
+    max_terms: int
+    use_nobi_extractor: bool = False
+    nobi_model: str = "tthhanh/xlm-ate-nobi-en-nes"
+    use_iate: bool = False
+    use_wikidata: bool = False
+    use_pubchem: bool = False
+    use_chebi: bool = False
+    use_chembl: bool = False
+    use_mesh: bool = False
+    use_nci: bool = False
+    use_agrovoc: bool = False
+    use_unterm: bool = False
+
+
+@dataclass(frozen=True)
+class StanzaTerminologyJob:
+    cache_key: tuple[str, str]
+    source_text: str
+    target_language: str
+    target_text: str
+    config: StanzaTerminologyConfig
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,8 +85,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--legal-terminology-cache", type=Path, default=None)
     parser.add_argument("--legal-terminology-workers", type=int, default=1)
     parser.add_argument("--extract-stanza-terms", action="store_true")
+    parser.add_argument("--use-nobi-extractor", action="store_true")
+    parser.add_argument("--nobi-model", default="tthhanh/xlm-ate-nobi-en-nes")
     parser.add_argument("--stanza-terminology-max-terms", type=int, default=20)
     parser.add_argument("--stanza-terminology-cache", type=Path, default=None)
+    parser.add_argument("--stanza-terminology-workers", type=int, default=1)
     parser.add_argument("--iate-terminology", action="store_true")
     parser.add_argument("--wikipedia-terminology", action="store_true")
     parser.add_argument("--unterm-terminology", action="store_true")
@@ -80,6 +110,7 @@ def main() -> None:
         raise ValueError("At least two languages are required.")
     legal_generator = build_legal_generator(args)
     stanza_generator = build_stanza_generator(args)
+    stanza_config = build_stanza_config(args)
     pair_rows = select_source_pair_rows(
         source_pairs_jsonl=args.source_pairs_jsonl,
         languages=languages,
@@ -90,7 +121,9 @@ def main() -> None:
         pair_rows=pair_rows,
         legal_generator=legal_generator,
         stanza_generator=stanza_generator,
+        stanza_config=stanza_config,
         legal_terminology_workers=max(1, args.legal_terminology_workers),
+        stanza_terminology_workers=max(1, args.stanza_terminology_workers),
     )
 
 
@@ -130,7 +163,28 @@ def build_stanza_generator(args: argparse.Namespace) -> DatasetTerminologyGenera
         use_nci=args.nci_terminology,
         use_agrovoc=args.agrovoc_terminology,
         use_unterm=args.unterm_terminology,
+        use_nobi_extractor=args.use_nobi_extractor,
+        nobi_model=args.nobi_model,
         cache_path=args.stanza_terminology_cache,
+    )
+
+
+def build_stanza_config(args: argparse.Namespace) -> StanzaTerminologyConfig | None:
+    if not args.extract_stanza_terms:
+        return None
+    return StanzaTerminologyConfig(
+        max_terms=args.stanza_terminology_max_terms,
+        use_nobi_extractor=args.use_nobi_extractor,
+        nobi_model=args.nobi_model,
+        use_iate=args.iate_terminology,
+        use_wikidata=args.wikipedia_terminology,
+        use_pubchem=args.pubchem_terminology,
+        use_chebi=args.chebi_terminology,
+        use_chembl=args.chembl_terminology,
+        use_mesh=args.mesh_terminology,
+        use_nci=args.nci_terminology,
+        use_agrovoc=args.agrovoc_terminology,
+        use_unterm=args.unterm_terminology,
     )
 
 
@@ -186,12 +240,18 @@ def write_source_pair_dataset(
     pair_rows: dict[str, list[dict[str, Any]]],
     legal_generator: LegalTerminologyGenerator | None,
     stanza_generator: DatasetTerminologyGenerator | None,
+    stanza_config: StanzaTerminologyConfig | None,
     legal_terminology_workers: int,
+    stanza_terminology_workers: int,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     combined_rows = []
     stanza_term_cache: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for direction, rows in sorted(pair_rows.items()):
+    for direction, rows in tqdm(
+        sorted(pair_rows.items()),
+        desc="Writing JRC directions",
+        unit="direction",
+    ):
         direction_dir = output_dir / direction
         direction_dir.mkdir(parents=True, exist_ok=True)
         manifest_rows = [build_source_pair_manifest_row(row=row) for row in rows]
@@ -204,6 +264,8 @@ def write_source_pair_dataset(
             rows=manifest_rows,
             generator=stanza_generator,
             term_cache=stanza_term_cache,
+            config=stanza_config,
+            workers=stanza_terminology_workers,
         )
         write_rows(direction_dir / "source.csv", [row["_source_row"] for row in manifest_rows])
         write_rows(direction_dir / "target.csv", [row["_target_row"] for row in manifest_rows])
@@ -274,19 +336,25 @@ def add_legal_terms_parallel(
     if generator is None:
         return rows
     if workers == 1:
-        return [add_legal_terms(row, generator) for row in rows]
+        return [
+            add_legal_terms(row, generator)
+            for row in tqdm(rows, desc="Generating legal terms", unit="row")
+        ]
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        return list(executor.map(lambda row: add_legal_terms(row, generator), rows))
+        return list(
+            tqdm(
+                executor.map(lambda row: add_legal_terms(row, generator), rows),
+                total=len(rows),
+                desc="Generating legal terms",
+                unit="row",
+            )
+        )
 
 
 def add_legal_terms(
     row: dict[str, Any],
     generator: LegalTerminologyGenerator,
 ) -> dict[str, Any]:
-    print(
-        f"Generating legal terms for {row['chunk_id']} -> {row['target_language']}",
-        flush=True,
-    )
     legal_terms = generator.generate(
         target_language=row["target_language"],
         reference_text=row["_target_text"],
@@ -300,10 +368,96 @@ def add_stanza_terms(
     rows: list[dict[str, Any]],
     generator: DatasetTerminologyGenerator | None,
     term_cache: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
+    config: StanzaTerminologyConfig | None = None,
+    workers: int = 1,
 ) -> list[dict[str, Any]]:
     if generator is None:
         return rows
-    return [add_stanza_terms_to_row(row, generator, term_cache=term_cache) for row in rows]
+    if workers > 1 and config is not None:
+        populate_stanza_term_cache_parallel(
+            rows=rows,
+            term_cache=term_cache,
+            config=config,
+            workers=workers,
+        )
+    return [
+        add_stanza_terms_to_row(row, generator, term_cache=term_cache)
+        for row in tqdm(rows, desc="Attaching target terms", unit="row")
+    ]
+
+
+def populate_stanza_term_cache_parallel(
+    *,
+    rows: list[dict[str, Any]],
+    term_cache: dict[tuple[str, str], list[dict[str, Any]]] | None,
+    config: StanzaTerminologyConfig,
+    workers: int,
+) -> None:
+    if term_cache is None:
+        return
+    jobs = collect_stanza_term_jobs(rows=rows, term_cache=term_cache, config=config)
+    if not jobs:
+        return
+    print(
+        f"Generating target terms for {len(jobs)} unique target chunks "
+        f"with {workers} workers.",
+        flush=True,
+    )
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        for cache_key, terms in tqdm(
+            executor.map(generate_stanza_terms_for_job, jobs),
+            total=len(jobs),
+            desc="Generating target terms",
+            unit="chunk",
+        ):
+            term_cache[cache_key] = terms
+
+
+def collect_stanza_term_jobs(
+    *,
+    rows: list[dict[str, Any]],
+    term_cache: dict[tuple[str, str], list[dict[str, Any]]],
+    config: StanzaTerminologyConfig,
+) -> list[StanzaTerminologyJob]:
+    jobs_by_key: dict[tuple[str, str], StanzaTerminologyJob] = {}
+    for row in rows:
+        cache_key = stanza_term_cache_key(row)
+        if cache_key in term_cache or cache_key in jobs_by_key:
+            continue
+        jobs_by_key[cache_key] = StanzaTerminologyJob(
+            cache_key=cache_key,
+            source_text=row["_source_text"],
+            target_language=row["target_language"],
+            target_text=row["_target_text"],
+            config=config,
+        )
+    return list(jobs_by_key.values())
+
+
+def generate_stanza_terms_for_job(
+    job: StanzaTerminologyJob,
+) -> tuple[tuple[str, str], list[dict[str, Any]]]:
+    generator = DatasetTerminologyGenerator(
+        max_terms=job.config.max_terms,
+        use_nobi_extractor=job.config.use_nobi_extractor,
+        nobi_model=job.config.nobi_model,
+        use_iate=job.config.use_iate,
+        use_wikidata=job.config.use_wikidata,
+        use_pubchem=job.config.use_pubchem,
+        use_chebi=job.config.use_chebi,
+        use_chembl=job.config.use_chembl,
+        use_mesh=job.config.use_mesh,
+        use_nci=job.config.use_nci,
+        use_agrovoc=job.config.use_agrovoc,
+        use_unterm=job.config.use_unterm,
+        cache_path=None,
+    )
+    terms = generator.generate(
+        source_text=job.source_text,
+        target_language=job.target_language,
+        reference_text=job.target_text,
+    )
+    return job.cache_key, [term.to_json() for term in terms]
 
 
 def add_stanza_terms_to_row(
@@ -314,10 +468,6 @@ def add_stanza_terms_to_row(
     cache_key = stanza_term_cache_key(row)
     cached_terms = term_cache.get(cache_key) if term_cache is not None else None
     if cached_terms is None:
-        print(
-            f"Generating Stanza terms for {row['chunk_id']} -> {row['target_language']}",
-            flush=True,
-        )
         stanza_terms = generator.generate(
             source_text=row["_source_text"],
             target_language=row["target_language"],
@@ -326,11 +476,6 @@ def add_stanza_terms_to_row(
         cached_terms = [term.to_json() for term in stanza_terms]
         if term_cache is not None:
             term_cache[cache_key] = cached_terms
-    else:
-        print(
-            f"Reusing Stanza terms for {row['chunk_id']} -> {row['target_language']}",
-            flush=True,
-        )
     existing_terms = [
         dataset_term_from_json(term)
         for term in row["terminology"]
