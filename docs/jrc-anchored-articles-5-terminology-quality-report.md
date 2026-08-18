@@ -1,7 +1,7 @@
 # JRC Anchored Articles Terminology Quality Report
 
-This report reviews the small anchored JRC-Acquis article dataset built with non-LLM terminology
-generation and all available external verifier sources.
+This report reviews terminology generated for the small anchored JRC-Acquis article dataset, grouped
+by candidate extractor and verification status.
 
 Dataset reviewed:
 
@@ -15,285 +15,218 @@ Combined manifest:
 benchmark_datasets/jrc_acquis_anchored_articles_5_all_non_llm_terms/jrc-acquis-20-directions-100-manifest.jsonl
 ```
 
-## Executive Summary
+## Dataset Summary
 
-The article dataset is structurally good, but the terminology layer is medium quality and still too
-noisy for final terminology-sensitive benchmark use.
+- Rows: 100.
+- Directions: 20.
+- Rows per direction: 5.
+- Total terminology records: 1,919.
+- Verified terminology records: 697.
+- Non-verified terminology records: 1,222.
+- Rows hitting the 20-term cap: 95 of 100.
+- Target terms appearing exactly in target/reference text: 1,919 of 1,919.
+- Records with populated `source_term`: 0 of 1,919.
 
-Numerical highlights:
+## Pipeline Explanation
 
-- 100 manifest rows across 20 ordered language directions.
-- 1,919 terminology records.
-- 697 verified records, which is 36.3% of all terminology records.
-- 1,222 algorithmic-only records, which is 63.7%.
-- 95 of 100 rows hit the 20-term cap.
-- 1,150 terms, or 59.9%, were found by multiple candidate extractor tags.
-- 303 terms, or 15.8%, had multiple verifier tags.
-- 109 terms, or 5.7%, had both multiple extractor tags and multiple verifier tags.
-- 1,919 of 1,919 target terms appeared in the target/reference text.
-- 1,919 of 1,919 terminology records had empty `source_term`.
+The JRC article benchmark starts from OPUS/JRC-Acquis aligned segments. The source builder selects
+documents available in all required languages and expands each anchored chunk to every ordered
+language pair. The dataset builder then writes `source.csv`, `target.csv`, and manifest rows per
+direction.
 
-Quality judgment:
-
-- Dataset text/alignment quality: good.
-- Language consistency: good in reviewed samples.
-- Target-term exact-span validity: good.
-- Terminology usefulness: mixed.
-- Final benchmark readiness for terminology-sensitive evaluation: not yet.
-
-The main issue is not alignment or language mismatch. The issue is term quality: many good legal and
-technical terms are present, but noisy headings, numbering fragments, table-of-contents spans,
-generic verified words, and target-only terms remain.
-
-## Pipeline Overview
-
-The full article path is:
-
-```text
-OPUS/JRC-Acquis aligned segments
-  -> anchored source JSONL
-  -> benchmark dataset builder
-  -> unique target chunk extraction
-  -> candidate extractors
-  -> duplicate/provenance merge
-  -> external verifier evidence
-  -> manifest terminology
-  -> benchmark evaluation
-```
-
-In the source creation step, JRC documents are selected only when all required languages are
-available. Each selected document is expanded to every ordered language pair. This gives true
-bidirectionality: if `en-es` exists for an anchored chunk, `es-en` exists as the exact reverse.
-
-In the dataset creation step, the builder writes `source.csv`, `target.csv`, and manifest files per
-direction. For anchored datasets, repeated target chunks are deduplicated before terminology
-generation. With five languages, the same target-language chunk can be reused across four incoming
-source-language directions.
-
-Terminology generation is target-side:
+Terminology is target-side:
 
 ```text
 target/reference text
   -> Stanza/UD candidates
-  -> optional XLM-R/NOBI candidates
-  -> merge duplicate candidate tags
-  -> external verifier checks
-  -> verified/algorithmic term records
+  -> XLM-R/NOBI candidates
+  -> duplicate candidate merge
+  -> external verifier lookup
+  -> verified or non-verified manifest terms
 ```
 
-The current terminology records are therefore exact target/reference spans. They are useful for
-target-term coverage, but they are not yet complete bilingual terminology pairs because `source_term`
-is still empty.
+Repeated anchored target chunks are deduplicated before extraction, so the same target-language chunk
+is reused across multiple source-language directions.
 
-## Build Settings
+## Method Explanations
 
-The dataset was built from the anchored article source with 5 rows per ordered language direction.
-It includes 20 directions across English, German, French, Spanish, and Portuguese.
+Stanza/UD is the broad deterministic extractor. It proposes noun-headed dependency spans, relaxed
+content n-grams, and proper-name sequences. It has high recall but produces the most legal
+boilerplate, heading fragments, and table-of-contents noise.
 
-Terminology settings:
+XLM-R/NOBI is the neural extractor. It uses an XLM-R token-classification checkpoint with NOBI labels
+for nested automatic term extraction. It produces fewer candidates and often cleaner named entities,
+but it can still return generic single words.
 
-- LLM extraction: disabled.
-- Candidate extractors: Stanza/UD and XLM-R/NOBI.
-- Verifier sources: PubChem, ChEBI, ChEMBL, MeSH, NCI Thesaurus, AGROVOC, IATE,
-  Wikipedia/Wikidata, and UNTERM.
-- Stanza/NOBI generation used 2 worker processes.
+External verifiers add evidence to extracted candidates. Enabled sources were IATE,
+Wikipedia/Wikidata, UNTERM, PubChem, ChEBI, ChEMBL, MeSH, NCI Thesaurus, and AGROVOC. Verification is
+evidence, not automatic quality.
 
-## Extraction Steps
+## Classes
 
-1. Source rows are read from the anchored JRC article source JSONL.
-2. Each row is converted into `source.csv`, `target.csv`, and manifest records.
-3. Repeated anchored target chunks are deduplicated by `(target_language_code, target_text)`.
-4. Stanza/UD extracts target-side terminology candidates from exact target/reference spans.
-5. XLM-R/NOBI adds neural token-classification candidates when enabled.
-6. Duplicate candidate terms are merged, preserving all extractor tags.
-7. External verifier sources are queried for each candidate.
-8. Verified terms are marked with `term_group = "verified"` and `verified_by`.
-9. Final terminology records are attached to the manifest.
+Terms are split into six classes:
 
-## Candidate Extractors
+- `stanza_only + verified`
+- `stanza_only + not_verified`
+- `nobi_only + verified`
+- `nobi_only + not_verified`
+- `both + verified`
+- `both + not_verified`
 
-Stanza/UD is the broad deterministic extractor. It parses target/reference text with Universal
-Dependencies and proposes noun-headed spans, relaxed content n-grams, and proper-name sequences. It
-has good recall, but can produce generic legal boilerplate and formatting fragments.
+The compact table below gives record counts, unique-term counts, and frequency ranges. The term lists
+after it show up to 100 extracted terms per class, ordered by frequency.
 
-XLM-R/NOBI is the neural extractor. It uses an XLM-R token-classification checkpoint with NOBI-style
-labels for nested automatic term extraction. It tends to find cleaner salient entities and domain
-nouns, but recall is lower and the current checkpoint is strongest on English.
+| Class | Records | Unique terms | 10+ repeats | 5-9 repeats | 2-4 repeats | 1 repeat |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Stanza only, verified | 237 | 79 | 0 | 4 | 52 | 23 |
+| Stanza only, not verified | 1,145 | 550 | 0 | 6 | 285 | 259 |
+| NOBI only, verified | 376 | 109 | 3 | 4 | 80 | 22 |
+| NOBI only, not verified | 58 | 20 | 0 | 0 | 15 | 5 |
+| Stanza + NOBI, verified | 84 | 25 | 0 | 0 | 21 | 4 |
+| Stanza + NOBI, not verified | 19 | 6 | 0 | 0 | 5 | 1 |
 
-External verifiers do not create candidates by themselves. They add evidence to candidates from the
-extractors. A term can keep multiple source tags, for example:
+## Stanza Only, Verified
 
-```text
-stanza_ud_dependency+xlmr_nobi+pubchem+chebi
-```
+Terms:
 
-## Dataset Shape
+`Partes Contratantes (7x)`; `Parte Contratante (7x)`; `Grupos Sanguíneos (7x)`; `Member States (5x)`; `Secretary-General (4x)`; `Contracting Parties (4x)`; `Contracting Party (4x)`; `MEMBER STATES (4x)`; `Additional Protocol (4x)`; `necessary measures (4x)`; `Blood-grouping (4x)`; `United Nations (4x)`; `Nations Conference (4x)`; `Council Regulation (4x)`; `Monitoring Centre (4x)`; `Management Board (4x)`; `Organización internacional (4x)`; `Comisión Europea (4x)`; `Unión Europea (4x)`; `instrument d'acceptation (4x)`; `parties contractantes (4x)`; `protocole additionnel (4x)`; `partie contractante (4x)`; `secrétaire général (4x)`; `partie intégrante (4x)`; `vice-président du Conseil (4x)`; `Admission d'observateurs (4x)`; `publication des comptes (4x)`; `Échange d'informations (4x)`; `mise à disposition (4x)`; `Protocolo Adicional (4x)`; `instrumento de aceitação (4x)`; `Organização Internacional (4x)`; `Nações Unidas (4x)`; `DISPOSIÇÕES FINANCEIRAS (4x)`; `relatório de avaliação (4x)`; `União Europeia (4x)`; `Comissão Europeia (4x)`; `personalidade independente (4x)`; `Intercâmbio de informações (4x)`; `Europäischen Union (4x)`; `sustancia de transición (3x)`; `países en desarrollo (3x)`; `medidas preventivas (3x)`; `Vereinten Nationen (3x)`; `Secretario General (3x)`; `ESTADOS MIEMBROS (3x)`; `Acuerdo Europeo (3x)`; `instrumento de aceptación (3x)`; `période de douze mois (3x)`; `Exchange of information (3x)`; `Controlled substance (2x)`; `precautionary measures (2x)`; `Transitional substance (2x)`; `capa de ozono (2x)`; `rationalisation industrielle (2x)`; `control measures (1x)`; `controlled substances (1x)`; `developing country (1x)`; `premier jour du mois (1x)`; `secrétaire général du Conseil de l'Europe (1x)`; `Tagung der Vertragsparteien (1x)`; `integración económica regional (1x)`; `Grupo II (1x)`; `Grupo I (1x)`; `regional economic integration organization (1x)`; `rendement économique (1x)`; `Organisation der regionalen Wirtschaftsintegration (1x)`; `innerstaatliche Rechtsvorschriften (1x)`; `eficiencia económica (1x)`; `Secretário-geral do Conselho da Europa (1x)`; `país em desenvolvimento (1x)`; `países em desenvolvimento (1x)`; `grupo I (1x)`; `Partes interesadas (1x)`; `materia prima (1x)`; `pays en développement (1x)`; `Communication des données (1x)`; `dix pour cent (1x)`.
 
-- Manifest rows: 100.
-- Directions: 20.
-- Rows per direction: 5.
-- Total terminology records: 1,919.
-- Terms per row:
-  - minimum: 1.
-  - median: 20.
-  - mean: 19.19.
-  - maximum: 20.
-  - 95 of 100 rows hit the 20-term cap.
+Analysis:
 
-Term groups:
+This class is mostly useful legal terminology. The terms are often multiword and externally backed,
+but some are still generic or context-dependent. This class should be kept, with light filtering and
+ranking.
 
-- `algorithmic`: 1,222.
-- `verified`: 697.
+## Stanza Only, Not Verified
 
-Review coverage:
+Terms:
 
-- Full combined manifest was used for aggregate counts.
-- 40 rows and 800 terminology records were reviewed for term quality across target languages.
-- 30 rows across all 20 directions were reviewed for text/alignment and terminology-in-context
-  quality.
+`date d'entrée en vigueur du présent protocole (6x)`; `límites de producción (5x)`; `besoins intérieurs fondamentaux (5x)`; `Annex A (5x)`; `one or more of these substances (5x)`; `basic domestic needs of the Parties (5x)`; `notification o communication (4x)`; `following such signature (4x)`; `following the date (4x)`; `Contracting Party to the Agreement (4x)`; `one of the Contracting Parties (4x)`; `objection to the entry into force (4x)`; `integral part of the Agreement (4x)`; `Contracting Party to the Additional Protocol (4x)`; `recommendations of the Council (4x)`; `functions of the Council (4x)`; `Sessions of the Council (4x)`; `Quorum for the Council (4x)`; `Jute Organization (4x)`; `Annex B Shares (4x)`; `Jute Products (4x)`; `Annex B (4x)`; `objective of the Centre (4x)`; `Regulation (EC (4x)`; `purpose of the consultations (4x)`; `unnecessary duplication (4x)`; `Decisiones y recomendaciones del Consejo (4x)`; `vicepresidente del Consejo (4x)`; `CAPÍTULO III ORGANIZACIÓN (4x)`; `CAPÍTULO II DEFINICIONES (4x)`; `CAPÍTULO V PRIVILEGIOS (4x)`; `funciones del Consejo (4x)`; `14 Cooperación (4x)`; `CAPÍTULO IX (4x)`; `Consejo internacional (4x)`; `proyectos12 Artículo (4x)`; `objetivo del Observatorio (4x)`; `n° 1035/97 (4x)`; `Observatorio Europeo (4x)`; `HAN CONVENIDO (4x)`; `datos y trabajos de carácter confidencial realizados (4x)`; `coordinación de sus actividades (4x)`; `présent protocole additionnel (4x)`; `pouvoirs nécessaires (4x)`; `objection à l'entrée (4x)`; `mesures nécessaires (4x)`; `trait à l'accord (4x)`; `telle objection (4x)`; `acceptation ou objection au sens de l'article (4x)`; `réactifs pour la détermination des groupes (4x)`; `recommandations du Conseil (4x)`; `Notification d'application (4x)`; `CHAPITRE III ORGANISATION (4x)`; `Membres de l'Organisation (4x)`; `XI DISPOSITIONS DIVERSES (4x)`; `XII DISPOSITIONS FINALES (4x)`; `CHAPITRE II DÉFINITIONS (4x)`; `18 Comptes financiers (4x)`; `niveau calculé de production (4x)`; `niveau calculé de production de ces substances (4x)`; `coordination de leurs activités (4x)`; `objectif de l'Observatoire (4x)`; `consultations régulières (4x)`; `presente Protocolo Adicional (4x)`; `Acordo Europeu (4x)`; `Contratante no Acordo (4x)`; `medidas necessárias (4x)`; `uma das Partes Contratantes (4x)`; `reagentes para determinação de grupos (4x)`; `objecção à sua entrada em vigor (4x)`; `parte integrante do Acordo (4x)`; `nº 1 deste artigo (4x)`; `Parte Contratante no Protocolo Adicional (4x)`; `Conselho Internacional (4x)`; `vice-presidente do Conselho (4x)`; `CAPÍTULO III ORGANIZAÇÃO (4x)`; `ACTIVIDADES OPERACIONAIS (4x)`; `CAPÍTULO X ESTATÍSTICAS (4x)`; `CAPÍTULO II DEFINIÇÕES (4x)`; `CAPÍTULO V PRIVILÉGIOS (4x)`; `nível calculado de produção (4x)`; `CE) n.° 1035/97 (4x)`; `Observatório Europeu (4x)`; `coordenação das suas actividades (4x)`; `I. Intercâmbio de informações (4x)`; `informações objectivas (4x)`; `difusão tão vasta (4x)`; `Vertragspartei des Übereinkommens (4x)`; `Europäischen Übereinkommens (4x)`; `MITGLIEDSTAATEN DES EUROPARATS (4x)`; `Inkrafttretens dieses Zusatzprotokolls (4x)`; `Vertragspartei des Zusatzprotokolls (4x)`; `Einwand gegen sein Inkrafttreten (4x)`; `Generalsekretär des Europarats (4x)`; `letzte der Vertragsparteien (4x)`; `erforderlichen Befugnisse (4x)`; `menschlichen Ursprungs (4x)`; `notwendigen Maßnahmen (4x)`; `beigetretenen Staaten (4x)`; `Mitteilung im Zusammenhang mit diesem Übereinkommen (4x)`.
 
-## Provenance Coverage
+Analysis:
 
-Candidate extractor tags:
+This is the largest and noisiest class. It contains useful recall candidates, but many terms are
+headings, legal scaffolding, table-of-contents fragments, partial citations, or broad boilerplate.
+This class should not be used as final benchmark terminology without strong filters.
 
-- `stanza_ud_ngram`: 1,258 terms.
-- `stanza_ud_dependency`: 1,197 terms.
-- `xlmr_nobi`: 537 terms.
-- `stanza_ud_proper_name`: 271 terms.
-- `llm_target`: 0 terms.
+## NOBI Only, Verified
 
-Verifier tags:
+Terms:
 
-- `iate`: 613 terms.
-- `agrovoc`: 282 terms.
-- `wikipedia`: 198 terms.
-- `mesh`: 66 terms.
-- `nci`: 31 terms.
-- `pubchem`: 5 terms.
-- `chebi`: 1 term.
-- `chembl`: 0 terms.
-- `unterm`: 0 terms.
+`JUTE (12x)`; `ECRI (12x)`; `industrial (10x)`; `Council (8x)`; `xenofobia (8x)`; `racismo (8x)`; `Adicional (7x)`; `Council of Europe (4x)`; `Protocol (4x)`; `Common Fund for Commodities (4x)`; `payment (4x)`; `account (4x)`; `Administrative account (4x)`; `Committee on projects (4x)`; `Financial accounts (4x)`; `European Monitoring Centre on Racism and Xenophobia (4x)`; `European Commission against Racism and Intolerance (4x)`; `Council of the European Union (4x)`; `anti-semitism (4x)`; `xenophobia (4x)`; `General (4x)`; `Organización internacional del yute (4x)`; `Consejo internacional del yute (4x)`; `Cuenta administrativa (4x)`; `Cuenta especial (4x)`; `fondo común (4x)`; `cuentas (4x)`; `YUTE (4x)`; `Cuentas financieras (4x)`; `Comisión Europea contra el racismo y la intolerancia (4x)`; `Observatorio Europeo del Racismo y la Xenofobia (4x)`; `Consejo de administración (4x)`; `antisemitismo (4x)`; `droits d (4x)`; `Conseil international du jute (4x)`; `fonds commun (4x)`; `comptes (4x)`; `paiement (4x)`; `Organisation internationale du jute (4x)`; `Comptes financiers (4x)`; `spécial (4x)`; `Observatoire européen des phénomènes racistes et xénophobes (4x)`; `Commission européenne contre le racisme et l'intolérance (4x)`; `administration (4x)`; `antisémitisme (4x)`; `xénophobie (4x)`; `racisme (4x)`; `règlement (4x)`; `général (4x)`; `Conseil d (4x)`; `Secretário-geral (4x)`; `Conselho Internacional da Juta (4x)`; `Comité dos projectos (4x)`; `Conta administrativa (4x)`; `Conta especial (4x)`; `Fundo comum (4x)`; `contas (4x)`; `JUTA (4x)`; `Comissão Europeia contra o Racismo e a Intolerância (4x)`; `Observatório Europeu do Racismo e da Xenofobia (4x)`; `anti-semitismo (4x)`; `CERI (4x)`; `Conselho de Administração (4x)`; `Verwaltungskonto (4x)`; `Sonderkonto (4x)`; `Zahlung (4x)`; `Finanzkonten (4x)`; `Europarat (4x)`; `emissions (3x)`; `emisiones (3x)`; `ozono (3x)`; `Conselho da Europa (3x)`; `Conseil de l'Europe (3x)`; `Commission (3x)`; `INTERNATIONAL JUTE COUNCIL (3x)`; `technologies (2x)`; `technical (2x)`; `ozone depletion (2x)`; `Consejo de Europa (2x)`; `capa de (2x)`; `Ozonschicht (2x)`; `Endziel (2x)`; `technische (2x)`; `CONSEJO DE EUROPA (2x)`; `tecnologías (2x)`; `industrielle (2x)`; `FCKW (2x)`; `technology (1x)`; `International Jute Council (1x)`; `accounts (1x)`; `Comunidad Económica Europea (1x)`; `integración económica regional (1x)`; `CONSEIL DE L'EUROPE (1x)`; `production (1x)`; `consommation (1x)`; `integração económica (1x)`; `DE OZONO (1x)`; `Europeu (1x)`; `produção (1x)`; `emissões (1x)`.
 
-Multi-source coverage:
+Analysis:
 
-- Terms with multiple candidate extractor tags: 1,150 of 1,919.
-- Terms with multiple verifier tags: 303 of 1,919.
-- Terms with both multiple candidate and multiple verifier tags: 109 of 1,919.
+This class is mixed. It has strong named entities and domain terms, but also many generic verified
+single words. Verification alone is not enough here. Generic terms such as `Council`, `industrial`,
+`payment`, `account`, `Protocol`, and `General` should be down-ranked.
 
-Example verified records:
+## NOBI Only, Not Verified
 
-```json
-{
-  "target_terms": ["European Economic Community"],
-  "source": "stanza_ud_dependency+stanza_ud_ngram+xlmr_nobi+iate+wikipedia",
-  "term_group": "verified",
-  "verified_by": ["iate", "wikipedia"]
-}
-```
+Terms:
 
-```json
-{
-  "target_terms": ["control measures"],
-  "source": "stanza_ud_dependency+stanza_ud_ngram+agrovoc+iate",
-  "term_group": "verified",
-  "verified_by": ["agrovoc", "iate"]
-}
-```
+`International Jute Organization (4x)`; `INTERNACIONAL DEL YUTE (4x)`; `INTERNACIONAL DA JUTA (4x)`; `executivo (4x)`; `Europarats (4x)`; `Gemeinsamen Fonds für Rohstoffe (4x)`; `FINANZFRAGEN (4x)`; `JUTEERZEUGNISSE (4x)`; `JUTERAT (4x)`; `Europäischen Kommission gegen Rassismus und Intoleranz (4x)`; `EKRI (4x)`; `MONTREAL (3x)`; `Isomere (2x)`; `regionalen Wirtschaftsintegration (2x)`; `técnicas (2x)`; `réduction de consommation (1x)`; `régionale d'intégration économique (1x)`; `Internationalen Juterats (1x)`; `Internationalen Juteorganisation (1x)`; `resepectivo (1x)`.
 
-Example algorithmic record:
+Analysis:
 
-```json
-{
-  "target_terms": ["blood-grouping reagents"],
-  "source": "stanza_ud_dependency+xlmr_nobi",
-  "term_group": "algorithmic",
-  "verified_by": []
-}
-```
+This class is small. Some terms are useful and simply missed by verifiers, while others are headings,
+inflected fragments, or errors. It is useful for recall diagnostics and manual review, but not final
+benchmark terminology.
 
-## Term Quality Review
+## Stanza + NOBI, Verified
 
-The dataset contains many useful legal, institutional, and technical terms.
+Terms:
 
-Good examples:
+`European Economic Community (4x)`; `European Community (4x)`; `Council of Europe (4x)`; `Consejo de la Unión Europea (4x)`; `Consejo de Europa (4x)`; `Comunidad Europea (4x)`; `Secretaría General (4x)`; `Communauté économique européenne (4x)`; `Compte administratif (4x)`; `Conseil de l'Union européenne (4x)`; `Communauté européenne (4x)`; `CONSEIL DE L'EUROPE (4x)`; `Comunidade Económica Europeia (4x)`; `Conselho da União Europeia (4x)`; `Comunidade Europeia (4x)`; `Conselho da Europa (4x)`; `Europäische Wirtschaftsgemeinschaft (4x)`; `Rat der Europäischen Union (4x)`; `Comunidad Económica Europea (3x)`; `Protocolo Adicional (3x)`; `OZONE LAYER (2x)`; `capa de ozono (1x)`; `economic integration (1x)`; `tetracloreto de carbono (1x)`; `Tétrachlorure de carbone (1x)`.
 
-- English: `European Economic Community`, `controlled substances`, `blood-grouping reagents`,
-  `ozone depletion`, `European Monitoring Centre on Racism and Xenophobia`.
-- German: `Europäische Wirtschaftsgemeinschaft`, `Verwaltungskonto`, `Sonderkonto`,
-  `Rat der Europäischen Union`, `Ozonschicht`.
-- French: `Communauté économique européenne`, `protocole additionnel`,
-  `substances réglementées`, `Conseil international du jute`, `Tétrachlorure de carbone`.
-- Spanish: `Comunidad Económica Europea`, `Consejo internacional del yute`,
-  `Cuenta administrativa`, `capa de ozono`, `sustancia de transición`.
-- Portuguese: `Comunidade Económica Europeia`, `Protocolo Adicional`,
-  `Conselho Internacional da Juta`, `tetracloreto de carbono`.
+Analysis:
 
-Questionable examples:
+This is the strongest class. Agreement between both extractors plus external verification is the
+best available signal. This class should receive the highest ranking priority.
 
-- English: `Protocol`, `Council`, `payment`, `account`, `technology`, `technical`.
-- German: `Zahlung`, `Endziel`, `technische`, `Europarats`.
-- French: `production`, `consommation`, `comptes`, `spécial`, `général`.
-- Spanish: `Adicional`, `General`, `industrial`, `cuentas`, `YUTE`.
-- Portuguese: `Adicional`, `industrial`, `contas`, `JUTA`, `Grupo I`.
+## Stanza + NOBI, Not Verified
 
-Bad or noisy examples:
+Terms:
 
-- `notification o communication`.
-- `acceptance o objection`.
-- `following the date`.
-- `Definitions 1`.
-- `CAPÍTULO II DEFINICIONES`.
-- `Aufgaben des Rates .................... Artikel`.
-- `K. Article`.
-- `Nº 10`.
-- `droits d`.
-- `Conseil d`.
+`blood-grouping reagents (4x)`; `Europäischen Wirtschaftsgemeinschaft (4x)`; `Europäischen Gemeinschaft (4x)`; `Internationalen Juterats (3x)`; `Internationalen Juteorganisation (3x)`; `regionalen Wirtschaftsintegration (1x)`.
 
-## Dataset Text Quality
+Analysis:
 
-The underlying article rows are generally aligned and usable:
+This class is small but promising. Agreement between both extractors means these terms are likely
+salient, even when external verifiers do not match. This class should be kept for review and possible
+source-term alignment.
 
-- No obvious wrong-language rows were found in the reviewed sample.
-- Reverse-pair consistency was clean in aggregate checks.
-- Source/target size ratios looked reasonable.
-- Target terms all appeared in target/reference text.
+## Main Points
 
-The main caveat is that terminology records are target-side candidates. `source_term` is empty for
-all reviewed terminology records, so the dataset currently evaluates target/reference term coverage,
-not fully aligned bilingual source-to-target terminology transfer.
-
-## Main Issues
-
-1. Verified does not always mean useful. Sources like IATE, AGROVOC, Wikipedia, MeSH, and NCI can
-   verify broad words such as `Council`, `payment`, `industrial`, or `production`.
-2. Stanza/UD provides recall, but it also introduces headings, table-of-contents fragments, article
-   numbering, date fragments, and generic noun phrases.
-3. XLM-R/NOBI produces cleaner candidates, but fewer of them.
-4. The 20-term cap is often reached. The cap is not too low by itself; the ranking/filtering before
-   the cap needs improvement.
-5. Some JRC article chunks contain table-of-contents or legal-structure material. The parallel text is
-   aligned, but not always ideal for terminology-sensitive evaluation.
+1. The best class is `Stanza + NOBI, verified`.
+2. The worst large class is `Stanza only, not verified`.
+3. `NOBI only, verified` is useful but needs generic single-word filtering.
+4. `Stanza + NOBI, not verified` is small and worth manual review.
+5. Verification helps, but it does not guarantee benchmark-quality terminology.
+6. The current terms are target-side only because `source_term` is empty.
 
 ## Recommendations
 
-Before using this as a terminology-sensitive benchmark, improve term filtering and ranking:
+1. Rank `Stanza + NOBI, verified` highest.
+2. Prefer verified multiword terms over verified single words.
+3. Penalize generic verified words such as `Council`, `Protocol`, `payment`, `account`,
+   `industrial`, `General`, and `Adicional`.
+4. Keep `Stanza + NOBI, not verified` as a review bucket.
+5. Treat `Stanza only, not verified` as a recall/diagnostic bucket, not final terminology.
+6. Add filters for headings, table-of-contents spans, article references, malformed citations, and
+   partial spans ending in function words.
+7. Populate `source_term` by aligning accepted target terms back to source text.
+8. Regenerate the 5-row sample after filtering/ranking changes before scaling to 250.
 
-1. Populate `source_term` by aligning target terms back to the source side where possible.
-2. Down-rank generic single-token terms unless they are strong acronyms, formulas, or exact named
-   entities.
-3. Reject terms that look like headings, table-of-contents fragments, article references, isolated
-   numbering, or partial spans ending in function words.
-4. Prefer verified multiword terms over verified single-word generic terms.
-5. Give a ranking bonus when both Stanza/UD and XLM-R/NOBI find the same term.
-6. Treat external verifier matches as evidence, not automatic quality.
-7. Consider a stricter legal/JRC stoplist for boilerplate terms such as `Protocol`, `Council`,
-   `General`, `Adicional`, `payment`, and `account` unless supported by stronger context.
-8. Increase document diversity after the filtering is improved. The 5-record anchored test is useful
-   for controlled inspection, but too small and repetitive for final benchmark conclusions.
+## Improving Technical Difficulty
 
-## Overall Assessment
+The current pipeline produces many valid terms, but not all are technically difficult enough for a
+strong terminology-sensitive benchmark. The next improvement should be a technical term
+ranker/filter before final term selection.
 
-The article dataset itself is structurally usable and aligned. The terminology layer is promising but
-too noisy for final terminology-sensitive evaluation without additional filtering. The best immediate
-next step is not adding more extractors; it is improving term ranking and filtering while preserving
-the current provenance tags.
+Preferred signals:
+
+- Found by both Stanza/UD and XLM-R/NOBI.
+- Verified by at least one external source.
+- Verified by multiple external sources.
+- Multiword span, especially 2-6 tokens.
+- Legal, institutional, scientific, chemical, or regulatory phrase.
+- Acronym or formal entity name, such as `ECRI`, `JUTE`, or `FCKW`.
+- Domain-bearing words such as `ozone`, `substance`, `carbon`, `economic integration`,
+  `administrative account`, `monitoring centre`, or equivalent multilingual forms.
+
+Penalty signals:
+
+- Generic single word, such as `Council`, `Protocol`, `payment`, `account`, `industrial`,
+  `General`, or `Adicional`.
+- Heading or table-of-contents text.
+- Article/paragraph numbering.
+- Partial spans ending in function words, such as `droits d` or `Conseil d`.
+- Malformed spans, dot leaders, OCR artifacts, or punctuation fragments.
+
+Recommended scoring shape:
+
+```text
+technical_score =
+  + both_extractors
+  + verified
+  + multiple_verifiers
+  + multiword
+  + domain_or_institution_pattern
+  + acronym_or_formula_pattern
+  - generic_single_word
+  - heading_or_toc_pattern
+  - article_or_numbering_pattern
+  - partial_or_malformed_span
+```
+
+The final manifest should keep fewer, harder terms rather than filling every row with 20 broad
+candidates. A better target is something like:
+
+- top 5 verified technical terms per row;
+- plus top 2 `Stanza + NOBI, not verified` terms for review;
+- no generic verified single words unless they are acronyms, formulas, or clear domain terms.
+
+The largest quality gain will come from populating `source_term`. A term is much more useful for
+translation benchmarking if both the source span and target span are known, not only the target-side
+reference span.
