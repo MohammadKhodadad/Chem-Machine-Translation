@@ -190,6 +190,7 @@ def write_source_pair_dataset(
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     combined_rows = []
+    stanza_term_cache: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for direction, rows in sorted(pair_rows.items()):
         direction_dir = output_dir / direction
         direction_dir.mkdir(parents=True, exist_ok=True)
@@ -199,7 +200,11 @@ def write_source_pair_dataset(
             generator=legal_generator,
             workers=legal_terminology_workers,
         )
-        manifest_rows = add_stanza_terms(rows=manifest_rows, generator=stanza_generator)
+        manifest_rows = add_stanza_terms(
+            rows=manifest_rows,
+            generator=stanza_generator,
+            term_cache=stanza_term_cache,
+        )
         write_rows(direction_dir / "source.csv", [row["_source_row"] for row in manifest_rows])
         write_rows(direction_dir / "target.csv", [row["_target_row"] for row in manifest_rows])
         manifest_path = (
@@ -294,34 +299,53 @@ def add_legal_terms(
 def add_stanza_terms(
     rows: list[dict[str, Any]],
     generator: DatasetTerminologyGenerator | None,
+    term_cache: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
 ) -> list[dict[str, Any]]:
     if generator is None:
         return rows
-    return [add_stanza_terms_to_row(row, generator) for row in rows]
+    return [add_stanza_terms_to_row(row, generator, term_cache=term_cache) for row in rows]
 
 
 def add_stanza_terms_to_row(
     row: dict[str, Any],
     generator: DatasetTerminologyGenerator,
+    term_cache: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
-    print(
-        f"Generating Stanza terms for {row['chunk_id']} -> {row['target_language']}",
-        flush=True,
-    )
-    stanza_terms = generator.generate(
-        source_text=row["_source_text"],
-        target_language=row["target_language"],
-        reference_text=row["_target_text"],
-    )
+    cache_key = stanza_term_cache_key(row)
+    cached_terms = term_cache.get(cache_key) if term_cache is not None else None
+    if cached_terms is None:
+        print(
+            f"Generating Stanza terms for {row['chunk_id']} -> {row['target_language']}",
+            flush=True,
+        )
+        stanza_terms = generator.generate(
+            source_text=row["_source_text"],
+            target_language=row["target_language"],
+            reference_text=row["_target_text"],
+        )
+        cached_terms = [term.to_json() for term in stanza_terms]
+        if term_cache is not None:
+            term_cache[cache_key] = cached_terms
+    else:
+        print(
+            f"Reusing Stanza terms for {row['chunk_id']} -> {row['target_language']}",
+            flush=True,
+        )
     existing_terms = [
         dataset_term_from_json(term)
         for term in row["terminology"]
         if isinstance(term, dict)
     ]
+    stanza_terms = [dataset_term_from_json(term) for term in cached_terms]
     row["terminology"] = [
         term.to_json() for term in deduplicate_terms(existing_terms + stanza_terms)
     ]
     return row
+
+
+def stanza_term_cache_key(row: dict[str, Any]) -> tuple[str, str]:
+    target_language = str(row.get("target_language_code") or row["target_language"])
+    return target_language, row["_target_text"]
 
 
 def write_rows(csv_path: Path, rows: list[dict[str, str]]) -> None:
