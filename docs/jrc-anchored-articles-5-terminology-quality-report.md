@@ -226,6 +226,38 @@ that it can still include headings and generic legal words, and it still does no
 6. Verification helps, but it does not guarantee benchmark-quality terminology.
 7. The current terms are target-side only because `source_term` is empty.
 
+## Needed Term Selection Layer
+
+The main missing component is not another candidate extractor. The pipeline needs a separate
+term-selection/ranking layer between candidate extraction and final verification.
+
+Candidate extractors answer: which spans look structurally like terms? Stanza/UD does this with
+syntax, XLM-R/NOBI does this with neural sequence labeling, and the LLM extractor does this with
+prompted span extraction. None of these methods reliably answers whether a candidate is valuable for
+translation evaluation.
+
+External verifiers also do not fully answer that question. A verifier only shows that an expression
+appears in a trusted terminology resource. It can validate evidence for a term, but it cannot decide
+whether the candidate is complete, important in the current segment, difficult to translate, or useful
+for scoring translation quality. This is why terms like `Council`, `payment`, or document headings can
+still pass verification while not being good benchmark terms.
+
+The intended architecture should be:
+
+```text
+candidate extractors
+  -> deterministic cleanup
+  -> term selector / ranker
+  -> external verifier evidence
+  -> source-target alignment
+  -> final top benchmark terms
+```
+
+The selector should keep candidates only when they are complete lexical units, domain-specific,
+contextually important, translation-sensitive, and alignable between source and reference. Verification
+and extractor agreement should support the selector, but they should not make the final decision by
+themselves.
+
 ## Recommendations
 
 1. Rank `Stanza + NOBI, verified` highest.
