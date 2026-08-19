@@ -58,6 +58,10 @@ XLM-R/NOBI is the neural extractor. It uses an XLM-R token-classification checkp
 for nested automatic term extraction. It produces fewer candidates and often cleaner named entities,
 but it can still return generic single words.
 
+LLM extraction is a prompt-based legal terminology extractor. In the LLM-only run, the model was
+asked to extract exact target/reference spans, then the legal verifier layer was applied on top. This
+mode was run separately from Stanza/UD and XLM-R/NOBI so its candidates can be inspected directly.
+
 External verifiers add evidence to extracted candidates. Enabled sources were IATE,
 Wikipedia/Wikidata, UNTERM, PubChem, ChEBI, ChEMBL, MeSH, NCI Thesaurus, and AGROVOC. Verification is
 evidence, not automatic quality.
@@ -156,27 +160,85 @@ This class is small but promising. Agreement between both extractors means these
 salient, even when external verifiers do not match. This class should be kept for review and possible
 source-term alignment.
 
+## LLM Mode
+
+The LLM-only article dataset was built from the same anchored article source and the same 5 rows per
+direction. Stanza/UD and XLM-R/NOBI were disabled. LLM candidates were verified with the JRC legal
+verifier layer: IATE, Wikipedia/Wikidata, and UNTERM.
+
+LLM mode summary:
+
+- Rows: 100.
+- Total terminology records: 1,628.
+- Verified records: 798.
+- Non-verified records: 830.
+- Unique verified terms: 272.
+- Unique non-verified terms: 389.
+- Records with populated `source_term`: 0 of 1,628.
+
+| LLM class | Records | Unique terms | 10+ repeats | 5-9 repeats | 2-4 repeats | 1 repeat |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| LLM, verified | 798 | 272 | 2 | 14 | 174 | 82 |
+| LLM, not verified | 830 | 389 | 0 | 14 | 172 | 203 |
+
+### LLM, Verified
+
+Terms:
+
+`ECRI (12x)`; `Vertragsparteien (10x)`; `Protocolo (9x)`; `notification (8x)`; `PROTOCOLO ADICIONAL (8x)`; `Partes Contratantes (8x)`; `protocole (8x)`; `Inkrafttreten (6x)`; `entry into force (5x)`; `transferir (5x)`; `Consejo de Europa (5x)`; `Parte Contratante (5x)`; `Conselho da Europa (5x)`; `Protokoll (5x)`; `Produktion (5x)`; `Sekretariat (5x)`; `European Economic Community (4x)`; `ADDITIONAL PROTOCOL (4x)`; `Contracting Parties (4x)`; `instrument of acceptance (4x)`; `acceptance (4x)`; `Treaty (4x)`; `Common Fund for Commodities (4x)`; `International Jute Council (4x)`; `Privileges and immunities (4x)`; `Depositary (4x)`; `Notification of provisional application (4x)`; `Audit and publication of accounts (4x)`; `Relief from obligations (4x)`; `Committee on projects (4x)`; `Financial accounts (4x)`; `Special account (4x)`; `European Monitoring Centre on Racism and Xenophobia (4x)`; `European Commission against Racism and Intolerance (4x)`; `Council of Europe (4x)`; `AGREEMENT (4x)`; `Centre (4x)`; `confidential data (4x)`; `Management Board (4x)`; `work programme (4x)`; `Comunidad Económica Europea (4x)`; `ACUERDO EUROPEO (4x)`; `instrumento de aceptación (4x)`; `derechos de importación (4x)`; `Tratado constitutivo (4x)`; `entrada en vigor (4x)`; `notificación (4x)`; `aceptación (4x)`; `objeción (4x)`; `FONDO COMÚN PARA LOS PRODUCTOS BÁSICOS (4x)`; `Organización internacional del yute (4x)`; `Consejo internacional del yute (4x)`; `Privilegios e inmunidades (4x)`; `Comité de proyectos (4x)`; `Depositario (4x)`; `Cuentas financieras (4x)`; `Observatorio Europeo del Racismo y la Xenofobia (4x)`; `Comunidad Europea (4x)`; `Observatorio (4x)`; `ACUERDO (4x)`; `Intercambio de información y de datos (4x)`; `Communauté économique européenne (4x)`; `PROTOCOLE ADDITIONNEL (4x)`; `entrée en vigueur (4x)`; `ACCORD EUROPÉEN (4x)`; `instrument d'acceptation (4x)`; `parties contractantes (4x)`; `signature (4x)`; `traité (4x)`; `Organisation internationale du jute (4x)`; `Conseil international du jute (4x)`; `Privilèges et immunités (4x)`; `Dépositaire (4x)`; `Comité des projets (4x)`; `Adhésion (4x)`; `Compte administratif (4x)`; `Comptes financiers (4x)`; `Compte spécial (4x)`; `Observatoire européen des phénomènes racistes et xénophobes (4x)`; `Commission européenne contre le racisme et l'intolérance (4x)`; `Communauté européenne (4x)`; `Conseil de l'Europe (4x)`; `Observatoire (4x)`; `ACCORD (4x)`; `programme d'activité (4x)`; `Comunidade Económica Europeia (4x)`; `entrada em vigor (4x)`; `instrumento de aceitação (4x)`; `notificação (4x)`; `aceitação (4x)`; `objecção (4x)`; `Tratado (4x)`; `ACORDO INTERNACIONAL DE 1989 SOBRE A JUTA E OS ARTIGOS DE JUTA (4x)`; `Fundo comum para os produtos de base (4x)`; `Organização Internacional da Juta (4x)`; `Conselho Internacional da Juta (4x)`; `Privilégios e imunidades (4x)`; `Entrada em vigor (4x)`; `Denúncia (4x)`; `Comité dos projectos (4x)`.
+
+Analysis:
+
+The LLM verified group is broader and often more semantically meaningful than raw Stanza-only output.
+It captures many legal headings and institutional terms in complete phrases. However, it still
+contains generic or structurally weak terms such as `notification`, `acceptance`, `signature`,
+`AGREEMENT`, `ACCORD`, `Centre`, and `Observatoire`. The LLM helps phrase quality, but verifier
+evidence is still not enough to guarantee technical difficulty.
+
+### LLM, Not Verified
+
+Terms:
+
+`Partes (9x)`; `anexo A (8x)`; `substances réglementées (8x)`; `anexo B (7x)`; `niveau calculé de production (7x)`; `substâncias regulamentadas (7x)`; `controlled substances (6x)`; `nível calculado de produção (6x)`; `sustancias controladas (5x)`; `parties (5x)`; `niveau calculé de consommation (5x)`; `besoins intérieurs fondamentaux (5x)`; `nível calculado de consumo (5x)`; `calculated level of production (5x)`; `Secretary-General of the Council of Europe (4x)`; `MEMBER STATES OF THE COUNCIL OF EUROPE (4x)`; `EUROPEAN AGREEMENT (4x)`; `objection to the entry into force (4x)`; `exempt from all import duties (4x)`; `acceded to the Agreement (4x)`; `import duties (4x)`; `exchanges of blood-grouping reagents (4x)`; `Signature, ratification, acceptance and approval (4x)`; `International Jute Organization (4x)`; `General obligations of members (4x)`; `Differential and remedial measures (4x)`; `Complaints and disputes (4x)`; `Annex A (4x)`; `Annex B (4x)`; `Council Regulation (EC) No 1035/97 (4x)`; `joint and/or complementary activities (4x)`; `Exchange of information and data (4x)`; `Secretario General del Consejo de Europa (4x)`; `nivel calculado de producción (4x)`; `Firma, ratificación, aceptación y aprobación (4x)`; `Obligaciones generales de los miembros (4x)`; `Procedimiento de votación del Consejo (4x)`; `Auditoría y publicación de cuentas (4x)`; `Quórum del Consejo (4x)`; `Decisiones y recomendaciones del Consejo (4x)`; `Medidas diferenciales y correctivas (4x)`; `Facultades y funciones del Consejo (4x)`; `Reclamaciones y controversias (4x)`; `anexo C (4x)`; `Reglamento (CE) n° 1035/97 (4x)`; `Comisión Europea contra el racismo y la intolerancia (ECRI (4x)`; `Consejo de administración del Observatorio (4x)`; `programa de trabajo del Observatorio (4x)`; `secrétaire général du Conseil de l'Europe (4x)`; `objection à l'entrée en vigueur (4x)`; `droits d'importation (4x)`; `ACCORD INTERNATIONAL DE 1989 SUR LE JUTE ET LES ARTICLES EN JUTE (4x)`; `Signature, ratification, acceptation et approbation (4x)`; `Obligations générales des membres (4x)`; `Plaintes et différends (4x)`; `Modes de paiement (4x)`; `règlement (CE) n° 1035/97 (4x)`; `mise à disposition réciproque des informations et données (4x)`; `coordination de leurs activités (4x)`; `Secretário-geral do Conselho da Europa (4x)`; `ACORDO EUROPEU (4x)`; `direitos de importação (4x)`; `Obrigações gerais dos membros (4x)`; `Assinatura, ratificação, aceitação e aprovação (4x)`; `Duração, prorrogação e fim do acordo (4x)`; `Queixas e diferendos (4x)`; `Regulamento (CE) n.° 1035/97 (4x)`; `Comissão Europeia contra o Racismo e a Intolerância (CERI (4x)`; `Conselho de Administração do Observatório (4x)`; `Intercâmbio de informações e de dados (4x)`; `coordenação das suas actividades (4x)`; `Mitgliedstaaten der Europäischen Wirtschaftsgemeinschaft (4x)`; `Generalsekretär des Europarats (4x)`; `EUROPÄISCHEN ÜBEREINKOMMEN (4x)`; `Verpflichtung zur Gewährung dieser Befreiung (4x)`; `Artikel 5 Absatz 1 des Übereinkommens (4x)`; `therapeutischen Substanzen menschlichen Ursprungs (4x)`; `Einwand gegen sein Inkrafttreten (4x)`; `Eingangsabgaben (4x)`; `Allgemeine Verpflichtungen der Mitglieder (4x)`; `Mitgliedschaft zwischenstaatlicher Organisationen (4x)`; `Mitgliedschaft in der Organisation (4x)`; `Beschwerden und Streitigkeiten (4x)`; `Befugnisse und Aufgaben des Rates (4x)`; `Produktionsgrenzen (4x)`; `Verordnung (EG) Nr. 1035/97 (4x)`; `Informations- und Datenaustausch (4x)`; `Mitglied des Verwaltungsrates (4x)`; `Article 2 C (4x)`; `calculated level of consumption (4x)`; `communication relating to the Agreement (3x)`; `production limits (3x)`; `período de dos años (3x)`; `CONVENIO INTERNACIONAL DEL YUTE Y LOS PRODUCTOS DEL YUTE, 1989 (3x)`; `ENMIENDA AL PROTOCOLO DE MONTREAL (3x)`; `períodos de control (3x)`; `recipiente utilizado para el transporte o almacenamiento (3x)`; `puesta a disposición recíproca (3x)`; `coordinación de sus actividades (3x)`; `transfert de production (3x)`.
+
+Analysis:
+
+The LLM non-verified group contains many of the best technical-looking terms, including `controlled
+substances`, `substances réglementées`, `calculated level of production`, and `Council Regulation
+(EC) No 1035/97`. The lack of verification does not mean low quality. It often means the term is a
+longer legal/technical phrase or an inflected multilingual phrase that the verifier did not match
+exactly. This group is better than Stanza-only non-verified terms and should be reviewed carefully.
+
+### LLM Mode Takeaway
+
+LLM mode is better at producing coherent legal and technical phrases than the raw non-LLM extractors.
+Its non-verified terms are often more useful than non-verified Stanza-only terms. The weakness is
+that it can still include headings and generic legal words, and it still does not populate
+`source_term`.
+
 ## Main Points
 
 1. The best class is `Stanza + NOBI, verified`.
 2. The worst large class is `Stanza only, not verified`.
 3. `NOBI only, verified` is useful but needs generic single-word filtering.
 4. `Stanza + NOBI, not verified` is small and worth manual review.
-5. Verification helps, but it does not guarantee benchmark-quality terminology.
-6. The current terms are target-side only because `source_term` is empty.
+5. `LLM, not verified` contains many coherent technical phrases that exact-match verifiers miss.
+6. Verification helps, but it does not guarantee benchmark-quality terminology.
+7. The current terms are target-side only because `source_term` is empty.
 
 ## Recommendations
 
 1. Rank `Stanza + NOBI, verified` highest.
-2. Prefer verified multiword terms over verified single words.
-3. Penalize generic verified words such as `Council`, `Protocol`, `payment`, `account`,
+2. Use LLM mode as a quality-oriented phrase proposer, especially for longer legal/technical terms.
+3. Prefer verified multiword terms over verified single words.
+4. Penalize generic verified words such as `Council`, `Protocol`, `payment`, `account`,
    `industrial`, `General`, and `Adicional`.
-4. Keep `Stanza + NOBI, not verified` as a review bucket.
-5. Treat `Stanza only, not verified` as a recall/diagnostic bucket, not final terminology.
-6. Add filters for headings, table-of-contents spans, article references, malformed citations, and
+5. Keep `Stanza + NOBI, not verified` and `LLM, not verified` as review buckets.
+6. Treat `Stanza only, not verified` as a recall/diagnostic bucket, not final terminology.
+7. Add filters for headings, table-of-contents spans, article references, malformed citations, and
    partial spans ending in function words.
-7. Populate `source_term` by aligning accepted target terms back to source text.
-8. Regenerate the 5-row sample after filtering/ranking changes before scaling to 250.
+8. Populate `source_term` by aligning accepted target terms back to source text.
+9. Regenerate the 5-row sample after filtering/ranking changes before scaling to 250.
 
 ## Improving Technical Difficulty
 
