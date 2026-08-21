@@ -27,6 +27,33 @@ benchmark_datasets/jrc_acquis_anchored_articles_5_all_non_llm_terms/jrc-acquis-2
 - Target terms appearing exactly in target/reference text: 1,919 of 1,919.
 - Records with populated `source_term`: 0 of 1,919.
 
+## Weighted Extracted-Text Length
+
+This measures how much extracted terminology text each extractor contributes. For each extractor,
+the weighted character sum is calculated as:
+
+```text
+sum(length of extracted target term * number of times extracted)
+```
+
+| Extractor | Matches | Unique terms | Unique character sum | Weighted character sum |
+| --- | ---: | ---: | ---: | ---: |
+| Stanza/UD | 1,485 | 656 | 16,724 | 36,833 |
+| XLM-R/NOBI | 537 | 151 | 2,674 | 9,580 |
+| LLM | 1,628 | 661 | 16,461 | 39,312 |
+| NLTK | 2,000 | 875 | 37,976 | 93,289 |
+| mSPLADE | 94 | 41 | 1,802 | 4,468 |
+| spaCy | 2,000 | 844 | 39,280 | 97,886 |
+
+## English Sample Highlight Figure
+
+The figure below uses one English target sample from the JRC anchored article run:
+`de-en:jrc21987A0207_06:chunk-0135` in direction `de-en`. Each row repeats the same target text.
+Highlighted words are covered by terms extracted by that specific extractor. Darker highlights
+indicate verified terms; lighter highlights indicate unverified terms.
+
+![JRC English extractor highlights](figures/jrc-english-extractor-highlights.png)
+
 ## Pipeline Explanation
 
 The JRC article benchmark starts from OPUS/JRC-Acquis aligned segments. The source builder selects

@@ -85,6 +85,24 @@ Extractor target counts:
 | NLTK | 494 | 1 | 493 | 459 |
 | mSPLADE | 162 | 37 | 125 | 156 |
 
+Weighted extracted-text length:
+
+This measures how much extracted terminology text each extractor contributes. For each extractor,
+the weighted character sum is calculated as:
+
+```text
+sum(length of extracted target term * number of times extracted)
+```
+
+| Extractor | Matches | Unique terms | Unique character sum | Weighted character sum |
+| --- | ---: | ---: | ---: | ---: |
+| Stanza/UD | 194 | 180 | 2,979 | 3,260 |
+| XLM-R/NOBI | 441 | 395 | 4,844 | 5,261 |
+| LLM | 1,427 | 1,256 | 19,446 | 21,298 |
+| NLTK | 494 | 459 | 19,864 | 22,330 |
+| mSPLADE | 162 | 156 | 3,453 | 3,616 |
+| spaCy | 2,000 | 1,900 | 67,394 | 71,209 |
+
 ## Method-Language Matrix
 
 Cells are `unverified/verified` terminology counts. A verified term can still be
@@ -98,6 +116,16 @@ quality.
 | LLM | 265/164 | 230/133 | 82/52 | 69/40 | 152/6 | 107/0 | 91/36 |
 | NLTK | 68/0 | 134/1 | 52/0 | 64/0 | 42/0 | 76/0 | 57/0 |
 | mSPLADE | 74/24 | 27/10 | 9/0 | 15/3 | 0/0 | 0/0 | 0/0 |
+
+## English Sample Highlight Figure
+
+The figure below uses one English target sample from the Google Patents run:
+`within-document:abstract:en-es:CL-2008000542-A1:reverse` in direction `es-en`.
+Each row repeats the same target text. Highlighted words are covered by terms extracted by that
+specific extractor. Darker highlights indicate verified terms; lighter highlights indicate
+unverified terms.
+
+![Google Patents English extractor highlights](figures/google-patents-english-extractor-highlights.png)
 
 ## Extractor Classes
 
