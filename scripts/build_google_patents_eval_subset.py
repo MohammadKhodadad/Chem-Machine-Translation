@@ -10,7 +10,11 @@ from typing import Any
 from openai import OpenAI
 
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
-from chem_machine_translation.data.terminology import DatasetTerminologyGenerator
+from chem_machine_translation.data.terminology import (
+    DEFAULT_MSPLADE_MODEL,
+    DEFAULT_SPACY_MODEL,
+    DatasetTerminologyGenerator,
+)
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
 LANGUAGE_NAMES = {
@@ -18,11 +22,13 @@ LANGUAGE_NAMES = {
     "en": "English",
     "es": "Spanish",
     "fr": "French",
+    "ja": "Japanese",
     "nl": "Dutch",
     "pt": "Portuguese",
+    "ru": "Russian",
     "zh": "Chinese",
 }
-DEFAULT_LANGUAGES = ("de", "en", "es", "fr", "pt", "zh")
+DEFAULT_LANGUAGES = ("de", "en", "es", "fr", "ja", "pt", "ru", "zh")
 TEXT_FIELD = "context"
 
 
@@ -43,6 +49,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--limit", type=int, default=50, help="Rows per ordered direction.")
     parser.add_argument(
+        "--bidirectional",
+        action="store_true",
+        help="Also emit synthetic reverse rows by swapping source and target text.",
+    )
+    parser.add_argument(
         "--language",
         action="append",
         dest="languages",
@@ -54,6 +65,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--extract-terminology", action="store_true")
     parser.add_argument("--terminology-model", default=DEFAULT_MODEL)
     parser.add_argument("--terminology-max-terms", type=int, default=20)
+    parser.add_argument(
+        "--no-stanza-extractor",
+        action="store_false",
+        dest="use_stanza_extractor",
+        help="Disable the default Stanza/UD extractor while keeping other target extractors.",
+    )
+    parser.add_argument("--use-nobi-extractor", action="store_true")
+    parser.add_argument("--nobi-model", default="tthhanh/xlm-ate-nobi-en-nes")
+    parser.add_argument("--use-nltk-extractor", action="store_true")
+    parser.add_argument("--use-spacy-extractor", action="store_true")
+    parser.add_argument("--spacy-model", default=DEFAULT_SPACY_MODEL)
+    parser.add_argument("--use-msplade-extractor", action="store_true")
+    parser.add_argument("--msplade-model", default=DEFAULT_MSPLADE_MODEL)
     parser.add_argument("--iate-terminology", action="store_true")
     parser.add_argument("--wikidata-terminology", action="store_true")
     parser.add_argument("--wikipedia-terminology", action="store_true")
@@ -78,6 +102,8 @@ def main() -> None:
         min_input_tokens=args.min_input_tokens,
         max_input_tokens=args.max_input_tokens,
     )
+    if args.bidirectional:
+        pair_rows = add_bidirectional_pair_rows(pair_rows)
     write_source_pair_dataset(
         output_dir=args.output_dir,
         pair_rows=pair_rows,
@@ -119,6 +145,35 @@ def select_source_pair_rows(
             if len(selected[direction]) < limit:
                 selected[direction].append(row)
     return {direction: rows for direction, rows in selected.items() if rows}
+
+
+def add_bidirectional_pair_rows(
+    pair_rows: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[dict[str, Any]]]:
+    bidirectional_rows = {direction: list(rows) for direction, rows in pair_rows.items()}
+    for rows in pair_rows.values():
+        for row in rows:
+            reversed_row = reverse_source_pair_row(row)
+            bidirectional_rows.setdefault(reversed_row["language_pair"], []).append(reversed_row)
+    return {direction: rows for direction, rows in sorted(bidirectional_rows.items())}
+
+
+def reverse_source_pair_row(row: dict[str, Any]) -> dict[str, Any]:
+    source_language = str(row["source_language"])
+    target_language = str(row["target_language"])
+    reversed_pair = f"{target_language}-{source_language}"
+    return {
+        **row,
+        "example_id": f"{row.get('example_id')}:reverse",
+        "language_pair": reversed_pair,
+        "source_language": target_language,
+        "target_language": source_language,
+        "source_text": row["target_text"],
+        "target_text": row["source_text"],
+        "selection_rule": (
+            f"{row.get('selection_rule', '')}; synthetic reverse direction".strip("; ")
+        ),
+    }
 
 
 def normalize_source_pair_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -262,6 +317,10 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         or args.mesh_terminology
         or args.nci_terminology
         or args.agrovoc_terminology
+        or args.use_nobi_extractor
+        or args.use_nltk_extractor
+        or args.use_spacy_extractor
+        or args.use_msplade_extractor
     ):
         return None
     client = None
@@ -279,6 +338,14 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         model=args.terminology_model,
         max_terms=args.terminology_max_terms,
         use_llm=args.extract_terminology,
+        use_stanza_extractor=args.use_stanza_extractor,
+        use_nobi_extractor=args.use_nobi_extractor,
+        nobi_model=args.nobi_model,
+        use_nltk_extractor=args.use_nltk_extractor,
+        use_spacy_extractor=args.use_spacy_extractor,
+        spacy_model=args.spacy_model,
+        use_msplade_extractor=args.use_msplade_extractor,
+        msplade_model=args.msplade_model,
         use_iate=args.iate_terminology,
         use_wikidata=args.wikidata_terminology or args.wikipedia_terminology,
         use_pubchem=args.pubchem_terminology,

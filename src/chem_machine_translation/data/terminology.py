@@ -19,6 +19,7 @@ from chem_machine_translation.translation.wikidata import WikidataClient, wikida
 _FORMULA_OR_IDENTIFIER_RE = re.compile(
     r"^(?:[A-Z][a-z]?\d*)+$|^[A-Z]{1,6}-?\d[\w.-]*$|^\d+(?:[.,]\d+)?\s?[A-Za-z/%]+$"
 )
+_CANDIDATE_TOKEN_RE = re.compile(r"\b[^\W_][\w'’.-]*\b", re.UNICODE)
 _COMPACT_NUMERIC_UNIT_RE = re.compile(
     r"^\d+(?:[.,]\d+)?(?:\s*(?:-|to|–|—|à)\s*\d+(?:[.,]\d+)?)?\s*"
     r"(?:%|°C|K|ppm|ppb|mol%|wt%|mg|g|kg|mL|L|cm2|cm3|mm|cm|m|nm|µm|um)$",
@@ -90,6 +91,55 @@ _NOBI_LABEL_MAP = {
     "LABEL_2": "BN",
     "LABEL_3": "IN",
     "LABEL_4": "I",
+}
+DEFAULT_MSPLADE_MODEL = "naver/splade-cocondenser-ensembledistil"
+DEFAULT_SPACY_MODEL = ""
+_SPACY_LANGUAGE_ALIASES = {
+    "chinese": "zh",
+    "english": "en",
+    "french": "fr",
+    "german": "de",
+    "japanese": "ja",
+    "portuguese": "pt",
+    "russian": "ru",
+    "spanish": "es",
+}
+_NLTK_STOPWORD_LANGUAGES = {
+    "de": "german",
+    "en": "english",
+    "es": "spanish",
+    "fr": "french",
+    "pt": "portuguese",
+}
+_BOUNDARY_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "as",
+    "by",
+    "da",
+    "das",
+    "de",
+    "del",
+    "des",
+    "do",
+    "dos",
+    "du",
+    "e",
+    "en",
+    "et",
+    "for",
+    "für",
+    "in",
+    "la",
+    "le",
+    "les",
+    "of",
+    "or",
+    "the",
+    "to",
+    "und",
+    "y",
 }
 
 TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT = """You extract terminology candidates from target
@@ -206,6 +256,13 @@ class DatasetTerminologyTerm:
             "external_candidates": self.candidates,
             "candidates": self.candidates,
         }
+
+
+@dataclass(frozen=True)
+class CandidateToken:
+    surface: str
+    start_char: int
+    end_char: int
 
 
 class PubChemClient:
@@ -675,6 +732,298 @@ class XLMRNOBITerminologyExtractor:
         return self._pipeline
 
 
+class NLTKTerminologyExtractor:
+    """Lightweight NLTK n-gram candidate extractor for exact target spans."""
+
+    def __init__(self, max_ngram_tokens: int = 5) -> None:
+        self.max_ngram_tokens = max_ngram_tokens
+        self._stopwords_by_language: dict[str, set[str]] = {}
+
+    def extract(
+        self,
+        text: str,
+        max_terms: int,
+        target_language: str = "",
+    ) -> list[DatasetTerminologyTerm]:
+        if not self.load_nltk():
+            return []
+        tokens = candidate_token_spans(text)
+        if not tokens:
+            return []
+
+        language_code = terminology_language_code(target_language)
+        stopwords = self.stopwords_for_language(language_code)
+        candidates = []
+        for size in range(1, self.max_ngram_tokens + 1):
+            for index in range(0, max(len(tokens) - size + 1, 0)):
+                window = tokens[index : index + size]
+                if not token_window_is_plausible(window, stopwords):
+                    continue
+                surface = clean_candidate_term(text[window[0].start_char : window[-1].end_char])
+                if not candidate_surface_is_clean(surface):
+                    continue
+                candidates.append(
+                    make_target_term(
+                        target_term=surface,
+                        category="other",
+                        source="nltk_ngram",
+                        confidence=nltk_ngram_confidence(window),
+                        reason="NLTK token n-gram candidate from target reference.",
+                    )
+                )
+        return deduplicate_terms(candidates)[:max_terms]
+
+    def load_nltk(self) -> bool:
+        try:
+            import nltk  # noqa: F401
+        except ImportError:
+            return False
+        return True
+
+    def stopwords_for_language(self, language_code: str) -> set[str]:
+        if language_code in self._stopwords_by_language:
+            return self._stopwords_by_language[language_code]
+        stopwords = set(_BOUNDARY_STOPWORDS)
+        nltk_language = _NLTK_STOPWORD_LANGUAGES.get(language_code)
+        if nltk_language:
+            try:
+                from nltk.corpus import stopwords as nltk_stopwords
+
+                stopwords.update(word.casefold() for word in nltk_stopwords.words(nltk_language))
+            except LookupError:
+                pass
+        self._stopwords_by_language[language_code] = stopwords
+        return stopwords
+
+
+class SpaCyTerminologyExtractor:
+    """spaCy-based exact-span candidate extractor using tokenization, noun chunks, and entities."""
+
+    def __init__(
+        self,
+        model_name: str = DEFAULT_SPACY_MODEL,
+        max_ngram_tokens: int = 5,
+    ) -> None:
+        self.model_name = model_name
+        self.max_ngram_tokens = max_ngram_tokens
+        self._pipelines: dict[str, Any] = {}
+
+    def extract(
+        self,
+        text: str,
+        max_terms: int,
+        target_language: str = "",
+    ) -> list[DatasetTerminologyTerm]:
+        pipeline = self.load_pipeline(target_language)
+        if pipeline is None:
+            return []
+        try:
+            doc = pipeline(text[:4000])
+        except Exception:
+            return []
+
+        candidates = []
+        candidates.extend(self.entity_terms(doc))
+        candidates.extend(self.noun_chunk_terms(doc))
+        candidates.extend(self.ngram_terms(text[:4000], doc, target_language))
+        return deduplicate_terms(candidates)[:max_terms]
+
+    def load_pipeline(self, target_language: str) -> Any | None:
+        cache_key = self.model_name or spacy_language_code(target_language) or "xx"
+        if cache_key in self._pipelines:
+            return self._pipelines[cache_key]
+        try:
+            import spacy
+        except ImportError:
+            return None
+        try:
+            if self.model_name:
+                pipeline = spacy.load(self.model_name)
+            else:
+                pipeline = spacy.blank(cache_key)
+        except Exception:
+            return None
+        self._pipelines[cache_key] = pipeline
+        return pipeline
+
+    def entity_terms(self, doc: Any) -> list[DatasetTerminologyTerm]:
+        terms = []
+        for entity in getattr(doc, "ents", ()):
+            surface = clean_candidate_term(entity.text)
+            if candidate_surface_is_clean(surface):
+                terms.append(
+                    make_target_term(
+                        target_term=surface,
+                        category="other",
+                        source="spacy_entity",
+                        confidence=0.74,
+                        reason="spaCy named-entity candidate from target reference.",
+                    )
+                )
+        return terms
+
+    def noun_chunk_terms(self, doc: Any) -> list[DatasetTerminologyTerm]:
+        try:
+            noun_chunks = list(doc.noun_chunks)
+        except (NotImplementedError, ValueError):
+            return []
+        terms = []
+        for chunk in noun_chunks:
+            surface = clean_candidate_term(chunk.text)
+            if candidate_surface_is_clean(surface):
+                terms.append(
+                    make_target_term(
+                        target_term=surface,
+                        category="other",
+                        source="spacy_noun_chunk",
+                        confidence=0.7,
+                        reason="spaCy noun-chunk candidate from target reference.",
+                    )
+                )
+        return terms
+
+    def ngram_terms(
+        self,
+        text: str,
+        doc: Any,
+        target_language: str,
+    ) -> list[DatasetTerminologyTerm]:
+        language_code = spacy_language_code(target_language)
+        stopwords = set(_BOUNDARY_STOPWORDS)
+        tokens = [
+            CandidateToken(token.text, token.idx, token.idx + len(token.text))
+            for token in doc
+            if spacy_token_is_candidate(token)
+        ]
+        candidates = []
+        for size in range(1, self.max_ngram_tokens + 1):
+            for index in range(0, max(len(tokens) - size + 1, 0)):
+                window = tokens[index : index + size]
+                if not token_window_is_plausible(window, stopwords):
+                    continue
+                surface = clean_candidate_term(text[window[0].start_char : window[-1].end_char])
+                if not candidate_surface_is_clean(surface):
+                    continue
+                candidates.append(
+                    make_target_term(
+                        target_term=surface,
+                        category="other",
+                        source="spacy_ngram",
+                        confidence=spacy_ngram_confidence(window, language_code),
+                        reason="spaCy token n-gram candidate from target reference.",
+                    )
+                )
+        return candidates
+
+
+class MSPLADETerminologyExtractor:
+    """SPLADE/mSPLADE sparse-activation candidate extractor for exact target spans."""
+
+    def __init__(
+        self,
+        model_name: str = DEFAULT_MSPLADE_MODEL,
+        max_activated_tokens: int = 128,
+        max_ngram_tokens: int = 5,
+    ) -> None:
+        self.model_name = model_name
+        self.max_activated_tokens = max_activated_tokens
+        self.max_ngram_tokens = max_ngram_tokens
+        self._model_bundle: tuple[Any, Any, Any, str] | None = None
+
+    def extract(
+        self,
+        text: str,
+        max_terms: int,
+        target_language: str = "",
+    ) -> list[DatasetTerminologyTerm]:
+        del target_language
+        weights = self.activated_token_weights(text)
+        if not weights:
+            return []
+        tokens = candidate_token_spans(text)
+        if not tokens:
+            return []
+
+        candidates = []
+        for size in range(1, self.max_ngram_tokens + 1):
+            for index in range(0, max(len(tokens) - size + 1, 0)):
+                window = tokens[index : index + size]
+                if not token_window_is_plausible(window, set(_BOUNDARY_STOPWORDS)):
+                    continue
+                score = msplade_window_score(window, weights)
+                if score <= 0:
+                    continue
+                surface = clean_candidate_term(text[window[0].start_char : window[-1].end_char])
+                if not candidate_surface_is_clean(surface):
+                    continue
+                candidates.append(
+                    make_target_term(
+                        target_term=surface,
+                        category="other",
+                        source="msplade_sparse",
+                        confidence=msplade_confidence(window, score),
+                        reason="SPLADE sparse lexical activation candidate from target reference.",
+                    )
+                )
+        return deduplicate_terms(candidates)[:max_terms]
+
+    def activated_token_weights(self, text: str) -> dict[str, float]:
+        bundle = self.load_model_bundle()
+        if bundle is None:
+            return {}
+        tokenizer, model, torch, device = bundle
+        try:
+            encoded = tokenizer(
+                text[:4000],
+                return_tensors="pt",
+                truncation=True,
+                max_length=512,
+            )
+            encoded = {key: value.to(device) for key, value in encoded.items()}
+            with torch.no_grad():
+                outputs = model(**encoded)
+            logits = outputs.logits
+            attention_mask = encoded["attention_mask"].unsqueeze(-1)
+            weighted_logits = torch.log1p(torch.relu(logits)) * attention_mask
+            sparse_vector = torch.max(weighted_logits, dim=1).values
+            sparse_vector = sparse_vector.squeeze(0)
+            positive_indices = torch.nonzero(sparse_vector > 0, as_tuple=False).flatten()
+            if positive_indices.numel() == 0:
+                return {}
+            top_k = min(self.max_activated_tokens, int(positive_indices.numel()))
+            values, indices = torch.topk(sparse_vector, k=top_k)
+        except Exception:
+            return {}
+
+        weights: dict[str, float] = {}
+        for token_id, value in zip(indices.tolist(), values.tolist(), strict=False):
+            raw_token = tokenizer.convert_ids_to_tokens(int(token_id))
+            token = clean_sparse_vocabulary_token(raw_token)
+            if not token:
+                continue
+            weights[token.casefold()] = max(weights.get(token.casefold(), 0.0), float(value))
+        return weights
+
+    def load_model_bundle(self) -> tuple[Any, Any, Any, str] | None:
+        if self._model_bundle is not None:
+            return self._model_bundle
+        try:
+            import torch
+            from transformers import AutoModelForMaskedLM, AutoTokenizer
+        except ImportError:
+            return None
+        try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            model = AutoModelForMaskedLM.from_pretrained(self.model_name)
+            model.to(device)
+            model.eval()
+        except Exception:
+            return None
+        self._model_bundle = (tokenizer, model, torch, device)
+        return self._model_bundle
+
+
 class DatasetTerminologyGenerator:
     """Generates target-side terminology mappings for benchmark manifests."""
 
@@ -706,8 +1055,14 @@ class DatasetTerminologyGenerator:
         llm_extractor: LLMTargetCandidateExtractor | None = None,
         extractor: TargetTerminologyExtractor | None = None,
         extractors: tuple[Any, ...] | None = None,
+        use_stanza_extractor: bool = True,
         use_nobi_extractor: bool = False,
         nobi_model: str = "tthhanh/xlm-ate-nobi-en-nes",
+        use_nltk_extractor: bool = False,
+        use_msplade_extractor: bool = False,
+        msplade_model: str = DEFAULT_MSPLADE_MODEL,
+        use_spacy_extractor: bool = False,
+        spacy_model: str = DEFAULT_SPACY_MODEL,
     ) -> None:
         self.model = model
         self.max_terms = max_terms
@@ -739,9 +1094,19 @@ class DatasetTerminologyGenerator:
         if extractors is not None:
             self.extractors = list(extractors)
         else:
-            self.extractors = [extractor or TargetTerminologyExtractor()]
+            self.extractors = []
+            if use_stanza_extractor:
+                self.extractors.append(extractor or TargetTerminologyExtractor())
+            elif extractor is not None:
+                self.extractors.append(extractor)
         if use_nobi_extractor:
             self.extractors.append(XLMRNOBITerminologyExtractor(model_name=nobi_model))
+        if use_nltk_extractor:
+            self.extractors.append(NLTKTerminologyExtractor())
+        if use_spacy_extractor:
+            self.extractors.append(SpaCyTerminologyExtractor(model_name=spacy_model))
+        if use_msplade_extractor:
+            self.extractors.append(MSPLADETerminologyExtractor(model_name=msplade_model))
         self.extractor = self.extractors[0] if self.extractors else TargetTerminologyExtractor()
         self.extractor_names = tuple(type(extractor).__name__ for extractor in self.extractors)
         self._cache = load_terminology_cache(cache_path)
@@ -1272,6 +1637,130 @@ def candidate_has_word_boundaries(text: str, start_char: int, end_char: int) -> 
     left_ok = start_char <= 0 or not text[start_char - 1].isalnum()
     right_ok = end_char >= len(text) or not text[end_char].isalnum()
     return left_ok and right_ok
+
+
+def candidate_token_spans(text: str) -> list[CandidateToken]:
+    tokens = []
+    for match in _CANDIDATE_TOKEN_RE.finditer(text):
+        surface = match.group(0)
+        if not any(character.isalpha() for character in surface):
+            continue
+        tokens.append(
+            CandidateToken(
+                surface=surface,
+                start_char=match.start(),
+                end_char=match.end(),
+            )
+        )
+    return tokens
+
+
+def token_window_is_plausible(tokens: list[CandidateToken], stopwords: set[str]) -> bool:
+    if not tokens:
+        return False
+    first = normalize_candidate_token(tokens[0].surface)
+    last = normalize_candidate_token(tokens[-1].surface)
+    if not first or not last or first in stopwords or last in stopwords:
+        return False
+    if len(tokens) == 1:
+        surface = tokens[0].surface
+        if len(surface) < 4 and not surface.isupper():
+            return False
+    normalized_tokens = [normalize_candidate_token(token.surface) for token in tokens]
+    if all(token in stopwords for token in normalized_tokens if token):
+        return False
+    return True
+
+
+def candidate_surface_is_clean(surface: str) -> bool:
+    if not surface:
+        return False
+    if not stanza_candidate_surface_is_clean(surface):
+        return False
+    if _FORMULA_OR_IDENTIFIER_RE.match(surface):
+        return True
+    if len(surface) < 4:
+        return False
+    if not any(character.isalpha() for character in surface):
+        return False
+    return True
+
+
+def nltk_ngram_confidence(tokens: list[CandidateToken]) -> float:
+    token_count = len(tokens)
+    confidence = 0.46 + min(token_count, 5) * 0.04
+    if token_count > 1:
+        confidence += 0.04
+    if any(token.surface[:1].isupper() for token in tokens):
+        confidence += 0.02
+    return min(0.72, confidence)
+
+
+def msplade_window_score(
+    tokens: list[CandidateToken],
+    sparse_token_weights: dict[str, float],
+) -> float:
+    weights = [
+        sparse_token_weights.get(normalize_candidate_token(token.surface), 0.0)
+        for token in tokens
+    ]
+    if not any(weight > 0 for weight in weights):
+        return 0.0
+    return max(weights) + sum(weights) / max(len(tokens), 1)
+
+
+def msplade_confidence(tokens: list[CandidateToken], score: float) -> float:
+    token_count = len(tokens)
+    confidence = 0.48 + min(score, 5.0) * 0.03
+    if token_count > 1:
+        confidence += 0.07
+    return min(0.78, confidence)
+
+
+def spacy_language_code(language: str) -> str:
+    language_code = terminology_language_code(language)
+    return _SPACY_LANGUAGE_ALIASES.get(language_code, language_code) or "xx"
+
+
+def spacy_token_is_candidate(token: Any) -> bool:
+    surface = str(token.text or "").strip()
+    if not surface:
+        return False
+    if getattr(token, "is_space", False) or getattr(token, "is_punct", False):
+        return False
+    if getattr(token, "like_url", False) or getattr(token, "like_email", False):
+        return False
+    if not any(character.isalpha() for character in surface):
+        return False
+    return True
+
+
+def spacy_ngram_confidence(tokens: list[CandidateToken], language_code: str) -> float:
+    token_count = len(tokens)
+    confidence = 0.5 + min(token_count, 5) * 0.04
+    if token_count > 1:
+        confidence += 0.04
+    if language_code in {"ja", "zh"} and token_count == 1:
+        confidence += 0.04
+    return min(0.74, confidence)
+
+
+def normalize_candidate_token(token: str) -> str:
+    return clean_candidate_term(token).casefold()
+
+
+def clean_sparse_vocabulary_token(token: str) -> str:
+    if not token:
+        return ""
+    if token.startswith("##"):
+        return ""
+    token = token.removeprefix("▁").removeprefix("Ġ").strip()
+    token = clean_candidate_term(token)
+    if len(token) < 3:
+        return ""
+    if not any(character.isalpha() for character in token):
+        return ""
+    return token
 
 
 def make_target_term(

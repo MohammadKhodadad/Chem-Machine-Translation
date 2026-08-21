@@ -7,6 +7,9 @@ from chem_machine_translation.data.terminology import (
     DatasetTerminologyGenerator,
     DatasetTerminologyTerm,
     LLMTargetCandidateExtractor,
+    MSPLADETerminologyExtractor,
+    NLTKTerminologyExtractor,
+    SpaCyTerminologyExtractor,
     TargetTerminologyExtractor,
     append_terminology_cache,
     dataset_term_from_json,
@@ -253,6 +256,61 @@ def test_generator_unions_multiple_candidate_extractors() -> None:
         "Council of Europe",
         "European Economic Community",
     ]
+
+
+def test_nltk_extractor_returns_exact_ngram_spans() -> None:
+    extractor = NLTKTerminologyExtractor(max_ngram_tokens=4)
+
+    terms = extractor.extract(
+        text="The controlled substances include carbon tetrachloride.",
+        target_language="English",
+        max_terms=10,
+    )
+
+    target_terms = [term.target_terms[0] for term in terms]
+    assert "controlled substances" in target_terms
+    assert "carbon tetrachloride" in target_terms
+    assert all(term.source == "nltk_ngram" for term in terms)
+
+
+def test_spacy_extractor_returns_exact_ngram_spans() -> None:
+    extractor = SpaCyTerminologyExtractor(max_ngram_tokens=4)
+
+    terms = extractor.extract(
+        text="The controlled substances include carbon tetrachloride.",
+        target_language="English",
+        max_terms=10,
+    )
+
+    target_terms = [term.target_terms[0] for term in terms]
+    assert "controlled substances" in target_terms
+    assert "carbon tetrachloride" in target_terms
+    assert all(term.source.startswith("spacy_") for term in terms)
+
+
+def test_msplade_extractor_uses_sparse_weights_for_exact_spans() -> None:
+    class _FakeMSPLADEExtractor(MSPLADETerminologyExtractor):
+        def activated_token_weights(self, text: str) -> dict[str, float]:
+            assert text
+            return {
+                "calculated": 1.0,
+                "production": 0.8,
+                "controlled": 1.2,
+                "substances": 1.1,
+            }
+
+    extractor = _FakeMSPLADEExtractor(max_ngram_tokens=4)
+
+    terms = extractor.extract(
+        text="The calculated level of production applies to controlled substances.",
+        target_language="English",
+        max_terms=10,
+    )
+
+    target_terms = [term.target_terms[0] for term in terms]
+    assert "controlled substances" in target_terms
+    assert "calculated level of production" in target_terms
+    assert all(term.source == "msplade_sparse" for term in terms)
 
 
 def test_stanza_candidate_cleanup_rejects_internal_separators_and_citations() -> None:

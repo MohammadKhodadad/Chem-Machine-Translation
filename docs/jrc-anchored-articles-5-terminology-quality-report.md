@@ -58,6 +58,10 @@ XLM-R/NOBI is the neural extractor. It uses an XLM-R token-classification checkp
 for nested automatic term extraction. It produces fewer candidates and often cleaner named entities,
 but it can still return generic single words.
 
+spaCy extraction was run separately as a tokenizer-based candidate extractor. No external spaCy
+language models were installed for this run, so it used blank language tokenizers and exact-span
+token n-grams rather than trained entities or noun chunks.
+
 LLM extraction is a prompt-based legal terminology extractor. In the LLM-only run, the model was
 asked to extract exact target/reference spans, then the legal verifier layer was applied on top. This
 mode was run separately from Stanza/UD and XLM-R/NOBI so its candidates can be inspected directly.
@@ -216,6 +220,199 @@ Its non-verified terms are often more useful than non-verified Stanza-only terms
 that it can still include headings and generic legal words, and it still does not populate
 `source_term`.
 
+## NLTK Mode
+
+This mode was run on the same anchored 5-row-per-direction JRC article data as the earlier samples.
+The source and target CSV rows were checked against the previous non-LLM sample datasets and matched
+exactly for all 20 directions.
+
+NLTK was used as a deterministic target-side n-gram extractor. It proposes exact spans from the
+reference text using token windows, then the normal verifier layer is applied.
+
+Article-mode summary:
+
+- `nltk_ngram` records: 2,000.
+- `nltk_ngram` records without mSPLADE support: 1,906.
+- Unique NLTK-only terms: 839.
+- Verified NLTK article records: 0.
+
+Representative NLTK-only article terms:
+
+`produccion de las Partes interesadas`; `substances reglementees du groupe I`;
+`Chaque partie produisant une ou`; `communication relating to the Agreement`;
+`European Economic Community may become`; `Additional Protocol in accordance with`;
+`notify the European Economic Community`; `acceptance by the Contracting Parties`;
+`Contracting Parties to the Agreement`; `General obligations of members`;
+`No 1035/97 establishing a European Monitoring`; `establishing a European Monitoring Centre`;
+`Secretariat of the European Commission`; `on Racism and Xenophobia`;
+`Partes Contratantes adoptaran cuantas medidas`; `Protocolo Adicional formara parte integrante`.
+
+Analysis:
+
+NLTK is useful as a high-recall baseline, but by itself it is not a good final terminology source.
+It reliably fills the per-row candidate budget, but many terms are ordinary prose fragments, clause
+fragments, or document-structure spans. Examples include `Additional Protocol in accordance with`,
+`Parties has deposited its instrument`, and table-of-contents text containing dot leaders and
+`CHAPTER`/`Article`. NLTK should therefore be treated as a recall/diagnostic extractor whose output
+must pass a later term-selection layer.
+
+## mSPLADE Mode
+
+mSPLADE was run as a separate candidate extractor using
+`naver/splade-cocondenser-ensembledistil`.
+The first attempted SPLADE default did not load through the masked-language-model interface, so the
+run was regenerated with this compatible checkpoint.
+
+In this implementation, SPLADE sparse lexical activations are used as a salience signal over exact
+n-gram spans from the target/reference text. That means mSPLADE terms can merge with NLTK terms when
+they select the same span, but the `source` field still records `msplade_sparse` separately.
+
+Article-mode summary:
+
+- `msplade_sparse` records: 94.
+- Unique mSPLADE-tagged terms: 41.
+- Verified mSPLADE article records: 0.
+- Independent mSPLADE-only records after deduplication: 0, because all mSPLADE spans merged with
+  matching `nltk_ngram` spans.
+
+Definition-mode check:
+
+- `msplade_sparse` merged records: 51.
+- Verified definition records from the NLTK/mSPLADE run: 20, from IATE and AGROVOC.
+
+Representative mSPLADE-tagged article terms:
+
+`this Additional Protocol shall enter`; `Additional Protocol shall enter into`;
+`MONTREAL RELATIVO A LAS SUSTANCIAS`; `ENMIENDA AL PROTOCOLO DE MONTREAL`;
+`AL PROTOCOLO DE MONTREAL RELATIVO`; `European Monitoring Centre on Racism`;
+`MONTREAL PROTOCOL ON SUBSTANCES THAT`; `AMENDMENT TO THE MONTREAL PROTOCOL`;
+`domestic needs of the Parties`; `Commission against Racism and Intolerance`;
+`ALTERACAO DO PROTOCOLO DE MONTREAL`; `Por racionalizacion industrial se entiende`;
+`production desdites substances n'excede pas`.
+
+Analysis:
+
+mSPLADE is more useful as salience evidence than as a standalone final extractor. It can identify
+spans whose vocabulary is important for the segment, but it can still boost malformed or structural
+spans if those spans are supplied by the n-gram candidate generator. In this sample, mSPLADE found
+some useful domain phrases, but it also tagged spans crossing headings and article boundaries. It
+should be used inside the future selector/ranker, not as an automatic keep decision.
+
+## spaCy Mode
+
+spaCy was run as a separate candidate extractor on the same anchored 5-row-per-direction JRC article
+data. Stanza/UD, XLM-R/NOBI, NLTK, mSPLADE, and LLM extraction were disabled. All verifier sources
+were enabled.
+
+Dataset reviewed:
+
+```text
+benchmark_datasets/jrc_acquis_anchored_articles_5_spacy_only_terms/
+```
+
+Combined manifest:
+
+```text
+benchmark_datasets/jrc_acquis_anchored_articles_5_spacy_only_terms/jrc-acquis-20-directions-100-manifest.jsonl
+```
+
+Article-mode summary:
+
+- Rows: 100.
+- Directions: 20.
+- Total spaCy records: 2,000.
+- Verified spaCy records: 4.
+- Non-verified spaCy records: 1,996.
+- Unique verified spaCy terms: 3.
+- Unique non-verified spaCy terms: 841.
+- Source tags: `spacy_ngram` for all 2,000 records.
+- Verifier hits: IATE 4.
+
+Cells are `unverified/verified` counts:
+
+| Target language | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| spaCy-only | 400/0 | 400/0 | 398/2 | 399/1 | 399/1 |
+
+### spaCy, Verified
+
+Terms:
+
+`organización de integración económica regional (2x)`; `organisation régionale d'intégration économique (1x)`; `organização regional de integração económica (1x)`.
+
+Analysis:
+
+The verified spaCy signal is very small. The few verified terms are legitimate institutional/legal
+phrases, but the mode does not produce enough high-quality verified terminology to compete with
+Stanza/UD, NOBI, or LLM extraction.
+
+### spaCy, Not Verified
+
+Terms:
+
+`consumption of the controlled substances (6x)`; `répondre aux besoins intérieurs fondamentaux (5x)`; `besoins intérieurs fondamentaux des parties (5x)`; `intérieurs fondamentaux des parties visées (5x)`; `blood-grouping reagents (hereinafter called (4x)`; `reagents (hereinafter called "the Agreement (4x)`; `Additional Protocol. The Secretary-General (4x)`; `European Economic Community are concerned (4x)`; `communication relating to the Agreement (4x)`; `European Economic Community may become (4x)`; `Objectives .................. CHAPTER II DEFINITIONS .................. Article (4x)`; `review .................. CHAPTER XI MISCELLANEOUS .................. Article (4x)`; `Commission against Racism and Intolerance (4x)`; `establishing a European Monitoring Centre (4x)`.
+
+Analysis:
+
+This mode is mostly noisy high-recall n-gram output. It frequently crosses sentence boundaries,
+includes table-of-contents dot leaders, and keeps legal boilerplate fragments. Without trained spaCy
+models or a strong selector/ranker, blank-tokenizer spaCy is not a useful standalone extractor for
+JRC terminology.
+
+## Per-Document Target-Language Matrices
+
+Each cell is unverified/verified. Rows are the five anchored JRC article documents. Columns are target languages, not language pairs. Counts are summed across all rows in the sample that use that document and target language.
+
+### Stanza/UD
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 72/4 | 40/32 | 24/27 | 39/30 | 43/25 |
+| jrc21988A1031_02 | 37/3 | 69/6 | 71/3 | 65/7 | 50/4 |
+| jrc21991A0204_01 | 30/3 | 31/8 | 40/4 | 32/16 | 28/16 |
+| jrc21991A1231_02 | 70/0 | 64/8 | 53/13 | 77/3 | 72/2 |
+| jrc21999A0218_01 | 60/8 | 25/27 | 28/24 | 20/20 | 24/28 |
+
+### XLM-R/NOBI
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 8/4 | 4/12 | 0/19 | 0/15 | 0/16 |
+| jrc21988A1031_02 | 3/0 | 0/6 | 0/6 | 2/6 | 1/7 |
+| jrc21991A0204_01 | 24/20 | 4/37 | 4/32 | 0/36 | 8/28 |
+| jrc21991A1231_02 | 2/8 | 0/10 | 3/12 | 0/1 | 2/5 |
+| jrc21999A0218_01 | 12/8 | 0/36 | 0/44 | 0/52 | 0/40 |
+
+### LLM
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 41/35 | 39/36 | 9/51 | 18/40 | 13/47 |
+| jrc21988A1031_02 | 25/43 | 34/19 | 41/20 | 41/22 | 47/20 |
+| jrc21991A0204_01 | 41/35 | 33/47 | 45/35 | 28/52 | 22/57 |
+| jrc21991A1231_02 | 46/19 | 44/23 | 47/19 | 48/9 | 48/12 |
+| jrc21999A0218_01 | 12/28 | 14/37 | 33/28 | 25/35 | 36/29 |
+
+### NLTK
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
+| jrc21988A1031_02 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
+| jrc21991A0204_01 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
+| jrc21991A1231_02 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
+| jrc21999A0218_01 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
+
+### mSPLADE
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 0/0 | 15/0 | 0/0 | 0/0 | 0/0 |
+| jrc21988A1031_02 | 0/0 | 6/0 | 1/0 | 4/0 | 1/0 |
+| jrc21991A0204_01 | 0/0 | 12/0 | 4/0 | 8/0 | 12/0 |
+| jrc21991A1231_02 | 0/0 | 6/0 | 9/0 | 3/0 | 6/0 |
+| jrc21999A0218_01 | 0/0 | 4/0 | 0/0 | 3/0 | 0/0 |
+
 ## Main Points
 
 1. The best class is `Stanza + NOBI, verified`.
@@ -223,8 +420,11 @@ that it can still include headings and generic legal words, and it still does no
 3. `NOBI only, verified` is useful but needs generic single-word filtering.
 4. `Stanza + NOBI, not verified` is small and worth manual review.
 5. `LLM, not verified` contains many coherent technical phrases that exact-match verifiers miss.
-6. Verification helps, but it does not guarantee benchmark-quality terminology.
-7. The current terms are target-side only because `source_term` is empty.
+6. `NLTK` is useful for recall, but not as final terminology.
+7. `mSPLADE` is useful as salience evidence, but not as an automatic keep decision.
+8. Blank-tokenizer `spaCy` is not useful as a standalone extractor in this sample.
+9. Verification helps, but it does not guarantee benchmark-quality terminology.
+10. The current terms are target-side only because `source_term` is empty.
 
 ## Needed Term Selection Layer
 
@@ -266,11 +466,16 @@ themselves.
 4. Penalize generic verified words such as `Council`, `Protocol`, `payment`, `account`,
    `industrial`, `General`, and `Adicional`.
 5. Keep `Stanza + NOBI, not verified` and `LLM, not verified` as review buckets.
-6. Treat `Stanza only, not verified` as a recall/diagnostic bucket, not final terminology.
+6. Treat `Stanza only, not verified` and `NLTK only` as recall/diagnostic buckets, not final
+   terminology.
 7. Add filters for headings, table-of-contents spans, article references, malformed citations, and
    partial spans ending in function words.
-8. Populate `source_term` by aligning accepted target terms back to source text.
-9. Regenerate the 5-row sample after filtering/ranking changes before scaling to 250.
+8. Use mSPLADE as a salience/ranking signal inside the future selector, not as a standalone keep
+   decision.
+9. Use spaCy only with trained language models or as a diagnostic tokenizer baseline, not as a final
+   term source.
+10. Populate `source_term` by aligning accepted target terms back to source text.
+11. Regenerate the 5-row sample after filtering/ranking changes before scaling to 250.
 
 ## Improving Technical Difficulty
 

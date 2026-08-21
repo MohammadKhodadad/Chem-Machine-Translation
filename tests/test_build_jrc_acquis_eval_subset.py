@@ -1,6 +1,7 @@
 import importlib.util
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from chem_machine_translation.data.terminology import make_target_term
@@ -136,3 +137,58 @@ def test_collect_stanza_term_jobs_keeps_only_uncached_unique_targets() -> None:
     assert len(jobs) == 1
     assert jobs[0].cache_key == ("en", "The same English target chunk.")
     assert jobs[0].target_language == "English"
+
+
+def test_build_stanza_config_includes_optional_extractors() -> None:
+    args = SimpleNamespace(
+        extract_stanza_terms=True,
+        stanza_terminology_max_terms=10,
+        use_stanza_extractor=False,
+        use_nobi_extractor=True,
+        nobi_model="test-nobi",
+        use_nltk_extractor=True,
+        use_spacy_extractor=True,
+        spacy_model="test-spacy",
+        use_msplade_extractor=True,
+        msplade_model="test-msplade",
+        iate_terminology=False,
+        wikipedia_terminology=False,
+        pubchem_terminology=False,
+        chebi_terminology=False,
+        chembl_terminology=False,
+        mesh_terminology=False,
+        nci_terminology=False,
+        agrovoc_terminology=False,
+        unterm_terminology=False,
+    )
+
+    config = dataset_builder.build_stanza_config(args)
+
+    assert config is not None
+    assert config.use_stanza_extractor is False
+    assert config.use_nobi_extractor is True
+    assert config.use_nltk_extractor is True
+    assert config.use_spacy_extractor is True
+    assert config.spacy_model == "test-spacy"
+    assert config.use_msplade_extractor is True
+    assert config.msplade_model == "test-msplade"
+
+
+def test_generate_stanza_terms_for_job_passes_spacy_config() -> None:
+    job = dataset_builder.StanzaTerminologyJob(
+        cache_key=("en", "The controlled substances include carbon tetrachloride."),
+        source_text="Ignored.",
+        target_language="English",
+        target_text="The controlled substances include carbon tetrachloride.",
+        config=dataset_builder.StanzaTerminologyConfig(
+            max_terms=10,
+            use_stanza_extractor=False,
+            use_spacy_extractor=True,
+        ),
+    )
+
+    _, terms = dataset_builder.generate_stanza_terms_for_job(job)
+
+    target_terms = [term["target_terms"][0] for term in terms]
+    assert "carbon tetrachloride" in target_terms
+    assert all(term["source"].startswith("spacy_") for term in terms)

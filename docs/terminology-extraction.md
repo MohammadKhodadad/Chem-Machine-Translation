@@ -56,6 +56,13 @@ Terminology is attached when creating benchmark datasets from source-pair JSONL 
 - `scripts/build_google_patents_eval_subset.py`
   - chemistry/patent terminology;
   - enabled with `--extract-terminology`;
+  - source-pair samples can be mirrored with `--bidirectional` for exact reverse
+    source/target rows;
+  - XLM-R/NOBI can be added with `--use-nobi-extractor`;
+  - NLTK n-gram extraction can be added with `--use-nltk-extractor`;
+  - spaCy tokenization/noun-chunk/entity extraction can be added with `--use-spacy-extractor`;
+  - SPLADE/mSPLADE sparse-activation extraction can be added with `--use-msplade-extractor`;
+  - the default Stanza/UD extractor can be disabled with `--no-stanza-extractor`;
   - optional evidence flags include `--pubchem-terminology`, `--chebi-terminology`,
     `--chembl-terminology`, `--mesh-terminology`, `--nci-terminology`,
     `--agrovoc-terminology`, `--iate-terminology`, and `--wikipedia-terminology`.
@@ -68,7 +75,12 @@ Terminology is attached when creating benchmark datasets from source-pair JSONL 
 - `scripts/build_jrc_acquis_eval_subset.py`
   - legal terminology for JRC-Acquis;
   - non-LLM target-side extraction is enabled with `--extract-stanza-terms`;
+  - the default Stanza/UD extractor can be disabled with `--no-stanza-extractor`
+    when testing only other target-side extractors;
   - XLM-R/NOBI can be added with `--use-nobi-extractor`;
+  - NLTK n-gram extraction can be added with `--use-nltk-extractor`;
+  - spaCy tokenization/noun-chunk/entity extraction can be added with `--use-spacy-extractor`;
+  - SPLADE/mSPLADE sparse-activation extraction can be added with `--use-msplade-extractor`;
   - unique anchored target chunks can be parallelized with `--stanza-terminology-workers`;
   - optional evidence flags include `--iate-terminology`, `--wikipedia-terminology`,
     `--unterm-terminology`, `--pubchem-terminology`, `--chebi-terminology`,
@@ -88,6 +100,12 @@ When enabled, it can combine:
 - an LLM target candidate extractor that returns exact target/reference spans only;
 - Stanza/Universal Dependencies candidates from exact target/reference spans;
 - optional XLM-R/NOBI token-classification candidates;
+- optional NLTK n-gram candidates over exact target/reference spans;
+- optional spaCy candidates. If `--spacy-model` is provided, the configured spaCy pipeline can
+  contribute entities and noun chunks; otherwise the extractor falls back to a blank language tokenizer
+  and exact-span token n-grams;
+- optional SPLADE/mSPLADE sparse-activation candidates. SPLADE activations are used to score exact
+  n-gram spans from the target/reference text, not as free-form generated terms;
 - external verifier evidence from chemistry, biomedical, legal, and multilingual terminology sources.
 
 The LLM is only a candidate extractor when explicitly enabled. It is instructed not to translate, normalize, rewrite,
@@ -143,9 +161,10 @@ Every manifest term has a coarse `term_group` and a detailed `source`.
 - `algorithmic`: the term came from regex or optional deterministic/model-based extractors rather
   than external terminology databases.
 
-The detailed `source` field records provenance such as `llm_target+pubchem`, `legal_llm+iate`,
-`regex+chebi`, or `chemdataextractor`. The `verified_by` field stores only the evidence sources, for
-example `["pubchem"]`, `["iate"]`, or `["wikipedia", "unterm"]`.
+The detailed `source` field records provenance such as `llm_target+pubchem`,
+`stanza_ud_dependency+iate`, `xlmr_nobi+chebi`, `nltk_ngram`, or `msplade_sparse`. The
+`verified_by` field stores only the evidence sources, for example `["pubchem"]`, `["iate"]`, or
+`["wikipedia", "unterm"]`.
 
 ## Manifest Shape
 
