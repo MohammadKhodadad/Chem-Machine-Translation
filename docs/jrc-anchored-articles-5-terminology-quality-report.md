@@ -43,7 +43,7 @@ sum(length of extracted target term * number of times extracted)
 | LLM | 1,628 | 661 | 16,461 | 39,312 |
 | NLTK | 2,000 | 875 | 37,976 | 93,289 |
 | mSPLADE | 94 | 41 | 1,802 | 4,468 |
-| spaCy | 2,000 | 844 | 39,280 | 97,886 |
+| spaCy | 2,000 | 712 | 13,562 | 38,165 |
 
 ## English Sample Highlight Figure
 
@@ -85,9 +85,9 @@ XLM-R/NOBI is the neural extractor. It uses an XLM-R token-classification checkp
 for nested automatic term extraction. It produces fewer candidates and often cleaner named entities,
 but it can still return generic single words.
 
-spaCy extraction was run separately as a tokenizer-based candidate extractor. No external spaCy
-language models were installed for this run, so it used blank language tokenizers and exact-span
-token n-grams rather than trained entities or noun chunks.
+spaCy extraction was run separately as a deterministic candidate extractor. The refreshed run uses
+installed spaCy language models where available, combining trained entities, noun chunks, contiguous
+token spans, POS-based cleanup, and compact noun-like n-gram ranking.
 
 LLM extraction is a prompt-based legal terminology extractor. In the LLM-only run, the model was
 asked to extract exact target/reference spans, then the legal verifier layer was applied on top. This
@@ -329,7 +329,8 @@ should be used inside the future selector/ranker, not as an automatic keep decis
 
 spaCy was run as a separate candidate extractor on the same anchored 5-row-per-direction JRC article
 data. Stanza/UD, XLM-R/NOBI, NLTK, mSPLADE, and LLM extraction were disabled. All verifier sources
-were enabled.
+were enabled. This refreshed run uses trained spaCy language models where available, contiguous token
+spans, entity/noun-chunk candidates, POS-based cleanup, and compact noun-like n-gram ranking.
 
 Dataset reviewed:
 
@@ -348,43 +349,46 @@ Article-mode summary:
 - Rows: 100.
 - Directions: 20.
 - Total spaCy records: 2,000.
-- Verified spaCy records: 4.
-- Non-verified spaCy records: 1,996.
-- Unique verified spaCy terms: 3.
-- Unique non-verified spaCy terms: 841.
-- Source tags: `spacy_ngram` for all 2,000 records.
-- Verifier hits: IATE 4.
+- Verified spaCy records: 836.
+- Non-verified spaCy records: 1,164.
+- Unique verified spaCy terms: 258.
+- Unique non-verified spaCy terms: 442.
+- Source tags: `spacy_ngram` 1,715; `spacy_noun_chunk` 1,517; `spacy_entity` 1,025.
+- Verifier hits: IATE 736; AGROVOC 491; MeSH 118; NCI 77; ChEMBL 18; Wikipedia 16; PubChem 7.
 
 Cells are `unverified/verified` counts:
 
 | Target language | de | en | es | fr | pt |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| spaCy-only | 400/0 | 400/0 | 398/2 | 399/1 | 399/1 |
+| spaCy-only | 304/96 | 232/168 | 214/186 | 170/230 | 244/156 |
 
 ### spaCy, Verified
 
 Terms:
 
-`organización de integración económica regional (2x)`; `organisation régionale d'intégration économique (1x)`; `organização regional de integração económica (1x)`.
+`Partes (16x)`; `Article (12x)`; `Protocolo (9x)`; `Member States (8x)`; `Partes Contratantes (8x)`; `Conseil de l'Europe (8x)`; `Xenofobia (8x)`; `ECRI (8x)`; `European Economic Community (4x)`; `Contracting Parties (4x)`; `Additional Protocol (4x)`; `Secretary-General (4x)`; `necessary measures (4x)`; `International Jute Council (4x)`; `Council Regulation (4x)`; `Comunidad Economica Europea (4x)`; `Comunidade Economica Europeia (4x)`; `European Commission (4x)`; `calculated level (6x)`; `nivel calculado (5x)`.
 
 Analysis:
 
-The verified spaCy signal is very small. The few verified terms are legitimate institutional/legal
-phrases, but the mode does not produce enough high-quality verified terminology to compete with
-Stanza/UD, NOBI, or LLM extraction.
+The refreshed spaCy run is dramatically better than the earlier baseline. It now has
+broad verifier coverage across all five target languages and returns many complete legal or
+institutional spans. The weakness is that many verified terms are generic legal words or entities
+such as `Article`, `Partes`, `State`, `Agreement`, and `Community`. This reinforces that verifier hits
+should support ranking but should not automatically define final benchmark terminology.
 
 ### spaCy, Not Verified
 
 Terms:
 
-`consumption of the controlled substances (6x)`; `répondre aux besoins intérieurs fondamentaux (5x)`; `besoins intérieurs fondamentaux des parties (5x)`; `intérieurs fondamentaux des parties visées (5x)`; `blood-grouping reagents (hereinafter called (4x)`; `reagents (hereinafter called "the Agreement (4x)`; `Additional Protocol. The Secretary-General (4x)`; `European Economic Community are concerned (4x)`; `communication relating to the Agreement (4x)`; `European Economic Community may become (4x)`; `Objectives .................. CHAPTER II DEFINITIONS .................. Article (4x)`; `review .................. CHAPTER XI MISCELLANEOUS .................. Article (4x)`; `Commission against Racism and Intolerance (4x)`; `establishing a European Monitoring Centre (4x)`.
+`basic domestic needs (6x)`; `besoins interieurs fondamentaux (6x)`; `Partes presentes (6x)`; `sustancias controladas (5x)`; `presente articulo (5x)`; `presente artigo (5x)`; `anwesenden und abstimmenden Vertragsparteien (5x)`; `geregelten Stoffen (5x)`; `Blood-grouping Reagents (4x)`; `International Jute Organization (4x)`; `Jute Products (4x)`; `European Monitoring Centre on Racism (4x)`; `Centre's Management Board (4x)`; `Racism and Intolerance (4x)`; `European Agreement (4x)`; `day of the month (4x)`; `notification o communication (4x)`; `CHAPTER IV INTERNATIONAL JUTE COUNCIL (4x)`; `CHAPTER III ORGANIZATION (4x)`.
 
 Analysis:
 
-This mode is mostly noisy high-recall n-gram output. It frequently crosses sentence boundaries,
-includes table-of-contents dot leaders, and keeps legal boilerplate fragments. Without trained spaCy
-models or a strong selector/ranker, blank-tokenizer spaCy is not a useful standalone extractor for
-JRC terminology.
+The non-verified class now contains many useful legal/regulatory candidates, but it still includes
+headings, document-structure spans, and some source-text artifacts such as `notification o
+communication`. spaCy is now useful as a deterministic candidate source for JRC, but the final
+benchmark terminology still needs a selector/ranker to remove generic legal scaffolding, headings,
+and low-value institutional words.
 
 ## Per-Document Target-Language Matrices
 
@@ -440,6 +444,16 @@ Each cell is unverified/verified. Rows are the five anchored JRC article documen
 | jrc21991A1231_02 | 0/0 | 6/0 | 9/0 | 3/0 | 6/0 |
 | jrc21999A0218_01 | 0/0 | 4/0 | 0/0 | 3/0 | 0/0 |
 
+### spaCy
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 48/32 | 24/56 | 36/44 | 24/56 | 40/40 |
+| jrc21988A1031_02 | 70/10 | 35/45 | 45/35 | 45/35 | 55/25 |
+| jrc21991A0204_01 | 60/20 | 70/10 | 40/40 | 37/43 | 59/21 |
+| jrc21991A1231_02 | 62/18 | 54/26 | 58/22 | 27/53 | 62/18 |
+| jrc21999A0218_01 | 64/16 | 49/31 | 35/45 | 37/43 | 28/52 |
+
 ## Main Points
 
 1. The best class is `Stanza + NOBI, verified`.
@@ -449,7 +463,8 @@ Each cell is unverified/verified. Rows are the five anchored JRC article documen
 5. `LLM, not verified` contains many coherent technical phrases that exact-match verifiers miss.
 6. `NLTK` is useful for recall, but not as final terminology.
 7. `mSPLADE` is useful as salience evidence, but not as an automatic keep decision.
-8. Blank-tokenizer `spaCy` is not useful as a standalone extractor in this sample.
+8. Refreshed `spaCy` is much stronger with trained models, but it still needs generic-term and
+   heading filters before final use.
 9. Verification helps, but it does not guarantee benchmark-quality terminology.
 10. The current terms are target-side only because `source_term` is empty.
 
@@ -499,8 +514,8 @@ themselves.
    partial spans ending in function words.
 8. Use mSPLADE as a salience/ranking signal inside the future selector, not as a standalone keep
    decision.
-9. Use spaCy only with trained language models or as a diagnostic tokenizer baseline, not as a final
-   term source.
+9. Use spaCy with trained language models as another deterministic evidence source, but do not treat
+   spaCy verifier hits as automatic final terms.
 10. Populate `source_term` by aligning accepted target terms back to source text.
 11. Regenerate the 5-row sample after filtering/ranking changes before scaling to 250.
 

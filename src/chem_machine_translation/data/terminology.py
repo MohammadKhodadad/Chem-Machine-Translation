@@ -114,22 +114,6 @@ _SPACY_LANGUAGE_ALIASES = {
     "russian": "ru",
     "spanish": "es",
 }
-_SPACY_BLOCKED_BOUNDARY_LEMMAS = {
-    "apply",
-    "be",
-    "become",
-    "comprise",
-    "concern",
-    "consist",
-    "contain",
-    "include",
-    "make",
-    "provide",
-    "relate",
-    "said",
-    "thereof",
-    "use",
-}
 _NLTK_STOPWORD_LANGUAGES = {
     "de": "german",
     "en": "english",
@@ -881,6 +865,7 @@ class SpaCyTerminologyExtractor:
     def entity_terms(self, doc: Any) -> list[DatasetTerminologyTerm]:
         terms = []
         for entity in getattr(doc, "ents", ()):
+            entity = trim_spacy_span(entity)
             surface = clean_candidate_term(entity.text)
             if candidate_surface_is_clean(surface) and spacy_span_has_content(entity):
                 terms.append(
@@ -888,7 +873,7 @@ class SpaCyTerminologyExtractor:
                         target_term=surface,
                         category="other",
                         source="spacy_entity",
-                        confidence=0.74,
+                        confidence=spacy_linguistic_span_confidence(entity, base_confidence=0.78),
                         reason="spaCy named-entity candidate from target reference.",
                     )
                 )
@@ -909,7 +894,7 @@ class SpaCyTerminologyExtractor:
                         target_term=surface,
                         category="other",
                         source="spacy_noun_chunk",
-                        confidence=0.7,
+                        confidence=spacy_linguistic_span_confidence(chunk, base_confidence=0.72),
                         reason="spaCy noun-chunk candidate from target reference.",
                     )
                 )
@@ -923,40 +908,42 @@ class SpaCyTerminologyExtractor:
     ) -> list[DatasetTerminologyTerm]:
         language_code = spacy_language_code(target_language)
         has_pos = spacy_doc_has_pos(doc)
-        stopwords = set(_BOUNDARY_STOPWORDS) | _SPACY_BLOCKED_BOUNDARY_LEMMAS
+        stopwords: set[str] = set()
         candidates = []
         spans = list(doc.sents) if spacy_doc_has_sentences(doc) else [doc]
         max_ngram_tokens = self.max_ngram_tokens if has_pos else min(self.max_ngram_tokens, 3)
         for span in spans:
-            spacy_tokens = [token for token in span if spacy_token_is_candidate(token)]
-            candidate_tokens = [
-                CandidateToken(token.text, token.idx, token.idx + len(token.text))
-                for token in spacy_tokens
-            ]
-            for size in range(1, max_ngram_tokens + 1):
-                for index in range(0, max(len(spacy_tokens) - size + 1, 0)):
-                    token_window = spacy_tokens[index : index + size]
-                    window = candidate_tokens[index : index + size]
-                    if not token_window_is_plausible(window, stopwords):
-                        continue
-                    if not spacy_window_is_plausible(token_window, has_pos):
-                        continue
-                    surface = clean_candidate_term(text[window[0].start_char : window[-1].end_char])
-                    if not candidate_surface_is_clean(surface):
-                        continue
-                    candidates.append(
-                        make_target_term(
-                            target_term=surface,
-                            category="other",
-                            source="spacy_ngram",
-                            confidence=spacy_ngram_confidence(
-                                token_window,
-                                language_code,
-                                has_pos=has_pos,
-                            ),
-                            reason="spaCy token n-gram candidate from target reference.",
+            for spacy_tokens in spacy_contiguous_token_runs(span):
+                candidate_tokens = [
+                    CandidateToken(token.text, token.idx, token.idx + len(token.text))
+                    for token in spacy_tokens
+                ]
+                for size in range(1, max_ngram_tokens + 1):
+                    for index in range(0, max(len(spacy_tokens) - size + 1, 0)):
+                        token_window = spacy_tokens[index : index + size]
+                        window = candidate_tokens[index : index + size]
+                        if not token_window_is_plausible(window, stopwords):
+                            continue
+                        if not spacy_window_is_plausible(token_window, has_pos):
+                            continue
+                        surface = clean_candidate_term(
+                            text[window[0].start_char : window[-1].end_char]
                         )
-                    )
+                        if not candidate_surface_is_clean(surface):
+                            continue
+                        candidates.append(
+                            make_target_term(
+                                target_term=surface,
+                                category="other",
+                                source="spacy_ngram",
+                                confidence=spacy_ngram_confidence(
+                                    token_window,
+                                    language_code,
+                                    has_pos=has_pos,
+                                ),
+                                reason="spaCy token n-gram candidate from target reference.",
+                            )
+                        )
         return candidates
 
 
@@ -1719,6 +1706,8 @@ def token_window_is_plausible(tokens: list[CandidateToken], stopwords: set[str])
 def candidate_surface_is_clean(surface: str) -> bool:
     if not surface:
         return False
+    if "\ufffd" in surface:
+        return False
     if not stanza_candidate_surface_is_clean(surface):
         return False
     if _FORMULA_OR_IDENTIFIER_RE.match(surface):
@@ -1786,8 +1775,6 @@ def spacy_token_is_candidate(token: Any) -> bool:
         return False
     if getattr(token, "is_space", False) or getattr(token, "is_punct", False):
         return False
-    if getattr(token, "is_stop", False):
-        return False
     if getattr(token, "like_url", False) or getattr(token, "like_email", False):
         return False
     if not any(character.isalpha() for character in surface):
@@ -1795,16 +1782,50 @@ def spacy_token_is_candidate(token: Any) -> bool:
     return True
 
 
+def spacy_contiguous_token_runs(span: Any) -> list[list[Any]]:
+    runs = []
+    current = []
+    for token in span:
+        if spacy_token_is_candidate(token):
+            current.append(token)
+            continue
+        if current:
+            runs.append(current)
+            current = []
+    if current:
+        runs.append(current)
+    return runs
+
+
+def spacy_token_is_content(token: Any) -> bool:
+    if not spacy_token_is_candidate(token):
+        return False
+    if getattr(token, "is_stop", False):
+        return False
+    if str(getattr(token, "pos_", "")) in {
+        "ADP",
+        "AUX",
+        "CCONJ",
+        "DET",
+        "PART",
+        "PRON",
+        "SCONJ",
+        "VERB",
+    }:
+        return False
+    return True
+
+
 def spacy_span_has_content(span: Any) -> bool:
-    return any(spacy_token_is_candidate(token) for token in span)
+    return any(spacy_token_is_content(token) for token in span)
 
 
 def trim_spacy_span(span: Any) -> Any:
     start = 0
     end = len(span)
-    while start < end and not spacy_token_is_candidate(span[start]):
+    while start < end and not spacy_token_is_content(span[start]):
         start += 1
-    while end > start and not spacy_token_is_candidate(span[end - 1]):
+    while end > start and not spacy_token_is_content(span[end - 1]):
         end -= 1
     return span[start:end]
 
@@ -1812,33 +1833,66 @@ def trim_spacy_span(span: Any) -> Any:
 def spacy_window_is_plausible(tokens: list[Any], has_pos: bool) -> bool:
     if not tokens:
         return False
-    first = normalize_candidate_token(str(tokens[0].lemma_ or tokens[0].text))
-    last = normalize_candidate_token(str(tokens[-1].lemma_ or tokens[-1].text))
-    if first in _SPACY_BLOCKED_BOUNDARY_LEMMAS or last in _SPACY_BLOCKED_BOUNDARY_LEMMAS:
+    if getattr(tokens[0], "is_stop", False) or getattr(tokens[-1], "is_stop", False):
         return False
     if has_pos:
-        pos_tags = {str(token.pos_) for token in tokens}
-        if pos_tags & {"AUX", "CCONJ", "DET", "PRON", "SCONJ", "VERB"}:
+        pos_tags = [str(token.pos_) for token in tokens]
+        boundary_pos = {"ADP", "AUX", "CCONJ", "DET", "PART", "PRON", "SCONJ"}
+        if pos_tags[0] in boundary_pos or pos_tags[-1] in boundary_pos:
             return False
-        if not (pos_tags & {"ADJ", "NOUN", "NUM", "PROPN", "SYM", "X"}):
+        if set(pos_tags) & {"AUX", "CCONJ", "DET", "PART", "PRON", "SCONJ"}:
             return False
-        if len(tokens) == 1 and str(tokens[0].pos_) not in {"NOUN", "PROPN", "SYM", "X"}:
+        if "VERB" in pos_tags and not (
+            pos_tags[-1] in {"NOUN", "PROPN", "SYM", "X"}
+            and all(pos_tag != "VERB" for pos_tag in pos_tags[1:])
+        ):
             return False
+        if not (set(pos_tags) & {"ADJ", "NOUN", "NUM", "PROPN", "SYM", "X"}):
+            return False
+        if len(tokens) == 1 and pos_tags[0] not in {"NOUN", "PROPN", "SYM", "X"}:
+            return False
+    elif any(getattr(token, "is_stop", False) for token in tokens):
+        return False
     return True
+
+
+def spacy_linguistic_span_confidence(span: Any, base_confidence: float) -> float:
+    tokens = [token for token in span if spacy_token_is_candidate(token)]
+    content_count = sum(1 for token in tokens if spacy_token_is_content(token))
+    confidence = base_confidence + min(content_count, 3) * 0.025
+    if len(tokens) == 1:
+        confidence -= 0.04
+    if len(tokens) > 4:
+        confidence -= (len(tokens) - 4) * 0.03
+    if any(str(getattr(token, "pos_", "")) == "PROPN" for token in tokens):
+        confidence += 0.02
+    return max(0.58, min(0.82, confidence))
 
 
 def spacy_ngram_confidence(tokens: list[Any], language_code: str, has_pos: bool) -> float:
     token_count = len(tokens)
-    confidence = 0.48 + min(token_count, 5) * 0.04
+    content_count = sum(1 for token in tokens if spacy_token_is_content(token))
+    pos_tags = [str(getattr(token, "pos_", "")) for token in tokens]
+    confidence = 0.46 + min(content_count, 3) * 0.035
     if has_pos:
-        confidence += 0.08
+        confidence += 0.05
     if token_count > 1:
         confidence += 0.04
-    if any(str(getattr(token, "pos_", "")) == "PROPN" for token in tokens):
+    if (
+        has_pos
+        and 2 <= token_count <= 3
+        and all(pos_tag in {"ADJ", "NOUN", "NUM", "PROPN", "SYM", "X"} for pos_tag in pos_tags)
+    ):
+        confidence += 0.06
+    if token_count > 3:
+        confidence -= (token_count - 3) * 0.04
+    if "ADP" in pos_tags:
+        confidence -= 0.02
+    if "PROPN" in pos_tags:
         confidence += 0.03
     if language_code in {"ja", "zh"} and token_count == 1:
         confidence += 0.04
-    return min(0.76, confidence)
+    return max(0.42, min(0.72, confidence))
 
 
 def normalize_candidate_token(token: str) -> str:
@@ -1885,7 +1939,7 @@ def make_target_term(
 
 
 def clean_candidate_term(term: str) -> str:
-    return re.sub(r"\s+", " ", term).strip(" ,.;:()[]{}")
+    return re.sub(r"\s+", " ", term).strip(" ,.;:()[]{}\"'“”‘’")
 
 
 def find_exact_text_span(text: str, candidate: str) -> str:

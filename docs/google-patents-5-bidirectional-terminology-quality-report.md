@@ -84,6 +84,7 @@ Extractor target counts:
 | LLM | 1,427 | 431 | 996 | 1,256 |
 | NLTK | 494 | 1 | 493 | 459 |
 | mSPLADE | 162 | 37 | 125 | 156 |
+| spaCy | 2,170 | 698 | 1,472 | 1,877 |
 
 Weighted extracted-text length:
 
@@ -101,7 +102,7 @@ sum(length of extracted target term * number of times extracted)
 | LLM | 1,427 | 1,256 | 19,446 | 21,298 |
 | NLTK | 494 | 459 | 19,864 | 22,330 |
 | mSPLADE | 162 | 156 | 3,453 | 3,616 |
-| spaCy | 2,000 | 1,900 | 67,394 | 71,209 |
+| spaCy | 2,170 | 1,877 | 28,513 | 31,790 |
 
 ## Method-Language Matrix
 
@@ -116,6 +117,7 @@ quality.
 | LLM | 265/164 | 230/133 | 82/52 | 69/40 | 152/6 | 107/0 | 91/36 |
 | NLTK | 68/0 | 134/1 | 52/0 | 64/0 | 42/0 | 76/0 | 57/0 |
 | mSPLADE | 74/24 | 27/10 | 9/0 | 15/3 | 0/0 | 0/0 | 0/0 |
+| spaCy | 374/226 | 252/348 | 168/32 | 114/86 | 200/0 | 200/0 | 164/6 |
 
 ## English Sample Highlight Figure
 
@@ -249,7 +251,9 @@ Contains promising Latin-script technical spans, but also sentence-fragment boun
 ## spaCy-Only Mode
 
 The spaCy-only run used the same 5-per-pair bidirectional Google Patents sample and all verifier
-sources. It disabled Stanza/UD, XLM-R/NOBI, NLTK, mSPLADE, and LLM extraction.
+sources. It disabled Stanza/UD, XLM-R/NOBI, NLTK, mSPLADE, and LLM extraction. This refreshed run
+uses installed spaCy language models where available, contiguous token spans, entity/noun-chunk
+candidates, POS-based cleanup, and compact noun-like n-gram ranking.
 
 Combined spaCy analysis manifest:
 
@@ -259,51 +263,47 @@ spaCy-only summary:
 
 - Rows: 110.
 - Directions: 22.
-- Total terminology records: 2,000.
-- Verified records: 1.
-- Non-verified records: 1,999.
-- Unique verified terms: 1.
-- Unique non-verified terms: 1,899.
-- Source tags: `spacy_ngram` for all 2,000 records.
-- Verifier hits: IATE 1.
+- Total terminology records: 2,170.
+- Verified records: 698.
+- Non-verified records: 1,472.
+- Unique verified terms: 577.
+- Unique non-verified terms: 1,296.
+- Source tags: `spacy_ngram` 1,991; `spacy_noun_chunk` 1,428; `spacy_entity` 228.
+- Verifier hits: IATE 593; AGROVOC 484; MeSH 209; NCI 171; ChEMBL 89; PubChem 68; Wikipedia 15; ChEBI 6.
 
 Cells are `unverified/verified` counts:
 
 | Target language | en | fr | de | es | ja | ru | zh |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| spaCy-only | 600/0 | 599/1 | 200/0 | 200/0 | 0/0 | 200/0 | 200/0 |
+| spaCy-only | 374/226 | 252/348 | 168/32 | 114/86 | 200/0 | 200/0 | 164/6 |
 
 ### spaCy, Verified
 
 Terms:
 
-`dispositif de réglage de température (1x)`.
+`surface (10x)`; `production (5x)`; `passage (5x)`; `temperature (5x)`; `traitement (4x)`; `procede (4x)`; `temperature (4x)`; `method (4x)`; `surface roughness (2x)`; `alkaline earth metal (2x)`; `laser beam (2x)`; `biologie moleculaire (2x)`; `medecine veterinaire (2x)`; `Candida utilis (2x)`; `Escherichia (2x)`; `SiO (2x)`; `carbonate (2x)`; `machining (2x)`; `virus (2x)`; `fluorescence (2x)`.
 
 Analysis:
 
-The verified signal is effectively absent. With the blank spaCy tokenizer fallback, spaCy did not
-produce useful verifier-backed chemistry/patent terminology on this sample.
+The refreshed spaCy run is much stronger than the earlier baseline. Verification
+coverage increased sharply, especially for English and French, because trained spaCy pipelines now
+produce cleaner entities, noun chunks, and compact noun-like spans. However, many verified terms are
+still generic single words such as `surface`, `production`, `method`, and `temperature`, so verifier
+coverage is evidence, not final term quality.
 
 ### spaCy, Not Verified
 
 Terms:
 
-`series of microcraters. The positioning (2x)`; `associated ridge which partly surrounds (2x)`;
-`their receptivity to superimposed coats (2x)`; `improving their ductility for stamping (2x)`;
-`roller surface. The resulting pattern (2x)`; `surrounds the crater. The dimensions (2x)`;
-`irradiated by an interrupted laser (2x)`; `reducing gas is directed obliquely (2x)`;
-`direction applied. In a subsequent (2x)`; `subsidiary beam to ensure complete (2x)`;
-`develops a series of microcraters (2x)`; `produce an associated ridge which (2x)`;
-`which partly surrounds the crater (2x)`; `complete adhesion with the roller (2x)`;
-`surface. The resulting pattern is (2x)`; `специализированных биочипах. Предложены набор олигонуклеотидов (2x)`;
-`типичных последовательностей ДНК различных инфекционных (2x)`; `semiconductor wafer-use polishing pad (2x)`;
-`machining method machines by cutting (2x)`; `non-water-soluble matrix containing (2x)`.
+`present invention (3x)`; `presente invention (5x)`; `electrically conductive material (2x)`; `interrupted laser beam (2x)`; `sheet metal mill (2x)`; `superimposed coats (2x)`; `complete adhesion (2x)`; `subsequent phase (2x)`; `roller surface (2x)`; `semiconductor wafer-use polishing pad (2x)`; Japanese terms for wafer polishing pads and machining tables; Chinese terms for ceramic liners and concrete construction-joint surfaces.
 
 Analysis:
 
-This mode is very noisy. It mostly returns long token n-grams, sentence fragments, and spans that
-cross clause or sentence boundaries. It is useful as a diagnostic baseline, but not as a standalone
-candidate extractor unless we use real spaCy language models or add a stricter post-selector.
+The non-verified terms are now often legitimate technical candidates rather than sentence-crossing
+fragments. Japanese, Chinese, and Russian still have lower verifier support, so many useful terms
+remain unverified. spaCy is now useful as a deterministic candidate extractor for chemistry/patents,
+but it still needs a selector/ranker to remove generic terms and prioritize translation-sensitive
+terminology.
 
 ## Qualitative Findings
 
@@ -344,9 +344,10 @@ mSPLADE helped identify salient Latin-script spans such as
 target languages here. It also produced occasional malformed spans such as
 `roller surface. The resulting pattern`.
 
-spaCy-only extraction with blank language tokenizers performed poorly. It filled the 20-term budget
-almost everywhere, but the output was nearly all unverified n-gram fragments and did not provide a
-useful chemistry/patent signal without trained spaCy models or a stronger selector.
+The refreshed spaCy-only run is no longer just a tokenizer baseline. It produced broad
+candidate coverage and substantial verifier evidence, especially for English and French. It still
+needs ranking because verifier-backed output includes generic words and the CJK/Russian verifier
+coverage remains weak.
 
 External verification improves evidence but does not solve term usefulness.
 Several low-value terms were verified because they exist in large terminology
@@ -372,7 +373,8 @@ Recommended next steps:
   final benchmark scoring.
 - Make CJK/Russian tokenization stricter for NLTK-like n-gram extraction or
   disable NLTK for those languages by default.
-- Treat blank-tokenizer spaCy as a diagnostic baseline unless trained spaCy models are installed.
+- Use spaCy as a deterministic candidate source when trained language models are available, but still
+  pass it through the selector/ranker before final benchmark scoring.
 - Treat verifier hits as supporting evidence, not as automatic acceptance.
 - Prefer top terms that are complete, domain-specific, source-target alignable,
   and translation-sensitive.
