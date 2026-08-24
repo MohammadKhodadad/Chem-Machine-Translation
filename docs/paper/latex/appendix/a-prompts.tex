@@ -1,0 +1,84 @@
+\appendix
+\section{Terminology prompts}
+
+This appendix records the prompt families implemented in
+\texttt{src/chem\_machine\_translation/data/terminology.py}. The wording should be kept synchronized
+with the implementation when prompt changes are made.
+
+\subsection{Chemistry candidate extractor}
+
+\begin{lstlisting}
+You extract terminology candidates from target reference translations for chemistry and patent
+machine-translation benchmarks.
+
+The text may be in any language. Return only exact spans that appear in the provided target text.
+Do not translate, normalize, rewrite, lemmatize, abbreviate, explain, or invent terms.
+
+Extract only terms that a domain translator should preserve consistently:
+- chemical names, compounds, materials, formulas, reagents, solvents, polymers, proteins;
+- technical processes, methods, assay/analytical terms, properties, hazards, identifiers;
+- compact numeric/unit expressions only when the quantity itself is technically meaningful.
+
+Reject common prose, boilerplate patent wording, whole clauses, sentence fragments, headings, dates,
+citations, names, and generic single words unless they are unambiguous domain terms.
+
+Return only valid JSON containing exact target text spans, category, confidence, and reason.
+\end{lstlisting}
+
+\subsection{Legal candidate extractor}
+
+\begin{lstlisting}
+You extract legal terminology candidates from target/reference translations for legal
+machine-translation benchmarks.
+
+The text may be in any language. Return only exact spans that appear in the provided target text.
+Do not translate, normalize, rewrite, lemmatize, abbreviate, explain, or invent terms.
+
+Extract legal instruments, institutions, committees, agencies, programmes, funds, named bodies,
+procedures, rights, obligations, restrictions, sanctions, remedies, legal effects, regulatory
+domains, named legal acts, and defined terms.
+
+Reject dates, article numbers alone, paragraph references alone, people names, signatures, whole
+clauses, sentence fragments, generic single words, ordinary administrative prose, and repeated
+treaty boilerplate unless the phrase is a recognized legal or institutional term.
+
+Return only valid JSON containing exact target text spans, category, confidence, and reason.
+\end{lstlisting}
+
+\subsection{Chemistry refiner}
+
+\begin{lstlisting}
+You are a terminology selector for chemistry and patent machine-translation evaluation.
+
+You receive target/reference text and a numbered list of candidate terms that were already extracted
+by other systems. Your job is to select only candidates that are useful benchmark terminology.
+
+Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
+candidate IDs. A selected term must be an exact span in the target/reference text.
+
+Keep complete, domain-specific, and translation-sensitive chemistry and patent terms. Reject or
+down-rank generic patent words, whole clauses, sentence fragments, broad prose, headings, citations,
+partial spans, and generic verified terms unless they are part of a stronger technical phrase.
+
+Return only valid JSON with candidate_id, target_term, category, quality_score, and reason.
+\end{lstlisting}
+
+\subsection{Legal refiner}
+
+\begin{lstlisting}
+You are a terminology selector for legal and regulatory machine-translation evaluation.
+
+You receive target/reference text and a numbered list of candidate terms that were already extracted
+by other systems. Your job is to select only candidates that are useful benchmark terminology.
+
+Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
+candidate IDs. A selected term must be an exact span in the target/reference text.
+
+Keep legal instruments, named legal acts, institutions, committees, agencies, programmes, funds,
+defined terms, procedures, obligations, rights, restrictions, legal effects, remedies, and regulatory
+or institutional multiword expressions whose mistranslation would matter. Reject generic legal words
+unless they are part of a complete official term, headings, article numbers, dates, table-of-contents
+text, boilerplate, partial spans, and verified single words that are not useful terminology.
+
+Return only valid JSON with candidate_id, target_term, category, quality_score, and reason.
+\end{lstlisting}

@@ -1,0 +1,23 @@
+\section{Ablation}
+
+This section is a placeholder. No final ablation study has been run yet.
+
+\subsection{Planned ablations}
+
+\begin{itemize}
+  \item Candidate extractors: LLM only, Stanza/UD only, XLM-R/NOBI only, spaCy only, and combined.
+  \item Verification sources: no external verification, chemistry-only verification, legal-only
+  verification, and all enabled verification.
+  \item Refiner: no refiner versus chemistry/legal LLM refiner.
+  \item Exact-span enforcement: parser with and without strict candidate-ID and exact-span
+  validation.
+  \item Source selection: hard length filtering versus preferred length with backfill.
+  \item Terminology groups during evaluation: verified only, refined only, refined verified, and all
+  candidate terms.
+\end{itemize}
+
+\subsection{Reporting requirements}
+
+Each ablation should report both standard translation metrics and terminology-specific metrics. For
+terminology, the minimum useful outputs are candidate count, refined count, verified refined count,
+and target-term coverage under the selected terminology group.

@@ -1,0 +1,165 @@
+\section{Methods}
+
+\subsection{Overview}
+
+The completed pipeline has two parts. First, we construct benchmark source-pair datasets for
+chemistry patent abstracts and legal/regulatory JRC-Acquis text. Second, we construct target-side
+terminology annotations for evaluating whether translations preserve domain-relevant terms. The
+terminology pipeline is deliberately conservative: large language models may propose or select terms,
+but final accepted terms must correspond to exact spans already present in the target/reference text.
+
+The current paper draft describes the implemented data and terminology methodology only. Translation
+model scoring and model ranking are not complete and should not be inferred from this section.
+
+\subsection{Benchmark source construction}
+
+\subsubsection{Google Patents chemistry abstracts}
+
+The Google Patents source is rebuilt from the Hugging Face dataset
+\texttt{BASF-AI/ai4chem-clir-google-patents-within-document-abstract-pairs}. The upstream dataset
+contains within-publication abstract pairs from the CLIR \texttt{google-patents-chem} corpus. Each
+row includes document metadata, a language pair, source and target language codes, source and target
+abstract text, and precomputed length statistics.
+
+We export a local benchmark source snapshot with
+\texttt{scripts/create\_google\_patents\_source\_pairs.py}. The exporter streams the Hugging Face
+dataset in its existing deterministic order, normalizes whitespace, and writes JSONL rows to
+\texttt{benchmark\_sources/google\_patents\_within\_document\_pairs\_250\_per\_language\_pair.jsonl}.
+The companion metadata file records row counts, language-pair counts, length-preference settings,
+and selection policy.
+
+The current source snapshot keeps 11 language directions with 250 rows each, for 2,750 rows total:
+\texttt{de-fr}, \texttt{en-de}, \texttt{en-es}, \texttt{en-fr}, \texttt{en-ja}, \texttt{en-ru},
+\texttt{en-zh}, \texttt{fr-es}, \texttt{fr-ja}, \texttt{fr-ru}, and \texttt{zh-fr}. Rows are
+selected with a length-preference policy. We prefer examples where both source and target contain
+128--384 approximate whitespace tokens according to the same \texttt{approximate\_token\_count()}
+function used by the benchmark builder. If a language pair does not have 250 rows satisfying both
+sides of the range, we backfill first from source-only matches, then target-only matches, and finally
+from remaining examples. Pairs that cannot reach 250 rows at all are omitted.
+
+This policy preserves balanced per-direction counts while still concentrating the source on the
+length range intended for model evaluation. The metadata records the final priority mix: 1,026 rows
+have both source and target in range, 1,230 have only source in range, 489 have only target in range,
+and 5 are final out-of-range backfill rows.
+
+\subsubsection{JRC-Acquis anchored legal sources}
+
+The JRC-Acquis source snapshots are built from OPUS JRC-Acquis v3.0 Moses aligned segment files using
+\texttt{scripts/create\_jrc\_acquis\_source\_pairs.py}. Unlike the original pairwise selection mode,
+the preferred anchored mode first selects document anchors shared across the requested language set
+and then emits all ordered language-pair rows for each anchor. This ensures that directions share the
+same underlying document anchors and that reverse rows are exact source/target swaps of the same
+aligned chunk.
+
+Two retained JRC source variants are available. The article-focused source contains 5,000 rows across
+20 ordered directions for English, Spanish, German, French, and Portuguese, with 250 rows per
+direction. It uses operative article/provision text. The definition-focused source has the same
+language and direction structure but emphasizes definition-heavy passages. Both variants use legacy
+markup cleanup and strict quality filtering. The article source has approximate source-token
+statistics of 251 minimum, 679 maximum, and 418.6 mean. The definition source has approximate
+source-token statistics of 246 minimum, 756 maximum, and 487.9 mean.
+
+\subsection{Benchmark dataset materialization}
+
+Source-pair snapshots are converted into benchmark direction folders by dataset builders. For Google
+Patents, \texttt{scripts/build\_google\_patents\_eval\_subset.py} reads source-pair JSONL rows,
+optionally adds synthetic reverse rows, filters by language and input length, and writes
+direction-specific \texttt{source.csv}, \texttt{target.csv}, and manifest JSONL files. For
+JRC-Acquis, \texttt{scripts/build\_jrc\_acquis\_eval\_subset.py} performs the analogous
+materialization for legal sources.
+
+The manifest rows preserve document IDs, direction metadata, source and target language codes,
+publication metadata where available, text fields, and optional terminology annotations. The source
+snapshots and builders are separated so that data selection is reproducible independently of
+terminology extraction or model evaluation.
+
+\subsection{Terminology candidate extraction}
+
+Terminology is extracted from the target/reference side of benchmark examples. This design makes the
+terminology annotations usable as reference-side evaluation targets: a model output is later assessed
+against terms that should appear in, or be semantically preserved relative to, the target reference.
+
+The implemented candidate extraction layer combines four active extractors:
+
+\begin{itemize}
+  \item a target-side LLM extractor for chemistry/patent text or legal text, depending on domain;
+  \item a Stanza/UD extractor that proposes syntactic spans from dependency parses;
+  \item an XLM-R/NOBI token-classification extractor for compact term spans;
+  \item a spaCy extractor that proposes named entities, noun chunks, and linguistically filtered
+  n-grams.
+\end{itemize}
+
+Earlier diagnostic NLTK n-gram and mSPLADE sparse-activation extractors were removed from the active
+pipeline because they were not part of the recommended final workflow.
+
+All LLM extraction prompts require exact target-text spans and prohibit translation, normalization,
+lemmatization, abbreviation, explanation, or invention. The parser validates returned spans against
+the original target/reference text, discarding terms that are not present. This makes the LLM a
+candidate-span proposer rather than a generator of unconstrained terminology.
+
+\subsection{Provenance merging}
+
+After extraction, candidates are deduplicated by normalized target-term key. When multiple extractors
+produce the same surface term, the system merges their provenance rather than keeping duplicate
+records. The \texttt{source} field records candidate origins, such as \texttt{llm\_target},
+\texttt{stanza\_ud\_ngram}, \texttt{xlmr\_nobi}, \texttt{spacy\_noun\_chunk}, or
+\texttt{spacy\_ngram}. External verification sources are also merged into the same record when they
+support the term.
+
+This provenance supports analysis of which extractor families contributed useful terms, which terms
+were independently supported by multiple sources, and which terms survived only as unverified but
+potentially domain-relevant candidates.
+
+\subsection{External verification}
+
+Candidate terms are checked against external evidence sources when the corresponding verifier is
+enabled. Chemistry-oriented verification can use PubChem, ChEBI, ChEMBL, MeSH, NCI Thesaurus,
+AGROVOC, Wikidata/Wikipedia, and IATE. Legal/regulatory verification can use IATE,
+Wikidata/Wikipedia, UNTERM, AGROVOC, and related terminology resources where applicable.
+
+Verification is not treated as a sufficient condition for final benchmark quality. Some verified
+terms are too generic for translation evaluation, such as broad words that appear in external
+terminology databases but do not represent a meaningful domain-specific challenge in context.
+Conversely, some good patent-specific phrases are not externally verified because public databases
+may not contain exact multiword phrases from a patent abstract. Verification is therefore evidence,
+not the final selection step.
+
+\subsection{LLM refinement}
+
+The final implemented precision layer is a domain-specific LLM refiner. Separate prompts are used for
+chemistry/patent text and JRC/legal text. The refiner receives the target/reference text and a
+numbered list of candidates already extracted by earlier systems. It is instructed to select only
+candidate IDs that represent useful benchmark terminology for translation evaluation.
+
+The refiner does not create new candidate strings. It may only select from existing IDs. The parser
+then enforces two constraints:
+
+\begin{enumerate}
+  \item the returned \texttt{candidate\_id} must exist in the candidate list;
+  \item the selected candidate term must still be an exact span in the target/reference text.
+\end{enumerate}
+
+Terms that violate either condition are discarded. This exact-span validation prevents hallucinated,
+rewritten, normalized, or translated terms from entering the benchmark terminology annotations.
+
+The chemistry refiner favors complete chemical names, materials, formulas, reagents, solvents,
+polymers, proteins, equipment, dosage forms, administration routes, disease names, analytical terms,
+technical processes, properties, hazards, identifiers, and meaningful numeric/unit expressions. It
+down-ranks generic patent words, broad prose, headings, citations, and partial spans.
+
+The legal refiner favors legal instruments, named legal acts, institutions, committees, agencies,
+programmes, funds, defined terms, procedures, obligations, rights, restrictions, legal effects,
+remedies, and regulatory or institutional multiword expressions. It down-ranks article numbers,
+dates, table-of-contents text, boilerplate, generic legal words outside complete official terms, and
+single words that are not useful terminology for translation evaluation.
+
+\subsection{Qualitative inspection and visualization}
+
+For four completed examples, we rendered target/reference text with three underline lanes: all
+extracted candidates, refined candidates, and refined candidates with external verification. These
+figures are used as qualitative debugging artifacts rather than final experimental results. They
+make visible how broad extraction is narrowed by the refiner and where verified terms remain too
+generic or where unverified domain phrases are still useful.
+
+The examples are included in the appendix as copied paper-local figures. They should not be
+interpreted as a complete evaluation of model performance.
