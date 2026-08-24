@@ -1,7 +1,34 @@
 # Benchmark Source Snapshots
 
-This folder tracks only the preferred anchored JRC-Acquis source-pair snapshots used to
-recreate benchmark datasets.
+This folder tracks portable source-pair snapshots used to recreate benchmark datasets.
+
+## Google Patents / Hugging Face
+
+The Google Patents source can be rebuilt from
+`BASF-AI/ai4chem-clir-google-patents-within-document-abstract-pairs`.
+That dataset contains within-publication chemistry patent abstract pairs from the CLIR
+`google-patents-chem` corpus.
+
+Create a 250-per-language-pair source snapshot:
+
+```powershell
+uv run --no-sync python scripts/create_google_patents_source_pairs.py `
+  --output-jsonl benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl `
+  --metadata-output benchmark_sources/google_patents_within_document_pairs_250_per_language_pair_metadata.json `
+  --limit-per-pair 250 `
+  --min-source-tokens 128 `
+  --max-source-tokens 384 `
+  --min-target-tokens 128 `
+  --max-target-tokens 384 `
+  --backfill-shortfalls `
+  --require-full-limit
+```
+
+The exporter streams the Hugging Face dataset in dataset order, keeps source/target text and
+metadata fields, filters to the benchmark input-length range using the same approximate token
+counter as `scripts/build_google_patents_eval_subset.py`, prefers rows where both sides are in
+range, then backfills each pair from lower-priority rows until the cap is reached. Sparse pairs that
+cannot reach the cap are omitted when `--require-full-limit` is set.
 
 ## JRC-Acquis / OPUS
 
