@@ -23,6 +23,46 @@ benchmark_datasets/jrc_acquis_anchored_articles_5_nltk_msplade_only_terms/
 benchmark_datasets/jrc_acquis_anchored_articles_5_spacy_only_terms/
 ```
 
+
+## Pipeline And Methods
+
+The JRC article terminology pipeline is target-side. The source builder starts from OPUS/JRC-Acquis
+aligned segments, selects documents available in all required languages, and expands each anchored
+chunk to every ordered language pair. The dataset builder then writes `source.csv`, `target.csv`, and
+manifest rows per direction.
+
+```text
+target/reference article chunk
+  -> candidate extractor mode
+  -> exact-span cleanup and duplicate merge
+  -> external verifier lookup
+  -> verified or non-verified manifest terms
+```
+
+Repeated anchored target chunks are deduplicated before extraction, so the same target-language chunk
+is reused across multiple source-language directions.
+
+Methods reviewed in this report:
+
+- **LLM legal extractor**: prompt-based legal/regulatory terminology extraction. It proposes coherent
+  legal phrases and institutional terms, then the verifier layer adds evidence.
+- **Stanza/UD**: deterministic Universal Dependencies extraction. It proposes noun-headed dependency
+  spans, relaxed content n-grams, and proper-name sequences. It has high recall but also returns legal
+  boilerplate, headings, and table-of-contents fragments.
+- **XLM-R/NOBI**: neural automatic term extraction using an XLM-R token-classification checkpoint with
+  NOBI labels for nested terms. It often finds compact named or domain terms, but it can return generic
+  single words.
+- **spaCy**: refreshed deterministic extraction using trained spaCy language models where available.
+  The spaCy pipeline combines trained entities, noun chunks, contiguous token spans, POS-based cleanup,
+  and compact noun-like n-gram ranking. It is evaluated as a separate spaCy-only run on the same rows.
+- **NLTK n-grams**: high-recall diagnostic n-gram extraction. It was evaluated, but it is too noisy for
+  final tables or figures.
+- **mSPLADE**: sparse-activation salience extraction. It was evaluated as a ranking/salience signal,
+  but it is not kept in the final tables or figures.
+
+The tables and figures below focus on the final comparison methods: LLM, Stanza/UD, XLM-R/NOBI, and
+spaCy.
+
 ## Dataset Summary
 
 This summary describes the first all-non-LLM run with Stanza/UD and XLM-R/NOBI.
@@ -41,8 +81,9 @@ Later sections review LLM-only, NLTK/mSPLADE-only, and spaCy-only runs on the sa
 
 ## Extractor Target Counts
 
-This table compares all extractor modes reviewed in the report. `Targets` counts records tagged with
-that extractor; the rows should be compared by extractor, not summed as one manifest.
+This table compares the final extractor methods kept in the report tables and figures. `Targets`
+counts records tagged with that extractor; the rows should be compared by extractor, not summed as
+one manifest.
 
 | Extractor | Targets | Verified | Unverified | Unique targets |
 | --- | ---: | ---: | ---: | ---: |
@@ -70,7 +111,7 @@ sample. They should be compared by extractor, not summed as one combined manifes
 | LLM | 1,628 | 661 | 16,461 | 39,312 |
 | spaCy | 2,000 | 712 | 13,562 | 38,165 |
 
-## English Sample Highlight Figure
+## English Sample Underline Figure
 
 The figure below uses one English target sample from the JRC anchored article run:
 `de-en:jrc21987A0207_06:chunk-0135` in direction `de-en`. The figure shows the target text once.
@@ -78,49 +119,6 @@ Colored underline lanes mark spans found by each extractor. Darker, thicker unde
 verified terms; lighter, thinner underlines indicate unverified terms.
 
 ![JRC English extractor highlights](figures/jrc-english-extractor-highlights.png)
-
-## Pipeline Explanation
-
-The JRC article benchmark starts from OPUS/JRC-Acquis aligned segments. The source builder selects
-documents available in all required languages and expands each anchored chunk to every ordered
-language pair. The dataset builder then writes `source.csv`, `target.csv`, and manifest rows per
-direction.
-
-Terminology is target-side. The candidate generator can be swapped by run:
-
-```text
-target/reference text
-  -> candidate extractor mode
-       (Stanza/UD + XLM-R/NOBI, LLM-only, NLTK/mSPLADE-only, or spaCy-only)
-  -> duplicate candidate merge
-  -> external verifier lookup
-  -> verified or non-verified manifest terms
-```
-
-Repeated anchored target chunks are deduplicated before extraction, so the same target-language chunk
-is reused across multiple source-language directions.
-
-## Method Explanations
-
-Stanza/UD is the broad deterministic extractor. It proposes noun-headed dependency spans, relaxed
-content n-grams, and proper-name sequences. It has high recall but produces the most legal
-boilerplate, heading fragments, and table-of-contents noise.
-
-XLM-R/NOBI is the neural extractor. It uses an XLM-R token-classification checkpoint with NOBI labels
-for nested automatic term extraction. It produces fewer candidates and often cleaner named entities,
-but it can still return generic single words.
-
-spaCy extraction was run separately as a deterministic candidate extractor. The refreshed run uses
-installed spaCy language models where available, combining trained entities, noun chunks, contiguous
-token spans, POS-based cleanup, and compact noun-like n-gram ranking.
-
-LLM extraction is a prompt-based legal terminology extractor. In the LLM-only run, the model was
-asked to extract exact target/reference spans, then the legal verifier layer was applied on top. This
-mode was run separately from Stanza/UD and XLM-R/NOBI so its candidates can be inspected directly.
-
-External verifiers add evidence to extracted candidates. Enabled sources were IATE,
-Wikipedia/Wikidata, UNTERM, PubChem, ChEBI, ChEMBL, MeSH, NCI Thesaurus, and AGROVOC. Verification is
-evidence, not automatic quality.
 
 ## Classes
 
@@ -155,6 +153,53 @@ Mode-level class counts for the separate runs:
 | LLM, not verified | 830 | 389 | 0 | 14 | 172 | 203 |
 | spaCy, verified | 836 | 270 | 1 | 24 | 167 | 78 |
 | spaCy, not verified | 1,164 | 444 | 0 | 16 | 291 | 137 |
+
+## Per-Document Target-Language Matrices
+
+Each cell is unverified/verified. Rows are the five anchored JRC article documents. Columns are target languages, not language pairs. Counts are summed across all rows in the sample that use that document and target language.
+
+### Stanza/UD
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 72/4 | 40/32 | 24/27 | 39/30 | 43/25 |
+| jrc21988A1031_02 | 37/3 | 69/6 | 71/3 | 65/7 | 50/4 |
+| jrc21991A0204_01 | 30/3 | 31/8 | 40/4 | 32/16 | 28/16 |
+| jrc21991A1231_02 | 70/0 | 64/8 | 53/13 | 77/3 | 72/2 |
+| jrc21999A0218_01 | 60/8 | 25/27 | 28/24 | 20/20 | 24/28 |
+
+### XLM-R/NOBI
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 8/4 | 4/12 | 0/19 | 0/15 | 0/16 |
+| jrc21988A1031_02 | 3/0 | 0/6 | 0/6 | 2/6 | 1/7 |
+| jrc21991A0204_01 | 24/20 | 4/37 | 4/32 | 0/36 | 8/28 |
+| jrc21991A1231_02 | 2/8 | 0/10 | 3/12 | 0/1 | 2/5 |
+| jrc21999A0218_01 | 12/8 | 0/36 | 0/44 | 0/52 | 0/40 |
+
+### LLM
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 41/35 | 39/36 | 9/51 | 18/40 | 13/47 |
+| jrc21988A1031_02 | 25/43 | 34/19 | 41/20 | 41/22 | 47/20 |
+| jrc21991A0204_01 | 41/35 | 33/47 | 45/35 | 28/52 | 22/57 |
+| jrc21991A1231_02 | 46/19 | 44/23 | 47/19 | 48/9 | 48/12 |
+| jrc21999A0218_01 | 12/28 | 14/37 | 33/28 | 25/35 | 36/29 |
+
+### spaCy
+
+| Document | de | en | es | fr | pt |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| jrc21987A0207_06 | 48/32 | 24/56 | 36/44 | 24/56 | 40/40 |
+| jrc21988A1031_02 | 70/10 | 35/45 | 45/35 | 45/35 | 55/25 |
+| jrc21991A0204_01 | 60/20 | 70/10 | 40/40 | 37/43 | 59/21 |
+| jrc21991A1231_02 | 62/18 | 54/26 | 58/22 | 27/53 | 62/18 |
+| jrc21999A0218_01 | 64/16 | 49/31 | 35/45 | 37/43 | 28/52 |
+
+
+## Detailed Extractor Samples And Findings
 
 ## Stanza Only, Verified
 
@@ -420,50 +465,6 @@ headings, document-structure spans, and some source-text artifacts such as `noti
 communication`. spaCy is now useful as a deterministic candidate source for JRC, but the final
 benchmark terminology still needs a selector/ranker to remove generic legal scaffolding, headings,
 and low-value institutional words.
-
-## Per-Document Target-Language Matrices
-
-Each cell is unverified/verified. Rows are the five anchored JRC article documents. Columns are target languages, not language pairs. Counts are summed across all rows in the sample that use that document and target language.
-
-### Stanza/UD
-
-| Document | de | en | es | fr | pt |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| jrc21987A0207_06 | 72/4 | 40/32 | 24/27 | 39/30 | 43/25 |
-| jrc21988A1031_02 | 37/3 | 69/6 | 71/3 | 65/7 | 50/4 |
-| jrc21991A0204_01 | 30/3 | 31/8 | 40/4 | 32/16 | 28/16 |
-| jrc21991A1231_02 | 70/0 | 64/8 | 53/13 | 77/3 | 72/2 |
-| jrc21999A0218_01 | 60/8 | 25/27 | 28/24 | 20/20 | 24/28 |
-
-### XLM-R/NOBI
-
-| Document | de | en | es | fr | pt |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| jrc21987A0207_06 | 8/4 | 4/12 | 0/19 | 0/15 | 0/16 |
-| jrc21988A1031_02 | 3/0 | 0/6 | 0/6 | 2/6 | 1/7 |
-| jrc21991A0204_01 | 24/20 | 4/37 | 4/32 | 0/36 | 8/28 |
-| jrc21991A1231_02 | 2/8 | 0/10 | 3/12 | 0/1 | 2/5 |
-| jrc21999A0218_01 | 12/8 | 0/36 | 0/44 | 0/52 | 0/40 |
-
-### LLM
-
-| Document | de | en | es | fr | pt |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| jrc21987A0207_06 | 41/35 | 39/36 | 9/51 | 18/40 | 13/47 |
-| jrc21988A1031_02 | 25/43 | 34/19 | 41/20 | 41/22 | 47/20 |
-| jrc21991A0204_01 | 41/35 | 33/47 | 45/35 | 28/52 | 22/57 |
-| jrc21991A1231_02 | 46/19 | 44/23 | 47/19 | 48/9 | 48/12 |
-| jrc21999A0218_01 | 12/28 | 14/37 | 33/28 | 25/35 | 36/29 |
-
-### spaCy
-
-| Document | de | en | es | fr | pt |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| jrc21987A0207_06 | 48/32 | 24/56 | 36/44 | 24/56 | 40/40 |
-| jrc21988A1031_02 | 70/10 | 35/45 | 45/35 | 45/35 | 55/25 |
-| jrc21991A0204_01 | 60/20 | 70/10 | 40/40 | 37/43 | 59/21 |
-| jrc21991A1231_02 | 62/18 | 54/26 | 58/22 | 27/53 | 62/18 |
-| jrc21999A0218_01 | 64/16 | 49/31 | 35/45 | 37/43 | 28/52 |
 
 ## Main Points
 

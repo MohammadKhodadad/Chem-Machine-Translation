@@ -21,6 +21,43 @@ out because the generic token counter undercounts Chinese text, so a supplementa
 `zh-fr`/`fr-zh` run with `--min-input-tokens 1` was merged into the analysis
 manifest.
 
+## Pipeline And Methods
+
+The Google Patents terminology pipeline is target-side. Each selected abstract is written to the
+benchmark dataset, candidate terms are extracted from the target/reference text, duplicate terms are
+merged with all extractor provenance tags, and verifier sources add evidence.
+
+```text
+target/reference abstract
+  -> candidate extractor mode
+  -> exact-span cleanup and duplicate merge
+  -> external verifier lookup
+  -> verified or non-verified manifest terms
+```
+
+Methods reviewed in this report:
+
+- **LLM target-span extractor**: prompt-based chemistry/patent terminology extraction. It produced
+  the best broad multilingual candidate quality, especially for Japanese, Russian, and Chinese terms
+  that deterministic tokenizers handled poorly.
+- **Stanza/UD**: deterministic Universal Dependencies extraction. It proposes noun-headed spans,
+  proper-name spans, and content n-grams. It is useful for recall but needs ranking because it can
+  keep broad or generic phrases.
+- **XLM-R/NOBI**: neural automatic term extraction using an XLM-R token-classification model with
+  NOBI-style labels. It often finds compact biomedical or chemical spans, but it can also return
+  generic single tokens.
+- **spaCy**: refreshed deterministic extraction using installed spaCy language models where
+  available. The spaCy pipeline combines trained entities, noun chunks, contiguous token spans,
+  POS-based cleanup, and compact noun-like n-gram ranking. It is evaluated as a separate spaCy-only
+  run on the same sampled rows.
+- **NLTK n-grams**: high-recall diagnostic n-gram extraction. It was evaluated, but it is too noisy
+  for final tables or figures.
+- **mSPLADE**: sparse-activation salience extraction. It was evaluated as a ranking/salience signal,
+  but it is not kept in the final tables or figures.
+
+The tables and figures below focus on the final comparison methods: LLM, Stanza/UD, XLM-R/NOBI, and
+spaCy.
+
 ## Build Settings
 
 The sample contains 5 examples from each available original language pair plus 5
@@ -73,7 +110,7 @@ Verifier hits:
 | ChEMBL | 91 |
 | ChEBI | 13 |
 
-Extractor provenance appearances in the all-candidate run:
+Extractor provenance appearances for the final comparison methods:
 
 | Extractor/source tag | Appearances |
 | --- | ---: |
@@ -123,7 +160,7 @@ quality. The spaCy row is from the separate refreshed spaCy-only run.
 | LLM | 265/164 | 230/133 | 82/52 | 69/40 | 152/6 | 107/0 | 91/36 |
 | spaCy | 374/226 | 252/348 | 168/32 | 114/86 | 200/0 | 200/0 | 164/6 |
 
-## English Sample Highlight Figure
+## English Sample Underline Figure
 
 The figure below uses one English target sample from the Google Patents run:
 `within-document:abstract:en-es:CL-2008000542-A1:reverse` in direction `es-en`.
@@ -151,6 +188,8 @@ used in the JRC terminology report.
 | LLM, not verified | 996 | 853 | 0 | 1 | 107 | 745 |
 | spaCy, verified | 698 | 582 | 1 | 3 | 78 | 500 |
 | spaCy, not verified | 1,472 | 1,297 | 0 | 1 | 130 | 1,166 |
+
+## Detailed Extractor Samples
 
 ### Stanza/UD, Verified
 
