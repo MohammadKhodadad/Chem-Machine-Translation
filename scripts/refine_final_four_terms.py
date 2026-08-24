@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -15,10 +16,10 @@ from chem_machine_translation.data.terminology import (
     deduplicate_terms,
 )
 
-
 ROOT = Path(__file__).resolve().parents[1]
 BENCHMARK_DIR = ROOT / "benchmark_datasets"
 OUTPUT_PATH = ROOT / "docs" / "final-four-extractor-refiner-results.json"
+RETIRED_SOURCE_TAGS = {"nltk_ngram", "msplade_sparse"}
 
 CASES = [
     {
@@ -116,10 +117,13 @@ def main() -> None:
     print(f"Wrote {OUTPUT_PATH}")
     for result in results:
         terms = ", ".join(term["target_terms"][0] for term in result["refined_terms"])
+        refined_status = (
+            f"{result['candidate_count']} refined terms "
+            f"({result['refined_verified_count']} verified): "
+        )
         print(
             f"Item {result['item']}: {result['refined_count']}/"
-            f"{result['candidate_count']} refined terms ({result['refined_verified_count']} verified): "
-            f"{terms}"
+            f"{refined_status}{terms}"
         )
 
 
@@ -149,7 +153,16 @@ def load_target_text(path: Path, index: int) -> str:
 
 
 def load_terms(raw_terms: list[dict[str, Any]]) -> list[DatasetTerminologyTerm]:
-    return [dataset_term_from_json(term) for term in raw_terms]
+    terms = []
+    for raw_term in raw_terms:
+        term = dataset_term_from_json(raw_term)
+        active_sources = [
+            source for source in term.source.split("+") if source not in RETIRED_SOURCE_TAGS
+        ]
+        if not active_sources:
+            continue
+        terms.append(replace(term, source="+".join(active_sources)))
+    return terms
 
 
 if __name__ == "__main__":

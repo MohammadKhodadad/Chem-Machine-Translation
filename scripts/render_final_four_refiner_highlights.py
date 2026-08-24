@@ -3,18 +3,16 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any
 
 from matplotlib import font_manager
 from PIL import Image, ImageDraw, ImageFont
+from refine_final_four_terms import CASES, OUTPUT_PATH, load_case_from_root, load_terms
 
 from chem_machine_translation.data.terminology import (
     DatasetTerminologyTerm,
     dataset_term_from_json,
     deduplicate_terms,
 )
-from refine_final_four_terms import CASES, OUTPUT_PATH, load_case_from_root, load_terms
-
 
 ROOT = Path(__file__).resolve().parents[1]
 FIGURE_DIR = ROOT / "docs" / "figures"

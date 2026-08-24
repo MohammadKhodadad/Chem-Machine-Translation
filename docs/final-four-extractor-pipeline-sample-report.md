@@ -134,7 +134,7 @@ coverage, but many verified terms are generic in this context: `treatment`, `com
 
 The refiner correctly favors the long chemical name, salt form, formulation terms, administration
 routes, and disease terms. It removes generic or boilerplate candidates like `claim`, `method`,
-`treatment`, `compound`, `form`, `anxiety`, and noisy NLTK spans that cross claim boundaries.
+`treatment`, `compound`, `form`, and `anxiety`.
 
 Could be better:
 

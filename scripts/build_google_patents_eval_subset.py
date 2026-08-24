@@ -11,7 +11,6 @@ from openai import OpenAI
 
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
 from chem_machine_translation.data.terminology import (
-    DEFAULT_MSPLADE_MODEL,
     DEFAULT_SPACY_MODEL,
     DatasetTerminologyGenerator,
 )
@@ -73,11 +72,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--use-nobi-extractor", action="store_true")
     parser.add_argument("--nobi-model", default="tthhanh/xlm-ate-nobi-en-nes")
-    parser.add_argument("--use-nltk-extractor", action="store_true")
     parser.add_argument("--use-spacy-extractor", action="store_true")
     parser.add_argument("--spacy-model", default=DEFAULT_SPACY_MODEL)
-    parser.add_argument("--use-msplade-extractor", action="store_true")
-    parser.add_argument("--msplade-model", default=DEFAULT_MSPLADE_MODEL)
     parser.add_argument("--iate-terminology", action="store_true")
     parser.add_argument("--wikidata-terminology", action="store_true")
     parser.add_argument("--wikipedia-terminology", action="store_true")
@@ -318,9 +314,7 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         or args.nci_terminology
         or args.agrovoc_terminology
         or args.use_nobi_extractor
-        or args.use_nltk_extractor
         or args.use_spacy_extractor
-        or args.use_msplade_extractor
     ):
         return None
     client = None
@@ -341,11 +335,8 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         use_stanza_extractor=args.use_stanza_extractor,
         use_nobi_extractor=args.use_nobi_extractor,
         nobi_model=args.nobi_model,
-        use_nltk_extractor=args.use_nltk_extractor,
         use_spacy_extractor=args.use_spacy_extractor,
         spacy_model=args.spacy_model,
-        use_msplade_extractor=args.use_msplade_extractor,
-        msplade_model=args.msplade_model,
         use_iate=args.iate_terminology,
         use_wikidata=args.wikidata_terminology or args.wikipedia_terminology,
         use_pubchem=args.pubchem_terminology,

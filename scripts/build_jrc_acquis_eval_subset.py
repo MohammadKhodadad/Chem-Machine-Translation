@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
 from chem_machine_translation.data.terminology import (
-    DEFAULT_MSPLADE_MODEL,
     DEFAULT_SPACY_MODEL,
     DatasetTerminologyGenerator,
     LegalTerminologyGenerator,
@@ -39,9 +38,6 @@ class StanzaTerminologyConfig:
     use_stanza_extractor: bool = True
     use_nobi_extractor: bool = False
     nobi_model: str = "tthhanh/xlm-ate-nobi-en-nes"
-    use_nltk_extractor: bool = False
-    use_msplade_extractor: bool = False
-    msplade_model: str = DEFAULT_MSPLADE_MODEL
     use_spacy_extractor: bool = False
     spacy_model: str = DEFAULT_SPACY_MODEL
     use_iate: bool = False
@@ -101,11 +97,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--use-nobi-extractor", action="store_true")
     parser.add_argument("--nobi-model", default="tthhanh/xlm-ate-nobi-en-nes")
-    parser.add_argument("--use-nltk-extractor", action="store_true")
     parser.add_argument("--use-spacy-extractor", action="store_true")
     parser.add_argument("--spacy-model", default=DEFAULT_SPACY_MODEL)
-    parser.add_argument("--use-msplade-extractor", action="store_true")
-    parser.add_argument("--msplade-model", default=DEFAULT_MSPLADE_MODEL)
     parser.add_argument("--stanza-terminology-max-terms", type=int, default=20)
     parser.add_argument("--stanza-terminology-cache", type=Path, default=None)
     parser.add_argument("--stanza-terminology-workers", type=int, default=1)
@@ -185,11 +178,8 @@ def build_stanza_generator(args: argparse.Namespace) -> DatasetTerminologyGenera
         use_stanza_extractor=args.use_stanza_extractor,
         use_nobi_extractor=args.use_nobi_extractor,
         nobi_model=args.nobi_model,
-        use_nltk_extractor=args.use_nltk_extractor,
         use_spacy_extractor=args.use_spacy_extractor,
         spacy_model=args.spacy_model,
-        use_msplade_extractor=args.use_msplade_extractor,
-        msplade_model=args.msplade_model,
         cache_path=args.stanza_terminology_cache,
     )
 
@@ -202,11 +192,8 @@ def build_stanza_config(args: argparse.Namespace) -> StanzaTerminologyConfig | N
         use_stanza_extractor=args.use_stanza_extractor,
         use_nobi_extractor=args.use_nobi_extractor,
         nobi_model=args.nobi_model,
-        use_nltk_extractor=args.use_nltk_extractor,
         use_spacy_extractor=args.use_spacy_extractor,
         spacy_model=args.spacy_model,
-        use_msplade_extractor=args.use_msplade_extractor,
-        msplade_model=args.msplade_model,
         use_iate=args.iate_terminology,
         use_wikidata=args.wikipedia_terminology,
         use_pubchem=args.pubchem_terminology,
@@ -473,11 +460,8 @@ def generate_stanza_terms_for_job(
         use_stanza_extractor=job.config.use_stanza_extractor,
         use_nobi_extractor=job.config.use_nobi_extractor,
         nobi_model=job.config.nobi_model,
-        use_nltk_extractor=job.config.use_nltk_extractor,
         use_spacy_extractor=job.config.use_spacy_extractor,
         spacy_model=job.config.spacy_model,
-        use_msplade_extractor=job.config.use_msplade_extractor,
-        msplade_model=job.config.msplade_model,
         use_iate=job.config.use_iate,
         use_wikidata=job.config.use_wikidata,
         use_pubchem=job.config.use_pubchem,

@@ -146,11 +146,8 @@ def test_build_stanza_config_includes_optional_extractors() -> None:
         use_stanza_extractor=False,
         use_nobi_extractor=True,
         nobi_model="test-nobi",
-        use_nltk_extractor=True,
         use_spacy_extractor=True,
         spacy_model="test-spacy",
-        use_msplade_extractor=True,
-        msplade_model="test-msplade",
         iate_terminology=False,
         wikipedia_terminology=False,
         pubchem_terminology=False,
@@ -167,11 +164,8 @@ def test_build_stanza_config_includes_optional_extractors() -> None:
     assert config is not None
     assert config.use_stanza_extractor is False
     assert config.use_nobi_extractor is True
-    assert config.use_nltk_extractor is True
     assert config.use_spacy_extractor is True
     assert config.spacy_model == "test-spacy"
-    assert config.use_msplade_extractor is True
-    assert config.msplade_model == "test-msplade"
 
 
 def test_generate_stanza_terms_for_job_passes_spacy_config() -> None:
