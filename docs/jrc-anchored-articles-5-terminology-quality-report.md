@@ -15,7 +15,19 @@ Combined manifest:
 benchmark_datasets/jrc_acquis_anchored_articles_5_all_non_llm_terms/jrc-acquis-20-directions-100-manifest.jsonl
 ```
 
+Additional mode-specific runs reviewed in this report:
+
+```text
+benchmark_datasets/jrc_acquis_anchored_articles_5_llm_terms/
+benchmark_datasets/jrc_acquis_anchored_articles_5_nltk_msplade_only_terms/
+benchmark_datasets/jrc_acquis_anchored_articles_5_spacy_only_terms/
+```
+
 ## Dataset Summary
+
+This summary describes the first all-non-LLM run with Stanza/UD and XLM-R/NOBI.
+Later sections review LLM-only, NLTK/mSPLADE-only, and spaCy-only runs on the same
+5-row-per-direction JRC article sample.
 
 - Rows: 100.
 - Directions: 20.
@@ -27,6 +39,18 @@ benchmark_datasets/jrc_acquis_anchored_articles_5_all_non_llm_terms/jrc-acquis-2
 - Target terms appearing exactly in target/reference text: 1,919 of 1,919.
 - Records with populated `source_term`: 0 of 1,919.
 
+## Extractor Target Counts
+
+This table compares all extractor modes reviewed in the report. `Targets` counts records tagged with
+that extractor; the rows should be compared by extractor, not summed as one manifest.
+
+| Extractor | Targets | Verified | Unverified | Unique targets |
+| --- | ---: | ---: | ---: | ---: |
+| Stanza/UD | 1,485 | 321 | 1,164 | 656 |
+| XLM-R/NOBI | 537 | 460 | 77 | 151 |
+| LLM | 1,628 | 798 | 830 | 661 |
+| spaCy | 2,000 | 836 | 1,164 | 712 |
+
 ## Weighted Extracted-Text Length
 
 This measures how much extracted terminology text each extractor contributes. For each extractor,
@@ -36,21 +60,22 @@ the weighted character sum is calculated as:
 sum(length of extracted target term * number of times extracted)
 ```
 
+Rows in this table come from comparable mode-specific runs on the same 5-row-per-direction article
+sample. They should be compared by extractor, not summed as one combined manifest.
+
 | Extractor | Matches | Unique terms | Unique character sum | Weighted character sum |
 | --- | ---: | ---: | ---: | ---: |
 | Stanza/UD | 1,485 | 656 | 16,724 | 36,833 |
 | XLM-R/NOBI | 537 | 151 | 2,674 | 9,580 |
 | LLM | 1,628 | 661 | 16,461 | 39,312 |
-| NLTK | 2,000 | 875 | 37,976 | 93,289 |
-| mSPLADE | 94 | 41 | 1,802 | 4,468 |
 | spaCy | 2,000 | 712 | 13,562 | 38,165 |
 
 ## English Sample Highlight Figure
 
 The figure below uses one English target sample from the JRC anchored article run:
-`de-en:jrc21987A0207_06:chunk-0135` in direction `de-en`. Each row repeats the same target text.
-Highlighted words are covered by terms extracted by that specific extractor. Darker highlights
-indicate verified terms; lighter highlights indicate unverified terms.
+`de-en:jrc21987A0207_06:chunk-0135` in direction `de-en`. The figure shows the target text once.
+Colored underline lanes mark spans found by each extractor. Darker, thicker underlines indicate
+verified terms; lighter, thinner underlines indicate unverified terms.
 
 ![JRC English extractor highlights](figures/jrc-english-extractor-highlights.png)
 
@@ -61,12 +86,12 @@ documents available in all required languages and expands each anchored chunk to
 language pair. The dataset builder then writes `source.csv`, `target.csv`, and manifest rows per
 direction.
 
-Terminology is target-side:
+Terminology is target-side. The candidate generator can be swapped by run:
 
 ```text
 target/reference text
-  -> Stanza/UD candidates
-  -> XLM-R/NOBI candidates
+  -> candidate extractor mode
+       (Stanza/UD + XLM-R/NOBI, LLM-only, NLTK/mSPLADE-only, or spaCy-only)
   -> duplicate candidate merge
   -> external verifier lookup
   -> verified or non-verified manifest terms
@@ -99,7 +124,8 @@ evidence, not automatic quality.
 
 ## Classes
 
-Terms are split into six classes:
+For the first all-non-LLM run, terms are split into six Stanza/NOBI provenance
+classes:
 
 - `stanza_only + verified`
 - `stanza_only + not_verified`
@@ -108,8 +134,9 @@ Terms are split into six classes:
 - `both + verified`
 - `both + not_verified`
 
-The compact table below gives record counts, unique-term counts, and frequency ranges. The term lists
-after it show up to 100 extracted terms per class, ordered by frequency.
+The compact table below gives record counts, unique-term counts, and frequency ranges for the
+Stanza/NOBI run only. The term lists after it show up to 100 extracted terms per class, ordered by
+frequency.
 
 | Class | Records | Unique terms | 10+ repeats | 5-9 repeats | 2-4 repeats | 1 repeat |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -119,6 +146,15 @@ after it show up to 100 extracted terms per class, ordered by frequency.
 | NOBI only, not verified | 58 | 20 | 0 | 0 | 15 | 5 |
 | Stanza + NOBI, verified | 84 | 25 | 0 | 0 | 21 | 4 |
 | Stanza + NOBI, not verified | 19 | 6 | 0 | 0 | 5 | 1 |
+
+Mode-level class counts for the separate runs:
+
+| Class | Records | Unique terms | 10+ repeats | 5-9 repeats | 2-4 repeats | 1 repeat |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| LLM, verified | 798 | 272 | 2 | 14 | 174 | 82 |
+| LLM, not verified | 830 | 389 | 0 | 14 | 172 | 203 |
+| spaCy, verified | 836 | 270 | 1 | 24 | 167 | 78 |
+| spaCy, not verified | 1,164 | 444 | 0 | 16 | 291 | 137 |
 
 ## Stanza Only, Verified
 
@@ -302,11 +338,6 @@ Article-mode summary:
 - Independent mSPLADE-only records after deduplication: 0, because all mSPLADE spans merged with
   matching `nltk_ngram` spans.
 
-Definition-mode check:
-
-- `msplade_sparse` merged records: 51.
-- Verified definition records from the NLTK/mSPLADE run: 20, from IATE and AGROVOC.
-
 Representative mSPLADE-tagged article terms:
 
 `this Additional Protocol shall enter`; `Additional Protocol shall enter into`;
@@ -351,8 +382,8 @@ Article-mode summary:
 - Total spaCy records: 2,000.
 - Verified spaCy records: 836.
 - Non-verified spaCy records: 1,164.
-- Unique verified spaCy terms: 258.
-- Unique non-verified spaCy terms: 442.
+- Unique verified spaCy terms: 270.
+- Unique non-verified spaCy terms: 444.
 - Source tags: `spacy_ngram` 1,715; `spacy_noun_chunk` 1,517; `spacy_entity` 1,025.
 - Verifier hits: IATE 736; AGROVOC 491; MeSH 118; NCI 77; ChEMBL 18; Wikipedia 16; PubChem 7.
 
@@ -366,7 +397,7 @@ Cells are `unverified/verified` counts:
 
 Terms:
 
-`Partes (16x)`; `Article (12x)`; `Protocolo (9x)`; `Member States (8x)`; `Partes Contratantes (8x)`; `Conseil de l'Europe (8x)`; `Xenofobia (8x)`; `ECRI (8x)`; `European Economic Community (4x)`; `Contracting Parties (4x)`; `Additional Protocol (4x)`; `Secretary-General (4x)`; `necessary measures (4x)`; `International Jute Council (4x)`; `Council Regulation (4x)`; `Comunidad Economica Europea (4x)`; `Comunidade Economica Europeia (4x)`; `European Commission (4x)`; `calculated level (6x)`; `nivel calculado (5x)`.
+`Partes (16x)`; `Article (12x)`; `Protocolo (9x)`; `Member States (8x)`; `Partes Contratantes (8x)`; `Conseil de l'Europe (8x)`; `Xenofobia (8x)`; `ECRI (8x)`; `European Economic Community (4x)`; `Contracting Parties (4x)`; `Additional Protocol (4x)`; `Secretary-General (4x)`; `necessary measures (4x)`; `International Jute Council (4x)`; `Council Regulation (4x)`; `Comunidad Económica Europea (4x)`; `Comunidade Económica Europeia (4x)`; `European Commission (4x)`; `calculated level (6x)`; `nivel calculado (5x)`.
 
 Analysis:
 
@@ -380,7 +411,7 @@ should support ranking but should not automatically define final benchmark termi
 
 Terms:
 
-`basic domestic needs (6x)`; `besoins interieurs fondamentaux (6x)`; `Partes presentes (6x)`; `sustancias controladas (5x)`; `presente articulo (5x)`; `presente artigo (5x)`; `anwesenden und abstimmenden Vertragsparteien (5x)`; `geregelten Stoffen (5x)`; `Blood-grouping Reagents (4x)`; `International Jute Organization (4x)`; `Jute Products (4x)`; `European Monitoring Centre on Racism (4x)`; `Centre's Management Board (4x)`; `Racism and Intolerance (4x)`; `European Agreement (4x)`; `day of the month (4x)`; `notification o communication (4x)`; `CHAPTER IV INTERNATIONAL JUTE COUNCIL (4x)`; `CHAPTER III ORGANIZATION (4x)`.
+`basic domestic needs (6x)`; `besoins intérieurs fondamentaux (6x)`; `Partes presentes (6x)`; `sustancias controladas (5x)`; `presente artículo (5x)`; `presente artigo (5x)`; `anwesenden und abstimmenden Vertragsparteien (5x)`; `geregelten Stoffen (5x)`; `Blood-grouping Reagents (4x)`; `International Jute Organization (4x)`; `Jute Products (4x)`; `European Monitoring Centre on Racism (4x)`; `Centre's Management Board (4x)`; `Racism and Intolerance (4x)`; `European Agreement (4x)`; `day of the month (4x)`; `notification o communication (4x)`; `CHAPTER IV INTERNATIONAL JUTE COUNCIL (4x)`; `CHAPTER III ORGANIZATION (4x)`.
 
 Analysis:
 
@@ -424,26 +455,6 @@ Each cell is unverified/verified. Rows are the five anchored JRC article documen
 | jrc21991A1231_02 | 46/19 | 44/23 | 47/19 | 48/9 | 48/12 |
 | jrc21999A0218_01 | 12/28 | 14/37 | 33/28 | 25/35 | 36/29 |
 
-### NLTK
-
-| Document | de | en | es | fr | pt |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| jrc21987A0207_06 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
-| jrc21988A1031_02 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
-| jrc21991A0204_01 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
-| jrc21991A1231_02 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
-| jrc21999A0218_01 | 80/0 | 80/0 | 80/0 | 80/0 | 80/0 |
-
-### mSPLADE
-
-| Document | de | en | es | fr | pt |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| jrc21987A0207_06 | 0/0 | 15/0 | 0/0 | 0/0 | 0/0 |
-| jrc21988A1031_02 | 0/0 | 6/0 | 1/0 | 4/0 | 1/0 |
-| jrc21991A0204_01 | 0/0 | 12/0 | 4/0 | 8/0 | 12/0 |
-| jrc21991A1231_02 | 0/0 | 6/0 | 9/0 | 3/0 | 6/0 |
-| jrc21999A0218_01 | 0/0 | 4/0 | 0/0 | 3/0 | 0/0 |
-
 ### spaCy
 
 | Document | de | en | es | fr | pt |
@@ -456,7 +467,7 @@ Each cell is unverified/verified. Rows are the five anchored JRC article documen
 
 ## Main Points
 
-1. The best class is `Stanza + NOBI, verified`.
+1. The strongest deterministic precision class is `Stanza + NOBI, verified`.
 2. The worst large class is `Stanza only, not verified`.
 3. `NOBI only, verified` is useful but needs generic single-word filtering.
 4. `Stanza + NOBI, not verified` is small and worth manual review.

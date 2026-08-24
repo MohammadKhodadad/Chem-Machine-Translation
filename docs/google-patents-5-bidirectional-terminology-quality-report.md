@@ -12,6 +12,10 @@ Generated analysis manifest:
 
 - `benchmark_datasets/google_patents_5_bidirectional_all_candidate_terms/google-patents-22-directions-110-analysis-manifest.jsonl`
 
+The report also includes a separate refreshed spaCy-only run:
+
+- `benchmark_datasets/google_patents_5_bidirectional_spacy_only_terms/google-patents-22-directions-110-spacy-analysis-manifest.jsonl`
+
 The primary build produced 20 directions. The `zh-fr` pair was initially filtered
 out because the generic token counter undercounts Chinese text, so a supplemental
 `zh-fr`/`fr-zh` run with `--min-input-tokens 1` was merged into the analysis
@@ -31,7 +35,7 @@ synthetic reverse examples for each pair.
 - Source token range: 1 to 354, mean 124.2. The minimum is a tokenization artifact
   for CJK text, not necessarily a genuinely one-token abstract.
 
-Candidate extractors enabled:
+Candidate extractors in the all-candidate run:
 
 - LLM target-span extractor.
 - Stanza/Universal Dependencies.
@@ -39,12 +43,17 @@ Candidate extractors enabled:
 - NLTK n-gram extractor.
 - mSPLADE sparse-activation extractor.
 
+spaCy was run separately as a spaCy-only comparison using the same sampled rows.
+
 Verifier sources enabled:
 
 - IATE, Wikipedia/Wikidata, PubChem, ChEBI, ChEMBL, MeSH, NCI Thesaurus, and
   AGROVOC.
 
 ## Overall Counts
+
+The first counts below describe the all-candidate analysis manifest, before the
+separate refreshed spaCy-only comparison is added later in the report.
 
 - Total terminology entries: 2,200.
 - Verified entries: 605.
@@ -64,26 +73,25 @@ Verifier hits:
 | ChEMBL | 91 |
 | ChEBI | 13 |
 
-Extractor provenance appearances:
+Extractor provenance appearances in the all-candidate run:
 
 | Extractor/source tag | Appearances |
 | --- | ---: |
 | `llm_target` | 1,427 |
-| `nltk_ngram` | 494 |
 | `xlmr_nobi` | 441 |
 | `stanza_ud_dependency` | 155 |
 | `stanza_ud_ngram` | 147 |
-| `msplade_sparse` | 162 |
 
-Extractor target counts:
+Extractor target counts across comparison runs:
+
+The spaCy row comes from the separate spaCy-only manifest. It is included for
+comparison, so this table should be read by extractor, not as one summed manifest.
 
 | Extractor | Targets | Verified | Unverified | Unique targets |
 | --- | ---: | ---: | ---: | ---: |
 | Stanza/UD | 194 | 38 | 156 | 180 |
 | XLM-R/NOBI | 441 | 280 | 161 | 395 |
 | LLM | 1,427 | 431 | 996 | 1,256 |
-| NLTK | 494 | 1 | 493 | 459 |
-| mSPLADE | 162 | 37 | 125 | 156 |
 | spaCy | 2,170 | 698 | 1,472 | 1,877 |
 
 Weighted extracted-text length:
@@ -100,40 +108,38 @@ sum(length of extracted target term * number of times extracted)
 | Stanza/UD | 194 | 180 | 2,979 | 3,260 |
 | XLM-R/NOBI | 441 | 395 | 4,844 | 5,261 |
 | LLM | 1,427 | 1,256 | 19,446 | 21,298 |
-| NLTK | 494 | 459 | 19,864 | 22,330 |
-| mSPLADE | 162 | 156 | 3,453 | 3,616 |
 | spaCy | 2,170 | 1,877 | 28,513 | 31,790 |
 
 ## Method-Language Matrix
 
 Cells are `unverified/verified` terminology counts. A verified term can still be
 generic or low-value, so this table measures evidence coverage, not final term
-quality.
+quality. The spaCy row is from the separate refreshed spaCy-only run.
 
 | Method | en | fr | de | es | ja | ru | zh |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Stanza/UD | 136/35 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 | 20/3 |
 | XLM-R/NOBI | 50/108 | 51/108 | 12/31 | 14/31 | 0/0 | 31/0 | 3/2 |
 | LLM | 265/164 | 230/133 | 82/52 | 69/40 | 152/6 | 107/0 | 91/36 |
-| NLTK | 68/0 | 134/1 | 52/0 | 64/0 | 42/0 | 76/0 | 57/0 |
-| mSPLADE | 74/24 | 27/10 | 9/0 | 15/3 | 0/0 | 0/0 | 0/0 |
 | spaCy | 374/226 | 252/348 | 168/32 | 114/86 | 200/0 | 200/0 | 164/6 |
 
 ## English Sample Highlight Figure
 
 The figure below uses one English target sample from the Google Patents run:
 `within-document:abstract:en-es:CL-2008000542-A1:reverse` in direction `es-en`.
-Each row repeats the same target text. Highlighted words are covered by terms extracted by that
-specific extractor. Darker highlights indicate verified terms; lighter highlights indicate
-unverified terms.
+The figure shows the target text once. Colored underline lanes mark spans found by each extractor.
+Darker, thicker underlines indicate verified terms; lighter, thinner underlines indicate unverified
+terms.
 
 ![Google Patents English extractor highlights](figures/google-patents-english-extractor-highlights.png)
 
 ## Extractor Classes
 
-The compact table gives record counts, unique-term counts, and frequency ranges. The term lists
-after it show up to 25 verified and 25 unverified sample terms per extractor, ordered by
-frequency, matching the compact structure used in the JRC terminology report.
+The compact table gives record counts, unique-term counts, and frequency ranges by extractor class.
+The Stanza/UD, XLM-R/NOBI, and LLM rows come from the all-candidate run. The spaCy
+rows come from the separate refreshed spaCy-only run. The term lists after it show up to 25 verified
+and 25 unverified sample terms per extractor, ordered by frequency, matching the compact structure
+used in the JRC terminology report.
 
 | Class | Records | Unique terms | 10+ repeats | 5-9 repeats | 2-4 repeats | 1 repeat |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -143,10 +149,8 @@ frequency, matching the compact structure used in the JRC terminology report.
 | XLM-R/NOBI, not verified | 161 | 151 | 0 | 0 | 10 | 141 |
 | LLM, verified | 431 | 404 | 0 | 0 | 25 | 379 |
 | LLM, not verified | 996 | 853 | 0 | 1 | 107 | 745 |
-| NLTK, verified | 1 | 1 | 0 | 0 | 0 | 1 |
-| NLTK, not verified | 493 | 458 | 0 | 0 | 29 | 429 |
-| mSPLADE, verified | 37 | 36 | 0 | 0 | 1 | 35 |
-| mSPLADE, not verified | 125 | 120 | 0 | 0 | 5 | 115 |
+| spaCy, verified | 698 | 582 | 1 | 3 | 78 | 500 |
+| spaCy, not verified | 1,472 | 1,297 | 0 | 1 | 130 | 1,166 |
 
 ### Stanza/UD, Verified
 
@@ -266,8 +270,8 @@ spaCy-only summary:
 - Total terminology records: 2,170.
 - Verified records: 698.
 - Non-verified records: 1,472.
-- Unique verified terms: 577.
-- Unique non-verified terms: 1,296.
+- Unique verified terms: 582.
+- Unique non-verified terms: 1,297.
 - Source tags: `spacy_ngram` 1,991; `spacy_noun_chunk` 1,428; `spacy_entity` 228.
 - Verifier hits: IATE 593; AGROVOC 484; MeSH 209; NCI 171; ChEMBL 89; PubChem 68; Wikipedia 15; ChEBI 6.
 
@@ -281,7 +285,7 @@ Cells are `unverified/verified` counts:
 
 Terms:
 
-`surface (10x)`; `production (5x)`; `passage (5x)`; `temperature (5x)`; `traitement (4x)`; `procede (4x)`; `temperature (4x)`; `method (4x)`; `surface roughness (2x)`; `alkaline earth metal (2x)`; `laser beam (2x)`; `biologie moleculaire (2x)`; `medecine veterinaire (2x)`; `Candida utilis (2x)`; `Escherichia (2x)`; `SiO (2x)`; `carbonate (2x)`; `machining (2x)`; `virus (2x)`; `fluorescence (2x)`.
+`surface (10x)`; `production (5x)`; `passage (5x)`; `temperature (5x)`; `traitement (4x)`; `procédé (4x)`; `température (4x)`; `method (4x)`; `surface roughness (2x)`; `alkaline earth metal (2x)`; `laser beam (2x)`; `biologie moléculaire (2x)`; `médecine vétérinaire (2x)`; `Candida utilis (2x)`; `Escherichia (2x)`; `SiO (2x)`; `carbonate (2x)`; `machining (2x)`; `virus (2x)`; `fluorescence (2x)`.
 
 Analysis:
 
@@ -295,7 +299,7 @@ coverage is evidence, not final term quality.
 
 Terms:
 
-`present invention (3x)`; `presente invention (5x)`; `electrically conductive material (2x)`; `interrupted laser beam (2x)`; `sheet metal mill (2x)`; `superimposed coats (2x)`; `complete adhesion (2x)`; `subsequent phase (2x)`; `roller surface (2x)`; `semiconductor wafer-use polishing pad (2x)`; Japanese terms for wafer polishing pads and machining tables; Chinese terms for ceramic liners and concrete construction-joint surfaces.
+`présente invention (5x)`; `present invention (3x)`; `electrically conductive material (2x)`; `interrupted laser beam (2x)`; `sheet metal mill (2x)`; `superimposed coats (2x)`; `complete adhesion (2x)`; `subsequent phase (2x)`; `roller surface (2x)`; `semiconductor wafer-use polishing pad (2x)`; `ウェハ用研磨パッド (4x)`; `加工テーブル (4x)`; `半導体ウェハ (4x)`; `SiO固体 (2x)`; `硬質炭素薄膜 (2x)`; `耐磨陶瓷衬套 (1x)`; `砼施工缝表面 (1x)`.
 
 Analysis:
 
@@ -307,11 +311,10 @@ terminology.
 
 ## Qualitative Findings
 
-The dataset itself is useful for translation evaluation because the rows are
-technical patent abstracts and the synthetic reverse rows are exact text swaps.
-It is weaker than JRC anchored mode for controlled multilingual comparison,
-because the data is pairwise within-document rather than one shared multilingual
-document/chunk across every language.
+The dataset itself is useful for translation evaluation because the rows are technical patent
+abstracts and the synthetic reverse rows are exact text swaps. It is weaker than JRC anchored mode
+for controlled multilingual comparison because the data is pairwise within-document, not one shared
+multilingual document/chunk across every language.
 
 The best terms mostly came from the LLM extractor, especially for Japanese,
 Russian, and Chinese. Examples include `半導体ウェハ用研磨パッド`,
@@ -344,7 +347,7 @@ mSPLADE helped identify salient Latin-script spans such as
 target languages here. It also produced occasional malformed spans such as
 `roller surface. The resulting pattern`.
 
-The refreshed spaCy-only run is no longer just a tokenizer baseline. It produced broad
+The refreshed spaCy-only run is useful as another deterministic candidate source. It produced broad
 candidate coverage and substantial verifier evidence, especially for English and French. It still
 needs ranking because verifier-backed output includes generic words and the CJK/Russian verifier
 coverage remains weak.
