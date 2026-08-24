@@ -236,6 +236,73 @@ Return only valid JSON with this shape:
 }
 """
 
+CHEMISTRY_TERM_REFINER_SYSTEM_PROMPT = """You are a terminology selector for chemistry and patent
+machine-translation evaluation.
+
+You receive target/reference text and a numbered list of candidate terms that were already extracted
+by other systems. Your job is to select only candidates that are useful benchmark terminology.
+
+Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
+candidate IDs. A selected term must be an exact span in the target/reference text.
+
+Keep candidates when they are complete, domain-specific, and translation-sensitive:
+- chemical names, compounds, materials, formulas, reagents, solvents, polymers, proteins;
+- equipment, devices, dosage forms, administration routes, disease names, assay/analytical terms;
+- technical processes, properties, hazards, identifiers, and meaningful numeric/unit expressions.
+
+Reject or down-rank:
+- generic patent words such as method, claim, compound, form, treatment, surface, and invention;
+- whole clauses, sentence fragments, broad prose, headings, citations, and partial spans;
+- generic verified terms unless they are part of a stronger technical phrase.
+
+Return only valid JSON with this shape:
+{
+  "terms": [
+    {
+      "candidate_id": 0,
+      "target_term": "exact candidate text",
+      "category": "chemical|material|formulation|process|method|property|unit|identifier|hazard|biological|equipment|disease|other",
+      "quality_score": 0.0,
+      "reason": "short reason"
+    }
+  ]
+}
+"""
+
+LEGAL_TERM_REFINER_SYSTEM_PROMPT = """You are a terminology selector for legal and regulatory
+machine-translation evaluation.
+
+You receive target/reference text and a numbered list of candidate terms that were already extracted
+by other systems. Your job is to select only candidates that are useful benchmark terminology.
+
+Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
+candidate IDs. A selected term must be an exact span in the target/reference text.
+
+Keep candidates when they are complete, domain-specific, and translation-sensitive:
+- legal instruments, named legal acts, institutions, committees, agencies, programmes, and funds;
+- defined terms, procedures, obligations, rights, restrictions, legal effects, and remedies;
+- regulatory or institutional multiword expressions whose mistranslation would matter.
+
+Reject or down-rank:
+- generic legal words such as Article, Agreement, State, Community, Council, notification, and party
+  unless they are part of a complete official term;
+- headings, article numbers, dates, citations, table-of-contents text, boilerplate, and partial spans;
+- verified single words that are not useful terminology for translation evaluation.
+
+Return only valid JSON with this shape:
+{
+  "terms": [
+    {
+      "candidate_id": 0,
+      "target_term": "exact candidate text",
+      "category": "institution|legal_act|defined_term|procedure|legal_effect|right|obligation|restriction|sanction|remedy|policy|regulatory_domain|programme|fund|other",
+      "quality_score": 0.0,
+      "reason": "short reason"
+    }
+  ]
+}
+"""
+
 
 @dataclass(frozen=True)
 class DatasetTerminologyTerm:
@@ -562,6 +629,47 @@ class LLMLegalCandidateExtractor:
             ],
         )
         return parse_llm_legal_candidates(response.output_text, text)
+
+
+class LLMTerminologyRefiner:
+    """Uses an LLM to select useful terms from existing exact-span candidates."""
+
+    def __init__(self, client: Any, model: str = "gpt-4.1-mini") -> None:
+        self.client = client
+        self.model = model
+
+    def refine(
+        self,
+        text: str,
+        target_language: str,
+        candidates: list[DatasetTerminologyTerm],
+        domain: str,
+        max_terms: int,
+    ) -> list[DatasetTerminologyTerm]:
+        prompt, source_tag = refiner_prompt_and_source(domain)
+        candidate_payload = llm_refiner_candidate_payload(candidates)
+        response = self.client.responses.create(
+            model=self.model,
+            temperature=0.0,
+            input=[
+                {"role": "system", "content": prompt},
+                {
+                    "role": "user",
+                    "content": (
+                        f"Select up to {max_terms} final benchmark terms for this "
+                        f"{target_language} target/reference text.\n\n"
+                        f"Target text:\n{text}\n\n"
+                        f"Candidates:\n{json.dumps(candidate_payload, ensure_ascii=False)}"
+                    ),
+                },
+            ],
+        )
+        return parse_llm_refined_terms(
+            response.output_text,
+            reference_text=text,
+            candidates=candidates,
+            source_tag=source_tag,
+        )[:max_terms]
 
 
 class UNTERMClient:
@@ -1496,6 +1604,86 @@ def parse_llm_legal_candidates(text: str, reference_text: str) -> list[DatasetTe
             )
         )
     return terms
+
+
+def refiner_prompt_and_source(domain: str) -> tuple[str, str]:
+    normalized = domain.strip().casefold()
+    if normalized in {"jrc", "legal", "law", "regulatory"}:
+        return LEGAL_TERM_REFINER_SYSTEM_PROMPT, "llm_refiner_jrc"
+    if normalized in {"chem", "chemistry", "patent", "patents", "google_patents"}:
+        return CHEMISTRY_TERM_REFINER_SYSTEM_PROMPT, "llm_refiner_chem"
+    raise ValueError(f"Unknown terminology refiner domain: {domain}")
+
+
+def llm_refiner_candidate_payload(candidates: list[DatasetTerminologyTerm]) -> list[dict[str, Any]]:
+    payload = []
+    for index, candidate in enumerate(candidates):
+        target_term = candidate.target_terms[0] if candidate.target_terms else ""
+        if not target_term:
+            continue
+        payload.append(
+            {
+                "candidate_id": index,
+                "target_term": target_term,
+                "category": candidate.category,
+                "source": candidate.source,
+                "verified_by": list(candidate.verified_by),
+                "confidence": candidate.confidence,
+            }
+        )
+    return payload
+
+
+def parse_llm_refined_terms(
+    text: str,
+    reference_text: str,
+    candidates: list[DatasetTerminologyTerm],
+    source_tag: str,
+) -> list[DatasetTerminologyTerm]:
+    match = _JSON_OBJECT_RE.search(text)
+    try:
+        payload = json.loads(match.group(0) if match else text)
+    except json.JSONDecodeError:
+        return []
+
+    refined_terms = []
+    for raw_term in payload.get("terms", []):
+        if not isinstance(raw_term, dict):
+            continue
+        candidate_id = raw_term.get("candidate_id")
+        if not isinstance(candidate_id, int) or not 0 <= candidate_id < len(candidates):
+            continue
+        original = candidates[candidate_id]
+        original_target = original.target_terms[0] if original.target_terms else ""
+        returned_target = clean_candidate_term(str(raw_term.get("target_term", "")))
+        if returned_target and normalize_term_key(returned_target) != normalize_term_key(
+            original_target
+        ):
+            continue
+        verified_span = find_exact_text_span(reference_text, original_target)
+        if not verified_span:
+            continue
+        quality_score = parse_confidence(raw_term.get("quality_score"))
+        reason = str(raw_term.get("reason", "")).strip() or (
+            "LLM refiner selected this existing exact-span candidate for final terminology."
+        )
+        category = str(raw_term.get("category", original.category)).strip() or original.category
+        refined_terms.append(
+            replace_dataset_term(
+                original,
+                target_terms=(verified_span,),
+                reference_candidates=merge_unique_strings(
+                    original.reference_candidates, (verified_span,)
+                ),
+                category=category,
+                source="+".join(merge_source_tags(original.source, source_tag)),
+                term_group="refined",
+                confidence=max(original.confidence, quality_score),
+                decision="keep_refined",
+                reason=reason,
+            )
+        )
+    return deduplicate_terms(refined_terms)
 
 
 def terminology_language_code(language: str) -> str:

@@ -6,6 +6,7 @@ from chem_machine_translation.data.terminology import (
     TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT,
     DatasetTerminologyGenerator,
     DatasetTerminologyTerm,
+    LLMTerminologyRefiner,
     LLMTargetCandidateExtractor,
     MSPLADETerminologyExtractor,
     NLTKTerminologyExtractor,
@@ -17,6 +18,7 @@ from chem_machine_translation.data.terminology import (
     load_manifest_terminology,
     load_terminology_cache,
     make_stanza_terms,
+    parse_llm_refined_terms,
     parse_llm_target_candidates,
     select_dataset_terms,
     should_preserve_dataset_term,
@@ -84,6 +86,48 @@ class _FakeResponses:
 
 class _FakeClient:
     responses = _FakeResponses()
+
+
+class _FakeRefinerResponses:
+    def create(self, **kwargs: object) -> object:
+        assert kwargs["temperature"] == 0.0
+        return type(
+            "Response",
+            (),
+            {
+                "output_text": json.dumps(
+                    {
+                        "terms": [
+                            {
+                                "candidate_id": 0,
+                                "target_term": "chlorure de sodium",
+                                "category": "chemical",
+                                "quality_score": 0.95,
+                                "reason": "Specific compound name.",
+                            },
+                            {
+                                "candidate_id": 1,
+                                "target_term": "hallucinated term",
+                                "category": "chemical",
+                                "quality_score": 0.99,
+                                "reason": "Mismatched candidate text.",
+                            },
+                            {
+                                "candidate_id": 99,
+                                "target_term": "chlorure de sodium",
+                                "category": "chemical",
+                                "quality_score": 0.99,
+                                "reason": "Invalid candidate id.",
+                            },
+                        ]
+                    }
+                )
+            },
+        )()
+
+
+class _FakeRefinerClient:
+    responses = _FakeRefinerResponses()
 
 
 def test_target_candidate_prompt_requires_exact_target_spans() -> None:
@@ -187,6 +231,93 @@ def test_llm_target_candidate_extractor_uses_target_text_only() -> None:
     )
 
     assert [term.target_terms[0] for term in terms] == ["chlorure de sodium"]
+
+
+def test_parse_llm_refined_terms_requires_existing_candidate_and_exact_span() -> None:
+    candidates = [
+        DatasetTerminologyTerm(
+            target_terms=("chlorure de sodium",),
+            reference_candidates=("chlorure de sodium",),
+            category="chemical",
+            source="spacy_ngram+pubchem",
+            term_group="verified",
+            verified_by=("pubchem",),
+            confidence=0.8,
+            candidates={"pubchem": ["sodium chloride"]},
+        ),
+        DatasetTerminologyTerm(
+            target_terms=("solution",),
+            reference_candidates=("solution",),
+            category="other",
+            source="spacy_ngram",
+            confidence=0.4,
+        ),
+    ]
+
+    terms = parse_llm_refined_terms(
+        json.dumps(
+            {
+                "terms": [
+                    {
+                        "candidate_id": 0,
+                        "target_term": "chlorure de sodium",
+                        "category": "chemical",
+                        "quality_score": 0.95,
+                    },
+                    {
+                        "candidate_id": 1,
+                        "target_term": "hallucinated term",
+                        "category": "chemical",
+                        "quality_score": 0.99,
+                    },
+                    {
+                        "candidate_id": 99,
+                        "target_term": "chlorure de sodium",
+                        "category": "chemical",
+                    },
+                ]
+            }
+        ),
+        reference_text="La solution contient du chlorure de sodium.",
+        candidates=candidates,
+        source_tag="llm_refiner_chem",
+    )
+
+    assert [term.target_terms[0] for term in terms] == ["chlorure de sodium"]
+    assert terms[0].source == "spacy_ngram+pubchem+llm_refiner_chem"
+    assert terms[0].term_group == "refined"
+    assert terms[0].verified_by == ("pubchem",)
+    assert terms[0].decision == "keep_refined"
+
+
+def test_llm_terminology_refiner_uses_candidate_ids_only() -> None:
+    refiner = LLMTerminologyRefiner(client=_FakeRefinerClient(), model="gpt-test")
+    terms = refiner.refine(
+        text="La solution contient du chlorure de sodium.",
+        target_language="French",
+        candidates=[
+            DatasetTerminologyTerm(
+                target_terms=("chlorure de sodium",),
+                reference_candidates=("chlorure de sodium",),
+                category="chemical",
+                source="llm_target",
+                verified_by=("pubchem",),
+                confidence=0.8,
+            ),
+            DatasetTerminologyTerm(
+                target_terms=("solution",),
+                reference_candidates=("solution",),
+                category="other",
+                source="spacy_ngram",
+                confidence=0.4,
+            ),
+        ],
+        domain="chemistry",
+        max_terms=5,
+    )
+
+    assert [term.target_terms[0] for term in terms] == ["chlorure de sodium"]
+    assert "llm_refiner_chem" in terms[0].source
 
 
 def test_target_terminology_extractor_deduplicates_terms() -> None:

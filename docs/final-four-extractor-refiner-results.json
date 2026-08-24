@@ -1,0 +1,1057 @@
+[
+  {
+    "item": 1,
+    "label": "Chemistry, carbon gasification patent",
+    "domain": "chemistry",
+    "direction": "de-en",
+    "example_id": "within-document:abstract:en-de:AT-503517-B1:reverse",
+    "roots": [
+      "google_patents_5_bidirectional_all_candidate_terms",
+      "google_patents_5_bidirectional_spacy_only_terms"
+    ],
+    "target_language": "English",
+    "candidate_count": 29,
+    "verified_candidate_count": 19,
+    "refined_count": 8,
+    "refined_verified_count": 6,
+    "refined_terms": [
+      {
+        "source_term": "",
+        "target_terms": [
+          "gas washer"
+        ],
+        "reference_candidates": [
+          "gas washer"
+        ],
+        "category": "equipment",
+        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "specific equipment for gas purification",
+        "external_candidates": {
+          "iate": [
+            "wet scrubber"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "wet scrubber"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "compressor"
+        ],
+        "reference_candidates": [
+          "compressor"
+        ],
+        "category": "equipment",
+        "source": "llm_target+xlmr_nobi+nci+agrovoc+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "nci",
+          "agrovoc",
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "specific equipment for gas compression",
+        "external_candidates": {
+          "nci": [
+            "Compressor Air Pump Device"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "compressors",
+            "air compressors"
+          ],
+          "iate": [
+            "compressor"
+          ]
+        },
+        "candidates": {
+          "nci": [
+            "Compressor Air Pump Device"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "compressors",
+            "air compressors"
+          ],
+          "iate": [
+            "compressor"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "gas engine"
+        ],
+        "reference_candidates": [
+          "gas engine"
+        ],
+        "category": "equipment",
+        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+msplade_sparse+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "specific equipment for gas-powered engine",
+        "external_candidates": {
+          "iate": [
+            "gas engine"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "gas engine"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "air filter"
+        ],
+        "reference_candidates": [
+          "air filter"
+        ],
+        "category": "equipment",
+        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+mesh+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "mesh",
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "specific equipment for air filtration",
+        "external_candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D061808",
+            "Air Filters"
+          ],
+          "iate": [
+            "air filter"
+          ]
+        },
+        "candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D061808",
+            "Air Filters"
+          ],
+          "iate": [
+            "air filter"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "reactor"
+        ],
+        "reference_candidates": [
+          "reactor"
+        ],
+        "category": "equipment",
+        "source": "llm_target+xlmr_nobi+mesh+nci+agrovoc+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "mesh",
+          "nci",
+          "agrovoc",
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "key equipment in the gasification process",
+        "external_candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D009688",
+            "Nuclear Reactors"
+          ],
+          "nci": [
+            "Reactor Device"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "bioreactors",
+            "biochemical reactors",
+            "biofilm reactors",
+            "enzyme reactors",
+            "fluidized bed reactors",
+            "photobioreactors"
+          ],
+          "iate": [
+            "choke"
+          ]
+        },
+        "candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D009688",
+            "Nuclear Reactors"
+          ],
+          "nci": [
+            "Reactor Device"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "bioreactors",
+            "biochemical reactors",
+            "biofilm reactors",
+            "enzyme reactors",
+            "fluidized bed reactors",
+            "photobioreactors"
+          ],
+          "iate": [
+            "choke"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "clinker"
+        ],
+        "reference_candidates": [
+          "clinker"
+        ],
+        "category": "material",
+        "source": "llm_target+xlmr_nobi+iate+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "specific material product from oxidation",
+        "external_candidates": {
+          "iate": [
+            "cement clinker"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "cement clinker"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "plasma torches"
+        ],
+        "reference_candidates": [
+          "plasma torches"
+        ],
+        "category": "equipment",
+        "source": "llm_target+stanza_ud_ngram+msplade_sparse+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.95,
+        "decision": "keep_refined",
+        "reason": "specific equipment producing plasma",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "gasifying"
+        ],
+        "reference_candidates": [
+          "gasifying"
+        ],
+        "category": "process",
+        "source": "llm_target+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.95,
+        "decision": "keep_refined",
+        "reason": "technical process described in the text",
+        "external_candidates": {},
+        "candidates": {}
+      }
+    ]
+  },
+  {
+    "item": 2,
+    "label": "Chemistry, pharmaceutical salt patent",
+    "domain": "chemistry",
+    "direction": "ru-en",
+    "example_id": "within-document:abstract:en-ru:EA-001190-B1:reverse",
+    "roots": [
+      "google_patents_5_bidirectional_all_candidate_terms",
+      "google_patents_5_bidirectional_spacy_only_terms"
+    ],
+    "target_language": "English",
+    "candidate_count": 29,
+    "verified_candidate_count": 13,
+    "refined_count": 8,
+    "refined_verified_count": 4,
+    "refined_terms": [
+      {
+        "source_term": "",
+        "target_terms": [
+          "5-(2-(4-(1 ,2-benzisothiazol-3-yl)-1 piperazinyl)ethyl)-6-chloro-1,3-dihydro-2(1H)-indol-2-one"
+        ],
+        "reference_candidates": [
+          "5-(2-(4-(1 ,2-benzisothiazol-3-yl)-1 piperazinyl)ethyl)-6-chloro-1,3-dihydro-2(1H)-indol-2-one"
+        ],
+        "category": "chemical",
+        "source": "llm_target+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Full chemical name of the compound, domain-specific and translation-sensitive",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "parenteral administration"
+        ],
+        "reference_candidates": [
+          "parenteral administration"
+        ],
+        "category": "process",
+        "source": "llm_target+stanza_ud_dependency+stanza_ud_ngram+iate+wikipedia+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "iate",
+          "wikipedia"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Specific administration route, important in pharmaceutical context",
+        "external_candidates": {
+          "iate": [
+            "parenteral administration"
+          ],
+          "wikipedia": [
+            "parenteral administration"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "parenteral administration"
+          ],
+          "wikipedia": [
+            "parenteral administration"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "mesylate dihydrate salt"
+        ],
+        "reference_candidates": [
+          "mesylate dihydrate salt"
+        ],
+        "category": "chemical",
+        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Specific chemical salt form, important for chemical identity",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "intramuscular injection"
+        ],
+        "reference_candidates": [
+          "intramuscular injection"
+        ],
+        "category": "process",
+        "source": "llm_target+stanza_ud_dependency+stanza_ud_ngram+agrovoc+wikipedia+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "agrovoc",
+          "wikipedia"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Specific method of parenteral administration",
+        "external_candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "intramuscular injection"
+          ],
+          "wikipedia": [
+            "intramuscular injection"
+          ]
+        },
+        "candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "intramuscular injection"
+          ],
+          "wikipedia": [
+            "intramuscular injection"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "schizophrenia"
+        ],
+        "reference_candidates": [
+          "schizophrenia"
+        ],
+        "category": "other",
+        "source": "llm_target+mesh+nci+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "mesh",
+          "nci",
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Specific disease name relevant to treatment",
+        "external_candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D012559",
+            "Schizophrenia",
+            "http://id.nlm.nih.gov/mesh/D019967",
+            "Schizophrenia Spectrum and Other Psychotic Disorders",
+            "http://id.nlm.nih.gov/mesh/D012560",
+            "Schizophrenia, Catatonic",
+            "http://id.nlm.nih.gov/mesh/D012561",
+            "Schizophrenia, Childhood",
+            "http://id.nlm.nih.gov/mesh/D012562",
+            "Schizophrenia, Disorganized",
+            "http://id.nlm.nih.gov/mesh/D012563",
+            "Schizophrenia, Paranoid",
+            "http://id.nlm.nih.gov/mesh/D000090663",
+            "Schizophrenia, Treatment-Resistant"
+          ],
+          "nci": [
+            "Schizophrenia"
+          ],
+          "iate": [
+            "schizophrenia"
+          ]
+        },
+        "candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D012559",
+            "Schizophrenia",
+            "http://id.nlm.nih.gov/mesh/D019967",
+            "Schizophrenia Spectrum and Other Psychotic Disorders",
+            "http://id.nlm.nih.gov/mesh/D012560",
+            "Schizophrenia, Catatonic",
+            "http://id.nlm.nih.gov/mesh/D012561",
+            "Schizophrenia, Childhood",
+            "http://id.nlm.nih.gov/mesh/D012562",
+            "Schizophrenia, Disorganized",
+            "http://id.nlm.nih.gov/mesh/D012563",
+            "Schizophrenia, Paranoid",
+            "http://id.nlm.nih.gov/mesh/D000090663",
+            "Schizophrenia, Treatment-Resistant"
+          ],
+          "nci": [
+            "Schizophrenia"
+          ],
+          "iate": [
+            "schizophrenia"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "psychotic disorder"
+        ],
+        "reference_candidates": [
+          "psychotic disorder"
+        ],
+        "category": "other",
+        "source": "llm_target+stanza_ud_dependency+stanza_ud_ngram+xlmr_nobi+mesh+nci+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [
+          "mesh",
+          "nci"
+        ],
+        "confidence": 0.95,
+        "decision": "keep_refined",
+        "reason": "Specific disease category relevant to the pharmaceutical use",
+        "external_candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D011618",
+            "Psychotic Disorders",
+            "http://id.nlm.nih.gov/mesh/D019967",
+            "Schizophrenia Spectrum and Other Psychotic Disorders"
+          ],
+          "nci": [
+            "Psychotic Disorder Due to a General Medical Condition"
+          ]
+        },
+        "candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D011618",
+            "Psychotic Disorders",
+            "http://id.nlm.nih.gov/mesh/D019967",
+            "Schizophrenia Spectrum and Other Psychotic Disorders"
+          ],
+          "nci": [
+            "Psychotic Disorder Due to a General Medical Condition"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "pharmaceutically acceptable carrier"
+        ],
+        "reference_candidates": [
+          "pharmaceutically acceptable carrier"
+        ],
+        "category": "material",
+        "source": "llm_target+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Specific material used in pharmaceutical formulations",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "pharmaceutical composition"
+        ],
+        "reference_candidates": [
+          "pharmaceutical composition"
+        ],
+        "category": "formulation",
+        "source": "llm_target+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Technical term for the drug formulation",
+        "external_candidates": {},
+        "candidates": {}
+      }
+    ]
+  },
+  {
+    "item": 3,
+    "label": "JRC, additional protocol on blood-grouping reagents",
+    "domain": "jrc",
+    "direction": "de-en",
+    "example_id": "de-en:jrc21987A0207_06:chunk-0135",
+    "roots": [
+      "jrc_acquis_anchored_articles_5_all_non_llm_terms",
+      "jrc_acquis_anchored_articles_5_llm_terms",
+      "jrc_acquis_anchored_articles_5_spacy_only_terms"
+    ],
+    "target_language": "English",
+    "candidate_count": 43,
+    "verified_candidate_count": 22,
+    "refined_count": 8,
+    "refined_verified_count": 6,
+    "refined_terms": [
+      {
+        "source_term": "",
+        "target_terms": [
+          "European Economic Community"
+        ],
+        "reference_candidates": [
+          "European Economic Community"
+        ],
+        "category": "other",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+xlmr_nobi+iate+wikipedia+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate",
+          "wikipedia"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Named institution with legal competence",
+        "external_candidates": {
+          "iate": [
+            "European Economic Community"
+          ],
+          "wikipedia": [
+            "European Economic Community"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "European Economic Community"
+          ],
+          "wikipedia": [
+            "European Economic Community"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "ADDITIONAL PROTOCOL"
+        ],
+        "reference_candidates": [
+          "ADDITIONAL PROTOCOL"
+        ],
+        "category": "legal_act",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+iate+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Complete official legal act term",
+        "external_candidates": {
+          "iate": [
+            "additional protocol"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "additional protocol"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Contracting Parties"
+        ],
+        "reference_candidates": [
+          "Contracting Parties"
+        ],
+        "category": "defined_term",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+stanza_ud_proper_name+iate+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Defined term referring to parties bound by the agreement",
+        "external_candidates": {
+          "iate": [
+            "contracting parties"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "contracting parties"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Council of Europe"
+        ],
+        "reference_candidates": [
+          "Council of Europe"
+        ],
+        "category": "other",
+        "source": "xlmr_nobi+agrovoc+iate+wikipedia+spacy_entity+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "agrovoc",
+          "iate",
+          "wikipedia"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Named institution involved in the agreement",
+        "external_candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Council of Europe"
+          ],
+          "iate": [
+            "Council of Europe"
+          ],
+          "wikipedia": [
+            "Council of Europe"
+          ]
+        },
+        "candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Council of Europe"
+          ],
+          "iate": [
+            "Council of Europe"
+          ],
+          "wikipedia": [
+            "Council of Europe"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "entry into force"
+        ],
+        "reference_candidates": [
+          "entry into force"
+        ],
+        "category": "legal_effect",
+        "source": "legal_llm+iate+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Legal effect term critical for treaty implementation",
+        "external_candidates": {
+          "iate": [
+            "entry into force"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "entry into force"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "instrument of acceptance"
+        ],
+        "reference_candidates": [
+          "instrument of acceptance"
+        ],
+        "category": "procedure",
+        "source": "legal_llm+iate+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 0.9500000000000001,
+        "decision": "keep_refined",
+        "reason": "Specific legal procedure term",
+        "external_candidates": {
+          "iate": [
+            "instrument of acceptance"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "instrument of acceptance"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Secretary-General of the Council of Europe"
+        ],
+        "reference_candidates": [
+          "Secretary-General of the Council of Europe"
+        ],
+        "category": "institution",
+        "source": "stanza_ud_dependency+legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.95,
+        "decision": "keep_refined",
+        "reason": "Named institutional office with procedural role",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "exchanges of blood-grouping reagents"
+        ],
+        "reference_candidates": [
+          "exchanges of blood-grouping reagents"
+        ],
+        "category": "regulatory_domain",
+        "source": "legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.85,
+        "decision": "keep_refined",
+        "reason": "Domain-specific regulatory expression",
+        "external_candidates": {},
+        "candidates": {}
+      }
+    ]
+  },
+  {
+    "item": 4,
+    "label": "JRC, agreement on racism and xenophobia observatory",
+    "domain": "jrc",
+    "direction": "de-fr",
+    "example_id": "de-fr:jrc21999A0218_01:chunk-0453",
+    "roots": [
+      "jrc_acquis_anchored_articles_5_all_non_llm_terms",
+      "jrc_acquis_anchored_articles_5_llm_terms",
+      "jrc_acquis_anchored_articles_5_spacy_only_terms"
+    ],
+    "target_language": "French",
+    "candidate_count": 42,
+    "verified_candidate_count": 26,
+    "refined_count": 8,
+    "refined_verified_count": 7,
+    "refined_terms": [
+      {
+        "source_term": "",
+        "target_terms": [
+          "Observatoire européen des phénomènes racistes et xénophobes"
+        ],
+        "reference_candidates": [
+          "Observatoire européen des phénomènes racistes et xénophobes"
+        ],
+        "category": "other",
+        "source": "xlmr_nobi+iate+legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Named institution central to the agreement",
+        "external_candidates": {
+          "iate": [
+            "racisme xénophobie"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "racisme xénophobie"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Commission européenne contre le racisme et l'intolérance"
+        ],
+        "reference_candidates": [
+          "Commission européenne contre le racisme et l'intolérance"
+        ],
+        "category": "other",
+        "source": "xlmr_nobi+iate+legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Named institution involved in cooperation",
+        "external_candidates": {
+          "iate": [
+            "Commission européenne contre le racisme et l'intolérance"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "Commission européenne contre le racisme et l'intolérance"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "règlement (CE) n° 1035/97"
+        ],
+        "reference_candidates": [
+          "règlement (CE) n° 1035/97"
+        ],
+        "category": "legal_act",
+        "source": "legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Specific legal act establishing the Observatoire",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Conseil d'administration"
+        ],
+        "reference_candidates": [
+          "Conseil d'administration"
+        ],
+        "category": "institution",
+        "source": "legal_llm+iate+spacy_entity+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Named institutional body relevant to governance",
+        "external_candidates": {
+          "iate": [
+            "Conseil des gouverneurs de l'Agence internationale de l'énergie atomique"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "Conseil des gouverneurs de l'Agence internationale de l'énergie atomique"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Observatoire"
+        ],
+        "reference_candidates": [
+          "Observatoire"
+        ],
+        "category": "defined_term",
+        "source": "legal_llm+iate+spacy_entity+spacy_noun_chunk+spacy_ngram+agrovoc+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate",
+          "agrovoc"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Defined term referring to the Observatoire européen",
+        "external_candidates": {
+          "iate": [
+            "observatoire"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "tour de guet",
+            "pylone observatoire"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "observatoire"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "tour de guet",
+            "pylone observatoire"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "ECRI"
+        ],
+        "reference_candidates": [
+          "ECRI"
+        ],
+        "category": "other",
+        "source": "xlmr_nobi+iate+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Acronym for the Commission européenne contre le racisme et l'intolérance",
+        "external_candidates": {
+          "iate": [
+            "Commission européenne contre le racisme et l'intolérance"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "Commission européenne contre le racisme et l'intolérance"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "programme d'activité"
+        ],
+        "reference_candidates": [
+          "programme d'activité"
+        ],
+        "category": "programme",
+        "source": "legal_llm+iate+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 0.9500000000000001,
+        "decision": "keep_refined",
+        "reason": "Specific programme term related to coordination",
+        "external_candidates": {
+          "iate": [
+            "programme d'activité"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "programme d'activité"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "programme de travail"
+        ],
+        "reference_candidates": [
+          "programme de travail"
+        ],
+        "category": "programme",
+        "source": "legal_llm+iate+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 0.9500000000000001,
+        "decision": "keep_refined",
+        "reason": "Specific programme term related to work planning",
+        "external_candidates": {
+          "iate": [
+            "programme de travail"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "programme de travail"
+          ]
+        }
+      }
+    ]
+  }
+]
