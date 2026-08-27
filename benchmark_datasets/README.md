@@ -6,6 +6,9 @@ This folder contains benchmark-ready datasets built from portable source snapsho
 Use this README for the dataset build commands. Use `benchmark_sources/README.md` when you need to
 recreate the source-pair JSONL snapshots themselves.
 
+For the full benchmark generation flow and component details, see
+`docs/benchmark-generation-pipeline.md`.
+
 ## Standard Terminology Configuration
 
 The standard benchmark terminology pipeline is target-side. It stores a broad candidate pool first,

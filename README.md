@@ -171,6 +171,9 @@ uv run ruff check .
 
 Benchmark datasets live in `benchmark_datasets/`.
 
+For the end-to-end benchmark generation pipeline, including every terminology extractor, verifier,
+refiner, and evaluation group, see `docs/benchmark-generation-pipeline.md`.
+
 The current benchmark dataset is:
 
 `benchmark_datasets/google_patents_eval_subset_60_multidirectional`

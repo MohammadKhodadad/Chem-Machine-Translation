@@ -16,6 +16,10 @@
   counting.
 - `chem_machine_translation.config`: Environment-backed runtime settings.
 
+For the full benchmark generation flow, including source snapshots, candidate extractors, verifier
+enrichment, final terminology refinement, and evaluation groups, see
+`docs/benchmark-generation-pipeline.md`.
+
 ## Data Flow
 
 1. The CLI selects one or more dataset aliases and target languages.
