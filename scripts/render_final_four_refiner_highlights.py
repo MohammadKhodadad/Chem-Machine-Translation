@@ -6,7 +6,11 @@ from pathlib import Path
 
 from matplotlib import font_manager
 from PIL import Image, ImageDraw, ImageFont
-from refine_final_four_terms import CASES, OUTPUT_PATH, load_case_from_root, load_terms
+
+try:
+    from refine_final_four_terms import CASES, OUTPUT_PATH, load_case_from_root, load_terms
+except ModuleNotFoundError:
+    from scripts.refine_final_four_terms import CASES, OUTPUT_PATH, load_case_from_root, load_terms
 
 from chem_machine_translation.data.terminology import (
     DatasetTerminologyTerm,
