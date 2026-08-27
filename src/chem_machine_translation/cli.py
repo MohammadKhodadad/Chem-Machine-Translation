@@ -208,7 +208,7 @@ def translate(
         str | None,
         typer.Option(
             "--provider-base-url",
-            help="Override OPENAI_BASE_URL for OpenAI-compatible providers.",
+            help="Override OPENAI_BASE_URL/OPENCODE_BASE_URL for OpenAI-compatible providers.",
             rich_help_panel="Translation",
         ),
     ] = None,

@@ -74,10 +74,19 @@ CASES = [
 def main() -> None:
     settings = load_settings()
     if not settings.openai_api_key:
-        raise ValueError("OPENAI_API_KEY is required to run the LLM terminology refiner.")
+        raise ValueError(
+            "OPENAI_API_KEY or OPENCODE_API_KEY is required to run the LLM terminology refiner."
+        )
 
     client = OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url)
-    refiner = LLMTerminologyRefiner(client=client, model=settings.default_model)
+    refiner = LLMTerminologyRefiner(
+        client=client,
+        model=settings.default_model,
+        api_mode=settings.llm_api_mode,
+        max_output_tokens=settings.llm_max_output_tokens,
+        thinking=settings.llm_thinking,
+        reasoning_effort=settings.llm_reasoning_effort,
+    )
 
     results = []
     for case in CASES:

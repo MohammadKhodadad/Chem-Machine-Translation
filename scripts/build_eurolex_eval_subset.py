@@ -254,7 +254,9 @@ def build_legal_generator(args: argparse.Namespace) -> LegalTerminologyGenerator
         return None
     settings = load_settings()
     if not settings.openai_api_key:
-        raise ValueError("OPENAI_API_KEY is required for legal LLM terminology extraction.")
+        raise ValueError(
+            "OPENAI_API_KEY or OPENCODE_API_KEY is required for legal LLM terminology extraction."
+        )
     client = OpenAI(
         api_key=settings.openai_api_key,
         base_url=settings.openai_base_url,
@@ -264,6 +266,10 @@ def build_legal_generator(args: argparse.Namespace) -> LegalTerminologyGenerator
         client=client,
         model=args.legal_terminology_model,
         max_terms=args.legal_terminology_max_terms,
+        llm_api_mode=settings.llm_api_mode,
+        llm_max_output_tokens=settings.llm_max_output_tokens,
+        llm_thinking=settings.llm_thinking,
+        llm_reasoning_effort=settings.llm_reasoning_effort,
         use_iate=args.iate_terminology,
         use_wikidata=args.wikipedia_terminology,
         use_unterm=args.unterm_terminology,

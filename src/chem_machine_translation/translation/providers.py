@@ -27,6 +27,10 @@ class OpenAIResponsesProvider:
     api_key: str
     base_url: str | None = None
     timeout: float | None = None
+    api_mode: str = "responses"
+    max_output_tokens: int | None = 1024
+    thinking: str | None = None
+    reasoning_effort: str | None = None
     name: str = "openai"
 
     def __post_init__(self) -> None:
@@ -44,15 +48,38 @@ class OpenAIResponsesProvider:
         model: str,
         temperature: float = 0.0,
     ) -> str:
-        response = self._client.responses.create(
-            model=model,
-            temperature=temperature,
-            input=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
-        return response.output_text.strip()
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        if self.api_mode == "responses":
+            request: dict[str, object] = {
+                "model": model,
+                "temperature": temperature,
+                "input": messages,
+                "max_output_tokens": self.max_output_tokens,
+            }
+            if normalized_llm_thinking(self.thinking) == "disabled":
+                request["reasoning"] = {"effort": "none"}
+            elif self.reasoning_effort:
+                request["reasoning"] = {"effort": self.reasoning_effort}
+            response = self._client.responses.create(**request)
+            return response.output_text.strip()
+        if self.api_mode == "chat_completions":
+            request = {
+                "model": model,
+                "temperature": temperature,
+                "messages": messages,
+                "max_tokens": self.max_output_tokens,
+            }
+            extra_body = llm_chat_extra_body(self.thinking)
+            if extra_body:
+                request["extra_body"] = extra_body
+            if normalized_llm_thinking(self.thinking) == "enabled" and self.reasoning_effort:
+                request["reasoning_effort"] = self.reasoning_effort
+            response = self._client.chat.completions.create(**request)
+            return (response.choices[0].message.content or "").strip()
+        raise ValueError(f"Unknown LLM API mode: {self.api_mode}")
 
 
 def build_text_generation_provider(
@@ -70,11 +97,38 @@ def build_text_generation_provider(
     if not api_key and resolved_base_url:
         api_key = "local"
     if not api_key:
-        raise ValueError("OPENAI_API_KEY is required for the OpenAI text generation provider.")
+        raise ValueError(
+            "OPENAI_API_KEY or OPENCODE_API_KEY is required for the OpenAI-compatible text "
+            "generation provider."
+        )
 
     return OpenAIResponsesProvider(
         api_key=api_key,
         base_url=resolved_base_url,
         timeout=timeout,
+        api_mode=settings.llm_api_mode,
+        max_output_tokens=settings.llm_max_output_tokens,
+        thinking=settings.llm_thinking,
+        reasoning_effort=settings.llm_reasoning_effort,
         name=provider,
     )
+
+
+def normalized_llm_thinking(thinking: str | None) -> str | None:
+    if thinking is None:
+        return None
+    normalized = thinking.strip().lower()
+    if normalized in {"false", "off", "none", "non-thinking", "non_thinking", "disabled"}:
+        return "disabled"
+    if normalized in {"true", "on", "thinking", "enabled"}:
+        return "enabled"
+    return normalized
+
+
+def llm_chat_extra_body(thinking: str | None) -> dict[str, object]:
+    normalized = normalized_llm_thinking(thinking)
+    if normalized == "disabled":
+        return {"thinking": {"type": "disabled"}}
+    if normalized == "enabled":
+        return {"thinking": {"type": "enabled"}}
+    return {}

@@ -346,6 +346,67 @@ class ExtractedTerm:
     refinement_reason: str = ""
 
 
+def create_llm_response_text(
+    *,
+    client: OpenAI,
+    model: str,
+    temperature: float,
+    messages: list[dict[str, str]],
+    api_mode: str,
+    max_output_tokens: int | None = 1024,
+    thinking: str | None = None,
+    reasoning_effort: str | None = None,
+) -> str:
+    if api_mode == "responses":
+        request: dict[str, Any] = {
+            "model": model,
+            "temperature": temperature,
+            "input": messages,
+            "max_output_tokens": max_output_tokens,
+        }
+        if normalized_llm_thinking(thinking) == "disabled":
+            request["reasoning"] = {"effort": "none"}
+        elif reasoning_effort:
+            request["reasoning"] = {"effort": reasoning_effort}
+        response = client.responses.create(**request)
+        return response.output_text
+    if api_mode == "chat_completions":
+        request = {
+            "model": model,
+            "temperature": temperature,
+            "messages": messages,
+            "max_tokens": max_output_tokens,
+        }
+        extra_body = llm_chat_extra_body(thinking)
+        if extra_body:
+            request["extra_body"] = extra_body
+        if normalized_llm_thinking(thinking) == "enabled" and reasoning_effort:
+            request["reasoning_effort"] = reasoning_effort
+        response = client.chat.completions.create(**request)
+        return response.choices[0].message.content or ""
+    raise ValueError(f"Unknown LLM API mode: {api_mode}")
+
+
+def normalized_llm_thinking(thinking: str | None) -> str | None:
+    if thinking is None:
+        return None
+    normalized = thinking.strip().lower()
+    if normalized in {"false", "off", "none", "non-thinking", "non_thinking", "disabled"}:
+        return "disabled"
+    if normalized in {"true", "on", "thinking", "enabled"}:
+        return "enabled"
+    return normalized
+
+
+def llm_chat_extra_body(thinking: str | None) -> dict[str, Any]:
+    normalized = normalized_llm_thinking(thinking)
+    if normalized == "disabled":
+        return {"thinking": {"type": "disabled"}}
+    if normalized == "enabled":
+        return {"thinking": {"type": "enabled"}}
+    return {}
+
+
 class LLMTerminologyLayer:
     """Uses an LLM to extract source terms that the translator should handle carefully."""
 
@@ -359,6 +420,10 @@ class LLMTerminologyLayer:
         refine_terms: bool = False,
         refinement_confidence_threshold: float = _DEFAULT_REFINEMENT_CONFIDENCE_THRESHOLD,
         max_refined_terms: int = _DEFAULT_MAX_REFINED_TERMS,
+        api_mode: str = "responses",
+        max_output_tokens: int | None = 1024,
+        thinking: str | None = None,
+        reasoning_effort: str | None = None,
     ) -> None:
         self.client = client
         self.model = model
@@ -368,6 +433,10 @@ class LLMTerminologyLayer:
         self.refine_terms = refine_terms
         self.refinement_confidence_threshold = refinement_confidence_threshold
         self.max_refined_terms = max_refined_terms
+        self.api_mode = api_mode
+        self.max_output_tokens = max_output_tokens
+        self.thinking = thinking
+        self.reasoning_effort = reasoning_effort
         self._cache: dict[tuple[str, str, str, str, str], str] = {}
 
     def build_prompt_section(self, context: TerminologyContext) -> str:
@@ -391,10 +460,11 @@ class LLMTerminologyLayer:
         return section
 
     def extract_terms(self, context: TerminologyContext) -> list[ExtractedTerm]:
-        response = self.client.responses.create(
+        response_text = create_llm_response_text(
+            client=self.client,
             model=self.model,
             temperature=0.0,
-            input=[
+            messages=[
                 {"role": "system", "content": TERM_EXTRACTOR_SYSTEM_PROMPT},
                 {
                     "role": "user",
@@ -404,8 +474,12 @@ class LLMTerminologyLayer:
                     ),
                 },
             ],
+            api_mode=self.api_mode,
+            max_output_tokens=self.max_output_tokens,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
         )
-        return parse_extracted_terms(response.output_text)
+        return parse_extracted_terms(response_text)
 
     def refine_extracted_terms(
         self,
@@ -415,10 +489,11 @@ class LLMTerminologyLayer:
         if not terms:
             return []
 
-        response = self.client.responses.create(
+        response_text = create_llm_response_text(
+            client=self.client,
             model=self.model,
             temperature=0.0,
-            input=[
+            messages=[
                 {"role": "system", "content": TERMINOLOGY_REFINER_SYSTEM_PROMPT},
                 {
                     "role": "user",
@@ -428,9 +503,13 @@ class LLMTerminologyLayer:
                     ),
                 },
             ],
+            api_mode=self.api_mode,
+            max_output_tokens=self.max_output_tokens,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
         )
         return parse_refined_terms(
-            response.output_text,
+            response_text,
             terms,
             confidence_threshold=self.refinement_confidence_threshold,
             max_terms=self.max_refined_terms,
@@ -520,7 +599,9 @@ def build_terminology_layer(
 
     if extract_terms:
         if not settings.openai_api_key:
-            raise ValueError("OPENAI_API_KEY is required for LLM terminology extraction.")
+            raise ValueError(
+                "OPENAI_API_KEY or OPENCODE_API_KEY is required for LLM terminology extraction."
+            )
         layers.append(
             LLMTerminologyLayer(
                 client=OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url),
@@ -531,6 +612,10 @@ def build_terminology_layer(
                 refine_terms=refine_terms,
                 refinement_confidence_threshold=refinement_confidence_threshold,
                 max_refined_terms=max_refined_terms,
+                api_mode=settings.llm_api_mode,
+                max_output_tokens=settings.llm_max_output_tokens,
+                thinking=settings.llm_thinking,
+                reasoning_effort=settings.llm_reasoning_effort,
             )
         )
 

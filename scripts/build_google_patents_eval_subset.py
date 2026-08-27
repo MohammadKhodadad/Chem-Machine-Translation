@@ -321,7 +321,10 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
     if args.extract_terminology:
         settings = load_settings()
         if not settings.openai_api_key:
-            raise ValueError("OPENAI_API_KEY is required for LLM target terminology extraction.")
+            raise ValueError(
+                "OPENAI_API_KEY or OPENCODE_API_KEY is required for LLM target terminology "
+                "extraction."
+            )
         client = OpenAI(
             api_key=settings.openai_api_key,
             base_url=settings.openai_base_url,
@@ -331,6 +334,14 @@ def build_generator(args: argparse.Namespace) -> DatasetTerminologyGenerator | N
         client=client,
         model=args.terminology_model,
         max_terms=args.terminology_max_terms,
+        llm_api_mode=settings.llm_api_mode if args.extract_terminology else "responses",
+        llm_max_output_tokens=(
+            settings.llm_max_output_tokens if args.extract_terminology else 1024
+        ),
+        llm_thinking=settings.llm_thinking if args.extract_terminology else None,
+        llm_reasoning_effort=(
+            settings.llm_reasoning_effort if args.extract_terminology else None
+        ),
         use_llm=args.extract_terminology,
         use_stanza_extractor=args.use_stanza_extractor,
         use_nobi_extractor=args.use_nobi_extractor,

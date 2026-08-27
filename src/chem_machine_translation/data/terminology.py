@@ -236,6 +236,21 @@ by other systems. Your job is to select only candidates that are useful benchmar
 Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
 candidate IDs. A selected term must be an exact span in the target/reference text.
 
+Do not fill the quota. Select fewer than the requested maximum when fewer candidates are strong
+benchmark terms.
+
+Selection procedure:
+1. First discard candidates that are generic, partial, overly broad, or not useful for evaluating
+   translation quality.
+2. Rank the remaining candidates by benchmark value: domain specificity, completeness, centrality in
+   the text, and risk if mistranslated.
+3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term quality
+   is comparable to unverified candidates.
+4. Keep an unverified candidate only when it is clearly central, complete, and more
+   translation-sensitive than the verified alternatives.
+5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning
+   weak terms.
+
 Keep candidates when they are complete, domain-specific, and translation-sensitive:
 - chemical names, compounds, materials, formulas, reagents, solvents, polymers, proteins;
 - equipment, devices, dosage forms, administration routes, disease names, assay/analytical terms;
@@ -245,6 +260,14 @@ Reject or down-rank:
 - generic patent words such as method, claim, compound, form, treatment, surface, and invention;
 - whole clauses, sentence fragments, broad prose, headings, citations, and partial spans;
 - generic verified terms unless they are part of a stronger technical phrase.
+- standalone measurements unless the quantity is a named condition or key controlled parameter;
+- vague process fragments, role nouns, or generic material-state words unless they are established
+  technical terms in this context.
+
+Quality score:
+- 0.90-1.00: complete, central, domain-specific, and preferably verified.
+- 0.75-0.89: useful but less central, less complete, or unverified.
+- below 0.75: do not return it.
 
 Return only valid JSON with this shape:
 {
@@ -269,6 +292,21 @@ by other systems. Your job is to select only candidates that are useful benchmar
 Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
 candidate IDs. A selected term must be an exact span in the target/reference text.
 
+Do not fill the quota. Select fewer than the requested maximum when fewer candidates are strong
+benchmark terms.
+
+Selection procedure:
+1. First discard candidates that are generic, partial, overly broad, boilerplate, or not useful for
+   evaluating translation quality.
+2. Rank the remaining candidates by benchmark value: legal specificity, completeness, centrality in
+   the text, and risk if mistranslated.
+3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term quality
+   is comparable to unverified candidates.
+4. Keep an unverified candidate only when it is clearly central, complete, and more
+   translation-sensitive than the verified alternatives.
+5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning
+   weak terms.
+
 Keep candidates when they are complete, domain-specific, and translation-sensitive:
 - legal instruments, named legal acts, institutions, committees, agencies, programmes, and funds;
 - defined terms, procedures, obligations, rights, restrictions, legal effects, and remedies;
@@ -280,6 +318,13 @@ Reject or down-rank:
 - headings, article numbers, dates, citations, table-of-contents text, boilerplate, and
   partial spans;
 - verified single words that are not useful terminology for translation evaluation.
+- broad institutional references unless the exact candidate is the complete official term;
+- partial titles when a fuller official name or defined term is available in the candidates.
+
+Quality score:
+- 0.90-1.00: complete, central, legally specific, and preferably verified.
+- 0.75-0.89: useful but less central, less complete, or unverified.
+- below 0.75: do not return it.
 
 Return only valid JSON with this shape:
 {
@@ -563,12 +608,85 @@ def term_matches_any(term: str, names: list[str]) -> bool:
     )
 
 
+def create_llm_response_text(
+    *,
+    client: Any,
+    model: str,
+    temperature: float,
+    messages: list[dict[str, str]],
+    api_mode: str,
+    max_output_tokens: int | None = 1024,
+    thinking: str | None = None,
+    reasoning_effort: str | None = None,
+) -> str:
+    if api_mode == "responses":
+        request: dict[str, Any] = {
+            "model": model,
+            "temperature": temperature,
+            "input": messages,
+            "max_output_tokens": max_output_tokens,
+        }
+        if normalized_llm_thinking(thinking) == "disabled":
+            request["reasoning"] = {"effort": "none"}
+        elif reasoning_effort:
+            request["reasoning"] = {"effort": reasoning_effort}
+        response = client.responses.create(**request)
+        return response.output_text
+    if api_mode == "chat_completions":
+        request = {
+            "model": model,
+            "temperature": temperature,
+            "messages": messages,
+            "max_tokens": max_output_tokens,
+        }
+        extra_body = llm_chat_extra_body(thinking)
+        if extra_body:
+            request["extra_body"] = extra_body
+        if normalized_llm_thinking(thinking) == "enabled" and reasoning_effort:
+            request["reasoning_effort"] = reasoning_effort
+        response = client.chat.completions.create(**request)
+        return response.choices[0].message.content or ""
+    raise ValueError(f"Unknown LLM API mode: {api_mode}")
+
+
+def normalized_llm_thinking(thinking: str | None) -> str | None:
+    if thinking is None:
+        return None
+    normalized = thinking.strip().lower()
+    if normalized in {"false", "off", "none", "non-thinking", "non_thinking", "disabled"}:
+        return "disabled"
+    if normalized in {"true", "on", "thinking", "enabled"}:
+        return "enabled"
+    return normalized
+
+
+def llm_chat_extra_body(thinking: str | None) -> dict[str, Any]:
+    normalized = normalized_llm_thinking(thinking)
+    if normalized == "disabled":
+        return {"thinking": {"type": "disabled"}}
+    if normalized == "enabled":
+        return {"thinking": {"type": "enabled"}}
+    return {}
+
+
 class LLMTargetCandidateExtractor:
     """Uses an LLM only to propose exact target-side candidate spans."""
 
-    def __init__(self, client: Any, model: str = "gpt-4.1-mini") -> None:
+    def __init__(
+        self,
+        client: Any,
+        model: str = "gpt-4.1-mini",
+        api_mode: str = "responses",
+        max_output_tokens: int | None = 1024,
+        thinking: str | None = None,
+        reasoning_effort: str | None = None,
+    ) -> None:
         self.client = client
         self.model = model
+        self.api_mode = api_mode
+        self.max_output_tokens = max_output_tokens
+        self.thinking = thinking
+        self.reasoning_effort = reasoning_effort
 
     def extract(
         self,
@@ -576,29 +694,47 @@ class LLMTargetCandidateExtractor:
         target_language: str,
         max_terms: int,
     ) -> list[DatasetTerminologyTerm]:
-        response = self.client.responses.create(
+        messages = [
+            {"role": "system", "content": TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Extract up to {max_terms} strict technical terminology candidates from "
+                    f"this {target_language} target/reference text.\n\nTarget text:\n{text}"
+                ),
+            },
+        ]
+        response_text = create_llm_response_text(
+            client=self.client,
             model=self.model,
             temperature=0.0,
-            input=[
-                {"role": "system", "content": TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        f"Extract up to {max_terms} strict technical terminology candidates from "
-                        f"this {target_language} target/reference text.\n\nTarget text:\n{text}"
-                    ),
-                },
-            ],
+            messages=messages,
+            api_mode=self.api_mode,
+            max_output_tokens=self.max_output_tokens,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
         )
-        return parse_llm_target_candidates(response.output_text, text)
+        return parse_llm_target_candidates(response_text, text)
 
 
 class LLMLegalCandidateExtractor:
     """Uses an LLM only to propose exact target-side legal candidate spans."""
 
-    def __init__(self, client: Any, model: str = "gpt-4.1-mini") -> None:
+    def __init__(
+        self,
+        client: Any,
+        model: str = "gpt-4.1-mini",
+        api_mode: str = "responses",
+        max_output_tokens: int | None = 1024,
+        thinking: str | None = None,
+        reasoning_effort: str | None = None,
+    ) -> None:
         self.client = client
         self.model = model
+        self.api_mode = api_mode
+        self.max_output_tokens = max_output_tokens
+        self.thinking = thinking
+        self.reasoning_effort = reasoning_effort
 
     def extract(
         self,
@@ -606,29 +742,47 @@ class LLMLegalCandidateExtractor:
         target_language: str,
         max_terms: int,
     ) -> list[DatasetTerminologyTerm]:
-        response = self.client.responses.create(
+        messages = [
+            {"role": "system", "content": LEGAL_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Extract up to {max_terms} strict legal terminology candidates from "
+                    f"this {target_language} target/reference text.\n\nTarget text:\n{text}"
+                ),
+            },
+        ]
+        response_text = create_llm_response_text(
+            client=self.client,
             model=self.model,
             temperature=0.0,
-            input=[
-                {"role": "system", "content": LEGAL_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        f"Extract up to {max_terms} strict legal terminology candidates from "
-                        f"this {target_language} target/reference text.\n\nTarget text:\n{text}"
-                    ),
-                },
-            ],
+            messages=messages,
+            api_mode=self.api_mode,
+            max_output_tokens=self.max_output_tokens,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
         )
-        return parse_llm_legal_candidates(response.output_text, text)
+        return parse_llm_legal_candidates(response_text, text)
 
 
 class LLMTerminologyRefiner:
     """Uses an LLM to select useful terms from existing exact-span candidates."""
 
-    def __init__(self, client: Any, model: str = "gpt-4.1-mini") -> None:
+    def __init__(
+        self,
+        client: Any,
+        model: str = "gpt-4.1-mini",
+        api_mode: str = "responses",
+        max_output_tokens: int | None = 1024,
+        thinking: str | None = None,
+        reasoning_effort: str | None = None,
+    ) -> None:
         self.client = client
         self.model = model
+        self.api_mode = api_mode
+        self.max_output_tokens = max_output_tokens
+        self.thinking = thinking
+        self.reasoning_effort = reasoning_effort
 
     def refine(
         self,
@@ -640,24 +794,30 @@ class LLMTerminologyRefiner:
     ) -> list[DatasetTerminologyTerm]:
         prompt, source_tag = refiner_prompt_and_source(domain)
         candidate_payload = llm_refiner_candidate_payload(candidates)
-        response = self.client.responses.create(
+        messages = [
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": (
+                    f"Select up to {max_terms} final benchmark terms for this "
+                    f"{target_language} target/reference text.\n\n"
+                    f"Target text:\n{text}\n\n"
+                    f"Candidates:\n{json.dumps(candidate_payload, ensure_ascii=False)}"
+                ),
+            },
+        ]
+        response_text = create_llm_response_text(
+            client=self.client,
             model=self.model,
             temperature=0.0,
-            input=[
-                {"role": "system", "content": prompt},
-                {
-                    "role": "user",
-                    "content": (
-                        f"Select up to {max_terms} final benchmark terms for this "
-                        f"{target_language} target/reference text.\n\n"
-                        f"Target text:\n{text}\n\n"
-                        f"Candidates:\n{json.dumps(candidate_payload, ensure_ascii=False)}"
-                    ),
-                },
-            ],
+            messages=messages,
+            api_mode=self.api_mode,
+            max_output_tokens=self.max_output_tokens,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
         )
         return parse_llm_refined_terms(
-            response.output_text,
+            response_text,
             reference_text=text,
             candidates=candidates,
             source_tag=source_tag,
@@ -1012,6 +1172,10 @@ class DatasetTerminologyGenerator:
         agrovoc_client: AGROVOCClient | None = None,
         unterm_client: UNTERMClient | None = None,
         llm_extractor: LLMTargetCandidateExtractor | None = None,
+        llm_api_mode: str = "responses",
+        llm_max_output_tokens: int | None = 1024,
+        llm_thinking: str | None = None,
+        llm_reasoning_effort: str | None = None,
         extractor: TargetTerminologyExtractor | None = None,
         extractors: tuple[Any, ...] | None = None,
         use_stanza_extractor: bool = True,
@@ -1032,6 +1196,10 @@ class DatasetTerminologyGenerator:
         self.use_nci = use_nci
         self.use_agrovoc = use_agrovoc
         self.use_unterm = use_unterm
+        self.llm_api_mode = llm_api_mode
+        self.llm_max_output_tokens = llm_max_output_tokens
+        self.llm_thinking = llm_thinking
+        self.llm_reasoning_effort = llm_reasoning_effort
         self.cache_path = cache_path
         self.iate_client = iate_client or (IATEClient() if use_iate else None)
         self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
@@ -1043,7 +1211,14 @@ class DatasetTerminologyGenerator:
         self.agrovoc_client = agrovoc_client or (AGROVOCClient() if use_agrovoc else None)
         self.unterm_client = unterm_client or (UNTERMClient() if use_unterm else None)
         self.llm_extractor = llm_extractor or (
-            LLMTargetCandidateExtractor(client=client, model=model)
+            LLMTargetCandidateExtractor(
+                client=client,
+                model=model,
+                api_mode=llm_api_mode,
+                max_output_tokens=llm_max_output_tokens,
+                thinking=llm_thinking,
+                reasoning_effort=llm_reasoning_effort,
+            )
             if use_llm and client is not None
             else None
         )
@@ -1088,6 +1263,9 @@ class DatasetTerminologyGenerator:
             use_agrovoc=self.use_agrovoc,
             use_unterm=self.use_unterm,
             extractor_names=self.extractor_names,
+            llm_api_mode=self.llm_api_mode,
+            llm_thinking=self.llm_thinking,
+            llm_reasoning_effort=self.llm_reasoning_effort,
         )
         with self._cache_lock:
             cached_terms = self._cache.get(cache_key)
@@ -1240,17 +1418,32 @@ class LegalTerminologyGenerator:
         wikidata_client: WikidataClient | None = None,
         unterm_client: UNTERMClient | None = None,
         llm_extractor: LLMLegalCandidateExtractor | None = None,
+        llm_api_mode: str = "responses",
+        llm_max_output_tokens: int | None = 1024,
+        llm_thinking: str | None = None,
+        llm_reasoning_effort: str | None = None,
     ) -> None:
         self.model = model
         self.max_terms = max_terms
         self.use_iate = use_iate
         self.use_wikidata = use_wikidata
         self.use_unterm = use_unterm
+        self.llm_api_mode = llm_api_mode
+        self.llm_max_output_tokens = llm_max_output_tokens
+        self.llm_thinking = llm_thinking
+        self.llm_reasoning_effort = llm_reasoning_effort
         self.cache_path = cache_path
         self.iate_client = iate_client or (IATEClient() if use_iate else None)
         self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
         self.unterm_client = unterm_client or (UNTERMClient() if use_unterm else None)
-        self.llm_extractor = llm_extractor or LLMLegalCandidateExtractor(client, model)
+        self.llm_extractor = llm_extractor or LLMLegalCandidateExtractor(
+            client,
+            model,
+            api_mode=llm_api_mode,
+            max_output_tokens=llm_max_output_tokens,
+            thinking=llm_thinking,
+            reasoning_effort=llm_reasoning_effort,
+        )
         self._cache = load_terminology_cache(cache_path)
         self._cache_lock = threading.Lock()
 
@@ -1269,6 +1462,9 @@ class LegalTerminologyGenerator:
             use_wikidata=self.use_wikidata,
             use_unterm=self.use_unterm,
             eurovoc_descriptors=eurovoc_descriptors or {},
+            llm_api_mode=self.llm_api_mode,
+            llm_thinking=self.llm_thinking,
+            llm_reasoning_effort=self.llm_reasoning_effort,
         )
         with self._cache_lock:
             cached_terms = self._cache.get(cache_key)
@@ -2184,6 +2380,9 @@ def terminology_cache_key(
     use_agrovoc: bool = False,
     use_unterm: bool = False,
     extractor_names: tuple[str, ...] = (),
+    llm_api_mode: str = "responses",
+    llm_thinking: str | None = None,
+    llm_reasoning_effort: str | None = None,
 ) -> str:
     payload = {
         "reference_text": reference_text,
@@ -2201,6 +2400,9 @@ def terminology_cache_key(
         "use_agrovoc": use_agrovoc,
         "use_unterm": use_unterm,
         "extractor_names": extractor_names,
+        "llm_api_mode": llm_api_mode,
+        "llm_thinking": llm_thinking,
+        "llm_reasoning_effort": llm_reasoning_effort,
         "pipeline_version": _TERMINOLOGY_PIPELINE_VERSION,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
@@ -2216,6 +2418,9 @@ def legal_terminology_cache_key(
     use_wikidata: bool,
     use_unterm: bool,
     eurovoc_descriptors: dict[str, dict[str, str]],
+    llm_api_mode: str = "responses",
+    llm_thinking: str | None = None,
+    llm_reasoning_effort: str | None = None,
 ) -> str:
     payload = {
         "reference_text": reference_text,
@@ -2226,6 +2431,9 @@ def legal_terminology_cache_key(
         "use_wikidata": use_wikidata,
         "use_unterm": use_unterm,
         "eurovoc_descriptors": eurovoc_descriptors,
+        "llm_api_mode": llm_api_mode,
+        "llm_thinking": llm_thinking,
+        "llm_reasoning_effort": llm_reasoning_effort,
         "pipeline_version": "legal-target-llm-candidate-v4",
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
