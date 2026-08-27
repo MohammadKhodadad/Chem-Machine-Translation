@@ -30,7 +30,7 @@ DEFAULT_METRIC_NAMES = (
     "comet",
     "target_term_coverage",
 )
-TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified")
+TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified", "refined")
 DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
 MQM_DEFAULT_MODEL = "gpt-4.1-mini"

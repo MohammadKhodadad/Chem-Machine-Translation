@@ -47,7 +47,7 @@ def test_parse_metric_names_defaults_to_all_general_metrics() -> None:
     assert "terminology_success_rate" not in DEFAULT_METRIC_NAMES
     assert "fsp_mqm" not in DEFAULT_METRIC_NAMES
     assert DEFAULT_TERMINOLOGY_TERM_GROUPS == ("verified",)
-    assert set(TERMINOLOGY_TERM_GROUPS) == {"llm", "algorithmic", "verified"}
+    assert set(TERMINOLOGY_TERM_GROUPS) == {"llm", "algorithmic", "verified", "refined"}
 
 
 def test_parse_metric_names_rejects_unknown_metric() -> None:

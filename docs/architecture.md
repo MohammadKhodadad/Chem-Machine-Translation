@@ -42,7 +42,8 @@ Translator behavior and provider backend are separate:
 Prompt domain is explicit and reproducible. Benchmark runs can use `--translation-domain chemistry`,
 `legal`, `generic`, or `auto`; `auto` maps Google Patents to chemistry prompts and JRC/EuroLex to
 legal prompts. When `--use-manifest-terminology` is set, selected manifest terms are injected into
-the prompt. The default terminology group remains `verified`.
+the prompt. Candidate-only manifests typically use `verified`; finalized terminology manifests should
+use the refiner-selected `refined` group.
 
 ## Dataset Mapping
 

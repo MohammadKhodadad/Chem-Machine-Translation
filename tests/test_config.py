@@ -5,7 +5,20 @@ from chem_machine_translation.config import (
 )
 
 
+def clear_explicit_llm_runtime_overrides(monkeypatch) -> None:
+    for name in (
+        "CHEM_MT_LLM_API_MODE",
+        "CHEM_MT_LLM_THINKING",
+        "CHEM_MT_LLM_REASONING_EFFORT",
+        "OPENCODE_API_MODE",
+        "OPENCODE_THINKING",
+        "OPENCODE_REASONING_EFFORT",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+
 def test_load_settings_uses_opencode_provider_aliases(monkeypatch) -> None:
+    clear_explicit_llm_runtime_overrides(monkeypatch)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("CHEM_MT_MODEL", raising=False)
@@ -42,6 +55,7 @@ def test_load_settings_prefers_openai_and_chem_mt_names(monkeypatch) -> None:
 
 
 def test_load_settings_pairs_opencode_key_with_opencode_base_url(monkeypatch) -> None:
+    clear_explicit_llm_runtime_overrides(monkeypatch)
     monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.setenv("OPENCODE_API_KEY", "test-opencode-key")

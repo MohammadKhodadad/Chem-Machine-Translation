@@ -15,8 +15,9 @@ anchored JRC-Acquis article and definition sources in `benchmark_sources/`.
   direction from 250 document anchors.
 - Chunking: already-aligned source-target segments are concatenated within document boundaries.
   Anchored mode emits exact reverse rows by swapping source/target for each unordered pair chunk.
-- Terminology: legal terminology can be generated from the target/reference chunk with IATE,
-  Wikipedia/Wikidata, and UNTERM evidence.
+- Terminology: the standard legal pipeline uses four candidate extractor families
+  (LLM legal extractor, Stanza/UD, XLM-R/NOBI, and spaCy), then enriches candidates with IATE,
+  Wikipedia/Wikidata, and UNTERM evidence before final LLM refinement.
 
 Create the anchored article source-pair snapshot:
 
@@ -78,30 +79,34 @@ uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
   --language fr `
   --language pt `
   --limit 250 `
+  --extract-legal-terms `
   --extract-stanza-terms `
   --use-nobi-extractor `
+  --use-spacy-extractor `
+  --legal-terminology-max-terms 40 `
+  --stanza-terminology-max-terms 40 `
   --stanza-terminology-workers 2 `
   --iate-terminology `
   --wikipedia-terminology `
-  --unterm-terminology `
-  --pubchem-terminology `
-  --chebi-terminology `
-  --chembl-terminology `
-  --mesh-terminology `
-  --nci-terminology `
-  --agrovoc-terminology
+  --unterm-terminology
 ```
 
 The JRC builder shows progress bars and reuses terminology for repeated anchored target chunks.
 `--stanza-terminology-workers` parallelizes unique target chunk extraction with separate worker
 processes. Use modest values when `--use-nobi-extractor` or many public verifier sources are enabled.
 
+The builder step stores the candidate pool. The standard final benchmark pass should run an LLM
+refiner over the merged candidate pool and keep up to `n = 8` final `refined` terms per segment.
+Keep the candidate pool around `40` terms per segment so the refiner has enough recall without
+overloading the prompt.
+
 ## Terminology Groups
 
 Each manifest terminology item has a coarse `term_group` and detailed provenance.
 
-- `verified`: candidate has PubChem, IATE, or Wikipedia/Wikidata evidence. This is the default
-  benchmark terminology group.
+- `refined`: final terms selected by the LLM refiner. This is the standard final benchmark group.
+- `verified`: candidate has external verifier evidence. This remains useful for diagnostics and for
+  manifests that have not yet run the refiner.
 - `llm`: target-only LLM candidate that was verified to appear in the target/reference text, but has
   no external database evidence.
 - `algorithmic`: Stanza/UD, XLM-R/NOBI, or other non-database extractor output.
