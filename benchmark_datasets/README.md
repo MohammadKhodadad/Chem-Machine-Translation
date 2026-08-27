@@ -1,73 +1,80 @@
 # Benchmark Datasets
 
-This folder contains benchmark-ready datasets. The retained tracked source snapshots are the
-anchored JRC-Acquis article and definition sources in `benchmark_sources/`.
+This folder contains benchmark-ready datasets built from portable source snapshots in
+`benchmark_sources/`.
 
-## JRC-Acquis Anchored Sources
+Use this README for the dataset build commands. Use `benchmark_sources/README.md` when you need to
+recreate the source-pair JSONL snapshots themselves.
 
-- Sources:
-  `benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl` for operative legal
-  provisions and `benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`
-  for definition-heavy passages.
-- Languages: defaults to `en`, `es`, `de`, `fr`, and `pt`.
-- Directions: all ordered pairs across the selected languages.
-- Rows: controlled by the source snapshot; the current anchored sources have 250 chunks per ordered
-  direction from 250 document anchors.
-- Chunking: already-aligned source-target segments are concatenated within document boundaries.
-  Anchored mode emits exact reverse rows by swapping source/target for each unordered pair chunk.
-- Terminology: the standard legal pipeline uses four candidate extractor families
-  (LLM legal extractor, Stanza/UD, XLM-R/NOBI, and spaCy), then enriches candidates with IATE,
-  Wikipedia/Wikidata, and UNTERM evidence before final LLM refinement.
+## Standard Terminology Configuration
 
-Create the anchored article source-pair snapshot:
+The standard benchmark terminology pipeline is target-side. It stores a broad candidate pool first,
+then a final LLM refiner should select up to `n = 8` terms per segment.
 
-```powershell
-uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
-  --output-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl `
-  --metadata-output benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair_metadata.json `
-  --cache-dir data/opus_jrc_acquis `
-  --language en `
-  --language es `
-  --language de `
-  --language fr `
-  --language pt `
-  --limit 250 `
-  --min-chunk-tokens 250 `
-  --target-chunk-tokens 450 `
-  --max-chunk-tokens 700 `
-  --section-type article `
-  --selection-mode anchored `
-  --anchor-language en `
-  --anchor-search-multiplier 20 `
-  --clean-legacy-markup `
-  --quality-mode strict
-```
+Standard LLM settings:
 
-Create the anchored definition source-pair snapshot:
+- Model: `gpt-4.1-mini`
+- API mode: `responses`
+- Max output tokens: `1024`
+- Temperature: `0.0` in code
+
+Standard candidate cap:
+
+- Use `40` candidates before refinement.
+- Use `8` final refined terms after refinement.
+
+Standard extractor families:
+
+- LLM extractor: `--extract-terminology` for Google Patents, `--extract-legal-terms` for JRC.
+- Stanza/UD: enabled by default inside the terminology generator; for JRC pass
+  `--extract-stanza-terms`.
+- XLM-R/NOBI: `--use-nobi-extractor`.
+- spaCy: `--use-spacy-extractor`.
+
+Standard verifier flags:
+
+- Google Patents chemistry: `--iate-terminology`, `--wikidata-terminology`,
+  `--pubchem-terminology`, `--chebi-terminology`, `--chembl-terminology`,
+  `--mesh-terminology`, `--nci-terminology`, and `--agrovoc-terminology`.
+- JRC legal: `--iate-terminology`, `--wikipedia-terminology`, and `--unterm-terminology`.
+
+## Google Patents Chemistry
+
+Build the 250-row-per-pair Google Patents benchmark from the tracked source snapshot:
 
 ```powershell
-uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
-  --output-jsonl benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl `
-  --metadata-output benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair_metadata.json `
-  --cache-dir data/opus_jrc_acquis `
+uv run --no-sync python scripts/build_google_patents_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/google_patents_within_document_pairs_250_per_pair `
+  --language de `
   --language en `
   --language es `
-  --language de `
   --language fr `
-  --language pt `
+  --language ru `
+  --language zh `
   --limit 250 `
-  --min-chunk-tokens 250 `
-  --target-chunk-tokens 450 `
-  --max-chunk-tokens 700 `
-  --section-type definition `
-  --selection-mode anchored `
-  --anchor-language en `
-  --anchor-search-multiplier 20 `
-  --clean-legacy-markup `
-  --quality-mode strict
+  --extract-terminology `
+  --terminology-model gpt-4.1-mini `
+  --terminology-max-terms 40 `
+  --use-nobi-extractor `
+  --use-spacy-extractor `
+  --terminology-workers 2 `
+  --iate-terminology `
+  --wikidata-terminology `
+  --pubchem-terminology `
+  --chebi-terminology `
+  --chembl-terminology `
+  --mesh-terminology `
+  --nci-terminology `
+  --agrovoc-terminology
 ```
 
-Build a benchmark dataset from either tracked source snapshot:
+`--extract-terminology` enables the LLM target extractor. The standard command also keeps the
+deterministic Stanza/UD extractor, then adds XLM-R/NOBI and spaCy explicitly.
+
+## JRC-Acquis Articles
+
+Build the 250-row-per-pair JRC article/provision benchmark:
 
 ```powershell
 uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
@@ -80,37 +87,64 @@ uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
   --language pt `
   --limit 250 `
   --extract-legal-terms `
-  --extract-stanza-terms `
-  --use-nobi-extractor `
-  --use-spacy-extractor `
+  --legal-terminology-model gpt-4.1-mini `
   --legal-terminology-max-terms 40 `
+  --legal-terminology-workers 2 `
+  --extract-stanza-terms `
   --stanza-terminology-max-terms 40 `
   --stanza-terminology-workers 2 `
+  --use-nobi-extractor `
+  --use-spacy-extractor `
   --iate-terminology `
   --wikipedia-terminology `
   --unterm-terminology
 ```
 
-The JRC builder shows progress bars and reuses terminology for repeated anchored target chunks.
-`--stanza-terminology-workers` parallelizes unique target chunk extraction with separate worker
-processes. Use modest values when `--use-nobi-extractor` or many public verifier sources are enabled.
+## JRC-Acquis Definitions
 
-The builder step stores the candidate pool. The standard final benchmark pass should run an LLM
-refiner over the merged candidate pool and keep up to `n = 8` final `refined` terms per segment.
-Keep the candidate pool around `40` terms per segment so the refiner has enough recall without
-overloading the prompt.
+Build the 250-row-per-pair JRC definition-heavy benchmark:
 
-## Terminology Groups
+```powershell
+uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
+  --source-pairs-jsonl benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl `
+  --output-dir benchmark_datasets/jrc_acquis_anchored_definitions_250_per_pair `
+  --language en `
+  --language es `
+  --language de `
+  --language fr `
+  --language pt `
+  --limit 250 `
+  --extract-legal-terms `
+  --legal-terminology-model gpt-4.1-mini `
+  --legal-terminology-max-terms 40 `
+  --legal-terminology-workers 2 `
+  --extract-stanza-terms `
+  --stanza-terminology-max-terms 40 `
+  --stanza-terminology-workers 2 `
+  --use-nobi-extractor `
+  --use-spacy-extractor `
+  --iate-terminology `
+  --wikipedia-terminology `
+  --unterm-terminology
+```
 
-Each manifest terminology item has a coarse `term_group` and detailed provenance.
+The article and definition commands differ only in `--source-pairs-jsonl` and `--output-dir`.
 
-- `refined`: final terms selected by the LLM refiner. This is the standard final benchmark group.
-- `verified`: candidate has external verifier evidence. This remains useful for diagnostics and for
-  manifests that have not yet run the refiner.
-- `llm`: target-only LLM candidate that was verified to appear in the target/reference text, but has
-  no external database evidence.
-- `algorithmic`: Stanza/UD, XLM-R/NOBI, or other non-database extractor output.
+## Refiner And Evaluation Groups
 
-The detailed `source` field keeps all candidate and verifier provenance, such as
-`stanza_ud_dependency+xlmr_nobi+iate`. The `verified_by` field stores just the external evidence
-sources.
+The build commands above create candidate/verified terminology manifests. The standard final
+benchmark terminology is the refiner-selected `refined` group with `n = 8` terms per segment.
+
+Terminology groups:
+
+- `refined`: final terms selected by the LLM refiner.
+- `verified`: candidate has external verifier evidence.
+- `llm`: target-side LLM candidate that appears in the target/reference text.
+- `algorithmic`: deterministic extractor candidate from Stanza/UD, XLM-R/NOBI, or spaCy.
+
+Use `--terminology-term-group verified` for candidate-only manifests. Use
+`--terminology-term-group refined --max-manifest-terminology-terms 8` once the final refiner stage
+has been applied.
+
+The detailed `source` field keeps candidate and verifier provenance, such as
+`stanza_ud_dependency+xlmr_nobi+iate`. The `verified_by` field stores external evidence sources.
