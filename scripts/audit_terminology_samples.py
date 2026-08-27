@@ -15,6 +15,7 @@ from openai import OpenAI
 from chem_machine_translation.config import load_settings
 from chem_machine_translation.data.terminology import (
     DatasetTerminologyTerm,
+    DatasetTerminologyGenerator,
     LLMTerminologyRefiner,
     dataset_term_from_json,
     deduplicate_terms,
@@ -30,11 +31,37 @@ OUTPUT_JSON = ROOT / "docs" / "terminology-sample-audit.json"
 OUTPUT_DOC = ROOT / "docs" / "terminology-sample-audit.md"
 FIGURE_DIR = ROOT / "docs" / "figures" / "terminology-sample-audit"
 REFINED_MAX_TERMS = 8
+CHEMICAL_CANDIDATE_MAX_TERMS = 40
+GOOGLE_PATENTS_SOURCE_SNAPSHOT = (
+    "benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl"
+)
 HISTORICAL_ARTIFACT_REV = "a34841c^"
 JRC_ARTICLE_ROOTS = (
     "jrc_acquis_anchored_articles_5_all_non_llm_terms",
     "jrc_acquis_anchored_articles_5_llm_terms",
     "jrc_acquis_anchored_articles_5_spacy_only_terms",
+)
+LANGUAGE_NAMES = {
+    "de": "German",
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "ja": "Japanese",
+    "nl": "Dutch",
+    "pt": "Portuguese",
+    "ru": "Russian",
+    "zh": "Chinese",
+}
+EXTRACTOR_LABELS = (
+    ("llm_target", "LLM chemistry extractor"),
+    ("legal_llm", "LLM legal extractor"),
+    ("stanza_ud_dependency", "Stanza/UD dependency extractor"),
+    ("stanza_ud_ngram", "Stanza/UD relaxed n-gram extractor"),
+    ("stanza_ud_proper_name", "Stanza/UD proper-name extractor"),
+    ("xlmr_nobi", "XLM-R/NOBI token-classification extractor"),
+    ("spacy_entity", "spaCy named-entity extractor"),
+    ("spacy_noun_chunk", "spaCy noun-chunk extractor"),
+    ("spacy_ngram", "spaCy token n-gram extractor"),
 )
 
 
@@ -52,43 +79,43 @@ class SampleSpec:
 SAMPLES = [
     SampleSpec(
         "google_patents",
-        ("google_patents_eval_subset_60_multidirectional",),
+        (GOOGLE_PATENTS_SOURCE_SNAPSHOT,),
         "de-fr",
         "chemistry",
-        60,
-        220,
+        128,
+        384,
     ),
     SampleSpec(
         "google_patents",
-        ("google_patents_eval_subset_60_multidirectional",),
-        "fr-de",
-        "chemistry",
-        60,
-        240,
-    ),
-    SampleSpec(
-        "google_patents",
-        ("google_patents_eval_subset_60_multidirectional",),
-        "en-fr",
-        "chemistry",
-        60,
-        220,
-    ),
-    SampleSpec(
-        "google_patents",
-        ("google_patents_eval_subset_60_multidirectional",),
-        "fr-en",
-        "chemistry",
-        60,
-        240,
-    ),
-    SampleSpec(
-        "google_patents",
-        ("google_patents_eval_subset_60_multidirectional",),
+        (GOOGLE_PATENTS_SOURCE_SNAPSHOT,),
         "en-de",
         "chemistry",
-        60,
-        220,
+        128,
+        384,
+    ),
+    SampleSpec(
+        "google_patents",
+        (GOOGLE_PATENTS_SOURCE_SNAPSHOT,),
+        "en-fr",
+        "chemistry",
+        128,
+        384,
+    ),
+    SampleSpec(
+        "google_patents",
+        (GOOGLE_PATENTS_SOURCE_SNAPSHOT,),
+        "en-zh",
+        "chemistry",
+        128,
+        384,
+    ),
+    SampleSpec(
+        "google_patents",
+        (GOOGLE_PATENTS_SOURCE_SNAPSHOT,),
+        "fr-ru",
+        "chemistry",
+        128,
+        384,
     ),
     SampleSpec("jrc_acquis", JRC_ARTICLE_ROOTS, "de-es", "jrc", 150, 450, HISTORICAL_ARTIFACT_REV),
     SampleSpec("jrc_acquis", JRC_ARTICLE_ROOTS, "es-en", "jrc", 150, 450, HISTORICAL_ARTIFACT_REV),
@@ -104,6 +131,26 @@ def main() -> None:
         raise ValueError("OPENAI_API_KEY or OPENCODE_API_KEY is required for sample audit.")
 
     client = OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url)
+    chemical_generator = DatasetTerminologyGenerator(
+        client=client,
+        model=settings.default_model,
+        max_terms=CHEMICAL_CANDIDATE_MAX_TERMS,
+        use_llm=True,
+        use_iate=True,
+        use_wikidata=True,
+        use_pubchem=True,
+        use_chebi=True,
+        use_chembl=True,
+        use_mesh=True,
+        use_nci=True,
+        use_agrovoc=True,
+        llm_api_mode=settings.llm_api_mode,
+        llm_max_output_tokens=settings.llm_max_output_tokens,
+        llm_thinking=settings.llm_thinking,
+        llm_reasoning_effort=settings.llm_reasoning_effort,
+        use_nobi_extractor=True,
+        use_spacy_extractor=True,
+    )
     refiner = LLMTerminologyRefiner(
         client=client,
         model=settings.default_model,
@@ -116,7 +163,10 @@ def main() -> None:
     FIGURE_DIR.mkdir(parents=True, exist_ok=True)
     results = []
     for index, spec in enumerate(SAMPLES, start=1):
-        manifest_row, source_text, target_text, candidates = load_sample(spec)
+        manifest_row, source_text, target_text, candidates = load_sample(
+            spec,
+            chemical_generator=chemical_generator,
+        )
         print(
             f"sample={index} dataset={spec.dataset} direction={spec.direction} "
             f"candidates={len(candidates)} target={manifest_row['target_language']}",
@@ -153,6 +203,7 @@ def main() -> None:
             "example_id": manifest_row.get("example_id") or manifest_row.get("source_id"),
             "source_id": manifest_row.get("source_id"),
             "approx_source_tokens": manifest_row.get("approx_source_tokens"),
+            "source_snapshot": manifest_row.get("source_snapshot"),
             "model": settings.default_model,
             "api_mode": settings.llm_api_mode,
             "llm_max_output_tokens": settings.llm_max_output_tokens,
@@ -192,7 +243,13 @@ def main() -> None:
     print(f"Wrote {OUTPUT_DOC}")
 
 
-def load_sample(spec: SampleSpec) -> tuple[dict[str, Any], str, str, list[DatasetTerminologyTerm]]:
+def load_sample(
+    spec: SampleSpec,
+    *,
+    chemical_generator: DatasetTerminologyGenerator,
+) -> tuple[dict[str, Any], str, str, list[DatasetTerminologyTerm]]:
+    if spec.dataset == "google_patents" and spec.roots[0].endswith(".jsonl"):
+        return load_google_source_snapshot_sample(spec, chemical_generator)
     row_index, manifest_row = select_manifest_row(spec, spec.roots[0])
     example_id = manifest_row.get("example_id") or manifest_row.get("source_id")
     source_text = load_csv_context(load_csv_text(spec, spec.roots[0], "source.csv"), row_index)
@@ -202,6 +259,79 @@ def load_sample(spec: SampleSpec) -> tuple[dict[str, Any], str, str, list[Datase
         row = find_manifest_row(spec, root, example_id) or manifest_row
         terms.extend(dataset_term_from_json(term) for term in row.get("terminology", []))
     return manifest_row, source_text, target_text, deduplicate_terms(terms)
+
+
+def load_google_source_snapshot_sample(
+    spec: SampleSpec,
+    generator: DatasetTerminologyGenerator,
+) -> tuple[dict[str, Any], str, str, list[DatasetTerminologyTerm]]:
+    row = select_google_source_snapshot_row(spec)
+    source_language_code = str(row["source_language"])
+    target_language_code = str(row["target_language"])
+    source_language = LANGUAGE_NAMES.get(source_language_code, source_language_code)
+    target_language = LANGUAGE_NAMES.get(target_language_code, target_language_code)
+    source_text = str(row["source_text"])
+    target_text = str(row["target_text"])
+    terms = generator.generate(
+        source_text=source_text,
+        source_language=source_language,
+        target_language=target_language,
+        reference_text=target_text,
+    )
+    example_id = str(row.get("example_id") or row.get("doc_id") or spec.direction)
+    manifest_row = {
+        "dataset": "google_patents",
+        "source_id": example_id,
+        "example_id": example_id,
+        "direction": spec.direction,
+        "source_language": source_language,
+        "source_language_code": source_language_code,
+        "target_language": target_language,
+        "target_language_code": target_language_code,
+        "doc_id": str(row.get("doc_id") or ""),
+        "corpus_id": str(row.get("corpus_id") or ""),
+        "publication_number": str(row.get("doc_id") or ""),
+        "family_id": str(row.get("group_key") or ""),
+        "country_code": str(row.get("source") or ""),
+        "publication_date": str(row.get("pub_date") or ""),
+        "field": str(row.get("field") or ""),
+        "approx_source_tokens": int(
+            row.get("source_token_count") or approximate_whitespace_tokens(source_text)
+        ),
+        "source_snapshot": spec.roots[0],
+        "terminology": [term.to_json() for term in terms],
+    }
+    return manifest_row, source_text, target_text, deduplicate_terms(terms)
+
+
+def select_google_source_snapshot_row(spec: SampleSpec) -> dict[str, Any]:
+    snapshot_path = ROOT / spec.roots[0]
+    rows = []
+    with snapshot_path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("language_pair") == spec.direction:
+                rows.append(row)
+    if not rows:
+        raise ValueError(f"No Google source rows found for {spec.direction}.")
+    eligible = [
+        row
+        for row in rows
+        if spec.min_source_tokens
+        <= int(row.get("source_token_count") or 0)
+        <= spec.max_source_tokens
+    ]
+    if not eligible:
+        eligible = rows
+    return min(
+        eligible,
+        key=lambda row: (
+            abs(int(row.get("source_token_count") or 0) - spec.min_source_tokens),
+            str(row.get("example_id") or ""),
+        ),
+    )
 
 
 def select_manifest_row(spec: SampleSpec, root: str) -> tuple[int, dict[str, Any]]:
@@ -299,6 +429,10 @@ def csv_text_as_handle(text: str) -> Any:
     return StringIO(text)
 
 
+def approximate_whitespace_tokens(text: str) -> int:
+    return len(text.split())
+
+
 def count_exact_terms(text: str, terms: list[DatasetTerminologyTerm]) -> int:
     return sum(1 for term in terms if find_exact_text_span(text, primary_target_term(term)))
 
@@ -327,6 +461,10 @@ def render_markdown(results: list[dict[str, Any]]) -> str:
         "multilingual samples. Underlines use three lanes: gray for all candidates, blue for "
         "refined terms, and green for verified refined terms.",
         "",
+        "The Google Patents chemistry samples are selected directly from the newer tracked source "
+        f"snapshot `{GOOGLE_PATENTS_SOURCE_SNAPSHOT}` and then passed through the standard "
+        "chemistry candidate extractor, verifier, and refiner flow.",
+        "",
         "## Summary",
         "",
         f"- Samples: {len(results)}",
@@ -353,6 +491,7 @@ def render_sample_section(result: dict[str, Any]) -> list[str]:
         f"## {title}",
         "",
         f"- Example: `{result['example_id']}`",
+        *render_source_snapshot_line(result),
         f"- Source language: {result['source_language']}",
         f"- Target language: {result['target_language']}",
         f"- Approx source tokens: {result['approx_source_tokens']}",
@@ -371,9 +510,12 @@ def render_sample_section(result: dict[str, Any]) -> list[str]:
         "",
         normalize_markdown_text(result["target_text"]),
         "",
-        "### All Candidates",
+        "### Candidates By Extractor",
         "",
-        render_term_list(result["candidates"]),
+        "The same candidate can appear under multiple extractors when deduplication merged the "
+        "same exact target span from several sources.",
+        "",
+        render_candidates_by_extractor(result["candidates"]),
         "",
         "### Refined Terms",
         "",
@@ -384,6 +526,65 @@ def render_sample_section(result: dict[str, Any]) -> list[str]:
         render_term_list(result["verified_refined_terms"]),
         "",
     ]
+
+
+def render_source_snapshot_line(result: dict[str, Any]) -> list[str]:
+    source_snapshot = result.get("source_snapshot")
+    if not source_snapshot:
+        return []
+    return [f"- Source snapshot: `{source_snapshot}`"]
+
+
+def render_candidates_by_extractor(raw_terms: list[dict[str, Any]]) -> str:
+    if not raw_terms:
+        return "- None"
+
+    lines = []
+    used_term_ids: set[int] = set()
+    for tag, label in EXTRACTOR_LABELS:
+        terms = [
+            term
+            for term in raw_terms
+            if tag in source_parts(term)
+        ]
+        if not terms:
+            continue
+        used_term_ids.update(id(term) for term in terms)
+        lines.extend(
+            [
+                f"#### {label} (`{tag}`; {pluralize_candidate_count(len(terms))})",
+                "",
+                render_term_list(terms),
+                "",
+            ]
+        )
+
+    other_terms = [term for term in raw_terms if id(term) not in used_term_ids]
+    if other_terms:
+        lines.extend(
+            [
+                "#### Other or verifier-only provenance "
+                f"({pluralize_candidate_count(len(other_terms))})",
+                "",
+                render_term_list(other_terms),
+                "",
+            ]
+        )
+
+    return "\n".join(lines).strip() or "- None"
+
+
+def pluralize_candidate_count(count: int) -> str:
+    noun = "candidate" if count == 1 else "candidates"
+    return f"{count} {noun}"
+
+
+def source_parts(term: dict[str, Any]) -> set[str]:
+    return {
+        part.strip()
+        for part in str(term.get("source") or "").split("+")
+        if part.strip()
+    }
 
 
 def render_term_list(raw_terms: list[dict[str, Any]]) -> str:
