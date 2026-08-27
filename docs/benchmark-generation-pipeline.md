@@ -9,13 +9,22 @@ part of those commands does and how the terminology objects move through the sys
 
 ## High-Level Flow
 
-Benchmark generation has four main stages.
+Benchmark generation has three top-level stages.
 
 1. Create or reuse a source-pair snapshot in `benchmark_sources/`.
-2. Build benchmark-ready direction folders in `benchmark_datasets/`.
-3. Generate target-side terminology candidates and verifier evidence for each target/reference
-   segment.
-4. Run the final LLM refiner when the benchmark needs the final `refined` terminology group.
+2. Run the benchmark creator. This writes benchmark-ready direction folders in
+   `benchmark_datasets/` and builds the terminology manifest for each target/reference segment.
+3. Run translation and evaluation against those manifests.
+
+Inside stage 2, terminology creation is a nested pipeline:
+
+1. Read one target/reference segment.
+2. Run candidate extractors.
+3. Deduplicate and cap the broad candidate pool, normally at `40` terms.
+4. Run verifier/enrichment sources.
+5. Rank and store candidate or `verified` manifest terms.
+6. Run the final LLM refiner when a finalized benchmark needs the `refined` group, normally capped
+   at `8` terms.
 
 The pipeline is target-side for benchmark terminology. Candidate extractors read the target/reference
 text and return exact spans that appear in that text. They do not translate source terms during
@@ -29,6 +38,51 @@ The standard terminology setup is:
 - Default API mode: `responses`.
 - Default max output tokens for terminology calls: `1024`.
 - Temperature: `0.0` in the LLM call code.
+
+## Flow Figures
+
+### Benchmark Creator
+
+```mermaid
+flowchart LR
+  A[Source-pair snapshot] --> B[Benchmark creator]
+  B --> C[source.csv]
+  B --> D[target.csv]
+  B --> E[manifest.jsonl]
+  E --> F[translation run]
+  F --> G[evaluation reports]
+```
+
+### Terminology Manifest Builder
+
+```mermaid
+flowchart LR
+  A[Target/reference text] --> B[Candidate extractors]
+  B --> C[Deduplicate and cap at 40]
+  C --> D[Verifier enrichment]
+  D --> E[Rank candidate terms]
+  E --> F[candidate or verified manifest]
+  F --> G[LLM refiner]
+  G --> H[refined terms, cap at 8]
+```
+
+### Candidate Extractors To Refiner
+
+```mermaid
+flowchart TB
+  A[Target/reference text] --> B[LLM extractor]
+  A --> C[Stanza/UD extractor]
+  A --> D[XLM-R/NOBI extractor]
+  A --> E[spaCy extractor]
+  B --> F[Merged candidate pool]
+  C --> F
+  D --> F
+  E --> F
+  F --> G[External verifiers]
+  G --> H[verified evidence]
+  H --> I[LLM refiner]
+  I --> J[final refined terminology]
+```
 
 ## Source-Pair Snapshots
 
@@ -108,10 +162,18 @@ Class: `LLMTargetCandidateExtractor`
 
 Used by Google Patents when `--extract-terminology` is passed.
 
-This extractor sends the target/reference text to the LLM and asks for exact technical spans only.
-It is chemistry and patent oriented. It looks for chemical names, compounds, materials, formulas,
-reagents, solvents, polymers, proteins, process names, assay terms, analytical terms, properties,
-hazards, identifiers, and technically meaningful units.
+Pipeline:
+
+1. Build a chemistry/patent prompt around the target/reference text.
+2. Ask the LLM for exact technical spans only.
+3. Parse the JSON response.
+4. Check every returned `target_term` against the original target/reference text.
+5. Drop terms that do not appear exactly.
+6. Convert accepted spans into `DatasetTerminologyTerm` objects.
+
+The extractor looks for chemical names, compounds, materials, formulas, reagents, solvents,
+polymers, proteins, process names, assay terms, analytical terms, properties, hazards, identifiers,
+and technically meaningful units.
 
 The parser accepts only terms that:
 
@@ -131,9 +193,18 @@ Class: `LLMLegalCandidateExtractor`
 
 Used by JRC-Acquis when `--extract-legal-terms` is passed.
 
-This extractor is tuned for legal and institutional terminology. It looks for legal instruments,
-institutions, committees, agencies, programmes, funds, procedures, rights, obligations, restrictions,
-sanctions, remedies, legal effects, regulatory domains, and explicitly defined terms.
+Pipeline:
+
+1. Build a legal-domain prompt around the target/reference text.
+2. Ask the LLM for exact legal or institutional spans only.
+3. Parse the JSON response.
+4. Check every returned `target_term` against the original target/reference text.
+5. Drop terms that do not appear exactly.
+6. Convert accepted spans into `DatasetTerminologyTerm` objects.
+
+The extractor looks for legal instruments, institutions, committees, agencies, programmes, funds,
+procedures, rights, obligations, restrictions, sanctions, remedies, legal effects, regulatory
+domains, and explicitly defined terms.
 
 It rejects dates, article numbers alone, paragraph references alone, personal names, signatures,
 whole clauses, generic single words, and ordinary administrative prose.
@@ -150,13 +221,23 @@ Class: `TargetTerminologyExtractor`
 Google uses this extractor by default inside `DatasetTerminologyGenerator` unless
 `--no-stanza-extractor` is passed. JRC uses it when `--extract-stanza-terms` is passed.
 
-The extractor lazily loads a Stanza pipeline for the target language with:
+Pipeline:
+
+1. Resolve the target language code.
+2. Lazily load or reuse a Stanza pipeline for that language.
+3. Parse the target/reference text into tokens, POS tags, lemmas, and dependencies.
+4. Generate three separate lists of candidates from the parsed document: dependency spans,
+   relaxed n-grams, and proper-name runs.
+5. Clean and exact-span check each surface form.
+6. Deduplicate and cap the Stanza candidates.
+
+The Stanza pipeline uses:
 
 ```text
 tokenize,pos,lemma,depparse
 ```
 
-It then builds three candidate streams.
+The extractor then builds three lists of candidate terms before merging them.
 
 Dependency candidates use noun-like Universal Dependencies heads. The extractor expands heads with
 dependency relations such as modifiers, compounds, names, appositions, flat names, numeric modifiers,
@@ -193,9 +274,15 @@ The default model is:
 tthhanh/xlm-ate-nobi-en-nes
 ```
 
-The extractor uses a Hugging Face token-classification pipeline with no aggregation strategy. It
-maps the model labels into BIO-style term spans, handles subword continuations, and decodes contiguous
-terminology spans from the target/reference text.
+Pipeline:
+
+1. Load the Hugging Face token-classification model.
+2. Run token classification over the target/reference text.
+3. Map model labels into BIO-style terminology labels.
+4. Join contiguous term tokens, including subword continuations.
+5. Reconstruct exact target/reference spans.
+6. Drop spans with bad word boundaries or noisy surfaces.
+7. Deduplicate and cap accepted terms.
 
 The implementation truncates input to the first `4000` characters. It does not route by target
 language; the model is loaded once and applied to the supplied text.
@@ -214,6 +301,17 @@ Enabled with `--use-spacy-extractor`.
 The spaCy extractor is an exact-span extractor. It uses trained spaCy linguistic annotations when a
 language model is available, and falls back to a blank spaCy pipeline when possible.
 
+Pipeline:
+
+1. Resolve the target language code.
+2. Load the configured `--spacy-model`, or the default small model for the target language.
+3. If the language model is unavailable, fall back to `spacy.blank(language_code)` when possible.
+4. Parse the first `4000` characters of the target/reference text.
+5. Extract named-entity candidates from `doc.ents`.
+6. Extract noun-chunk candidates from `doc.noun_chunks` when the pipeline supports noun chunks.
+7. Extract token n-gram candidates from sentence-scoped candidate token runs.
+8. Clean, trim, exact-span preserve, deduplicate, and cap the combined spaCy candidates.
+
 Default language model mapping:
 
 - German: `de_core_news_sm`
@@ -228,7 +326,7 @@ Default language model mapping:
 If `--spacy-model` is provided, that model is loaded instead of the language default. The input is
 truncated to the first `4000` characters.
 
-The spaCy extractor has three internal components.
+The three spaCy candidate components are:
 
 Named-entity terms read `doc.ents`, trim non-content boundary tokens, clean the surface form, and
 keep candidates that have at least one content token. These candidates use:
@@ -291,60 +389,6 @@ JRC legal builds normally use:
 There is also EuroVoc descriptor matching support in the legal terminology code. The current JRC
 builder passes an empty descriptor map, so EuroVoc is not part of the standard JRC command unless
 that metadata is supplied.
-
-## Generator Orchestration
-
-### Google Patents
-
-Google uses `DatasetTerminologyGenerator`.
-
-When the standard command is used, the generator runs:
-
-1. LLM chemistry extraction from the target/reference text.
-2. Stanza/UD extraction.
-3. XLM-R/NOBI extraction.
-4. spaCy extraction.
-5. Deduplication and broad cap to `--terminology-max-terms 40`.
-6. External chemistry verifier enrichment.
-7. Ranking through `select_dataset_terms`.
-8. Cache write when `--terminology-cache` is supplied.
-
-The relevant flags are:
-
-- `--extract-terminology`
-- `--terminology-model gpt-4.1-mini`
-- `--terminology-max-terms 40`
-- `--use-nobi-extractor`
-- `--use-spacy-extractor`
-- `--terminology-workers`
-- chemistry verifier flags
-
-### JRC-Acquis
-
-JRC uses a split flow because the legal LLM extractor and deterministic target extractors are run as
-separate stages.
-
-First, `LegalTerminologyGenerator` runs when `--extract-legal-terms` is set:
-
-1. LLM legal extraction from the target/reference text.
-2. IATE, Wikidata, UNTERM, and optional EuroVoc evidence.
-3. Ranking through `select_legal_terms`.
-
-Then, `DatasetTerminologyGenerator` runs when `--extract-stanza-terms` is set:
-
-1. Stanza/UD extraction.
-2. Optional XLM-R/NOBI extraction.
-3. Optional spaCy extraction.
-4. External evidence enrichment.
-5. Ranking through `select_dataset_terms`.
-
-The builder then merges the legal and algorithmic results with `deduplicate_terms`.
-
-The JRC builder also caches deterministic target-term extraction by target language and target text,
-which matters because anchored JRC rows can reuse the same target chunk across directions.
-
-The article and definition benchmark commands differ only in the source JSONL and output directory.
-The terminology pipeline is the same for both.
 
 ## LLM Refiner
 
@@ -428,6 +472,70 @@ extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the chemistry verifier set.
 
 Use the JRC article or definition commands there for legal benchmarks. Both enable the legal LLM
 extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the legal verifier set.
+
+## Benchmark Creator Orchestration
+
+This section is intentionally near the end because it describes how the dataset builders wire
+together the extractor, verifier, and refiner pieces described above.
+
+### Google Patents
+
+Google uses `DatasetTerminologyGenerator` as one combined terminology generator.
+
+When the standard command is used, the benchmark creator runs:
+
+1. Build manifest rows from the Google source-pair snapshot.
+2. Send each target/reference text to the chemistry LLM extractor.
+3. Send the same target/reference text to Stanza/UD.
+4. Send the same target/reference text to XLM-R/NOBI when `--use-nobi-extractor` is set.
+5. Send the same target/reference text to spaCy when `--use-spacy-extractor` is set.
+6. Merge all candidate streams and deduplicate by normalized target surface.
+7. Cap the broad candidate pool with `--terminology-max-terms 40`.
+8. Run chemistry verifiers on each candidate.
+9. Rank terms through `select_dataset_terms`.
+10. Write candidate and `verified` terms into the manifest.
+11. Write or reuse terminology cache entries when `--terminology-cache` is supplied.
+
+The relevant flags are:
+
+- `--extract-terminology`
+- `--terminology-model gpt-4.1-mini`
+- `--terminology-max-terms 40`
+- `--use-nobi-extractor`
+- `--use-spacy-extractor`
+- `--terminology-workers`
+- chemistry verifier flags
+
+### JRC-Acquis
+
+JRC uses a split creator flow because the legal LLM extractor and deterministic target extractors are
+run as separate stages before being merged.
+
+First, `LegalTerminologyGenerator` runs when `--extract-legal-terms` is set:
+
+1. Build manifest rows from the JRC article or definition source-pair snapshot.
+2. Send each target/reference text to the legal LLM extractor.
+3. Run IATE, Wikidata, UNTERM, and optional EuroVoc evidence.
+4. Rank legal terms through `select_legal_terms`.
+5. Store the legal candidates on the manifest row.
+
+Then, `DatasetTerminologyGenerator` runs when `--extract-stanza-terms` is set:
+
+1. Reuse the same target/reference text.
+2. Run Stanza/UD.
+3. Run XLM-R/NOBI when `--use-nobi-extractor` is set.
+4. Run spaCy when `--use-spacy-extractor` is set.
+5. Deduplicate and cap with `--stanza-terminology-max-terms 40`.
+6. Run configured verifier enrichment.
+7. Rank through `select_dataset_terms`.
+8. Merge the legal and algorithmic results with `deduplicate_terms`.
+9. Write candidate and `verified` terms into the manifest.
+
+The JRC builder also caches deterministic target-term extraction by target language and target text,
+which matters because anchored JRC rows can reuse the same target chunk across directions.
+
+The article and definition benchmark commands differ only in the source JSONL and output directory.
+The terminology pipeline is the same for both.
 
 ## Important Implementation Files
 
