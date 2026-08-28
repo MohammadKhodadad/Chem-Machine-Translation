@@ -1,0 +1,27 @@
+name = "google_patents_chemistry"
+domain = "chemistry"
+
+[source]
+kind = "google_patents_snapshot"
+source_pairs_jsonl = "benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl"
+output_dir = "benchmark_datasets/google_patents_within_document_pairs_250_per_pair"
+languages = ["de", "en", "es", "fr", "ru", "zh"]
+limit = 250
+min_input_tokens = 128
+max_input_tokens = 384
+bidirectional = false
+
+[terminology]
+domain = "chemistry"
+candidate_max_terms = 40
+refined_max_terms = 8
+model = "gpt-4.1-mini"
+base_url = "https://api.openai.com/v1"
+api_mode = "responses"
+max_output_tokens = 1024
+extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]
+verifiers = ["iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]
+refiner = true
+workers = 2
+openai_timeout = 120.0
+

@@ -2,6 +2,11 @@
 
 This folder tracks portable source-pair snapshots used to recreate benchmark datasets.
 
+Standard benchmark generation does not require passing these paths manually. The paths are already
+set in `config/benchmark_generation/chemistry.toml` and
+`config/benchmark_generation/legal.toml`; use this document only when you need to rebuild the source
+snapshots themselves.
+
 ## Google Patents / Hugging Face
 
 The Google Patents source can be rebuilt from

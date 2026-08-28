@@ -1,0 +1,319 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback when installed
+    import tomli as tomllib  # type: ignore[no-redef]
+
+from chem_machine_translation.config import DEFAULT_LLM_MAX_OUTPUT_TOKENS, DEFAULT_MODEL
+from chem_machine_translation.data.terminology import DEFAULT_SPACY_MODEL
+
+SUPPORTED_DOMAINS = {"chemistry", "google_patents", "jrc", "legal"}
+SUPPORTED_SOURCE_KINDS = {"google_patents_snapshot", "jrc_acquis_snapshot"}
+SUPPORTED_EXTRACTORS = {
+    "llm_chemistry",
+    "llm_legal",
+    "stanza_ud",
+    "xlmr_nobi",
+    "spacy",
+}
+SUPPORTED_VERIFIERS = {
+    "iate",
+    "wikidata",
+    "wikipedia",
+    "pubchem",
+    "chebi",
+    "chembl",
+    "mesh",
+    "nci",
+    "agrovoc",
+    "unterm",
+}
+
+
+@dataclass(frozen=True)
+class BenchmarkBuildConfig:
+    name: str
+    kind: str
+    source_pairs_jsonl: Path
+    output_dir: Path
+    languages: tuple[str, ...]
+    limit: int
+    min_input_tokens: int | None = None
+    max_input_tokens: int | None = None
+    anchor_limit: int | None = None
+    bidirectional: bool = False
+
+
+@dataclass(frozen=True)
+class BenchmarkTerminologyConfig:
+    domain: str
+    candidate_max_terms: int = 40
+    refined_max_terms: int = 8
+    model: str = DEFAULT_MODEL
+    base_url: str | None = None
+    api_mode: str | None = None
+    max_output_tokens: int = DEFAULT_LLM_MAX_OUTPUT_TOKENS
+    thinking: str | None = None
+    reasoning_effort: str | None = None
+    extractors: tuple[str, ...] = ()
+    verifiers: tuple[str, ...] = ()
+    refiner: bool = True
+    workers: int = 1
+    legal_workers: int | None = None
+    stanza_workers: int | None = None
+    nobi_model: str = "tthhanh/xlm-ate-nobi-en-nes"
+    spacy_model: str = DEFAULT_SPACY_MODEL
+    cache_path: Path | None = None
+    legal_cache_path: Path | None = None
+    stanza_cache_path: Path | None = None
+    openai_timeout: float = 120.0
+
+    @property
+    def resolved_legal_workers(self) -> int:
+        return self.legal_workers or self.workers
+
+    @property
+    def resolved_stanza_workers(self) -> int:
+        return self.stanza_workers or self.workers
+
+
+@dataclass(frozen=True)
+class BenchmarkGenerationConfig:
+    name: str
+    domain: str
+    builds: tuple[BenchmarkBuildConfig, ...]
+    terminology: BenchmarkTerminologyConfig
+
+
+def load_benchmark_config(
+    path: Path | str,
+    *,
+    validate_paths: bool = True,
+) -> BenchmarkGenerationConfig:
+    config_path = Path(path)
+    with config_path.open("rb") as handle:
+        payload = tomllib.load(handle)
+    config = benchmark_config_from_mapping(payload, base_dir=config_path.parent)
+    validate_benchmark_config(config, validate_paths=validate_paths)
+    return config
+
+
+def benchmark_config_from_mapping(
+    payload: dict[str, Any],
+    *,
+    base_dir: Path | None = None,
+) -> BenchmarkGenerationConfig:
+    base_dir = base_dir or Path.cwd()
+    domain = str(payload.get("domain") or "").strip()
+    terminology_payload = dict(payload.get("terminology") or {})
+    terminology = terminology_config_from_mapping(
+        terminology_payload,
+        domain=domain,
+        base_dir=base_dir,
+    )
+    builds = build_configs_from_mapping(payload, domain=domain, base_dir=base_dir)
+    return BenchmarkGenerationConfig(
+        name=str(payload.get("name") or "benchmark_generation"),
+        domain=domain,
+        builds=tuple(builds),
+        terminology=terminology,
+    )
+
+
+def terminology_config_from_mapping(
+    payload: dict[str, Any],
+    *,
+    domain: str,
+    base_dir: Path,
+) -> BenchmarkTerminologyConfig:
+    return BenchmarkTerminologyConfig(
+        domain=str(payload.get("domain") or domain),
+        candidate_max_terms=int(payload.get("candidate_max_terms") or 40),
+        refined_max_terms=int(payload.get("refined_max_terms") or 8),
+        model=str(payload.get("model") or DEFAULT_MODEL),
+        base_url=optional_string(payload.get("base_url")),
+        api_mode=optional_string(payload.get("api_mode")),
+        max_output_tokens=int(payload.get("max_output_tokens") or DEFAULT_LLM_MAX_OUTPUT_TOKENS),
+        thinking=optional_string(payload.get("thinking")),
+        reasoning_effort=optional_string(payload.get("reasoning_effort")),
+        extractors=string_tuple(payload.get("extractors")),
+        verifiers=string_tuple(payload.get("verifiers")),
+        refiner=bool(payload.get("refiner", True)),
+        workers=int(payload.get("workers") or 1),
+        legal_workers=optional_int(payload.get("legal_workers")),
+        stanza_workers=optional_int(payload.get("stanza_workers")),
+        nobi_model=str(payload.get("nobi_model") or "tthhanh/xlm-ate-nobi-en-nes"),
+        spacy_model=str(payload.get("spacy_model") or DEFAULT_SPACY_MODEL),
+        cache_path=optional_path(payload.get("cache_path"), base_dir=base_dir),
+        legal_cache_path=optional_path(payload.get("legal_cache_path"), base_dir=base_dir),
+        stanza_cache_path=optional_path(payload.get("stanza_cache_path"), base_dir=base_dir),
+        openai_timeout=float(payload.get("openai_timeout") or 120.0),
+    )
+
+
+def build_configs_from_mapping(
+    payload: dict[str, Any],
+    *,
+    domain: str,
+    base_dir: Path,
+) -> list[BenchmarkBuildConfig]:
+    selection = dict(payload.get("selection") or {})
+    if "source" in payload:
+        source = dict(payload["source"])
+        return [
+            build_config_from_mapping(
+                source,
+                domain=domain,
+                selection=selection,
+                base_dir=base_dir,
+                default_name=str(payload.get("name") or "benchmark"),
+            )
+        ]
+    builds = payload.get("builds")
+    if not isinstance(builds, list) or not builds:
+        raise ValueError("Benchmark config must define either [source] or [[builds]].")
+    return [
+        build_config_from_mapping(
+            dict(build),
+            domain=domain,
+            selection=selection,
+            base_dir=base_dir,
+            default_name=f"build_{index}",
+        )
+        for index, build in enumerate(builds, start=1)
+    ]
+
+
+def build_config_from_mapping(
+    payload: dict[str, Any],
+    *,
+    domain: str,
+    selection: dict[str, Any],
+    base_dir: Path,
+    default_name: str,
+) -> BenchmarkBuildConfig:
+    kind = str(
+        payload.get("kind")
+        or selection.get("kind")
+        or default_source_kind_for_domain(domain)
+    )
+    languages = string_tuple(payload.get("languages") or selection.get("languages"))
+    limit = int(payload.get("limit") or selection.get("limit") or 250)
+    return BenchmarkBuildConfig(
+        name=str(payload.get("name") or default_name),
+        kind=kind,
+        source_pairs_jsonl=required_path(
+            payload.get("source_pairs_jsonl"),
+            base_dir=base_dir,
+            field_name="source_pairs_jsonl",
+        ),
+        output_dir=required_path(
+            payload.get("output_dir"),
+            base_dir=base_dir,
+            field_name="output_dir",
+        ),
+        languages=languages,
+        limit=limit,
+        min_input_tokens=optional_int(
+            payload.get("min_input_tokens") or selection.get("min_input_tokens")
+        ),
+        max_input_tokens=optional_int(
+            payload.get("max_input_tokens") or selection.get("max_input_tokens")
+        ),
+        anchor_limit=optional_int(payload.get("anchor_limit") or selection.get("anchor_limit")),
+        bidirectional=bool(payload.get("bidirectional", selection.get("bidirectional", False))),
+    )
+
+
+def validate_benchmark_config(
+    config: BenchmarkGenerationConfig,
+    *,
+    validate_paths: bool = True,
+) -> None:
+    if config.domain not in SUPPORTED_DOMAINS:
+        raise ValueError(f"Unsupported benchmark domain: {config.domain}")
+    if not config.builds:
+        raise ValueError("At least one benchmark build is required.")
+    validate_terms("extractors", config.terminology.extractors, SUPPORTED_EXTRACTORS)
+    validate_terms("verifiers", config.terminology.verifiers, SUPPORTED_VERIFIERS)
+    if config.terminology.candidate_max_terms < 1:
+        raise ValueError("terminology.candidate_max_terms must be positive.")
+    if config.terminology.refined_max_terms < 1:
+        raise ValueError("terminology.refined_max_terms must be positive.")
+    for build in config.builds:
+        if build.kind not in SUPPORTED_SOURCE_KINDS:
+            raise ValueError(f"Unsupported source kind: {build.kind}")
+        if not build.languages:
+            raise ValueError(f"Build {build.name!r} must define at least one language.")
+        if build.limit < 1:
+            raise ValueError(f"Build {build.name!r} limit must be positive.")
+        if build.anchor_limit is not None and build.anchor_limit < 1:
+            raise ValueError(f"Build {build.name!r} anchor_limit must be positive.")
+        if validate_paths and not build.source_pairs_jsonl.exists():
+            raise FileNotFoundError(f"Source snapshot not found: {build.source_pairs_jsonl}")
+
+
+def validate_terms(name: str, values: tuple[str, ...], supported: set[str]) -> None:
+    unsupported = sorted(set(values) - supported)
+    if unsupported:
+        raise ValueError(f"Unsupported {name}: {', '.join(unsupported)}")
+
+
+def default_source_kind_for_domain(domain: str) -> str:
+    if domain in {"jrc", "legal"}:
+        return "jrc_acquis_snapshot"
+    return "google_patents_snapshot"
+
+
+def required_path(value: Any, *, base_dir: Path, field_name: str) -> Path:
+    if value in (None, ""):
+        raise ValueError(f"Missing required path field: {field_name}")
+    return resolve_config_path(Path(str(value)), base_dir)
+
+
+def optional_path(value: Any, *, base_dir: Path) -> Path | None:
+    if value in (None, ""):
+        return None
+    return resolve_config_path(Path(str(value)), base_dir)
+
+
+def resolve_config_path(path: Path, base_dir: Path) -> Path:
+    if path.is_absolute():
+        return path
+    return (config_path_root(base_dir) / path).resolve()
+
+
+def config_path_root(base_dir: Path) -> Path:
+    if base_dir.name == "benchmark" and base_dir.parent.name == "configs":
+        return base_dir.parent.parent
+    if base_dir.name == "benchmark_generation" and base_dir.parent.name in {"config", "configs"}:
+        return base_dir.parent.parent
+    return base_dir
+
+
+def string_tuple(value: Any) -> tuple[str, ...]:
+    if value in (None, ""):
+        return ()
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, list | tuple):
+        return tuple(str(item) for item in value)
+    raise TypeError(f"Expected string or list of strings, got {type(value).__name__}")
+
+
+def optional_string(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    return str(value)
+
+
+def optional_int(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    return int(value)
+

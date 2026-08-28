@@ -17,14 +17,22 @@
   },
   "length_filter_tokenizer": "chem_machine_translation.utils.text.approximate_token_count",
   "length_priority_counts": {
-    "backfill_out_of_range": 5,
-    "source_and_target_in_range": 1026,
-    "source_only_in_range": 1230,
-    "target_only_in_range": 489
+    "backfill_out_of_range": 275,
+    "source_and_target_in_range": 840,
+    "source_only_in_range": 965,
+    "target_only_in_range": 670
   },
   "limit_per_pair": 250,
+  "match_filter": "reranker",
+  "match_model": "BAAI/bge-reranker-v2-m3",
+  "match_score_stats": {
+    "max": 1.0,
+    "mean": 0.8949,
+    "min": 0.5018
+  },
   "max_source_tokens": 384,
   "max_target_tokens": 384,
+  "min_match_score": 0.5,
   "min_source_tokens": 128,
   "min_target_tokens": 128,
   "output_jsonl": "benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl",
@@ -33,6 +41,7 @@
   "rows": 2750,
   "schema_version": "hf-google-patents-within-document-abstract-pairs-v1",
   "selection_policy": "Streaming export from the Hugging Face Google Patents within-document abstract-pair dataset in dataset order. Rows matching both source and target token bounds are preferred, then source-only matches, then target-only matches, then remaining rows. Each language_pair is capped when limit_per_pair is positive.",
+  "skipped_below_match_score": 2512,
   "skipped_empty_text_rows": 0,
   "source_language_counts": {
     "de": 250,

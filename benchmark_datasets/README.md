@@ -9,6 +9,22 @@ recreate the source-pair JSONL snapshots themselves.
 For the full benchmark generation flow and component details, see
 `docs/benchmark-generation-pipeline.md`.
 
+## Standard Commands
+
+Use the config-driven runners for standard benchmark generation:
+
+```powershell
+uv run python scripts/generate_chemistry_benchmark.py
+uv run python scripts/generate_legal_benchmark.py
+```
+
+The chemistry runner loads `config/benchmark_generation/chemistry.toml`. The legal runner loads
+`config/benchmark_generation/legal.toml`, which builds both JRC article and JRC definition
+benchmarks.
+
+Use `scripts/generate_benchmark.py --config <path>` for custom configs. The long commands below are
+kept as advanced/manual equivalents for debugging individual flags.
+
 ## Standard Terminology Configuration
 
 The standard benchmark terminology pipeline is target-side. It stores a broad candidate pool first,
@@ -43,7 +59,7 @@ Standard verifier flags:
 
 ## Google Patents Chemistry
 
-Build the 250-row-per-pair Google Patents benchmark from the tracked source snapshot:
+Advanced manual equivalent for the 250-row-per-pair Google Patents benchmark:
 
 ```powershell
 uv run --no-sync python scripts/build_google_patents_eval_subset.py `
@@ -77,7 +93,7 @@ deterministic Stanza/UD extractor, then adds XLM-R/NOBI and spaCy explicitly.
 
 ## JRC-Acquis Articles
 
-Build the 250-row-per-pair JRC article/provision benchmark:
+Advanced manual equivalent for the 250-row-per-pair JRC article/provision benchmark:
 
 ```powershell
 uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
@@ -105,7 +121,7 @@ uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
 
 ## JRC-Acquis Definitions
 
-Build the 250-row-per-pair JRC definition-heavy benchmark:
+Advanced manual equivalent for the 250-row-per-pair JRC definition-heavy benchmark:
 
 ```powershell
 uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `

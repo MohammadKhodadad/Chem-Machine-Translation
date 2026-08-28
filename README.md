@@ -174,6 +174,17 @@ Benchmark datasets live in `benchmark_datasets/`.
 For the end-to-end benchmark generation pipeline, including every terminology extractor, verifier,
 refiner, and evaluation group, see `docs/benchmark-generation-pipeline.md`.
 
+Build standard benchmark datasets with config-driven runners:
+
+```powershell
+uv run python scripts/generate_chemistry_benchmark.py
+uv run python scripts/generate_legal_benchmark.py
+```
+
+Those scripts load `config/benchmark_generation/chemistry.toml` and
+`config/benchmark_generation/legal.toml`.
+The older argument-heavy builder scripts remain available for manual experiments.
+
 The current benchmark dataset is:
 
 `benchmark_datasets/google_patents_eval_subset_60_multidirectional`

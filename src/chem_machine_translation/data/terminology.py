@@ -244,8 +244,8 @@ Selection procedure:
    translation quality.
 2. Rank the remaining candidates by benchmark value: domain specificity, completeness, centrality in
    the text, and risk if mistranslated.
-3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term quality
-   is comparable to unverified candidates.
+3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term
+   quality is comparable to unverified candidates.
 4. Keep an unverified candidate only when it is clearly central, complete, and more
    translation-sensitive than the verified alternatives.
 5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning
@@ -300,8 +300,8 @@ Selection procedure:
    evaluating translation quality.
 2. Rank the remaining candidates by benchmark value: legal specificity, completeness, centrality in
    the text, and risk if mistranslated.
-3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term quality
-   is comparable to unverified candidates.
+3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term
+   quality is comparable to unverified candidates.
 4. Keep an unverified candidate only when it is clearly central, complete, and more
    translation-sensitive than the verified alternatives.
 5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning

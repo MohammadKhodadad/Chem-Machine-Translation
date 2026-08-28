@@ -1,0 +1,35 @@
+name = "jrc_acquis_legal"
+domain = "jrc"
+
+[[builds]]
+name = "articles"
+kind = "jrc_acquis_snapshot"
+source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl"
+output_dir = "benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair"
+
+[[builds]]
+name = "definitions"
+kind = "jrc_acquis_snapshot"
+source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl"
+output_dir = "benchmark_datasets/jrc_acquis_anchored_definitions_250_per_pair"
+
+[selection]
+languages = ["en", "es", "de", "fr", "pt"]
+limit = 250
+
+[terminology]
+domain = "jrc"
+candidate_max_terms = 40
+refined_max_terms = 8
+model = "gpt-4.1-mini"
+base_url = "https://api.openai.com/v1"
+api_mode = "responses"
+max_output_tokens = 1024
+extractors = ["llm_legal", "stanza_ud", "xlmr_nobi", "spacy"]
+verifiers = ["iate", "wikidata", "unterm"]
+refiner = true
+workers = 2
+legal_workers = 2
+stanza_workers = 2
+openai_timeout = 120.0
+

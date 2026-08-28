@@ -9,264 +9,19 @@
       "google_patents_5_bidirectional_all_candidate_terms",
       "google_patents_5_bidirectional_spacy_only_terms"
     ],
+    "model": "gpt-4.1-mini",
+    "api_mode": "responses",
+    "llm_thinking": null,
+    "llm_max_output_tokens": 4096,
+    "prompt_version": "strict-refiner-v2-unlimited",
     "target_language": "English",
     "candidate_count": 29,
     "verified_candidate_count": 19,
-    "refined_count": 8,
-    "refined_verified_count": 6,
+    "refiner_seconds": 28.3,
+    "refined_count": 1,
+    "refined_verified_count": 0,
+    "refined_exact_count": 1,
     "refined_terms": [
-      {
-        "source_term": "",
-        "target_terms": [
-          "gas washer"
-        ],
-        "reference_candidates": [
-          "gas washer"
-        ],
-        "category": "equipment",
-        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [
-          "iate"
-        ],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "specific equipment for gas purification",
-        "external_candidates": {
-          "iate": [
-            "wet scrubber"
-          ]
-        },
-        "candidates": {
-          "iate": [
-            "wet scrubber"
-          ]
-        }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "compressor"
-        ],
-        "reference_candidates": [
-          "compressor"
-        ],
-        "category": "equipment",
-        "source": "llm_target+xlmr_nobi+nci+agrovoc+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [
-          "nci",
-          "agrovoc",
-          "iate"
-        ],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "specific equipment for gas compression",
-        "external_candidates": {
-          "nci": [
-            "Compressor Air Pump Device"
-          ],
-          "agrovoc": [
-            "skos:prefLabel",
-            "skos:altLabel",
-            "compressors",
-            "air compressors"
-          ],
-          "iate": [
-            "compressor"
-          ]
-        },
-        "candidates": {
-          "nci": [
-            "Compressor Air Pump Device"
-          ],
-          "agrovoc": [
-            "skos:prefLabel",
-            "skos:altLabel",
-            "compressors",
-            "air compressors"
-          ],
-          "iate": [
-            "compressor"
-          ]
-        }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "gas engine"
-        ],
-        "reference_candidates": [
-          "gas engine"
-        ],
-        "category": "equipment",
-        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+msplade_sparse+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [
-          "iate"
-        ],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "specific equipment for gas-powered engine",
-        "external_candidates": {
-          "iate": [
-            "gas engine"
-          ]
-        },
-        "candidates": {
-          "iate": [
-            "gas engine"
-          ]
-        }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "air filter"
-        ],
-        "reference_candidates": [
-          "air filter"
-        ],
-        "category": "equipment",
-        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+mesh+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [
-          "mesh",
-          "iate"
-        ],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "specific equipment for air filtration",
-        "external_candidates": {
-          "mesh": [
-            "http://id.nlm.nih.gov/mesh/D061808",
-            "Air Filters"
-          ],
-          "iate": [
-            "air filter"
-          ]
-        },
-        "candidates": {
-          "mesh": [
-            "http://id.nlm.nih.gov/mesh/D061808",
-            "Air Filters"
-          ],
-          "iate": [
-            "air filter"
-          ]
-        }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "reactor"
-        ],
-        "reference_candidates": [
-          "reactor"
-        ],
-        "category": "equipment",
-        "source": "llm_target+xlmr_nobi+mesh+nci+agrovoc+iate+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [
-          "mesh",
-          "nci",
-          "agrovoc",
-          "iate"
-        ],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "key equipment in the gasification process",
-        "external_candidates": {
-          "mesh": [
-            "http://id.nlm.nih.gov/mesh/D009688",
-            "Nuclear Reactors"
-          ],
-          "nci": [
-            "Reactor Device"
-          ],
-          "agrovoc": [
-            "skos:prefLabel",
-            "skos:altLabel",
-            "bioreactors",
-            "biochemical reactors",
-            "biofilm reactors",
-            "enzyme reactors",
-            "fluidized bed reactors",
-            "photobioreactors"
-          ],
-          "iate": [
-            "choke"
-          ]
-        },
-        "candidates": {
-          "mesh": [
-            "http://id.nlm.nih.gov/mesh/D009688",
-            "Nuclear Reactors"
-          ],
-          "nci": [
-            "Reactor Device"
-          ],
-          "agrovoc": [
-            "skos:prefLabel",
-            "skos:altLabel",
-            "bioreactors",
-            "biochemical reactors",
-            "biofilm reactors",
-            "enzyme reactors",
-            "fluidized bed reactors",
-            "photobioreactors"
-          ],
-          "iate": [
-            "choke"
-          ]
-        }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "clinker"
-        ],
-        "reference_candidates": [
-          "clinker"
-        ],
-        "category": "material",
-        "source": "llm_target+xlmr_nobi+iate+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [
-          "iate"
-        ],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "specific material product from oxidation",
-        "external_candidates": {
-          "iate": [
-            "cement clinker"
-          ]
-        },
-        "candidates": {
-          "iate": [
-            "cement clinker"
-          ]
-        }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "plasma torches"
-        ],
-        "reference_candidates": [
-          "plasma torches"
-        ],
-        "category": "equipment",
-        "source": "llm_target+stanza_ud_ngram+msplade_sparse+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [],
-        "confidence": 0.95,
-        "decision": "keep_refined",
-        "reason": "specific equipment producing plasma",
-        "external_candidates": {},
-        "candidates": {}
-      },
       {
         "source_term": "",
         "target_terms": [
@@ -281,7 +36,7 @@
         "verified_by": [],
         "confidence": 0.95,
         "decision": "keep_refined",
-        "reason": "technical process described in the text",
+        "reason": "Central chemical/technical process; high domain specificity and importance.",
         "external_candidates": {},
         "candidates": {}
       }
@@ -297,30 +52,19 @@
       "google_patents_5_bidirectional_all_candidate_terms",
       "google_patents_5_bidirectional_spacy_only_terms"
     ],
+    "model": "gpt-4.1-mini",
+    "api_mode": "responses",
+    "llm_thinking": null,
+    "llm_max_output_tokens": 4096,
+    "prompt_version": "strict-refiner-v2-unlimited",
     "target_language": "English",
-    "candidate_count": 29,
+    "candidate_count": 22,
     "verified_candidate_count": 13,
+    "refiner_seconds": 21.2,
     "refined_count": 8,
     "refined_verified_count": 4,
+    "refined_exact_count": 8,
     "refined_terms": [
-      {
-        "source_term": "",
-        "target_terms": [
-          "5-(2-(4-(1 ,2-benzisothiazol-3-yl)-1 piperazinyl)ethyl)-6-chloro-1,3-dihydro-2(1H)-indol-2-one"
-        ],
-        "reference_candidates": [
-          "5-(2-(4-(1 ,2-benzisothiazol-3-yl)-1 piperazinyl)ethyl)-6-chloro-1,3-dihydro-2(1H)-indol-2-one"
-        ],
-        "category": "chemical",
-        "source": "llm_target+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "Full chemical name of the compound, domain-specific and translation-sensitive",
-        "external_candidates": {},
-        "candidates": {}
-      },
       {
         "source_term": "",
         "target_terms": [
@@ -338,7 +82,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Specific administration route, important in pharmaceutical context",
+        "reason": "Specific medical administration route, requires domain knowledge and correct translation; important for treatment method.",
         "external_candidates": {
           "iate": [
             "parenteral administration"
@@ -355,24 +99,6 @@
             "parenteral administration"
           ]
         }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "mesylate dihydrate salt"
-        ],
-        "reference_candidates": [
-          "mesylate dihydrate salt"
-        ],
-        "category": "chemical",
-        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
-        "term_group": "refined",
-        "verified_by": [],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "Specific chemical salt form, important for chemical identity",
-        "external_candidates": {},
-        "candidates": {}
       },
       {
         "source_term": "",
@@ -391,7 +117,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Specific method of parenteral administration",
+        "reason": "Precise medical procedure term, established translation equivalents, critical for understanding administration method.",
         "external_candidates": {
           "agrovoc": [
             "skos:prefLabel",
@@ -431,7 +157,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Specific disease name relevant to treatment",
+        "reason": "Medical disorder term, well-known but requires correct domain translation; central to treatment context.",
         "external_candidates": {
           "mesh": [
             "http://id.nlm.nih.gov/mesh/D012559",
@@ -484,6 +210,42 @@
       {
         "source_term": "",
         "target_terms": [
+          "5-(2-(4-(1 ,2-benzisothiazol-3-yl)-1 piperazinyl)ethyl)-6-chloro-1,3-dihydro-2(1H)-indol-2-one"
+        ],
+        "reference_candidates": [
+          "5-(2-(4-(1 ,2-benzisothiazol-3-yl)-1 piperazinyl)ethyl)-6-chloro-1,3-dihydro-2(1H)-indol-2-one"
+        ],
+        "category": "chemical",
+        "source": "llm_target+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.95,
+        "decision": "keep_refined",
+        "reason": "Highly specialized chemical name, critical for precise identification; requires exact translation.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "mesylate dihydrate salt"
+        ],
+        "reference_candidates": [
+          "mesylate dihydrate salt"
+        ],
+        "category": "chemical",
+        "source": "llm_target+stanza_ud_ngram+xlmr_nobi+spacy_noun_chunk+spacy_ngram+llm_refiner_chem",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.95,
+        "decision": "keep_refined",
+        "reason": "Specific chemical form, important for pharmaceutical context; requires domain knowledge.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
           "psychotic disorder"
         ],
         "reference_candidates": [
@@ -498,7 +260,7 @@
         ],
         "confidence": 0.95,
         "decision": "keep_refined",
-        "reason": "Specific disease category relevant to the pharmaceutical use",
+        "reason": "Medical disorder term, requires domain knowledge; central to treatment context.",
         "external_candidates": {
           "mesh": [
             "http://id.nlm.nih.gov/mesh/D011618",
@@ -536,7 +298,7 @@
         "verified_by": [],
         "confidence": 0.9,
         "decision": "keep_refined",
-        "reason": "Specific material used in pharmaceutical formulations",
+        "reason": "Pharmaceutical formulation term, requires domain knowledge and correct translation.",
         "external_candidates": {},
         "candidates": {}
       },
@@ -554,7 +316,7 @@
         "verified_by": [],
         "confidence": 0.9,
         "decision": "keep_refined",
-        "reason": "Technical term for the drug formulation",
+        "reason": "Important pharmaceutical term, domain-specific and translation sensitive.",
         "external_candidates": {},
         "candidates": {}
       }
@@ -571,11 +333,18 @@
       "jrc_acquis_anchored_articles_5_llm_terms",
       "jrc_acquis_anchored_articles_5_spacy_only_terms"
     ],
+    "model": "gpt-4.1-mini",
+    "api_mode": "responses",
+    "llm_thinking": null,
+    "llm_max_output_tokens": 4096,
+    "prompt_version": "strict-refiner-v2-unlimited",
     "target_language": "English",
     "candidate_count": 43,
     "verified_candidate_count": 22,
-    "refined_count": 8,
-    "refined_verified_count": 6,
+    "refiner_seconds": 49.0,
+    "refined_count": 21,
+    "refined_verified_count": 9,
+    "refined_exact_count": 21,
     "refined_terms": [
       {
         "source_term": "",
@@ -585,7 +354,7 @@
         "reference_candidates": [
           "European Economic Community"
         ],
-        "category": "other",
+        "category": "institution",
         "source": "stanza_ud_dependency+stanza_ud_ngram+xlmr_nobi+iate+wikipedia+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [
@@ -594,7 +363,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Named institution with legal competence",
+        "reason": "Named institution with specific legal and institutional meaning in European law; mistranslation affects scope and parties.",
         "external_candidates": {
           "iate": [
             "European Economic Community"
@@ -609,34 +378,6 @@
           ],
           "wikipedia": [
             "European Economic Community"
-          ]
-        }
-      },
-      {
-        "source_term": "",
-        "target_terms": [
-          "ADDITIONAL PROTOCOL"
-        ],
-        "reference_candidates": [
-          "ADDITIONAL PROTOCOL"
-        ],
-        "category": "legal_act",
-        "source": "stanza_ud_dependency+stanza_ud_ngram+iate+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
-        "term_group": "refined",
-        "verified_by": [
-          "iate"
-        ],
-        "confidence": 1.0,
-        "decision": "keep_refined",
-        "reason": "Complete official legal act term",
-        "external_candidates": {
-          "iate": [
-            "additional protocol"
-          ]
-        },
-        "candidates": {
-          "iate": [
-            "additional protocol"
           ]
         }
       },
@@ -656,7 +397,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Defined term referring to parties bound by the agreement",
+        "reason": "Defined legal term central to the agreement and obligations; mistranslation changes legal scope.",
         "external_candidates": {
           "iate": [
             "contracting parties"
@@ -671,12 +412,40 @@
       {
         "source_term": "",
         "target_terms": [
+          "ADDITIONAL PROTOCOL"
+        ],
+        "reference_candidates": [
+          "ADDITIONAL PROTOCOL"
+        ],
+        "category": "legal_act",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+iate+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Specific legal instrument modifying the agreement; precise translation needed to preserve legal effect.",
+        "external_candidates": {
+          "iate": [
+            "additional protocol"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "additional protocol"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
           "Council of Europe"
         ],
         "reference_candidates": [
           "Council of Europe"
         ],
-        "category": "other",
+        "category": "institution",
         "source": "xlmr_nobi+agrovoc+iate+wikipedia+spacy_entity+spacy_ngram+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [
@@ -686,7 +455,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Named institution involved in the agreement",
+        "reason": "Named institution with legal and institutional significance; mistranslation affects institutional references.",
         "external_candidates": {
           "agrovoc": [
             "skos:prefLabel",
@@ -730,7 +499,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Legal effect term critical for treaty implementation",
+        "reason": "Key legal concept determining when obligations and rights begin; mistranslation changes legal timing.",
         "external_candidates": {
           "iate": [
             "entry into force"
@@ -741,6 +510,113 @@
             "entry into force"
           ]
         }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Agreement"
+        ],
+        "reference_candidates": [
+          "Agreement"
+        ],
+        "category": "legal_act",
+        "source": "spacy_entity+spacy_noun_chunk+spacy_ngram+mesh+nci+agrovoc+iate+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "mesh",
+          "nci",
+          "agrovoc",
+          "iate"
+        ],
+        "confidence": 0.9850000000000001,
+        "decision": "keep_refined",
+        "reason": "Central legal instrument; general term but crucial for understanding the text.",
+        "external_candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D014164",
+            "Transfer Agreement"
+          ],
+          "nci": [
+            "Agreement"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "agreements",
+            "BBNJ Agreement",
+            "bilateral agreements",
+            "Biodiversity Beyond National Jurisdiction Agreement",
+            "Andean Group",
+            "Cartagena Agreement",
+            "commodity agreements",
+            "economic agreements",
+            "fishery agreements",
+            "fishing agreements",
+            "free trade agreements",
+            "GATT",
+            "General Agreement on Tariffs and Trade",
+            "international agreements",
+            "Material Transfer Agreements",
+            "monetary agreements",
+            "NAFTA",
+            "North American Free Trade Agreement"
+          ],
+          "iate": [
+            "agreement"
+          ]
+        },
+        "candidates": {
+          "mesh": [
+            "http://id.nlm.nih.gov/mesh/D014164",
+            "Transfer Agreement"
+          ],
+          "nci": [
+            "Agreement"
+          ],
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "agreements",
+            "BBNJ Agreement",
+            "bilateral agreements",
+            "Biodiversity Beyond National Jurisdiction Agreement",
+            "Andean Group",
+            "Cartagena Agreement",
+            "commodity agreements",
+            "economic agreements",
+            "fishery agreements",
+            "fishing agreements",
+            "free trade agreements",
+            "GATT",
+            "General Agreement on Tariffs and Trade",
+            "international agreements",
+            "Material Transfer Agreements",
+            "monetary agreements",
+            "NAFTA",
+            "North American Free Trade Agreement"
+          ],
+          "iate": [
+            "agreement"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "EUROPEAN AGREEMENT"
+        ],
+        "reference_candidates": [
+          "EUROPEAN AGREEMENT"
+        ],
+        "category": "legal_act",
+        "source": "legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9666666666666667,
+        "decision": "keep_refined",
+        "reason": "Specific named legal instrument central to the text; mistranslation changes legal reference.",
+        "external_candidates": {},
+        "candidates": {}
       },
       {
         "source_term": "",
@@ -758,7 +634,7 @@
         ],
         "confidence": 0.9500000000000001,
         "decision": "keep_refined",
-        "reason": "Specific legal procedure term",
+        "reason": "Specific legal procedural term for treaty acceptance; mistranslation affects legal validity.",
         "external_candidates": {
           "iate": [
             "instrument of acceptance"
@@ -767,6 +643,34 @@
         "candidates": {
           "iate": [
             "instrument of acceptance"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Treaty"
+        ],
+        "reference_candidates": [
+          "Treaty"
+        ],
+        "category": "legal_act",
+        "source": "legal_llm+iate+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 0.9500000000000001,
+        "decision": "keep_refined",
+        "reason": "Specific legal instrument with defined legal effects; mistranslation changes legal nature.",
+        "external_candidates": {
+          "iate": [
+            "treaty"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "treaty"
           ]
         }
       },
@@ -784,25 +688,215 @@
         "verified_by": [],
         "confidence": 0.95,
         "decision": "keep_refined",
-        "reason": "Named institutional office with procedural role",
+        "reason": "Named institutional office with specific legal role in notifications; mistranslation affects procedural clarity.",
         "external_candidates": {},
         "candidates": {}
       },
       {
         "source_term": "",
         "target_terms": [
-          "exchanges of blood-grouping reagents"
+          "MEMBER STATES OF THE COUNCIL OF EUROPE"
         ],
         "reference_candidates": [
-          "exchanges of blood-grouping reagents"
+          "MEMBER STATES OF THE COUNCIL OF EUROPE"
         ],
-        "category": "regulatory_domain",
+        "category": "institution",
         "source": "legal_llm+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [],
-        "confidence": 0.85,
+        "confidence": 0.95,
         "decision": "keep_refined",
-        "reason": "Domain-specific regulatory expression",
+        "reason": "Named institutional group with legal membership; important for scope.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Contracting Party to the Agreement"
+        ],
+        "reference_candidates": [
+          "Contracting Party to the Agreement"
+        ],
+        "category": "defined_term",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9333333333333332,
+        "decision": "keep_refined",
+        "reason": "Defined legal term with full phrase; important for legal clarity.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Contracting Party"
+        ],
+        "reference_candidates": [
+          "Contracting Party"
+        ],
+        "category": "defined_term",
+        "source": "stanza_ud_ngram+stanza_ud_proper_name+iate+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 0.9333333333333332,
+        "decision": "keep_refined",
+        "reason": "Defined legal term for treaty participant; mistranslation changes legal scope.",
+        "external_candidates": {
+          "iate": [
+            "contracting party"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "contracting party"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Contracting Party to the Additional Protocol"
+        ],
+        "reference_candidates": [
+          "Contracting Party to the Additional Protocol"
+        ],
+        "category": "defined_term",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Defined legal term specifying party status; important for legal clarity.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "form an integral part of the Agreement"
+        ],
+        "reference_candidates": [
+          "form an integral part of the Agreement"
+        ],
+        "category": "legal_effect",
+        "source": "legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Legal phrase indicating binding effect; mistranslation affects legal relationship.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "objection to the entry into force"
+        ],
+        "reference_candidates": [
+          "objection to the entry into force"
+        ],
+        "category": "restriction",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Specific legal condition affecting treaty activation; mistranslation changes legal effect.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "shall take all necessary measures"
+        ],
+        "reference_candidates": [
+          "shall take all necessary measures"
+        ],
+        "category": "obligation",
+        "source": "legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Legal obligation phrase; mistranslation affects duty scope.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "one of the Contracting Parties"
+        ],
+        "reference_candidates": [
+          "one of the Contracting Parties"
+        ],
+        "category": "defined_term",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Defined legal term referring to subset of parties; important for legal interpretation.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "exempt from all import duties"
+        ],
+        "reference_candidates": [
+          "exempt from all import duties"
+        ],
+        "category": "obligation",
+        "source": "legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Specific legal obligation regarding customs duties; mistranslation affects rights and duties.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "acceded to the Agreement"
+        ],
+        "reference_candidates": [
+          "acceded to the Agreement"
+        ],
+        "category": "procedure",
+        "source": "legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Legal procedure for joining treaty; mistranslation affects legal status.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "integral part of the Agreement"
+        ],
+        "reference_candidates": [
+          "integral part of the Agreement"
+        ],
+        "category": "legal_effect",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.8000000000000002,
+        "decision": "keep_refined",
+        "reason": "Legal phrase indicating binding effect; important for legal relationship.",
         "external_candidates": {},
         "candidates": {}
       }
@@ -819,11 +913,18 @@
       "jrc_acquis_anchored_articles_5_llm_terms",
       "jrc_acquis_anchored_articles_5_spacy_only_terms"
     ],
+    "model": "gpt-4.1-mini",
+    "api_mode": "responses",
+    "llm_thinking": null,
+    "llm_max_output_tokens": 4096,
+    "prompt_version": "strict-refiner-v2-unlimited",
     "target_language": "French",
     "candidate_count": 42,
     "verified_candidate_count": 26,
-    "refined_count": 8,
-    "refined_verified_count": 7,
+    "refiner_seconds": 50.3,
+    "refined_count": 13,
+    "refined_verified_count": 11,
+    "refined_exact_count": 13,
     "refined_terms": [
       {
         "source_term": "",
@@ -833,7 +934,7 @@
         "reference_candidates": [
           "Observatoire européen des phénomènes racistes et xénophobes"
         ],
-        "category": "other",
+        "category": "institution",
         "source": "xlmr_nobi+iate+legal_llm+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [
@@ -841,7 +942,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Named institution central to the agreement",
+        "reason": "Official institution name central to the agreement and legal context.",
         "external_candidates": {
           "iate": [
             "racisme xénophobie"
@@ -861,7 +962,7 @@
         "reference_candidates": [
           "Commission européenne contre le racisme et l'intolérance"
         ],
-        "category": "other",
+        "category": "institution",
         "source": "xlmr_nobi+iate+legal_llm+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [
@@ -869,7 +970,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Named institution involved in cooperation",
+        "reason": "Named institution with specific legal and institutional role in cooperation.",
         "external_candidates": {
           "iate": [
             "Commission européenne contre le racisme et l'intolérance"
@@ -878,6 +979,34 @@
         "candidates": {
           "iate": [
             "Commission européenne contre le racisme et l'intolérance"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Conseil de l'Union européenne"
+        ],
+        "reference_candidates": [
+          "Conseil de l'Union européenne"
+        ],
+        "category": "institution",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+xlmr_nobi+iate+spacy_entity+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "iate"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Official EU institution with precise legal meaning.",
+        "external_candidates": {
+          "iate": [
+            "Conseil de l'Union européenne"
+          ]
+        },
+        "candidates": {
+          "iate": [
+            "Conseil de l'Union européenne"
           ]
         }
       },
@@ -895,7 +1024,7 @@
         "verified_by": [],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Specific legal act establishing the Observatoire",
+        "reason": "Specific legal act central to the regulatory framework and obligations.",
         "external_candidates": {},
         "candidates": {}
       },
@@ -915,7 +1044,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Named institutional body relevant to governance",
+        "reason": "Governing body term with legal and institutional significance.",
         "external_candidates": {
           "iate": [
             "Conseil des gouverneurs de l'Agence internationale de l'énergie atomique"
@@ -924,6 +1053,100 @@
         "candidates": {
           "iate": [
             "Conseil des gouverneurs de l'Agence internationale de l'énergie atomique"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Communauté européenne"
+        ],
+        "reference_candidates": [
+          "Communauté européenne"
+        ],
+        "category": "institution",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+xlmr_nobi+agrovoc+iate+wikipedia+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "agrovoc",
+          "iate",
+          "wikipedia"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Official name of a legal entity in EU law.",
+        "external_candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Pays de l'Union européenne",
+            "Pays de la Communauté européenne"
+          ],
+          "iate": [
+            "Communauté européenne"
+          ],
+          "wikipedia": [
+            "Communauté européenne"
+          ]
+        },
+        "candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Pays de l'Union européenne",
+            "Pays de la Communauté européenne"
+          ],
+          "iate": [
+            "Communauté européenne"
+          ],
+          "wikipedia": [
+            "Communauté européenne"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "CONSEIL DE L'EUROPE"
+        ],
+        "reference_candidates": [
+          "CONSEIL DE L'EUROPE"
+        ],
+        "category": "institution",
+        "source": "stanza_ud_dependency+stanza_ud_ngram+xlmr_nobi+agrovoc+iate+wikipedia+legal_llm+spacy_entity+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "agrovoc",
+          "iate",
+          "wikipedia"
+        ],
+        "confidence": 1.0,
+        "decision": "keep_refined",
+        "reason": "Named international institution with legal and institutional role.",
+        "external_candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Conseil de l'Europe"
+          ],
+          "iate": [
+            "Conseil de l'Europe"
+          ],
+          "wikipedia": [
+            "Conseil de l'Europe"
+          ]
+        },
+        "candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Conseil de l'Europe"
+          ],
+          "iate": [
+            "Conseil de l'Europe"
+          ],
+          "wikipedia": [
+            "Conseil de l'Europe"
           ]
         }
       },
@@ -944,7 +1167,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Defined term referring to the Observatoire européen",
+        "reason": "Defined term referring to the institution, central to the text.",
         "external_candidates": {
           "iate": [
             "observatoire"
@@ -976,7 +1199,7 @@
         "reference_candidates": [
           "ECRI"
         ],
-        "category": "other",
+        "category": "institution",
         "source": "xlmr_nobi+iate+legal_llm+spacy_entity+spacy_noun_chunk+spacy_ngram+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [
@@ -984,7 +1207,7 @@
         ],
         "confidence": 1.0,
         "decision": "keep_refined",
-        "reason": "Acronym for the Commission européenne contre le racisme et l'intolérance",
+        "reason": "Acronym for a named institution with legal and institutional role.",
         "external_candidates": {
           "iate": [
             "Commission européenne contre le racisme et l'intolérance"
@@ -999,56 +1222,153 @@
       {
         "source_term": "",
         "target_terms": [
-          "programme d'activité"
+          "Commission européenne"
         ],
         "reference_candidates": [
-          "programme d'activité"
+          "Commission européenne"
         ],
-        "category": "programme",
-        "source": "legal_llm+iate+llm_refiner_jrc",
+        "category": "institution",
+        "source": "spacy_entity+spacy_noun_chunk+spacy_ngram+agrovoc+iate+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [
+          "agrovoc",
           "iate"
         ],
-        "confidence": 0.9500000000000001,
+        "confidence": 0.9199999999999999,
         "decision": "keep_refined",
-        "reason": "Specific programme term related to coordination",
+        "reason": "Official EU institution with legal significance.",
         "external_candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Commission européenne"
+          ],
           "iate": [
-            "programme d'activité"
+            "Commission européenne"
           ]
         },
         "candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Commission européenne"
+          ],
           "iate": [
-            "programme d'activité"
+            "Commission européenne"
           ]
         }
       },
       {
         "source_term": "",
         "target_terms": [
-          "programme de travail"
+          "règlement"
         ],
         "reference_candidates": [
-          "programme de travail"
+          "règlement"
         ],
-        "category": "programme",
-        "source": "legal_llm+iate+llm_refiner_jrc",
+        "category": "legal_act",
+        "source": "xlmr_nobi+agrovoc+iate+llm_refiner_jrc",
         "term_group": "refined",
         "verified_by": [
+          "agrovoc",
           "iate"
         ],
-        "confidence": 0.9500000000000001,
+        "confidence": 0.9031295537948608,
         "decision": "keep_refined",
-        "reason": "Specific programme term related to work planning",
+        "reason": "Legal term for a type of EU legal act, important for regulatory meaning.",
         "external_candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "règlement",
+            "règlement d'inspection du poisson",
+            "règlement de navigation",
+            "règlement de quarantaine",
+            "règlement des différends",
+            "règlements de la pêche",
+            "règlements de plongée",
+            "règlements de sécurité"
+          ],
           "iate": [
-            "programme de travail"
+            "règlement"
           ]
         },
         "candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "règlement",
+            "règlement d'inspection du poisson",
+            "règlement de navigation",
+            "règlement de quarantaine",
+            "règlement des différends",
+            "règlements de la pêche",
+            "règlements de plongée",
+            "règlements de sécurité"
+          ],
           "iate": [
-            "programme de travail"
+            "règlement"
+          ]
+        }
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "mise à disposition réciproque des informations et données"
+        ],
+        "reference_candidates": [
+          "mise à disposition réciproque des informations et données"
+        ],
+        "category": "procedure",
+        "source": "legal_llm+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [],
+        "confidence": 0.9,
+        "decision": "keep_refined",
+        "reason": "Specific procedural term about data exchange with legal implications.",
+        "external_candidates": {},
+        "candidates": {}
+      },
+      {
+        "source_term": "",
+        "target_terms": [
+          "Union européenne"
+        ],
+        "reference_candidates": [
+          "Union européenne"
+        ],
+        "category": "institution",
+        "source": "spacy_noun_chunk+spacy_ngram+agrovoc+iate+llm_refiner_jrc",
+        "term_group": "refined",
+        "verified_by": [
+          "agrovoc",
+          "iate"
+        ],
+        "confidence": 0.89,
+        "decision": "keep_refined",
+        "reason": "Official name of a legal entity in EU law.",
+        "external_candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Pays de l'Union européenne",
+            "Union européenne",
+            "États membres de l'Union européenne"
+          ],
+          "iate": [
+            "Union européenne"
+          ]
+        },
+        "candidates": {
+          "agrovoc": [
+            "skos:prefLabel",
+            "skos:altLabel",
+            "Pays de l'Union européenne",
+            "Union européenne",
+            "États membres de l'Union européenne"
+          ],
+          "iate": [
+            "Union européenne"
           ]
         }
       }

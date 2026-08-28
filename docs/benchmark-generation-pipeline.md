@@ -4,15 +4,24 @@ This document describes the full benchmark generation pipeline: source-pair crea
 manifest writing, terminology candidate extraction, verifier enrichment, LLM refinement, and
 evaluation-time terminology groups.
 
-The short command reference is in `benchmark_datasets/README.md`. This document explains what each
-part of those commands does and how the terminology objects move through the system.
+The short command reference is in `benchmark_datasets/README.md`. Standard runs now use
+config-driven wrappers:
+
+```powershell
+uv run python scripts/generate_chemistry_benchmark.py
+uv run python scripts/generate_legal_benchmark.py
+```
+
+Those scripts load `config/benchmark_generation/chemistry.toml` and
+`config/benchmark_generation/legal.toml`. This document explains what those configs drive and how
+terminology objects move through the system.
 
 ## High-Level Flow
 
 Benchmark generation has three top-level stages.
 
 1. Create or reuse a source-pair snapshot in `benchmark_sources/`.
-2. Run the benchmark creator. This writes benchmark-ready direction folders in
+2. Run the config-driven benchmark creator. This writes benchmark-ready direction folders in
    `benchmark_datasets/` and builds the terminology manifest for each target/reference segment.
 3. Run translation and evaluation against those manifests.
 
@@ -23,8 +32,7 @@ Inside stage 2, terminology creation is a nested pipeline:
 3. Deduplicate and cap the broad candidate pool, normally at `40` terms.
 4. Run verifier/enrichment sources.
 5. Rank and store candidate or `verified` manifest terms.
-6. Run the final LLM refiner when a finalized benchmark needs the `refined` group, normally capped
-   at `8` terms.
+6. Run the final LLM refiner when enabled in config, normally capped at `8` terms.
 
 The pipeline is target-side for benchmark terminology. Candidate extractors read the target/reference
 text and return exact spans that appear in that text. They do not translate source terms during
@@ -45,12 +53,13 @@ The standard terminology setup is:
 
 ```mermaid
 flowchart LR
-  A[Source-pair snapshot] --> B[Benchmark creator]
-  B --> C[source.csv]
-  B --> D[target.csv]
-  B --> E[manifest.jsonl]
-  E --> F[translation run]
-  F --> G[evaluation reports]
+  A[Domain TOML config] --> B[Benchmark creator]
+  SourceSnapshot[Source-pair snapshot] --> B
+  B --> SourceCsv[source.csv]
+  B --> TargetCsv[target.csv]
+  B --> Manifest[manifest.jsonl]
+  Manifest --> TranslationRun[translation run]
+  TranslationRun --> Reports[evaluation reports]
 ```
 
 ### Terminology Manifest Builder
@@ -61,9 +70,9 @@ flowchart LR
   B --> C[Deduplicate and cap at 40]
   C --> D[Verifier enrichment]
   D --> E[Rank candidate terms]
-  E --> F[candidate or verified manifest]
+  E --> F[candidate and verified terms]
   F --> G[LLM refiner]
-  G --> H[refined terms, cap at 8]
+  G --> H[refined terms in manifest]
 ```
 
 ### Candidate Extractors To Refiner
@@ -106,6 +115,19 @@ The current JRC source snapshots are:
 
 - `benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl`
 - `benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl`
+
+## Config-Driven Builder
+
+Standard benchmark generation is configured in TOML:
+
+- `config/benchmark_generation/chemistry.toml` points at the Google Patents source snapshot and
+  enables the chemistry extractor/verifier/refiner stack.
+- `config/benchmark_generation/legal.toml` points at both JRC source snapshots and enables the legal
+  extractor/verifier/refiner stack.
+
+Both configs are loaded by `src/chem_machine_translation/benchmark_generation/config.py` and
+executed by `src/chem_machine_translation/benchmark_generation/pipeline.py`. The old builder scripts
+remain useful for manual experiments, but the two wrapper commands are the canonical standard path.
 
 ## Dataset Builders
 
