@@ -188,6 +188,14 @@ def test_run_benchmark_generation_smoke_without_terminology(tmp_path: Path) -> N
     row = json.loads(manifest_path.read_text(encoding="utf-8").strip())
     assert row["direction"] == "de-fr"
     assert row["terminology"] == []
+    metadata = json.loads((output_dir / "metadata.json").read_text(encoding="utf-8"))
+    assert metadata["row_count"] == 1
+    assert metadata["direction_count"] == 1
+    assert metadata["overall"]["source_tokens"]["count"] == 1
+    assert metadata["overall"]["candidate_terms_per_row"]["buckets"]["0"] == {
+        "count": 1,
+        "pct": 100.0,
+    }
 
 
 def test_anchor_limit_selects_complete_jrc_anchor(tmp_path: Path) -> None:

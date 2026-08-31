@@ -52,6 +52,22 @@ For the smaller one-anchor report/smoke dataset, run:
 uv run python scripts/generate_benchmark.py --config config/benchmark_generation/legal_one_anchor.toml
 ```
 
+## Metadata
+
+Each config-driven build writes `metadata.json` in the benchmark output directory. It summarizes:
+
+- row, direction, and anchor counts;
+- source/target token percentiles;
+- candidate, refined, and verified-refined term count percentiles;
+- term-count bucket percentages, such as how many rows have `0`, `1-2`, `3-5`, or `6-8` terms;
+- the same statistics overall, by direction, by source language, and by target language.
+
+To add or refresh metadata for an already-generated benchmark without rerunning extraction:
+
+```powershell
+uv run python scripts/write_benchmark_metadata.py --config config/benchmark_generation/legal_one_anchor.toml
+```
+
 ## Length Filtering
 
 Length selection primarily happens when source snapshots are created in `benchmark_sources/`.

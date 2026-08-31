@@ -23,7 +23,7 @@ def print_result(result: object) -> None:
     for build in result.builds:
         print(
             f"- {build.name}: {build.row_count} rows across {build.direction_count} directions; "
-            f"manifest={build.combined_manifest_path}"
+            f"manifest={build.combined_manifest_path}; metadata={build.metadata_path}"
         )
 
 

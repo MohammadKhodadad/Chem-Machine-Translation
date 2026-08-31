@@ -12,7 +12,7 @@ config-driven benchmark pipeline.
 - Anchor ID: `en:jrc21987A0207_06`
 - Directions: `20` ordered language directions
 - Rows with terminology: `20` of `20`
-- Refined terms across the article benchmark: `144`
+- Refined terms across the article benchmark: `160`
 
 ## Flow
 
@@ -36,49 +36,52 @@ config-driven benchmark pipeline.
 ### German (`de`)
 
 - Direction shown: `en-de`
-- Candidate/verified terms: `40`
-- Refined terms: `5`
-- Verified refined terms: `1`
-- Term groups: `algorithmic` = `39`, `refined` = `5`, `verified` = `1`
+- Candidate/verified terms: `56`
+- Refined terms: `8`
+- Verified refined terms: `7`
+- Term groups: `algorithmic` = `33`, `llm` = `10`, `refined` = `8`, `verified` = `13`
 
 ![German article terminology underlines](figures/legal-one-anchor-benchmark/article-anchor-de-terms.png)
 
 Selected refined terms:
 
-- `Europäische Wirtschaftsgemeinschaft` (`iate, wikipedia`)
-- `Vertragspartei des Übereinkommens`
-- `Europäischen Übereinkommens`
-- `Vertragspartei des Zusatzprotokolls`
-- `Generalsekretär des Europarats`
+- `Europäische Wirtschaftsgemeinschaft` (`iate`)
+- `ZUSATZPROTOKOLL` (`iate`)
+- `Inkrafttreten` (`iate`)
+- `Europarat` (`iate`)
+- `Unterzeichnung` (`iate`)
+- `Notifikation` (`iate`)
+- `Annahme` (`iate`)
+- `EUROPÄISCHEN ÜBEREINKOMMEN`
 
 ### English (`en`)
 
 - Direction shown: `de-en`
-- Candidate/verified terms: `53`
+- Candidate/verified terms: `52`
 - Refined terms: `8`
-- Verified refined terms: `6`
-- Term groups: `algorithmic` = `27`, `llm` = `9`, `refined` = `8`, `verified` = `17`
+- Verified refined terms: `7`
+- Term groups: `algorithmic` = `26`, `llm` = `9`, `refined` = `8`, `verified` = `17`
 
 ![English article terminology underlines](figures/legal-one-anchor-benchmark/article-anchor-en-terms.png)
 
 Selected refined terms:
 
-- `Secretary-General of the Council of Europe`
+- `MEMBER STATES OF THE COUNCIL OF EUROPE` (`wikipedia`)
 - `European Economic Community` (`iate, wikipedia`)
-- `instrument of acceptance` (`iate`)
 - `ADDITIONAL PROTOCOL` (`iate`)
 - `Contracting Parties` (`iate`)
-- `EUROPEAN AGREEMENT`
-- `Council of Europe` (`iate, wikipedia`)
-- `enter into force` (`iate`)
+- `entry into force` (`iate`)
+- `Agreement` (`iate`)
+- `instrument of acceptance` (`iate`)
+- `exempt from all import duties`
 
 ### Spanish (`es`)
 
 - Direction shown: `en-es`
-- Candidate/verified terms: `52`
+- Candidate/verified terms: `53`
 - Refined terms: `8`
 - Verified refined terms: `8`
-- Term groups: `algorithmic` = `30`, `llm` = `3`, `refined` = `8`, `verified` = `19`
+- Term groups: `algorithmic` = `30`, `llm` = `5`, `refined` = `8`, `verified` = `18`
 
 ![Spanish article terminology underlines](figures/legal-one-anchor-benchmark/article-anchor-es-terms.png)
 
@@ -87,19 +90,19 @@ Selected refined terms:
 - `Comunidad Económica Europea` (`iate, wikipedia`)
 - `PROTOCOLO ADICIONAL` (`iate`)
 - `Partes Contratantes` (`iate`)
-- `Consejo de Europa` (`iate`)
 - `entrada en vigor` (`iate`)
 - `ACUERDO EUROPEO` (`iate`)
 - `instrumento de aceptación` (`iate`)
 - `derechos de importación` (`iate`)
+- `Tratado constitutivo` (`iate`)
 
 ### French (`fr`)
 
 - Direction shown: `en-fr`
-- Candidate/verified terms: `53`
+- Candidate/verified terms: `49`
 - Refined terms: `8`
 - Verified refined terms: `7`
-- Term groups: `algorithmic` = `30`, `llm` = `6`, `refined` = `8`, `verified` = `17`
+- Term groups: `algorithmic` = `30`, `llm` = `4`, `refined` = `8`, `verified` = `15`
 
 ![French article terminology underlines](figures/legal-one-anchor-benchmark/article-anchor-fr-terms.png)
 
@@ -112,26 +115,26 @@ Selected refined terms:
 - `ACCORD EUROPÉEN` (`iate`)
 - `instrument d'acceptation` (`iate`)
 - `parties contractantes` (`iate`)
-- `exempter de tous droits d'importation`
+- `secrétaire général du Conseil de l'Europe`
 
 ### Portuguese (`pt`)
 
 - Direction shown: `en-pt`
-- Candidate/verified terms: `51`
+- Candidate/verified terms: `40`
 - Refined terms: `8`
-- Verified refined terms: `7`
-- Term groups: `algorithmic` = `30`, `llm` = `5`, `refined` = `8`, `verified` = `16`
+- Verified refined terms: `8`
+- Term groups: `algorithmic` = `32`, `refined` = `8`, `verified` = `8`
 
 ![Portuguese article terminology underlines](figures/legal-one-anchor-benchmark/article-anchor-pt-terms.png)
 
 Selected refined terms:
 
-- `Comunidade Económica Europeia` (`iate, wikipedia`)
-- `instrumento de aceitação` (`iate`)
+- `Comunidade Económica Europeia` (`iate`)
+- `Conselho da Europa` (`iate`)
+- `Secretário-geral` (`iate`)
 - `Partes Contratantes` (`iate`)
-- `Conselho da Europa` (`iate, wikipedia`)
-- `entrada em vigor` (`iate`)
-- `Secretário-geral` (`iate, wikipedia`)
-- `Acordo` (`iate`)
-- `PROTOCOLO ADICIONAL AO ACORDO EUROPEU`
+- `Protocolo Adicional` (`iate`)
+- `Parte Contratante` (`iate`)
+- `Grupos Sanguíneos` (`iate`)
+- `instrumento de aceitação` (`iate`)
 

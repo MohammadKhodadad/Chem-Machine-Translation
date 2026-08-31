@@ -156,6 +156,10 @@ The older low-level builder scripts remain available for advanced/manual experim
 Each manifest row stores dataset metadata, source/target language metadata, token counts, row IDs,
 and a `terminology` array. During construction the builders keep internal `_source_text` and
 `_target_text` fields in memory; those private fields are removed before writing the final manifest.
+Each config-driven build also writes `metadata.json` next to the combined manifest. The metadata
+summarizes row counts, direction counts, anchor counts, source/target token percentiles, and
+candidate/refined/verified-refined term-count distributions overall, by direction, by source
+language, and by target language.
 
 Configs choose source-row selection with `mode`. `mode = "per_direction"` selects up to `limit` rows
 per observed language direction and can add synthetic reverse examples with `bidirectional = true`.

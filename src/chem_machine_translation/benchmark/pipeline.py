@@ -15,6 +15,7 @@ from chem_machine_translation.benchmark.config import (
     BenchmarkTerminologyConfig,
     load_benchmark_config,
 )
+from chem_machine_translation.benchmark.metadata import write_benchmark_metadata
 from chem_machine_translation.config import Settings, load_settings
 from chem_machine_translation.data.terminology import (
     DatasetTerminologyGenerator,
@@ -47,6 +48,7 @@ class BenchmarkBuildResult:
     direction_count: int
     row_count: int
     combined_manifest_path: Path
+    metadata_path: Path
 
 
 @dataclass(frozen=True)
@@ -269,12 +271,15 @@ def run_benchmark_build(
         len(combined_rows),
     )
     write_manifest(combined_manifest_path, combined_rows)
+    metadata_path = build.output_dir / "metadata.json"
+    write_benchmark_metadata(metadata_path, rows=combined_rows, build=build)
     return BenchmarkBuildResult(
         name=build.name,
         output_dir=build.output_dir,
         direction_count=len(pair_rows),
         row_count=len(combined_rows),
         combined_manifest_path=combined_manifest_path,
+        metadata_path=metadata_path,
     )
 
 
