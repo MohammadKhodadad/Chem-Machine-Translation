@@ -279,7 +279,7 @@ def run_benchmark_build(
 
 
 def select_source_pair_rows(build: BenchmarkBuildConfig) -> dict[str, list[dict[str, Any]]]:
-    if build.anchor_limit is not None:
+    if build.selection_mode == "anchored" or build.anchor_limit is not None:
         return select_anchor_source_pair_rows(build)
 
     selected: dict[str, list[dict[str, Any]]] = {}
@@ -307,10 +307,12 @@ def select_source_pair_rows(build: BenchmarkBuildConfig) -> dict[str, list[dict[
 
 def select_anchor_source_pair_rows(build: BenchmarkBuildConfig) -> dict[str, list[dict[str, Any]]]:
     if build.kind != "jrc_acquis_snapshot":
-        raise ValueError("anchor_limit is only supported for JRC anchored source snapshots.")
+        raise ValueError("mode = 'anchored' is only supported for JRC anchored source snapshots.")
 
     language_filter = set(build.languages)
+    expected_directions = expected_language_directions(build.languages)
     rows: list[dict[str, Any]] = []
+    directions_by_anchor: dict[str, set[str]] = {}
     anchor_order: list[str] = []
     seen_anchors: set[str] = set()
     with build.source_pairs_jsonl.open("r", encoding="utf-8", errors="replace") as handle:
@@ -327,19 +329,41 @@ def select_anchor_source_pair_rows(build: BenchmarkBuildConfig) -> dict[str, lis
                 continue
             anchor_id = str(row.get("anchor_id") or "")
             if not anchor_id:
-                raise ValueError("anchor_limit requires rows with anchor_id.")
+                raise ValueError("mode = 'anchored' requires rows with anchor_id.")
             rows.append(row)
+            directions_by_anchor.setdefault(anchor_id, set()).add(row["language_pair"])
             if anchor_id not in seen_anchors:
                 seen_anchors.add(anchor_id)
                 anchor_order.append(anchor_id)
 
-    selected_anchors = set(anchor_order[: build.anchor_limit])
+    complete_anchors = [
+        anchor_id
+        for anchor_id in anchor_order
+        if expected_directions <= directions_by_anchor.get(anchor_id, set())
+    ]
+    anchor_limit = build.anchor_limit or 0
+    if len(complete_anchors) < anchor_limit:
+        raise ValueError(
+            f"Requested {anchor_limit} complete anchors, but only found "
+            f"{len(complete_anchors)} with all {len(expected_directions)} directions."
+        )
+
+    selected_anchors = set(complete_anchors[:anchor_limit])
     selected: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
         if row.get("anchor_id") not in selected_anchors:
             continue
         selected.setdefault(row["language_pair"], []).append(row)
     return {direction: rows for direction, rows in selected.items() if rows}
+
+
+def expected_language_directions(languages: tuple[str, ...]) -> set[str]:
+    return {
+        f"{source_language}-{target_language}"
+        for source_language in languages
+        for target_language in languages
+        if source_language != target_language
+    }
 
 
 def normalize_source_pair_row(row: dict[str, Any], *, kind: str) -> dict[str, Any]:

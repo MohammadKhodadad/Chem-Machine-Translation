@@ -5,17 +5,18 @@ domain = "jrc"
 name = "articles"
 kind = "jrc_acquis_snapshot"
 source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl"
-output_dir = "benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair"
+output_dir = "benchmark_datasets/jrc_acquis_anchored_articles_250_anchors"
 
 [[builds]]
 name = "definitions"
 kind = "jrc_acquis_snapshot"
 source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl"
-output_dir = "benchmark_datasets/jrc_acquis_anchored_definitions_250_per_pair"
+output_dir = "benchmark_datasets/jrc_acquis_anchored_definitions_250_anchors"
 
 [selection]
+mode = "anchored"
 languages = ["en", "es", "de", "fr", "pt"]
-limit = 250
+anchor_limit = 250
 
 [terminology]
 domain = "jrc"

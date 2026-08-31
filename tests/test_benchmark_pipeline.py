@@ -65,7 +65,9 @@ def test_load_benchmark_config_resolves_standard_chemistry_config() -> None:
     assert config.name == "google_patents_chemistry"
     assert config.domain == "chemistry"
     assert config.builds[0].kind == "google_patents_snapshot"
+    assert config.builds[0].selection_mode == "per_direction"
     assert config.builds[0].limit == 250
+    assert config.builds[0].bidirectional is True
     assert config.terminology.extractors == (
         "llm_chemistry",
         "stanza_ud",
@@ -83,6 +85,12 @@ def test_load_benchmark_config_resolves_standard_legal_config() -> None:
     assert config.domain == "jrc"
     assert [build.name for build in config.builds] == ["articles", "definitions"]
     assert all(build.kind == "jrc_acquis_snapshot" for build in config.builds)
+    assert all(build.selection_mode == "anchored" for build in config.builds)
+    assert all(build.anchor_limit == 250 for build in config.builds)
+    assert [build.output_dir.name for build in config.builds] == [
+        "jrc_acquis_anchored_articles_250_anchors",
+        "jrc_acquis_anchored_definitions_250_anchors",
+    ]
     assert config.terminology.extractors == (
         "llm_legal",
         "stanza_ud",
@@ -196,7 +204,7 @@ def test_anchor_limit_selects_complete_jrc_anchor(tmp_path: Path) -> None:
             "target_text": f"target {anchor} {direction}",
         }
         for anchor in ("doc-1", "doc-2")
-        for direction in ("en-de", "de-en", "en-fr", "fr-en")
+        for direction in ("en-de", "de-en", "en-fr", "fr-en", "de-fr", "fr-de")
     ]
     source_path.write_text(
         "".join(json.dumps(row) + "\n" for row in rows),
@@ -214,8 +222,8 @@ def test_anchor_limit_selects_complete_jrc_anchor(tmp_path: Path) -> None:
 
     selected = select_source_pair_rows(build)
 
-    assert sorted(selected) == ["de-en", "en-de", "en-fr", "fr-en"]
-    assert sum(len(rows) for rows in selected.values()) == 4
+    assert sorted(selected) == ["de-en", "de-fr", "en-de", "en-fr", "fr-de", "fr-en"]
+    assert sum(len(rows) for rows in selected.values()) == 6
     assert {row["anchor_id"] for rows in selected.values() for row in rows} == {"en:doc-1"}
 
 
@@ -223,20 +231,33 @@ def test_jrc_manifest_preserves_anchor_metadata(tmp_path: Path) -> None:
     source_path = tmp_path / "source.jsonl"
     output_dir = tmp_path / "benchmark"
     source_path.write_text(
-        json.dumps(
-            {
-                "example_id": "en:doc-1:chunk-0001",
-                "doc_id": "doc-1",
-                "anchor_id": "en:doc-1",
-                "language_pair": "en-de",
-                "source_language": "en",
-                "target_language": "de",
-                "source_text": "Source legal text.",
-                "target_text": "Target legal text.",
-                "section_type": "article",
-            }
-        )
-        + "\n",
+        "".join(
+            json.dumps(row) + "\n"
+            for row in [
+                {
+                    "example_id": "en:doc-1:chunk-0001",
+                    "doc_id": "doc-1",
+                    "anchor_id": "en:doc-1",
+                    "language_pair": "en-de",
+                    "source_language": "en",
+                    "target_language": "de",
+                    "source_text": "Source legal text.",
+                    "target_text": "Target legal text.",
+                    "section_type": "article",
+                },
+                {
+                    "example_id": "de:doc-1:chunk-0001",
+                    "doc_id": "doc-1",
+                    "anchor_id": "en:doc-1",
+                    "language_pair": "de-en",
+                    "source_language": "de",
+                    "target_language": "en",
+                    "source_text": "Target legal text.",
+                    "target_text": "Source legal text.",
+                    "section_type": "article",
+                },
+            ]
+        ),
         encoding="utf-8",
     )
     config = BenchmarkGenerationConfig(

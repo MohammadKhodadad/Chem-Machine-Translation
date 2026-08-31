@@ -18,31 +18,46 @@ uv run python scripts/generate_chemistry_benchmark.py
 uv run python scripts/generate_legal_benchmark.py
 ```
 
-The chemistry runner loads `config/benchmark_generation/chemistry.toml`. The legal runner loads
-`config/benchmark_generation/legal.toml`, which builds both JRC article and JRC definition
-benchmarks.
+The chemistry runner loads `config/benchmark_generation/chemistry.toml`, which uses
+`mode = "per_direction"` and `bidirectional = true`. The legal runner loads
+`config/benchmark_generation/legal.toml`, which uses `mode = "anchored"` and builds JRC article and
+JRC definition benchmarks from 250 anchored legal cases.
 
 Use `scripts/generate_benchmark.py --config <path>` for custom configs. The old
 `scripts/build_google_patents_eval_subset.py` and `scripts/build_jrc_acquis_eval_subset.py` scripts
 are retained only as advanced debugging tools.
 
-## One-Anchor Legal Benchmark
+## JRC Legal Benchmark
 
-Use the one-anchor legal config when you want a small JRC anchored benchmark with the full legal
+Use the standard legal runner when you want the 250-anchor JRC benchmark with the full legal
 terminology stack:
+
+```powershell
+uv run python scripts/generate_legal_benchmark.py
+```
+
+This writes 250 anchored legal cases for articles and 250 for definitions:
+
+- `benchmark_datasets/jrc_acquis_anchored_articles_250_anchors`
+- `benchmark_datasets/jrc_acquis_anchored_definitions_250_anchors`
+
+The config uses `mode = "anchored"` and `anchor_limit = 250`, which selects 250 `anchor_id` values
+and expands each one to the ordered language directions available for the configured languages. It
+enables the legal LLM extractor, Stanza/UD, XLM-R/NOBI, spaCy, IATE, Wikidata, UNTERM, and the LLM
+refiner.
+
+For the smaller one-anchor report/smoke dataset, run:
 
 ```powershell
 uv run python scripts/generate_benchmark.py --config config/benchmark_generation/legal_one_anchor.toml
 ```
 
-This writes one complete anchored legal case for articles and one for definitions:
+## Length Filtering
 
-- `benchmark_datasets/jrc_acquis_anchored_articles_1_anchor`
-- `benchmark_datasets/jrc_acquis_anchored_definitions_1_anchor`
-
-The config uses `anchor_limit = 1`, which selects one `anchor_id` and expands it to all 20 ordered
-language directions for the configured languages. It enables the legal LLM extractor, Stanza/UD,
-XLM-R/NOBI, spaCy, IATE, Wikidata, UNTERM, and the LLM refiner.
+Length selection primarily happens when source snapshots are created in `benchmark_sources/`.
+The standard benchmark configs do not set `min_input_tokens` or `max_input_tokens`; they consume the
+already-selected source snapshots. JRC anchored configs use anchor completeness as the controlling
+selection rule.
 
 ## Standard Terminology Configuration
 

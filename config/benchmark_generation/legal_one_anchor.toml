@@ -14,8 +14,8 @@ source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_definitions_250_per_
 output_dir = "benchmark_datasets/jrc_acquis_anchored_definitions_1_anchor"
 
 [selection]
+mode = "anchored"
 languages = ["en", "es", "de", "fr", "pt"]
-limit = 250
 anchor_limit = 1
 
 [terminology]
@@ -33,4 +33,3 @@ workers = 2
 legal_workers = 2
 stanza_workers = 2
 openai_timeout = 120.0
-

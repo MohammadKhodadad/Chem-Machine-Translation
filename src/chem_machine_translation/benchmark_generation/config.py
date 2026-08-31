@@ -1,6 +1,7 @@
 from chem_machine_translation.benchmark.config import (
     SUPPORTED_DOMAINS,
     SUPPORTED_EXTRACTORS,
+    SUPPORTED_SELECTION_MODES,
     SUPPORTED_SOURCE_KINDS,
     SUPPORTED_VERIFIERS,
     BenchmarkBuildConfig,
@@ -10,6 +11,7 @@ from chem_machine_translation.benchmark.config import (
     build_config_from_mapping,
     build_configs_from_mapping,
     config_path_root,
+    default_selection_mode,
     default_source_kind_for_domain,
     load_benchmark_config,
     optional_int,
@@ -26,6 +28,7 @@ from chem_machine_translation.benchmark.config import (
 __all__ = [
     "SUPPORTED_DOMAINS",
     "SUPPORTED_EXTRACTORS",
+    "SUPPORTED_SELECTION_MODES",
     "SUPPORTED_SOURCE_KINDS",
     "SUPPORTED_VERIFIERS",
     "BenchmarkBuildConfig",
@@ -36,6 +39,7 @@ __all__ = [
     "build_configs_from_mapping",
     "config_path_root",
     "default_source_kind_for_domain",
+    "default_selection_mode",
     "load_benchmark_config",
     "optional_int",
     "optional_path",

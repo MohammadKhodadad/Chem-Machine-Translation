@@ -120,10 +120,12 @@ The current JRC source snapshots are:
 
 Standard benchmark generation is configured in TOML:
 
-- `config/benchmark_generation/chemistry.toml` points at the Google Patents source snapshot and
-  enables the chemistry extractor/verifier/refiner stack.
-- `config/benchmark_generation/legal.toml` points at both JRC source snapshots and enables the legal
+- `config/benchmark_generation/chemistry.toml` points at the Google Patents source snapshot, uses
+  `mode = "per_direction"` with `bidirectional = true`, and enables the chemistry
   extractor/verifier/refiner stack.
+- `config/benchmark_generation/legal.toml` points at both JRC source snapshots, sets
+  `mode = "anchored"` with `anchor_limit = 250`, and enables the legal extractor/verifier/refiner
+  stack.
 
 Both configs are loaded by `src/chem_machine_translation/benchmark_generation/config.py` and
 executed by `src/chem_machine_translation/benchmark_generation/pipeline.py`. The old builder scripts
@@ -155,11 +157,17 @@ Each manifest row stores dataset metadata, source/target language metadata, toke
 and a `terminology` array. During construction the builders keep internal `_source_text` and
 `_target_text` fields in memory; those private fields are removed before writing the final manifest.
 
-For anchored JRC smoke runs, configs can set `anchor_limit`. Unlike `limit`, which caps rows per
-direction, `anchor_limit = 1` selects one shared `anchor_id` and keeps the complete set of ordered
-language directions for that anchor. The one-anchor legal config is
-`config/benchmark_generation/legal_one_anchor.toml`; it keeps the full legal extractor, verifier,
-and refiner stack enabled.
+Configs choose source-row selection with `mode`. `mode = "per_direction"` selects up to `limit` rows
+per observed language direction and can add synthetic reverse examples with `bidirectional = true`.
+`mode = "anchored"` is for JRC: it selects shared `anchor_id` values using `anchor_limit` and keeps
+the complete set of ordered language directions available for each selected anchor. The standard
+legal config uses `anchor_limit = 250` and keeps the full legal extractor, verifier, and refiner
+stack enabled.
+
+Length selection happens during source snapshot generation in `benchmark_sources/`. The standard
+benchmark configs do not set `min_input_tokens` or `max_input_tokens`; they consume the
+already-selected source snapshots. Anchored JRC configs use anchor completeness as the main selection
+rule.
 
 ## Terminology Object Schema
 

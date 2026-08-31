@@ -14,6 +14,7 @@ from chem_machine_translation.data.terminology import DEFAULT_SPACY_MODEL
 
 SUPPORTED_DOMAINS = {"chemistry", "google_patents", "jrc", "legal"}
 SUPPORTED_SOURCE_KINDS = {"google_patents_snapshot", "jrc_acquis_snapshot"}
+SUPPORTED_SELECTION_MODES = {"per_direction", "anchored"}
 SUPPORTED_EXTRACTORS = {
     "llm_chemistry",
     "llm_legal",
@@ -43,6 +44,7 @@ class BenchmarkBuildConfig:
     output_dir: Path
     languages: tuple[str, ...]
     limit: int
+    selection_mode: str = "per_direction"
     min_input_tokens: int | None = None
     max_input_tokens: int | None = None
     anchor_limit: int | None = None
@@ -204,6 +206,14 @@ def build_config_from_mapping(
     )
     languages = string_tuple(payload.get("languages") or selection.get("languages"))
     limit = int(payload.get("limit") or selection.get("limit") or 250)
+    anchor_limit = optional_int(payload.get("anchor_limit") or selection.get("anchor_limit"))
+    selection_mode = str(
+        payload.get("mode")
+        or payload.get("selection_mode")
+        or selection.get("mode")
+        or selection.get("selection_mode")
+        or default_selection_mode(anchor_limit=anchor_limit)
+    )
     return BenchmarkBuildConfig(
         name=str(payload.get("name") or default_name),
         kind=kind,
@@ -219,13 +229,14 @@ def build_config_from_mapping(
         ),
         languages=languages,
         limit=limit,
+        selection_mode=selection_mode,
         min_input_tokens=optional_int(
             payload.get("min_input_tokens") or selection.get("min_input_tokens")
         ),
         max_input_tokens=optional_int(
             payload.get("max_input_tokens") or selection.get("max_input_tokens")
         ),
-        anchor_limit=optional_int(payload.get("anchor_limit") or selection.get("anchor_limit")),
+        anchor_limit=anchor_limit,
         bidirectional=bool(payload.get("bidirectional", selection.get("bidirectional", False))),
     )
 
@@ -248,12 +259,21 @@ def validate_benchmark_config(
     for build in config.builds:
         if build.kind not in SUPPORTED_SOURCE_KINDS:
             raise ValueError(f"Unsupported source kind: {build.kind}")
+        if build.selection_mode not in SUPPORTED_SELECTION_MODES:
+            raise ValueError(f"Unsupported selection mode: {build.selection_mode}")
         if not build.languages:
             raise ValueError(f"Build {build.name!r} must define at least one language.")
         if build.limit < 1:
             raise ValueError(f"Build {build.name!r} limit must be positive.")
-        if build.anchor_limit is not None and build.anchor_limit < 1:
-            raise ValueError(f"Build {build.name!r} anchor_limit must be positive.")
+        if build.selection_mode == "anchored":
+            if build.kind != "jrc_acquis_snapshot":
+                raise ValueError("mode = 'anchored' is only supported for JRC snapshots.")
+            if len(build.languages) < 2:
+                raise ValueError(f"Build {build.name!r} needs at least two languages.")
+            if build.anchor_limit is None or build.anchor_limit < 1:
+                raise ValueError(f"Build {build.name!r} anchor_limit must be positive.")
+        elif build.anchor_limit is not None:
+            raise ValueError("anchor_limit requires mode = 'anchored'.")
         if validate_paths and not build.source_pairs_jsonl.exists():
             raise FileNotFoundError(f"Source snapshot not found: {build.source_pairs_jsonl}")
 
@@ -268,6 +288,12 @@ def default_source_kind_for_domain(domain: str) -> str:
     if domain in {"jrc", "legal"}:
         return "jrc_acquis_snapshot"
     return "google_patents_snapshot"
+
+
+def default_selection_mode(*, anchor_limit: int | None) -> str:
+    if anchor_limit is not None:
+        return "anchored"
+    return "per_direction"
 
 
 def required_path(value: Any, *, base_dir: Path, field_name: str) -> Path:
