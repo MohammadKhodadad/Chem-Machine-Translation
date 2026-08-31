@@ -140,7 +140,13 @@ direction folder contains:
 
 The builders also write a combined manifest at the output root.
 
-The main builder scripts are:
+The main dataset-generation entry points are the config-driven wrappers:
+
+- `scripts/generate_chemistry_benchmark.py`
+- `scripts/generate_legal_benchmark.py`
+- `scripts/generate_benchmark.py --config <path>`
+
+The older low-level builder scripts remain available for advanced/manual experiments:
 
 - `scripts/build_google_patents_eval_subset.py`
 - `scripts/build_jrc_acquis_eval_subset.py`
@@ -148,6 +154,12 @@ The main builder scripts are:
 Each manifest row stores dataset metadata, source/target language metadata, token counts, row IDs,
 and a `terminology` array. During construction the builders keep internal `_source_text` and
 `_target_text` fields in memory; those private fields are removed before writing the final manifest.
+
+For anchored JRC smoke runs, configs can set `anchor_limit`. Unlike `limit`, which caps rows per
+direction, `anchor_limit = 1` selects one shared `anchor_id` and keeps the complete set of ordered
+language directions for that anchor. The one-anchor legal config is
+`config/benchmark_generation/legal_one_anchor.toml`; it keeps the full legal extractor, verifier,
+and refiner stack enabled.
 
 ## Terminology Object Schema
 
@@ -182,7 +194,7 @@ The standard candidate stage combines four extractor families.
 
 Class: `LLMTargetCandidateExtractor`
 
-Used by Google Patents when `--extract-terminology` is passed.
+Used by Google Patents when `llm_chemistry` is listed in the benchmark config extractors.
 
 Pipeline:
 
@@ -213,7 +225,7 @@ Output terms use:
 
 Class: `LLMLegalCandidateExtractor`
 
-Used by JRC-Acquis when `--extract-legal-terms` is passed.
+Used by JRC-Acquis when `llm_legal` is listed in the benchmark config extractors.
 
 Pipeline:
 
@@ -288,7 +300,7 @@ and many short generic fragments.
 
 Class: `XLMRNOBITerminologyExtractor`
 
-Enabled with `--use-nobi-extractor`.
+Enabled when `xlmr_nobi` is listed in the benchmark config extractors.
 
 The default model is:
 
@@ -318,7 +330,7 @@ Output terms use:
 
 Class: `SpaCyTerminologyExtractor`
 
-Enabled with `--use-spacy-extractor`.
+Enabled when `spacy` is listed in the benchmark config extractors.
 
 The spaCy extractor is an exact-span extractor. It uses trained spaCy linguistic annotations when a
 language model is available, and falls back to a blank spaCy pipeline when possible.
@@ -492,8 +504,9 @@ The copy-paste commands live in `benchmark_datasets/README.md`.
 Use the Google Patents command there for chemistry benchmarks. It enables the LLM chemistry
 extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the chemistry verifier set.
 
-Use the JRC article or definition commands there for legal benchmarks. Both enable the legal LLM
-extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the legal verifier set.
+Use `config/benchmark_generation/legal.toml` for legal benchmarks. It defines both the article and
+definition builds and enables the legal LLM extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the legal
+verifier set.
 
 ## Benchmark Creator Orchestration
 
@@ -504,36 +517,34 @@ together the extractor, verifier, and refiner pieces described above.
 
 Google uses `DatasetTerminologyGenerator` as one combined terminology generator.
 
-When the standard command is used, the benchmark creator runs:
+When `config/benchmark_generation/chemistry.toml` is used, the benchmark creator runs:
 
 1. Build manifest rows from the Google source-pair snapshot.
 2. Send each target/reference text to the chemistry LLM extractor.
 3. Send the same target/reference text to Stanza/UD.
-4. Send the same target/reference text to XLM-R/NOBI when `--use-nobi-extractor` is set.
-5. Send the same target/reference text to spaCy when `--use-spacy-extractor` is set.
+4. Send the same target/reference text to XLM-R/NOBI when `xlmr_nobi` is configured.
+5. Send the same target/reference text to spaCy when `spacy` is configured.
 6. Merge all candidate streams and deduplicate by normalized target surface.
-7. Cap the broad candidate pool with `--terminology-max-terms 40`.
+7. Cap the broad candidate pool with `candidate_max_terms = 40`.
 8. Run chemistry verifiers on each candidate.
 9. Rank terms through `select_dataset_terms`.
 10. Write candidate and `verified` terms into the manifest.
-11. Write or reuse terminology cache entries when `--terminology-cache` is supplied.
+11. Append final `refined` terms when `refiner = true`.
 
-The relevant flags are:
+The relevant config entries are:
 
-- `--extract-terminology`
-- `--terminology-model gpt-4.1-mini`
-- `--terminology-max-terms 40`
-- `--use-nobi-extractor`
-- `--use-spacy-extractor`
-- `--terminology-workers`
-- chemistry verifier flags
+- `extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]`
+- `verifiers = ["iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]`
+- `candidate_max_terms = 40`
+- `refined_max_terms = 8`
+- `refiner = true`
 
 ### JRC-Acquis
 
 JRC uses a split creator flow because the legal LLM extractor and deterministic target extractors are
 run as separate stages before being merged.
 
-First, `LegalTerminologyGenerator` runs when `--extract-legal-terms` is set:
+First, `LegalTerminologyGenerator` runs when `llm_legal` is configured:
 
 1. Build manifest rows from the JRC article or definition source-pair snapshot.
 2. Send each target/reference text to the legal LLM extractor.
@@ -541,31 +552,38 @@ First, `LegalTerminologyGenerator` runs when `--extract-legal-terms` is set:
 4. Rank legal terms through `select_legal_terms`.
 5. Store the legal candidates on the manifest row.
 
-Then, `DatasetTerminologyGenerator` runs when `--extract-stanza-terms` is set:
+Then, `DatasetTerminologyGenerator` runs when deterministic extractors are configured:
 
 1. Reuse the same target/reference text.
 2. Run Stanza/UD.
-3. Run XLM-R/NOBI when `--use-nobi-extractor` is set.
-4. Run spaCy when `--use-spacy-extractor` is set.
-5. Deduplicate and cap with `--stanza-terminology-max-terms 40`.
+3. Run XLM-R/NOBI when `xlmr_nobi` is configured.
+4. Run spaCy when `spacy` is configured.
+5. Deduplicate and cap with `candidate_max_terms = 40`.
 6. Run configured verifier enrichment.
 7. Rank through `select_dataset_terms`.
 8. Merge the legal and algorithmic results with `deduplicate_terms`.
 9. Write candidate and `verified` terms into the manifest.
+10. Append final `refined` terms when `refiner = true`.
 
 The JRC builder also caches deterministic target-term extraction by target language and target text,
 which matters because anchored JRC rows can reuse the same target chunk across directions.
 
-The article and definition benchmark commands differ only in the source JSONL and output directory.
-The terminology pipeline is the same for both.
+The article and definition builds differ only in the source JSONL and output directory. The
+terminology pipeline is the same for both.
 
 ## Important Implementation Files
 
 - `scripts/create_google_patents_source_pairs.py`: builds Google source-pair snapshots.
 - `scripts/create_jrc_acquis_source_pairs.py`: builds JRC article and definition source-pair
   snapshots.
-- `scripts/build_google_patents_eval_subset.py`: builds Google benchmark manifests and terminology.
-- `scripts/build_jrc_acquis_eval_subset.py`: builds JRC benchmark manifests and terminology.
+- `scripts/generate_chemistry_benchmark.py`: standard chemistry benchmark runner.
+- `scripts/generate_legal_benchmark.py`: standard legal benchmark runner.
+- `scripts/generate_benchmark.py`: generic config-driven runner for custom TOML configs.
+- `scripts/build_google_patents_eval_subset.py`: advanced manual Google builder.
+- `scripts/build_jrc_acquis_eval_subset.py`: advanced manual JRC builder.
+- `src/chem_machine_translation/benchmark_generation/config.py`: TOML config schema and loader.
+- `src/chem_machine_translation/benchmark_generation/pipeline.py`: shared config-driven benchmark
+  orchestration.
 - `src/chem_machine_translation/data/terminology.py`: terminology schema, extractors, verifiers,
   generators, deduplication, and LLM refiner.
 - `src/chem_machine_translation/evaluation/metrics.py`: terminology group filtering and coverage

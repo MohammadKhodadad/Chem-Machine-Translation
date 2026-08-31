@@ -2,6 +2,10 @@
 
 This folder tracks portable source-pair snapshots used to recreate benchmark datasets.
 
+Source snapshot creation is still command-driven. The config-driven benchmark pipeline consumes
+these JSONL snapshots after they exist; it does not rebuild Google Patents or JRC source snapshots
+yet.
+
 Standard benchmark generation does not require passing these paths manually. The paths are already
 set in `config/benchmark_generation/chemistry.toml` and
 `config/benchmark_generation/legal.toml`; use this document only when you need to rebuild the source
@@ -30,10 +34,10 @@ uv run --no-sync python scripts/create_google_patents_source_pairs.py `
 ```
 
 The exporter streams the Hugging Face dataset in dataset order, keeps source/target text and
-metadata fields, filters to the benchmark input-length range using the same approximate token
-counter as `scripts/build_google_patents_eval_subset.py`, prefers rows where both sides are in
-range, then backfills each pair from lower-priority rows until the cap is reached. Sparse pairs that
-cannot reach the cap are omitted when `--require-full-limit` is set.
+metadata fields, filters to the benchmark input-length range using the shared approximate token
+counter, prefers rows where both sides are in range, then backfills each pair from lower-priority
+rows until the cap is reached. Sparse pairs that cannot reach the cap are omitted when
+`--require-full-limit` is set.
 
 ## JRC-Acquis / OPUS
 
@@ -119,6 +123,10 @@ uv run --no-sync python scripts/create_jrc_acquis_source_pairs.py `
 
 `--limit 250` in anchored mode means 250 document anchors. Because each anchor expands to all 20
 ordered directions, this produces 250 rows per direction and 5,000 rows total.
+
+Dataset configs can use `anchor_limit` to build smaller anchored benchmark subsets from these
+snapshots. For example, `anchor_limit = 1` keeps one shared `anchor_id` and all 20 ordered
+directions for that anchor.
 
 `--quality-mode strict` rejects residual markup, control characters, all-caps blocks, obvious
 list-continuation starts, bare-date starts, and incomplete trailing fragments. It does not perform

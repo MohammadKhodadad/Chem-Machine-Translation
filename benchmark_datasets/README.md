@@ -22,8 +22,27 @@ The chemistry runner loads `config/benchmark_generation/chemistry.toml`. The leg
 `config/benchmark_generation/legal.toml`, which builds both JRC article and JRC definition
 benchmarks.
 
-Use `scripts/generate_benchmark.py --config <path>` for custom configs. The long commands below are
-kept as advanced/manual equivalents for debugging individual flags.
+Use `scripts/generate_benchmark.py --config <path>` for custom configs. The old
+`scripts/build_google_patents_eval_subset.py` and `scripts/build_jrc_acquis_eval_subset.py` scripts
+are retained only as advanced debugging tools.
+
+## One-Anchor Legal Benchmark
+
+Use the one-anchor legal config when you want a small JRC anchored benchmark with the full legal
+terminology stack:
+
+```powershell
+uv run python scripts/generate_benchmark.py --config config/benchmark_generation/legal_one_anchor.toml
+```
+
+This writes one complete anchored legal case for articles and one for definitions:
+
+- `benchmark_datasets/jrc_acquis_anchored_articles_1_anchor`
+- `benchmark_datasets/jrc_acquis_anchored_definitions_1_anchor`
+
+The config uses `anchor_limit = 1`, which selects one `anchor_id` and expands it to all 20 ordered
+language directions for the configured languages. It enables the legal LLM extractor, Stanza/UD,
+XLM-R/NOBI, spaCy, IATE, Wikidata, UNTERM, and the LLM refiner.
 
 ## Standard Terminology Configuration
 
@@ -44,115 +63,24 @@ Standard candidate cap:
 
 Standard extractor families:
 
-- LLM extractor: `--extract-terminology` for Google Patents, `--extract-legal-terms` for JRC.
-- Stanza/UD: enabled by default inside the terminology generator; for JRC pass
-  `--extract-stanza-terms`.
-- XLM-R/NOBI: `--use-nobi-extractor`.
-- spaCy: `--use-spacy-extractor`.
+- Chemistry config: `llm_chemistry`, `stanza_ud`, `xlmr_nobi`, and `spacy`.
+- Legal config: `llm_legal`, `stanza_ud`, `xlmr_nobi`, and `spacy`.
 
-Standard verifier flags:
+Standard verifier sources:
 
-- Google Patents chemistry: `--iate-terminology`, `--wikidata-terminology`,
-  `--pubchem-terminology`, `--chebi-terminology`, `--chembl-terminology`,
-  `--mesh-terminology`, `--nci-terminology`, and `--agrovoc-terminology`.
-- JRC legal: `--iate-terminology`, `--wikipedia-terminology`, and `--unterm-terminology`.
+- Chemistry config: `iate`, `wikidata`, `pubchem`, `chebi`, `chembl`, `mesh`, `nci`, and
+  `agrovoc`.
+- Legal config: `iate`, `wikidata`, and `unterm`.
 
-## Google Patents Chemistry
+The exact standard choices live in:
 
-Advanced manual equivalent for the 250-row-per-pair Google Patents benchmark:
-
-```powershell
-uv run --no-sync python scripts/build_google_patents_eval_subset.py `
-  --source-pairs-jsonl benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl `
-  --output-dir benchmark_datasets/google_patents_within_document_pairs_250_per_pair `
-  --language de `
-  --language en `
-  --language es `
-  --language fr `
-  --language ru `
-  --language zh `
-  --limit 250 `
-  --extract-terminology `
-  --terminology-model gpt-4.1-mini `
-  --terminology-max-terms 40 `
-  --use-nobi-extractor `
-  --use-spacy-extractor `
-  --terminology-workers 2 `
-  --iate-terminology `
-  --wikidata-terminology `
-  --pubchem-terminology `
-  --chebi-terminology `
-  --chembl-terminology `
-  --mesh-terminology `
-  --nci-terminology `
-  --agrovoc-terminology
-```
-
-`--extract-terminology` enables the LLM target extractor. The standard command also keeps the
-deterministic Stanza/UD extractor, then adds XLM-R/NOBI and spaCy explicitly.
-
-## JRC-Acquis Articles
-
-Advanced manual equivalent for the 250-row-per-pair JRC article/provision benchmark:
-
-```powershell
-uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
-  --source-pairs-jsonl benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl `
-  --output-dir benchmark_datasets/jrc_acquis_anchored_articles_250_per_pair `
-  --language en `
-  --language es `
-  --language de `
-  --language fr `
-  --language pt `
-  --limit 250 `
-  --extract-legal-terms `
-  --legal-terminology-model gpt-4.1-mini `
-  --legal-terminology-max-terms 40 `
-  --legal-terminology-workers 2 `
-  --extract-stanza-terms `
-  --stanza-terminology-max-terms 40 `
-  --stanza-terminology-workers 2 `
-  --use-nobi-extractor `
-  --use-spacy-extractor `
-  --iate-terminology `
-  --wikipedia-terminology `
-  --unterm-terminology
-```
-
-## JRC-Acquis Definitions
-
-Advanced manual equivalent for the 250-row-per-pair JRC definition-heavy benchmark:
-
-```powershell
-uv run --no-sync python scripts/build_jrc_acquis_eval_subset.py `
-  --source-pairs-jsonl benchmark_sources/jrc_acquis_anchored_definitions_250_per_language_pair.jsonl `
-  --output-dir benchmark_datasets/jrc_acquis_anchored_definitions_250_per_pair `
-  --language en `
-  --language es `
-  --language de `
-  --language fr `
-  --language pt `
-  --limit 250 `
-  --extract-legal-terms `
-  --legal-terminology-model gpt-4.1-mini `
-  --legal-terminology-max-terms 40 `
-  --legal-terminology-workers 2 `
-  --extract-stanza-terms `
-  --stanza-terminology-max-terms 40 `
-  --stanza-terminology-workers 2 `
-  --use-nobi-extractor `
-  --use-spacy-extractor `
-  --iate-terminology `
-  --wikipedia-terminology `
-  --unterm-terminology
-```
-
-The article and definition commands differ only in `--source-pairs-jsonl` and `--output-dir`.
+- `config/benchmark_generation/chemistry.toml`
+- `config/benchmark_generation/legal.toml`
 
 ## Refiner And Evaluation Groups
 
-The build commands above create candidate/verified terminology manifests. The standard final
-benchmark terminology is the refiner-selected `refined` group with `n = 8` terms per segment.
+The config-driven benchmark pipeline creates candidate/verified terminology and then appends the
+refiner-selected `refined` group with `n = 8` terms per segment.
 
 Terminology groups:
 

@@ -247,6 +247,7 @@ def run_benchmark_build(
     build.output_dir.mkdir(parents=True, exist_ok=True)
     combined_rows = []
     for direction, rows in sorted(pair_rows.items()):
+        print(f"Building {build.name} {direction}: {len(rows)} rows.", flush=True)
         direction_dir = build.output_dir / direction
         direction_dir.mkdir(parents=True, exist_ok=True)
         manifest_rows = [build_manifest_row(row=row, kind=build.kind) for row in rows]
@@ -498,7 +499,13 @@ def attach_terminology_to_rows(
     terminology: BenchmarkTerminologyConfig,
     runtime: TerminologyRuntime,
 ) -> list[dict[str, Any]]:
-    for row in rows:
+    total = len(rows)
+    for index, row in enumerate(rows, start=1):
+        direction = str(row.get("direction") or "unknown-direction")
+        print(
+            f"Generating terminology for {direction} row {index}/{total}.",
+            flush=True,
+        )
         terms = generate_candidate_terms(row, domain=domain, runtime=runtime)
         row["terminology"] = [term.to_json() for term in terms]
         if runtime.refiner is not None and terms:
