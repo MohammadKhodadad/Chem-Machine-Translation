@@ -25,14 +25,16 @@ Benchmark generation has three top-level stages.
    `benchmark_datasets/` and builds the terminology manifest for each target/reference segment.
 3. Run translation and evaluation against those manifests.
 
-Inside stage 2, terminology creation is a nested pipeline:
+Inside stage 2, terminology creation is stage-based:
 
-1. Read one target/reference segment.
-2. Run candidate extractors.
-3. Deduplicate and cap the broad candidate pool, normally at `40` terms.
-4. Run verifier/enrichment sources.
-5. Rank and store candidate or `verified` manifest terms.
-6. Run the final LLM refiner when enabled in config, normally capped at `8` terms.
+1. Select all benchmark rows for the build and write a checkpoint.
+2. Run all configured candidate extractors across the selected rows.
+3. Deduplicate and cap the broad candidate pool, normally at `40` terms per row.
+4. Run verifier/enrichment sources across the candidate pool.
+5. Rank and store candidate or `verified` terms.
+6. Run the final LLM refiner across the verified/enriched row records when enabled in config,
+   normally capped at `8` terms per row.
+7. Write final manifests and benchmark metadata.
 
 The pipeline is target-side for benchmark terminology. Candidate extractors read the target/reference
 text and return exact spans that appear in that text. They do not translate source terms during
@@ -66,13 +68,13 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  A[Target/reference text] --> B[Candidate extractors]
-  B --> C[Deduplicate and cap at 40]
-  C --> D[Verifier enrichment]
-  D --> E[Rank candidate terms]
-  E --> F[candidate and verified terms]
-  F --> G[LLM refiner]
-  G --> H[refined terms in manifest]
+  A[Selected rows checkpoint] --> B[All extractors stage]
+  B --> C[Candidate pool checkpoint]
+  C --> D[Verifier enrichment stage]
+  D --> E[Verified candidates checkpoint]
+  E --> F[LLM refiner stage]
+  F --> G[Final manifest rows checkpoint]
+  G --> H[manifest.jsonl and metadata.json]
 ```
 
 ### Candidate Extractors To Refiner
@@ -130,6 +132,53 @@ Standard benchmark generation is configured in TOML:
 Both configs are loaded by `src/chem_machine_translation/benchmark_generation/config.py` and
 executed by `src/chem_machine_translation/benchmark_generation/pipeline.py`. The old builder scripts
 remain useful for manual experiments, but the two wrapper commands are the canonical standard path.
+
+## Checkpoint And Resume
+
+Config-driven benchmark generation writes resumable intermediate files under `benchmark_work/` by
+default. This directory is ignored by Git and is separate from final benchmark outputs in
+`benchmark_datasets/`.
+
+The standard configs include:
+
+```toml
+[checkpoint]
+enabled = true
+work_dir = "benchmark_work"
+resume = true
+run_id = "auto"
+
+[checkpoint.reuse]
+selection = true
+extractors = true
+verifiers = true
+refiner = true
+manifest = true
+```
+
+With `run_id = "auto"`, checkpoints are stored by benchmark name and build name. A rerun reuses a
+stage when its checkpoint file exists and the stage-specific hash still matches. The hash includes
+the inputs and config values relevant to that stage, so a refiner-only config change can reuse
+selection, extractor, and verifier checkpoints while rerunning refinement and final manifest writing.
+
+Each build uses this layout:
+
+```text
+benchmark_work/
+  <benchmark_name>/
+    <build_name>/
+      stage_status.json
+      01_selected_rows.jsonl
+      directions/
+        <language-direction>/
+          02_extractor_candidates.jsonl
+          03_verified_candidates.jsonl
+          04_refined_terms.jsonl
+          05_manifest_rows.jsonl
+```
+
+The checkpoint files are implementation artifacts. The supported benchmark outputs remain the CSV
+files, manifests, combined manifest, and `metadata.json` written under `benchmark_datasets/`.
 
 ## Dataset Builders
 
@@ -492,9 +541,9 @@ Accepted refined terms use:
 - `decision`: `keep_refined`
 - `source`: original provenance plus the refiner tag
 
-At the time of writing, the main dataset builder commands create candidate and verified manifests.
-The final refiner stage is available through scripts such as `scripts/refine_final_four_terms.py` and
-the audit tooling, but it is not yet a single integrated full-dataset builder flag.
+The config-driven dataset builders now integrate the final refiner stage directly. When
+`refiner = true`, the final manifest contains both the verified/candidate terms and the appended
+`refined` terms selected by `LLMTerminologyRefiner`.
 
 ## Evaluation Terminology Groups
 
@@ -546,21 +595,19 @@ together the extractor, verifier, and refiner pieces described above.
 
 ### Google Patents
 
-Google uses `DatasetTerminologyGenerator` as one combined terminology generator.
-
 When `config/benchmark_generation/chemistry.toml` is used, the benchmark creator runs:
 
 1. Build manifest rows from the Google source-pair snapshot.
-2. Send each target/reference text to the chemistry LLM extractor.
-3. Send the same target/reference text to Stanza/UD.
-4. Send the same target/reference text to XLM-R/NOBI when `xlmr_nobi` is configured.
-5. Send the same target/reference text to spaCy when `spacy` is configured.
-6. Merge all candidate streams and deduplicate by normalized target surface.
-7. Cap the broad candidate pool with `candidate_max_terms = 40`.
-8. Run chemistry verifiers on each candidate.
-9. Rank terms through `select_dataset_terms`.
-10. Write candidate and `verified` terms into the manifest.
-11. Append final `refined` terms when `refiner = true`.
+2. Write or reuse the selected-row checkpoint.
+3. Run the chemistry LLM extractor, Stanza/UD, XLM-R/NOBI, and spaCy across the selected rows.
+4. Merge extractor outputs and deduplicate by normalized target surface.
+5. Write or reuse the extractor-candidate checkpoint.
+6. Run chemistry verifiers on the candidate pool.
+7. Rank terms through `select_dataset_terms`.
+8. Write or reuse the verified-candidate checkpoint.
+9. Run the LLM refiner across the verified/enriched row records when `refiner = true`.
+10. Write or reuse the manifest-row checkpoint.
+11. Write final direction manifests, combined manifest, and `metadata.json`.
 
 The relevant config entries are:
 
@@ -572,29 +619,19 @@ The relevant config entries are:
 
 ### JRC-Acquis
 
-JRC uses a split creator flow because the legal LLM extractor and deterministic target extractors are
-run as separate stages before being merged.
-
-First, `LegalTerminologyGenerator` runs when `llm_legal` is configured:
+JRC uses the same stage checkpoints, with legal-specific extraction and ranking:
 
 1. Build manifest rows from the JRC article or definition source-pair snapshot.
-2. Send each target/reference text to the legal LLM extractor.
-3. Run IATE, Wikidata, UNTERM, and optional EuroVoc evidence.
-4. Rank legal terms through `select_legal_terms`.
-5. Store the legal candidates on the manifest row.
-
-Then, `DatasetTerminologyGenerator` runs when deterministic extractors are configured:
-
-1. Reuse the same target/reference text.
-2. Run Stanza/UD.
-3. Run XLM-R/NOBI when `xlmr_nobi` is configured.
-4. Run spaCy when `spacy` is configured.
-5. Deduplicate and cap with `candidate_max_terms = 40`.
-6. Run configured verifier enrichment.
-7. Rank through `select_dataset_terms`.
-8. Merge the legal and algorithmic results with `deduplicate_terms`.
-9. Write candidate and `verified` terms into the manifest.
-10. Append final `refined` terms when `refiner = true`.
+2. Write or reuse the selected-row checkpoint.
+3. Run the legal LLM extractor when `llm_legal` is configured.
+4. Run Stanza/UD, XLM-R/NOBI, and spaCy when the deterministic extractors are configured.
+5. Merge all extractor outputs and deduplicate with `deduplicate_terms`.
+6. Write or reuse the extractor-candidate checkpoint.
+7. Run IATE, Wikidata, UNTERM, and optional EuroVoc evidence over the candidate pool.
+8. Rank legal terms through `select_legal_terms`.
+9. Write or reuse the verified-candidate checkpoint.
+10. Run the LLM refiner across the verified/enriched row records when `refiner = true`.
+11. Write final direction manifests, combined manifest, and `metadata.json`.
 
 The JRC builder also caches deterministic target-term extraction by target language and target text,
 which matters because anchored JRC rows can reuse the same target chunk across directions.

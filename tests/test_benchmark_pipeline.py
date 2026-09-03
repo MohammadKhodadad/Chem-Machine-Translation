@@ -4,6 +4,7 @@ from pathlib import Path
 
 from chem_machine_translation.benchmark_generation.config import (
     BenchmarkBuildConfig,
+    BenchmarkCheckpointConfig,
     BenchmarkGenerationConfig,
     BenchmarkTerminologyConfig,
     load_benchmark_config,
@@ -59,6 +60,16 @@ class _FakeRefiner:
         ]
 
 
+class _FailingGenerator:
+    def generate(self, **kwargs: object) -> list[DatasetTerminologyTerm]:
+        raise AssertionError("checkpointed extractor stage should have been reused")
+
+
+class _FailingRefiner:
+    def refine(self, **kwargs: object) -> list[DatasetTerminologyTerm]:
+        raise AssertionError("checkpointed refiner stage should have been reused")
+
+
 def test_load_benchmark_config_resolves_standard_chemistry_config() -> None:
     config = load_benchmark_config("config/benchmark_generation/chemistry.toml")
 
@@ -68,6 +79,9 @@ def test_load_benchmark_config_resolves_standard_chemistry_config() -> None:
     assert config.builds[0].selection_mode == "per_direction"
     assert config.builds[0].limit == 250
     assert config.builds[0].bidirectional is True
+    assert config.checkpoint.enabled is True
+    assert config.checkpoint.resume is True
+    assert config.checkpoint.work_dir.name == "benchmark_work"
     assert config.terminology.extractors == (
         "llm_chemistry",
         "stanza_ud",
@@ -87,6 +101,8 @@ def test_load_benchmark_config_resolves_standard_legal_config() -> None:
     assert all(build.kind == "jrc_acquis_snapshot" for build in config.builds)
     assert all(build.selection_mode == "anchored" for build in config.builds)
     assert all(build.anchor_limit == 250 for build in config.builds)
+    assert config.checkpoint.enabled is True
+    assert config.checkpoint.resume is True
     assert [build.output_dir.name for build in config.builds] == [
         "jrc_acquis_anchored_articles_250_anchors",
         "jrc_acquis_anchored_definitions_250_anchors",
@@ -330,6 +346,75 @@ def test_refiner_appends_refined_terms_to_manifest_rows() -> None:
 
     assert [term["term_group"] for term in rows[0]["terminology"]] == ["llm", "refined"]
     assert refined_terms_from_manifest(rows[0])[0].target_terms == ("chlorure de sodium",)
+
+
+def test_checkpointed_generation_resumes_completed_terminology_stages(tmp_path: Path) -> None:
+    source_path = tmp_path / "source.jsonl"
+    output_dir = tmp_path / "benchmark"
+    work_dir = tmp_path / "benchmark_work"
+    source_path.write_text(
+        json.dumps(
+            {
+                "example_id": "example-1",
+                "doc_id": "doc-1",
+                "language_pair": "de-fr",
+                "source_language": "de",
+                "target_language": "fr",
+                "source_text": "Quelle mit Natriumchlorid.",
+                "target_text": "Cible avec chlorure de sodium.",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    config = BenchmarkGenerationConfig(
+        name="resume-smoke",
+        domain="chemistry",
+        builds=(
+            BenchmarkBuildConfig(
+                name="tiny",
+                kind="google_patents_snapshot",
+                source_pairs_jsonl=source_path,
+                output_dir=output_dir,
+                languages=("de", "fr"),
+                limit=1,
+            ),
+        ),
+        terminology=BenchmarkTerminologyConfig(
+            domain="chemistry",
+            extractors=("llm_chemistry",),
+            verifiers=(),
+            refiner=True,
+        ),
+        checkpoint=BenchmarkCheckpointConfig(work_dir=work_dir),
+    )
+
+    run_benchmark_generation(
+        config,
+        settings=Settings(openai_api_key=None),
+        runtime=TerminologyRuntime(
+            chemistry_generator=_FakeChemistryGenerator(),  # type: ignore[arg-type]
+            refiner=_FakeRefiner(),  # type: ignore[arg-type]
+        ),
+    )
+    run_benchmark_generation(
+        config,
+        settings=Settings(openai_api_key=None),
+        runtime=TerminologyRuntime(
+            chemistry_generator=_FailingGenerator(),  # type: ignore[arg-type]
+            refiner=_FailingRefiner(),  # type: ignore[arg-type]
+        ),
+    )
+
+    checkpoint_dir = work_dir / "resume-smoke" / "tiny" / "directions" / "de-fr"
+    assert (checkpoint_dir / "02_extractor_candidates.jsonl").exists()
+    assert (checkpoint_dir / "03_verified_candidates.jsonl").exists()
+    assert (checkpoint_dir / "04_refined_terms.jsonl").exists()
+    assert (checkpoint_dir / "05_manifest_rows.jsonl").exists()
+
+    manifest_path = output_dir / "de-fr" / "google-patents-de-fr-1-manifest.jsonl"
+    row = json.loads(manifest_path.read_text(encoding="utf-8").strip())
+    assert [term["term_group"] for term in row["terminology"]] == ["llm", "refined"]
 
 
 def test_zero_argument_runner_config_paths() -> None:

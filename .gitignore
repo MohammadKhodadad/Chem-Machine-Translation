@@ -6,5 +6,6 @@ __pycache__/
 .cache/
 reports/
 runs/
+benchmark_work/
 
 /data/

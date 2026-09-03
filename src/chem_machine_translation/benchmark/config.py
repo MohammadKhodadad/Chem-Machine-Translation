@@ -85,11 +85,25 @@ class BenchmarkTerminologyConfig:
 
 
 @dataclass(frozen=True)
+class BenchmarkCheckpointConfig:
+    enabled: bool = True
+    work_dir: Path = Path("benchmark_work")
+    resume: bool = True
+    run_id: str = "auto"
+    reuse_selection: bool = True
+    reuse_extractors: bool = True
+    reuse_verifiers: bool = True
+    reuse_refiner: bool = True
+    reuse_manifest: bool = True
+
+
+@dataclass(frozen=True)
 class BenchmarkGenerationConfig:
     name: str
     domain: str
     builds: tuple[BenchmarkBuildConfig, ...]
     terminology: BenchmarkTerminologyConfig
+    checkpoint: BenchmarkCheckpointConfig = BenchmarkCheckpointConfig()
 
 
 def load_benchmark_config(
@@ -118,12 +132,17 @@ def benchmark_config_from_mapping(
         domain=domain,
         base_dir=base_dir,
     )
+    checkpoint = checkpoint_config_from_mapping(
+        dict(payload.get("checkpoint") or {}),
+        base_dir=base_dir,
+    )
     builds = build_configs_from_mapping(payload, domain=domain, base_dir=base_dir)
     return BenchmarkGenerationConfig(
         name=str(payload.get("name") or "benchmark_generation"),
         domain=domain,
         builds=tuple(builds),
         terminology=terminology,
+        checkpoint=checkpoint,
     )
 
 
@@ -155,6 +174,26 @@ def terminology_config_from_mapping(
         legal_cache_path=optional_path(payload.get("legal_cache_path"), base_dir=base_dir),
         stanza_cache_path=optional_path(payload.get("stanza_cache_path"), base_dir=base_dir),
         openai_timeout=float(payload.get("openai_timeout") or 120.0),
+    )
+
+
+def checkpoint_config_from_mapping(
+    payload: dict[str, Any],
+    *,
+    base_dir: Path,
+) -> BenchmarkCheckpointConfig:
+    reuse_payload = dict(payload.get("reuse") or {})
+    return BenchmarkCheckpointConfig(
+        enabled=bool(payload.get("enabled", True)),
+        work_dir=optional_path(payload.get("work_dir"), base_dir=base_dir)
+        or resolve_config_path(Path("benchmark_work"), base_dir),
+        resume=bool(payload.get("resume", True)),
+        run_id=str(payload.get("run_id") or "auto"),
+        reuse_selection=bool(reuse_payload.get("selection", True)),
+        reuse_extractors=bool(reuse_payload.get("extractors", True)),
+        reuse_verifiers=bool(reuse_payload.get("verifiers", True)),
+        reuse_refiner=bool(reuse_payload.get("refiner", True)),
+        reuse_manifest=bool(reuse_payload.get("manifest", True)),
     )
 
 
@@ -250,6 +289,8 @@ def validate_benchmark_config(
         raise ValueError(f"Unsupported benchmark domain: {config.domain}")
     if not config.builds:
         raise ValueError("At least one benchmark build is required.")
+    if not str(config.checkpoint.work_dir):
+        raise ValueError("checkpoint.work_dir must not be empty.")
     validate_terms("extractors", config.terminology.extractors, SUPPORTED_EXTRACTORS)
     validate_terms("verifiers", config.terminology.verifiers, SUPPORTED_VERIFIERS)
     if config.terminology.candidate_max_terms < 1:

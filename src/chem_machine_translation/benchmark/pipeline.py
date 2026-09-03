@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -11,6 +13,7 @@ from openai import OpenAI
 
 from chem_machine_translation.benchmark.config import (
     BenchmarkBuildConfig,
+    BenchmarkCheckpointConfig,
     BenchmarkGenerationConfig,
     BenchmarkTerminologyConfig,
     load_benchmark_config,
@@ -24,6 +27,8 @@ from chem_machine_translation.data.terminology import (
     LLMTerminologyRefiner,
     dataset_term_from_json,
     deduplicate_terms,
+    select_dataset_terms,
+    select_legal_terms,
 )
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
@@ -65,6 +70,14 @@ class TerminologyRuntime:
     refiner: LLMTerminologyRefiner | None = None
 
 
+@dataclass(frozen=True)
+class BenchmarkCheckpoint:
+    root: Path
+    enabled: bool
+    resume: bool
+    config: BenchmarkCheckpointConfig
+
+
 def run_benchmark_config_file(path: Path | str) -> BenchmarkGenerationResult:
     return run_benchmark_generation(load_benchmark_config(path))
 
@@ -80,9 +93,11 @@ def run_benchmark_generation(
     results = tuple(
         run_benchmark_build(
             build,
+            benchmark_name=config.name,
             domain=config.domain,
             terminology=config.terminology,
             runtime=runtime,
+            checkpoint=config.checkpoint,
         )
         for build in config.builds
     )
@@ -241,11 +256,18 @@ def uses_verifier(terminology: BenchmarkTerminologyConfig, *names: str) -> bool:
 def run_benchmark_build(
     build: BenchmarkBuildConfig,
     *,
+    benchmark_name: str,
     domain: str,
     terminology: BenchmarkTerminologyConfig,
     runtime: TerminologyRuntime,
+    checkpoint: BenchmarkCheckpointConfig | None = None,
 ) -> BenchmarkBuildResult:
-    pair_rows = select_source_pair_rows(build)
+    checkpoint_context = build_checkpoint_context(
+        benchmark_name=benchmark_name,
+        build=build,
+        checkpoint=checkpoint,
+    )
+    pair_rows = load_or_select_source_pair_rows(build, checkpoint=checkpoint_context)
     build.output_dir.mkdir(parents=True, exist_ok=True)
     combined_rows = []
     for direction, rows in sorted(pair_rows.items()):
@@ -255,9 +277,11 @@ def run_benchmark_build(
         manifest_rows = [build_manifest_row(row=row, kind=build.kind) for row in rows]
         manifest_rows = attach_terminology_to_rows(
             manifest_rows,
+            build=build,
             domain=domain,
             terminology=terminology,
             runtime=runtime,
+            checkpoint=checkpoint_context,
         )
         write_csv(direction_dir / "source.csv", [row["_source_row"] for row in manifest_rows])
         write_csv(direction_dir / "target.csv", [row["_target_row"] for row in manifest_rows])
@@ -281,6 +305,66 @@ def run_benchmark_build(
         combined_manifest_path=combined_manifest_path,
         metadata_path=metadata_path,
     )
+
+
+def build_checkpoint_context(
+    *,
+    benchmark_name: str,
+    build: BenchmarkBuildConfig,
+    checkpoint: BenchmarkCheckpointConfig | None,
+) -> BenchmarkCheckpoint:
+    checkpoint = checkpoint or BenchmarkCheckpointConfig()
+    root = checkpoint.work_dir / slugify_path_part(benchmark_name) / slugify_path_part(build.name)
+    if checkpoint.run_id != "auto":
+        root = root / slugify_path_part(checkpoint.run_id)
+    return BenchmarkCheckpoint(
+        root=root,
+        enabled=checkpoint.enabled,
+        resume=checkpoint.resume,
+        config=checkpoint,
+    )
+
+
+def load_or_select_source_pair_rows(
+    build: BenchmarkBuildConfig,
+    *,
+    checkpoint: BenchmarkCheckpoint,
+) -> dict[str, list[dict[str, Any]]]:
+    stage_hash = stable_hash(
+        {
+            "stage": "selection",
+            "build": checkpoint_build_payload(build),
+        }
+    )
+    cached = read_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="selection",
+        relative_path=Path("01_selected_rows.jsonl"),
+        expected_hash=stage_hash,
+        reuse=checkpoint.config.reuse_selection,
+    )
+    if cached is not None:
+        return group_source_pair_rows_by_direction(cached)
+
+    selected = select_source_pair_rows(build)
+    rows = [row for direction in sorted(selected) for row in selected[direction]]
+    write_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="selection",
+        relative_path=Path("01_selected_rows.jsonl"),
+        rows=rows,
+        stage_hash=stage_hash,
+    )
+    return selected
+
+
+def group_source_pair_rows_by_direction(
+    rows: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    selected: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        selected.setdefault(str(row["language_pair"]), []).append(row)
+    return {direction: selected[direction] for direction in sorted(selected)}
 
 
 def select_source_pair_rows(build: BenchmarkBuildConfig) -> dict[str, list[dict[str, Any]]]:
@@ -524,6 +608,66 @@ def source_target_rows(
 def attach_terminology_to_rows(
     rows: list[dict[str, Any]],
     *,
+    build: BenchmarkBuildConfig | None = None,
+    domain: str,
+    terminology: BenchmarkTerminologyConfig,
+    runtime: TerminologyRuntime,
+    checkpoint: BenchmarkCheckpoint | None = None,
+) -> list[dict[str, Any]]:
+    if checkpoint is None or build is None:
+        return attach_terminology_to_rows_without_checkpoints(
+            rows,
+            domain=domain,
+            terminology=terminology,
+            runtime=runtime,
+        )
+    if not terminology.extractors and runtime.refiner is None:
+        for row in rows:
+            row["terminology"] = []
+        return rows
+
+    candidates_by_row = load_or_run_extractor_stage(
+        rows,
+        build=build,
+        domain=domain,
+        terminology=terminology,
+        runtime=runtime,
+        checkpoint=checkpoint,
+    )
+    verified_by_row = load_or_run_verifier_stage(
+        rows,
+        candidates_by_row,
+        build=build,
+        domain=domain,
+        terminology=terminology,
+        runtime=runtime,
+        checkpoint=checkpoint,
+    )
+    refined_by_row = load_or_run_refiner_stage(
+        rows,
+        verified_by_row=verified_by_row,
+        build=build,
+        domain=domain,
+        terminology=terminology,
+        runtime=runtime,
+        checkpoint=checkpoint,
+    )
+    manifest_rows = apply_terminology_records(
+        rows,
+        verified_by_row=verified_by_row,
+        refined_by_row=refined_by_row,
+    )
+    return load_or_write_manifest_stage(
+        manifest_rows,
+        build=build,
+        terminology=terminology,
+        checkpoint=checkpoint,
+    )
+
+
+def attach_terminology_to_rows_without_checkpoints(
+    rows: list[dict[str, Any]],
+    *,
     domain: str,
     terminology: BenchmarkTerminologyConfig,
     runtime: TerminologyRuntime,
@@ -546,6 +690,198 @@ def attach_terminology_to_rows(
                 max_terms=terminology.refined_max_terms,
             )
             row["terminology"].extend(term.to_json() for term in refined_terms)
+    return rows
+
+
+def load_or_run_extractor_stage(
+    rows: list[dict[str, Any]],
+    *,
+    build: BenchmarkBuildConfig,
+    domain: str,
+    terminology: BenchmarkTerminologyConfig,
+    runtime: TerminologyRuntime,
+    checkpoint: BenchmarkCheckpoint,
+) -> dict[str, list[DatasetTerminologyTerm]]:
+    stage_hash = stable_hash(
+        {
+            "stage": "extractors",
+            "build": checkpoint_build_payload(build),
+            "terminology": extractor_stage_payload(terminology),
+            "rows": rows_checksum(rows),
+        }
+    )
+    cached = read_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="extractors",
+        relative_path=direction_checkpoint_path(rows, "02_extractor_candidates.jsonl"),
+        expected_hash=stage_hash,
+        reuse=checkpoint.config.reuse_extractors,
+    )
+    if cached is not None:
+        return terms_by_row_from_records(cached)
+
+    records = []
+    total = len(rows)
+    for index, row in enumerate(rows, start=1):
+        direction = str(row.get("direction") or "unknown-direction")
+        print(f"Extracting terminology candidates for {direction} row {index}/{total}.")
+        terms = generate_extractor_candidate_terms(
+            row,
+            domain=domain,
+            terminology=terminology,
+            runtime=runtime,
+        )
+        records.append(terms_record(row=row, terms=terms))
+    write_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="extractors",
+        relative_path=direction_checkpoint_path(rows, "02_extractor_candidates.jsonl"),
+        rows=records,
+        stage_hash=stage_hash,
+    )
+    return terms_by_row_from_records(records)
+
+
+def load_or_run_verifier_stage(
+    rows: list[dict[str, Any]],
+    candidates_by_row: dict[str, list[DatasetTerminologyTerm]],
+    *,
+    build: BenchmarkBuildConfig,
+    domain: str,
+    terminology: BenchmarkTerminologyConfig,
+    runtime: TerminologyRuntime,
+    checkpoint: BenchmarkCheckpoint,
+) -> dict[str, list[DatasetTerminologyTerm]]:
+    stage_hash = stable_hash(
+        {
+            "stage": "verifiers",
+            "build": checkpoint_build_payload(build),
+            "terminology": verifier_stage_payload(terminology),
+            "candidates": terms_by_row_checksum(candidates_by_row),
+        }
+    )
+    cached = read_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="verifiers",
+        relative_path=direction_checkpoint_path(rows, "03_verified_candidates.jsonl"),
+        expected_hash=stage_hash,
+        reuse=checkpoint.config.reuse_verifiers,
+    )
+    if cached is not None:
+        return terms_by_row_from_records(cached)
+
+    records = []
+    rows_by_id = {manifest_row_id(row): row for row in rows}
+    items = sorted(candidates_by_row.items())
+    total = len(items)
+    for index, (row_id, terms) in enumerate(items, start=1):
+        print(f"Verifying terminology candidates for row {index}/{total}.")
+        verified_terms = verify_candidate_terms(
+            terms,
+            row=rows_by_id[row_id],
+            domain=domain,
+            terminology=terminology,
+            runtime=runtime,
+        )
+        records.append({"row_id": row_id, "terms": [term.to_json() for term in verified_terms]})
+    write_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="verifiers",
+        relative_path=direction_checkpoint_path(rows, "03_verified_candidates.jsonl"),
+        rows=records,
+        stage_hash=stage_hash,
+    )
+    return terms_by_row_from_records(records)
+
+
+def load_or_run_refiner_stage(
+    rows: list[dict[str, Any]],
+    *,
+    verified_by_row: dict[str, list[DatasetTerminologyTerm]],
+    build: BenchmarkBuildConfig,
+    domain: str,
+    terminology: BenchmarkTerminologyConfig,
+    runtime: TerminologyRuntime,
+    checkpoint: BenchmarkCheckpoint,
+) -> dict[str, list[DatasetTerminologyTerm]]:
+    if runtime.refiner is None:
+        return {}
+    stage_hash = stable_hash(
+        {
+            "stage": "refiner",
+            "build": checkpoint_build_payload(build),
+            "terminology": refiner_stage_payload(terminology),
+            "verified": terms_by_row_checksum(verified_by_row),
+        }
+    )
+    cached = read_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="refiner",
+        relative_path=direction_checkpoint_path(rows, "04_refined_terms.jsonl"),
+        expected_hash=stage_hash,
+        reuse=checkpoint.config.reuse_refiner,
+    )
+    if cached is not None:
+        return terms_by_row_from_records(cached)
+
+    records = []
+    total = len(rows)
+    for index, row in enumerate(rows, start=1):
+        row_id = manifest_row_id(row)
+        terms = verified_by_row.get(row_id, [])
+        refined_terms: list[DatasetTerminologyTerm] = []
+        if terms:
+            direction = str(row.get("direction") or "unknown-direction")
+            print(f"Refining terminology for {direction} row {index}/{total}.")
+            refined_terms = runtime.refiner.refine(
+                text=row["_target_text"],
+                target_language=row["target_language"],
+                candidates=terms,
+                domain=domain,
+                max_terms=terminology.refined_max_terms,
+            )
+        records.append(terms_record(row=row, terms=refined_terms))
+    write_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="refiner",
+        relative_path=direction_checkpoint_path(rows, "04_refined_terms.jsonl"),
+        rows=records,
+        stage_hash=stage_hash,
+    )
+    return terms_by_row_from_records(records)
+
+
+def load_or_write_manifest_stage(
+    rows: list[dict[str, Any]],
+    *,
+    build: BenchmarkBuildConfig,
+    terminology: BenchmarkTerminologyConfig,
+    checkpoint: BenchmarkCheckpoint,
+) -> list[dict[str, Any]]:
+    stage_hash = stable_hash(
+        {
+            "stage": "manifest",
+            "build": checkpoint_build_payload(build),
+            "terminology": manifest_stage_payload(terminology),
+            "rows": manifest_rows_checksum(rows),
+        }
+    )
+    cached = read_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="manifest",
+        relative_path=direction_checkpoint_path(rows, "05_manifest_rows.jsonl"),
+        expected_hash=stage_hash,
+        reuse=checkpoint.config.reuse_manifest,
+    )
+    if cached is not None:
+        return cached
+    write_stage_jsonl(
+        checkpoint=checkpoint,
+        stage_name="manifest",
+        relative_path=direction_checkpoint_path(rows, "05_manifest_rows.jsonl"),
+        rows=rows,
+        stage_hash=stage_hash,
+    )
     return rows
 
 
@@ -584,6 +920,379 @@ def generate_candidate_terms(
             )
         )
     return deduplicate_terms(terms)
+
+
+def generate_extractor_candidate_terms(
+    row: dict[str, Any],
+    *,
+    domain: str,
+    terminology: BenchmarkTerminologyConfig,
+    runtime: TerminologyRuntime,
+) -> list[DatasetTerminologyTerm]:
+    if domain in {"chemistry", "google_patents"}:
+        generator = runtime.chemistry_generator
+        if generator is None:
+            return []
+        if not hasattr(generator, "extractors"):
+            return generate_candidate_terms(row, domain=domain, runtime=runtime)
+        terms = extract_terms_from_dataset_generator(
+            generator=generator,
+            row=row,
+            max_terms=terminology.candidate_max_terms,
+        )
+        return deduplicate_terms(terms)[: terminology.candidate_max_terms]
+
+    terms: list[DatasetTerminologyTerm] = []
+    legal_generator = runtime.legal_generator
+    if legal_generator is not None and hasattr(legal_generator, "llm_extractor"):
+        terms.extend(
+            legal_generator.llm_extractor.extract(
+                text=row["_target_text"],
+                target_language=row["target_language"],
+                max_terms=terminology.candidate_max_terms,
+            )
+        )
+    elif legal_generator is not None:
+        terms.extend(generate_candidate_terms(row, domain=domain, runtime=runtime))
+
+    algorithmic_generator = runtime.algorithmic_generator
+    if algorithmic_generator is not None and hasattr(algorithmic_generator, "extractors"):
+        terms.extend(
+            extract_terms_from_dataset_generator(
+                generator=algorithmic_generator,
+                row=row,
+                max_terms=terminology.candidate_max_terms,
+            )
+        )
+    return deduplicate_terms(terms)[: terminology.candidate_max_terms]
+
+
+def extract_terms_from_dataset_generator(
+    *,
+    generator: Any,
+    row: dict[str, Any],
+    max_terms: int,
+) -> list[DatasetTerminologyTerm]:
+    terms: list[DatasetTerminologyTerm] = []
+    llm_extractor = getattr(generator, "llm_extractor", None)
+    if llm_extractor is not None:
+        terms.extend(
+            llm_extractor.extract(
+                text=row["_target_text"],
+                target_language=row["target_language"],
+                max_terms=max_terms,
+            )
+        )
+    for extractor in getattr(generator, "extractors", []):
+        terms.extend(
+            extractor.extract(
+                row["_target_text"],
+                max_terms=max_terms,
+                target_language=row["target_language"],
+            )
+        )
+    return terms
+
+
+def verify_candidate_terms(
+    terms: list[DatasetTerminologyTerm],
+    *,
+    row: dict[str, Any],
+    domain: str,
+    terminology: BenchmarkTerminologyConfig,
+    runtime: TerminologyRuntime,
+) -> list[DatasetTerminologyTerm]:
+    if not terms:
+        return []
+    if domain in {"jrc", "legal"}:
+        verified = verify_legal_candidate_terms(terms, row=row, runtime=runtime)
+        return select_legal_terms(verified, max_terms=terminology.candidate_max_terms)
+    verified = verify_dataset_candidate_terms(terms, row=row, runtime=runtime)
+    return select_dataset_terms(
+        deduplicate_terms(verified),
+        max_terms=terminology.candidate_max_terms,
+    )
+
+
+def verify_dataset_candidate_terms(
+    terms: list[DatasetTerminologyTerm],
+    *,
+    row: dict[str, Any],
+    runtime: TerminologyRuntime,
+) -> list[DatasetTerminologyTerm]:
+    generator = runtime.chemistry_generator or runtime.algorithmic_generator
+    if generator is None or not hasattr(generator, "add_external_candidates"):
+        return deduplicate_terms(terms)
+    return [
+        generator.add_external_candidates(term=term, target_language=row["target_language"])
+        for term in deduplicate_terms(terms)
+    ]
+
+
+def verify_legal_candidate_terms(
+    terms: list[DatasetTerminologyTerm],
+    *,
+    row: dict[str, Any],
+    runtime: TerminologyRuntime,
+) -> list[DatasetTerminologyTerm]:
+    if runtime.legal_generator is not None and hasattr(
+        runtime.legal_generator,
+        "add_legal_evidence",
+    ):
+        return [
+            runtime.legal_generator.add_legal_evidence(
+                term=term,
+                target_language=row["target_language"],
+                eurovoc_descriptors={},
+            )
+            for term in deduplicate_terms(terms)
+        ]
+    if runtime.algorithmic_generator is not None and hasattr(
+        runtime.algorithmic_generator,
+        "add_external_candidates",
+    ):
+        return [
+            runtime.algorithmic_generator.add_external_candidates(
+                term=term,
+                target_language=row["target_language"],
+            )
+            for term in deduplicate_terms(terms)
+        ]
+    return deduplicate_terms(terms)
+
+
+def apply_terminology_records(
+    rows: list[dict[str, Any]],
+    *,
+    verified_by_row: dict[str, list[DatasetTerminologyTerm]],
+    refined_by_row: dict[str, list[DatasetTerminologyTerm]],
+) -> list[dict[str, Any]]:
+    for row in rows:
+        row_id = manifest_row_id(row)
+        terms = [
+            *verified_by_row.get(row_id, []),
+            *refined_by_row.get(row_id, []),
+        ]
+        row["terminology"] = [term.to_json() for term in terms]
+    return rows
+
+
+def read_stage_jsonl(
+    *,
+    checkpoint: BenchmarkCheckpoint,
+    stage_name: str,
+    relative_path: Path,
+    expected_hash: str,
+    reuse: bool,
+) -> list[dict[str, Any]] | None:
+    if not (checkpoint.enabled and checkpoint.resume and reuse):
+        return None
+    output_path = checkpoint.root / relative_path
+    status = read_stage_status(checkpoint.root)
+    stage = status.get(str(relative_path))
+    if not output_path.exists() or not isinstance(stage, dict):
+        return None
+    if stage.get("stage") != stage_name or stage.get("hash") != expected_hash:
+        return None
+    print(f"Reusing benchmark checkpoint: {relative_path}", flush=True)
+    return read_jsonl(output_path)
+
+
+def write_stage_jsonl(
+    *,
+    checkpoint: BenchmarkCheckpoint,
+    stage_name: str,
+    relative_path: Path,
+    rows: list[dict[str, Any]],
+    stage_hash: str,
+) -> None:
+    if not checkpoint.enabled:
+        return
+    output_path = checkpoint.root / relative_path
+    write_jsonl(output_path, rows)
+    status = read_stage_status(checkpoint.root)
+    status[str(relative_path)] = {
+        "stage": stage_name,
+        "hash": stage_hash,
+        "row_count": len(rows),
+        "output_path": str(output_path),
+    }
+    write_json(checkpoint.root / "stage_status.json", status)
+
+
+def read_stage_status(root: Path) -> dict[str, Any]:
+    status_path = root / "stage_status.json"
+    if not status_path.exists():
+        return {}
+    try:
+        return json.loads(status_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    rows = []
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            if line.strip():
+                rows.append(json.loads(line))
+    return rows
+
+
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_suffix(path.suffix + ".tmp")
+    with temp_path.open("w", encoding="utf-8", newline="\n") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
+    temp_path.replace(path)
+
+
+def write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_suffix(path.suffix + ".tmp")
+    temp_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True, default=str) + "\n",
+        encoding="utf-8",
+    )
+    temp_path.replace(path)
+
+
+def terms_record(row: dict[str, Any], terms: list[DatasetTerminologyTerm]) -> dict[str, Any]:
+    return {
+        "row_id": manifest_row_id(row),
+        "direction": str(row.get("direction") or ""),
+        "terms": [term.to_json() for term in terms],
+    }
+
+
+def terms_by_row_from_records(
+    records: list[dict[str, Any]],
+) -> dict[str, list[DatasetTerminologyTerm]]:
+    return {
+        str(record["row_id"]): [
+            dataset_term_from_json(term)
+            for term in record.get("terms", [])
+            if isinstance(term, dict)
+        ]
+        for record in records
+    }
+
+
+def direction_checkpoint_path(rows: list[dict[str, Any]], filename: str) -> Path:
+    direction = "unknown-direction"
+    if rows:
+        direction = str(rows[0].get("direction") or rows[0].get("language_pair") or direction)
+    return Path("directions") / slugify_path_part(direction) / filename
+
+
+def manifest_row_id(row: dict[str, Any]) -> str:
+    return stable_hash(
+        {
+            "direction": row.get("direction"),
+            "source_row_id": row.get("source_row_id"),
+            "target_row_id": row.get("target_row_id"),
+            "source_id": row.get("source_id"),
+        }
+    )
+
+
+def rows_checksum(rows: list[dict[str, Any]]) -> str:
+    return stable_hash(
+        [
+            {
+                "row_id": manifest_row_id(row),
+                "direction": row.get("direction"),
+                "source_text": row.get("_source_text"),
+                "target_text": row.get("_target_text"),
+            }
+            for row in rows
+        ]
+    )
+
+
+def terms_by_row_checksum(terms_by_row: dict[str, list[DatasetTerminologyTerm]]) -> str:
+    return stable_hash(
+        {
+            row_id: [term.to_json() for term in terms]
+            for row_id, terms in sorted(terms_by_row.items())
+        }
+    )
+
+
+def manifest_rows_checksum(rows: list[dict[str, Any]]) -> str:
+    return stable_hash(rows)
+
+
+def checkpoint_build_payload(build: BenchmarkBuildConfig) -> dict[str, Any]:
+    return {
+        "name": build.name,
+        "kind": build.kind,
+        "source_pairs_jsonl": str(build.source_pairs_jsonl),
+        "output_dir": str(build.output_dir),
+        "languages": build.languages,
+        "limit": build.limit,
+        "selection_mode": build.selection_mode,
+        "min_input_tokens": build.min_input_tokens,
+        "max_input_tokens": build.max_input_tokens,
+        "anchor_limit": build.anchor_limit,
+        "bidirectional": build.bidirectional,
+    }
+
+
+def extractor_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+    return {
+        "domain": terminology.domain,
+        "candidate_max_terms": terminology.candidate_max_terms,
+        "model": terminology.model,
+        "base_url": terminology.base_url,
+        "api_mode": terminology.api_mode,
+        "max_output_tokens": terminology.max_output_tokens,
+        "thinking": terminology.thinking,
+        "reasoning_effort": terminology.reasoning_effort,
+        "extractors": terminology.extractors,
+        "nobi_model": terminology.nobi_model,
+        "spacy_model": terminology.spacy_model,
+    }
+
+
+def verifier_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+    return {
+        "domain": terminology.domain,
+        "candidate_max_terms": terminology.candidate_max_terms,
+        "verifiers": terminology.verifiers,
+    }
+
+
+def refiner_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+    return {
+        "domain": terminology.domain,
+        "refiner": terminology.refiner,
+        "refined_max_terms": terminology.refined_max_terms,
+        "model": terminology.model,
+        "base_url": terminology.base_url,
+        "api_mode": terminology.api_mode,
+        "max_output_tokens": terminology.max_output_tokens,
+        "thinking": terminology.thinking,
+        "reasoning_effort": terminology.reasoning_effort,
+    }
+
+
+def manifest_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+    return {
+        "candidate_max_terms": terminology.candidate_max_terms,
+        "refined_max_terms": terminology.refined_max_terms,
+    }
+
+
+def stable_hash(payload: Any) -> str:
+    serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()[:16]
+
+
+def slugify_path_part(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", value.strip()).strip("-")
+    return slug or "default"
 
 
 def write_csv(csv_path: Path, rows: list[dict[str, str]]) -> None:

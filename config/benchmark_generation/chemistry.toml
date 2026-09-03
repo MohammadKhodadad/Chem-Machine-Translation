@@ -13,6 +13,19 @@ languages = ["de", "en", "es", "fr", "ru", "zh"]
 limit = 250
 bidirectional = true
 
+[checkpoint]
+enabled = true
+work_dir = "benchmark_work"
+resume = true
+run_id = "auto"
+
+[checkpoint.reuse]
+selection = true
+extractors = true
+verifiers = true
+refiner = true
+manifest = true
+
 [terminology]
 domain = "chemistry"
 candidate_max_terms = 40

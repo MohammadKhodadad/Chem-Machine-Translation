@@ -27,6 +27,25 @@ Use `scripts/generate_benchmark.py --config <path>` for custom configs. The old
 `scripts/build_google_patents_eval_subset.py` and `scripts/build_jrc_acquis_eval_subset.py` scripts
 are retained only as advanced debugging tools.
 
+## Checkpointed Resume
+
+Config-driven benchmark generation is stage-based and resumable. Standard configs enable:
+
+```toml
+[checkpoint]
+enabled = true
+work_dir = "benchmark_work"
+resume = true
+run_id = "auto"
+```
+
+Intermediate selected rows, extractor candidates, verified candidates, refined terms, and final
+manifest rows are written under `benchmark_work/`, which is ignored by Git. If a run stops after
+extractors or verifiers, rerunning the same command continues from the latest reusable checkpoint.
+
+The final benchmark outputs remain clean under `benchmark_datasets/`; checkpoint files are only
+internal build artifacts.
+
 ## End-To-End Experiment Command
 
 Use experiment configs when you want to generate or reuse a benchmark, run models, score outputs, and
