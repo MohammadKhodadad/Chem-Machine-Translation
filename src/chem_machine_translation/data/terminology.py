@@ -1163,6 +1163,7 @@ class DatasetTerminologyGenerator:
         use_unterm: bool = False,
         cache_path: Path | None = None,
         iate_client: IATEClient | None = None,
+        iate_source_name: str = "iate",
         wikidata_client: WikidataClient | None = None,
         pubchem_client: PubChemClient | None = None,
         chebi_client: ChEBIClient | None = None,
@@ -1202,6 +1203,7 @@ class DatasetTerminologyGenerator:
         self.llm_reasoning_effort = llm_reasoning_effort
         self.cache_path = cache_path
         self.iate_client = iate_client or (IATEClient() if use_iate else None)
+        self.iate_source_name = iate_source_name
         self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
         self.pubchem_client = pubchem_client or (PubChemClient() if use_pubchem else None)
         self.chebi_client = chebi_client or (ChEBIClient() if use_chebi else None)
@@ -1361,8 +1363,8 @@ class DatasetTerminologyGenerator:
                     target_language_code=language_code,
                 )
                 if translation:
-                    candidates["iate"] = [translation.target_label]
-                    source_parts.append("iate")
+                    candidates[self.iate_source_name] = [translation.target_label]
+                    source_parts.append(self.iate_source_name)
 
         if self.wikidata_client:
             language_code = wikidata_language_code(target_language)
@@ -1415,6 +1417,7 @@ class LegalTerminologyGenerator:
         use_unterm: bool = False,
         cache_path: Path | None = None,
         iate_client: IATEClient | None = None,
+        iate_source_name: str = "iate",
         wikidata_client: WikidataClient | None = None,
         unterm_client: UNTERMClient | None = None,
         llm_extractor: LLMLegalCandidateExtractor | None = None,
@@ -1434,6 +1437,7 @@ class LegalTerminologyGenerator:
         self.llm_reasoning_effort = llm_reasoning_effort
         self.cache_path = cache_path
         self.iate_client = iate_client or (IATEClient() if use_iate else None)
+        self.iate_source_name = iate_source_name
         self.wikidata_client = wikidata_client or (WikidataClient() if use_wikidata else None)
         self.unterm_client = unterm_client or (UNTERMClient() if use_unterm else None)
         self.llm_extractor = llm_extractor or LLMLegalCandidateExtractor(
@@ -1514,8 +1518,8 @@ class LegalTerminologyGenerator:
                 target_language_code=iate_code,
             )
             if translation:
-                candidates["iate"] = [translation.target_label]
-                source_parts.append("iate")
+                candidates[self.iate_source_name] = [translation.target_label]
+                source_parts.append(self.iate_source_name)
 
         if self.wikidata_client and wikidata_code:
             translation = self.wikidata_client.translate_term(

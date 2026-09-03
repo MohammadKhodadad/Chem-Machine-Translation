@@ -23,6 +23,7 @@ from chem_machine_translation.benchmark_generation.terminology_pipeline import (
 )
 from chem_machine_translation.config import Settings
 from chem_machine_translation.data.terminology import DatasetTerminologyTerm
+from chem_machine_translation.translation.iate import LocalIATEClient
 
 
 class _FakeChemistryGenerator:
@@ -88,8 +89,11 @@ def test_load_benchmark_config_resolves_standard_chemistry_config() -> None:
         "xlmr_nobi",
         "spacy",
     )
+    assert "local_iate" in config.terminology.verifiers
     assert "pubchem" in config.terminology.verifiers
     assert config.terminology.refined_max_terms == 8
+    assert config.terminology.local_iate_path is not None
+    assert config.terminology.local_iate_path.name == "iate"
 
 
 def test_load_benchmark_config_resolves_standard_legal_config() -> None:
@@ -113,20 +117,22 @@ def test_load_benchmark_config_resolves_standard_legal_config() -> None:
         "xlmr_nobi",
         "spacy",
     )
-    assert config.terminology.verifiers == ("iate", "wikidata", "unterm")
+    assert config.terminology.verifiers == ("local_iate", "wikidata", "unterm")
 
 
 def test_generator_factories_map_extractor_and_verifier_flags() -> None:
     chemistry = BenchmarkTerminologyConfig(
         domain="chemistry",
         extractors=("llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"),
-        verifiers=("iate", "wikidata", "pubchem"),
+        verifiers=("local_iate", "wikidata", "pubchem"),
     )
     chemistry_generator = build_chemistry_generator(chemistry, client=object())
 
     assert chemistry_generator is not None
     assert chemistry_generator.use_llm is True
     assert chemistry_generator.use_iate is True
+    assert isinstance(chemistry_generator.iate_client, LocalIATEClient)
+    assert chemistry_generator.iate_source_name == "local_iate"
     assert chemistry_generator.use_wikidata is True
     assert chemistry_generator.use_pubchem is True
     assert chemistry_generator.extractor_names == (
@@ -138,13 +144,15 @@ def test_generator_factories_map_extractor_and_verifier_flags() -> None:
     legal = BenchmarkTerminologyConfig(
         domain="jrc",
         extractors=("llm_legal", "stanza_ud", "spacy"),
-        verifiers=("iate", "wikidata", "unterm"),
+        verifiers=("local_iate", "wikidata", "unterm"),
     )
     legal_generator = build_legal_generator(legal, client=object())
     algorithmic_generator = build_algorithmic_generator(legal)
 
     assert legal_generator is not None
     assert legal_generator.use_iate is True
+    assert isinstance(legal_generator.iate_client, LocalIATEClient)
+    assert legal_generator.iate_source_name == "local_iate"
     assert legal_generator.use_wikidata is True
     assert legal_generator.use_unterm is True
     assert algorithmic_generator is not None

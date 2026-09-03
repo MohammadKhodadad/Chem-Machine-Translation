@@ -1,6 +1,9 @@
+import sqlite3
+
 from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.translation.iate import (
     IATETermTranslation,
+    LocalIATEClient,
     iate_language_code,
     parse_iate_translation,
 )
@@ -319,6 +322,95 @@ def test_parse_iate_translation_from_payload() -> None:
         source_term="catalyst",
         target_label="Katalysator",
         entry_id="ENTRY-1",
+    )
+
+
+def test_local_iate_client_reads_csv_export(tmp_path) -> None:
+    csv_path = tmp_path / "iate.csv"
+    csv_path.write_text(
+        "entry_id,language_code,term\n"
+        "IATE-1,en,catalyst\n"
+        "IATE-1,de,Katalysator\n"
+        "IATE-2,fr,fluor\n",
+        encoding="utf-8",
+    )
+    client = LocalIATEClient(csv_path, auto_build_index=False)
+
+    translation = client.translate_term("catalyst", "en", "de")
+    same_language = client.translate_term("fluor", "fr", "fr")
+
+    assert translation == IATETermTranslation(
+        source_term="catalyst",
+        target_label="Katalysator",
+        entry_id="IATE-1",
+    )
+    assert same_language == IATETermTranslation(
+        source_term="fluor",
+        target_label="fluor",
+        entry_id="IATE-2",
+    )
+
+
+def test_local_iate_client_auto_builds_sqlite_index(tmp_path) -> None:
+    csv_path = tmp_path / "iate.csv"
+    sqlite_path = tmp_path / "iate.sqlite"
+    csv_path.write_text(
+        "E_ID|L_CODE|T_TERM\n"
+        "IATE-1|en|catalyst\n"
+        "IATE-1|de|Katalysator\n",
+        encoding="utf-8",
+    )
+    client = LocalIATEClient(tmp_path)
+
+    translation = client.translate_term("catalyst", "en", "de")
+
+    assert sqlite_path.exists()
+    assert translation == IATETermTranslation(
+        source_term="catalyst",
+        target_label="Katalysator",
+        entry_id="IATE-1",
+    )
+
+
+def test_local_iate_client_uses_sqlite_index(tmp_path) -> None:
+    sqlite_path = tmp_path / "iate.sqlite"
+    with sqlite3.connect(sqlite_path) as connection:
+        connection.executescript(
+            """
+            CREATE TABLE terms (
+                entry_id TEXT NOT NULL,
+                language_code TEXT NOT NULL,
+                normalized_term TEXT NOT NULL,
+                term TEXT NOT NULL
+            );
+            CREATE INDEX idx_terms_lookup ON terms(language_code, normalized_term);
+            CREATE INDEX idx_terms_entry_language ON terms(entry_id, language_code);
+            """
+        )
+        connection.executemany(
+            """
+            INSERT INTO terms(entry_id, language_code, normalized_term, term)
+            VALUES (?, ?, ?, ?)
+            """,
+            [
+                ("IATE-1", "en", "catalyst", "catalyst"),
+                ("IATE-1", "fr", "catalyseur", "catalyseur"),
+                ("IATE-2", "fr", "induit", "induit"),
+                ("IATE-2", "fr", "rotor", "rotor"),
+            ],
+        )
+
+    client = LocalIATEClient(sqlite_path)
+
+    assert client.translate_term("catalyst", "en", "fr") == IATETermTranslation(
+        source_term="catalyst",
+        target_label="catalyseur",
+        entry_id="IATE-1",
+    )
+    assert client.translate_term("rotor", "fr", "fr") == IATETermTranslation(
+        source_term="rotor",
+        target_label="rotor",
+        entry_id="IATE-2",
     )
 
 

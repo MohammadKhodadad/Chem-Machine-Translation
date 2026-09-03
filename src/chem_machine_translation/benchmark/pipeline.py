@@ -30,6 +30,7 @@ from chem_machine_translation.data.terminology import (
     select_dataset_terms,
     select_legal_terms,
 )
+from chem_machine_translation.translation.iate import IATEClient, LocalIATEClient
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
 LANGUAGE_NAMES = {
@@ -170,7 +171,9 @@ def build_chemistry_generator(
         nobi_model=terminology.nobi_model,
         use_spacy_extractor="spacy" in terminology.extractors,
         spacy_model=terminology.spacy_model,
-        use_iate=uses_verifier(terminology, "iate"),
+        use_iate=uses_verifier(terminology, "iate", "local_iate"),
+        iate_client=build_iate_client(terminology),
+        iate_source_name=iate_source_name(terminology),
         use_wikidata=uses_verifier(terminology, "wikidata", "wikipedia"),
         use_pubchem=uses_verifier(terminology, "pubchem"),
         use_chebi=uses_verifier(terminology, "chebi"),
@@ -194,7 +197,9 @@ def build_legal_generator(
         client=client,
         model=terminology.model,
         max_terms=terminology.candidate_max_terms,
-        use_iate=uses_verifier(terminology, "iate"),
+        use_iate=uses_verifier(terminology, "iate", "local_iate"),
+        iate_client=build_iate_client(terminology),
+        iate_source_name=iate_source_name(terminology),
         use_wikidata=uses_verifier(terminology, "wikidata", "wikipedia"),
         use_unterm=uses_verifier(terminology, "unterm"),
         cache_path=terminology.legal_cache_path or terminology.cache_path,
@@ -218,7 +223,9 @@ def build_algorithmic_generator(
         nobi_model=terminology.nobi_model,
         use_spacy_extractor="spacy" in terminology.extractors,
         spacy_model=terminology.spacy_model,
-        use_iate=uses_verifier(terminology, "iate"),
+        use_iate=uses_verifier(terminology, "iate", "local_iate"),
+        iate_client=build_iate_client(terminology),
+        iate_source_name=iate_source_name(terminology),
         use_wikidata=uses_verifier(terminology, "wikidata", "wikipedia"),
         use_pubchem=uses_verifier(terminology, "pubchem"),
         use_chebi=uses_verifier(terminology, "chebi"),
@@ -251,6 +258,20 @@ def build_refiner(
 
 def uses_verifier(terminology: BenchmarkTerminologyConfig, *names: str) -> bool:
     return bool(set(names) & set(terminology.verifiers))
+
+
+def build_iate_client(
+    terminology: BenchmarkTerminologyConfig,
+) -> IATEClient | LocalIATEClient | None:
+    if "local_iate" in terminology.verifiers:
+        return LocalIATEClient(terminology.local_iate_path or Path("data/iate"))
+    if "iate" in terminology.verifiers:
+        return IATEClient()
+    return None
+
+
+def iate_source_name(terminology: BenchmarkTerminologyConfig) -> str:
+    return "local_iate" if "local_iate" in terminology.verifiers else "iate"
 
 
 def run_benchmark_build(
@@ -1257,10 +1278,12 @@ def extractor_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str
 
 
 def verifier_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+    local_iate_path = str(terminology.local_iate_path) if terminology.local_iate_path else None
     return {
         "domain": terminology.domain,
         "candidate_max_terms": terminology.candidate_max_terms,
         "verifiers": terminology.verifiers,
+        "local_iate_path": local_iate_path,
     }
 
 

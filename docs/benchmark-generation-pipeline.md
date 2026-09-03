@@ -180,6 +180,25 @@ benchmark_work/
 The checkpoint files are implementation artifacts. The supported benchmark outputs remain the CSV
 files, manifests, combined manifest, and `metadata.json` written under `benchmark_datasets/`.
 
+## Local IATE
+
+The standard benchmark configs use `local_iate` instead of the online IATE verifier. Place official
+IATE CSV exports under `data/iate/`; that directory is ignored by Git. The dropped full export uses
+pipe delimiters and columns such as `E_ID`, `L_CODE`, and `T_TERM`, which are supported by the local
+reader.
+
+Recommended: run the index-building script before benchmark generation:
+
+```powershell
+uv run python scripts/build_local_iate_index.py `
+  --input data/iate/IATE_export.csv `
+  --output data/iate/iate.sqlite
+```
+
+When `data/iate/iate.sqlite` exists, `local_iate` uses fast indexed lookups. If the index is missing,
+`local_iate` will try to build it automatically the first time it is used. If automatic indexing
+fails, it falls back to the raw local CSV export, which is much slower and can use a lot more RAM.
+
 ## Dataset Builders
 
 Dataset builders consume a source-pair JSONL snapshot and write benchmark direction folders. Each
@@ -255,9 +274,10 @@ Important fields:
 - `category`: coarse domain category such as `chemical`, `material`, `legal_act`, or
   `defined_term`.
 - `source`: provenance string. Multiple sources are joined with `+`, for example
-  `stanza_ud_dependency+xlmr_nobi+iate`.
+  `stanza_ud_dependency+xlmr_nobi+local_iate`.
 - `term_group`: evaluation group, usually `llm`, `algorithmic`, `verified`, or `refined`.
-- `verified_by`: external evidence sources that matched the term, such as `iate` or `pubchem`.
+- `verified_by`: external evidence sources that matched the term, such as `local_iate` or
+  `pubchem`.
 - `confidence`: extractor confidence adjusted by verifier evidence.
 - `decision`: preservation/refinement decision such as `preserve`, `translate`, or `keep_refined`.
 - `reason`: short human-readable explanation.
@@ -482,7 +502,7 @@ If a verifier matches:
 
 Google Patents chemistry builds can use these verifier flags:
 
-- `--iate-terminology`: IATE same-language terminology lookup.
+- `--iate-terminology`: online IATE same-language terminology lookup.
 - `--wikidata-terminology`: Wikidata label lookup. Stored as `wikipedia` in term evidence for
   historical naming compatibility.
 - `--pubchem-terminology`: PubChem compound synonym lookup.
@@ -496,7 +516,7 @@ Google Patents chemistry builds can use these verifier flags:
 
 JRC legal builds normally use:
 
-- `--iate-terminology`: IATE same-language legal terminology lookup.
+- `--iate-terminology`: online IATE same-language legal terminology lookup.
 - `--wikipedia-terminology`: Wikidata label lookup, stored as `wikipedia`.
 - `--unterm-terminology`: UNTERM public search-page evidence.
 
@@ -612,7 +632,7 @@ When `config/benchmark_generation/chemistry.toml` is used, the benchmark creator
 The relevant config entries are:
 
 - `extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]`
-- `verifiers = ["iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]`
+- `verifiers = ["local_iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]`
 - `candidate_max_terms = 40`
 - `refined_max_terms = 8`
 - `refiner = true`
@@ -627,7 +647,7 @@ JRC uses the same stage checkpoints, with legal-specific extraction and ranking:
 4. Run Stanza/UD, XLM-R/NOBI, and spaCy when the deterministic extractors are configured.
 5. Merge all extractor outputs and deduplicate with `deduplicate_terms`.
 6. Write or reuse the extractor-candidate checkpoint.
-7. Run IATE, Wikidata, UNTERM, and optional EuroVoc evidence over the candidate pool.
+7. Run local IATE, Wikidata, UNTERM, and optional EuroVoc evidence over the candidate pool.
 8. Rank legal terms through `select_legal_terms`.
 9. Write or reuse the verified-candidate checkpoint.
 10. Run the LLM refiner across the verified/enriched row records when `refiner = true`.

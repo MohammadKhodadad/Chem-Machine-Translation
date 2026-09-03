@@ -74,8 +74,8 @@ This writes 250 anchored legal cases for articles and 250 for definitions:
 
 The config uses `mode = "anchored"` and `anchor_limit = 250`, which selects 250 `anchor_id` values
 and expands each one to the ordered language directions available for the configured languages. It
-enables the legal LLM extractor, Stanza/UD, XLM-R/NOBI, spaCy, IATE, Wikidata, UNTERM, and the LLM
-refiner.
+enables the legal LLM extractor, Stanza/UD, XLM-R/NOBI, spaCy, local IATE, Wikidata, UNTERM, and the
+LLM refiner.
 
 For the smaller one-anchor report/smoke dataset, run:
 
@@ -130,9 +130,25 @@ Standard extractor families:
 
 Standard verifier sources:
 
-- Chemistry config: `iate`, `wikidata`, `pubchem`, `chebi`, `chembl`, `mesh`, `nci`, and
+- Chemistry config: `local_iate`, `wikidata`, `pubchem`, `chebi`, `chembl`, `mesh`, `nci`, and
   `agrovoc`.
-- Legal config: `iate`, `wikidata`, and `unterm`.
+- Legal config: `local_iate`, `wikidata`, and `unterm`.
+
+`local_iate` reads official IATE exports from `data/iate/` by default. That directory is ignored by
+Git; download the CSV locally and place it there before running standard configs.
+
+Recommended: run the index-building script before benchmark generation:
+
+```powershell
+uv run python scripts/build_local_iate_index.py `
+  --input data/iate/IATE_export.csv `
+  --output data/iate/iate.sqlite
+```
+
+When `data/iate/iate.sqlite` exists, `local_iate` uses fast local SQLite lookups. If the index is
+missing, `local_iate` will try to build it automatically the first time it is used. If automatic
+indexing fails, it falls back to the raw local CSV export, which is much slower and can use a lot
+more RAM.
 
 The exact standard choices live in:
 
@@ -156,4 +172,5 @@ Use `--terminology-term-group verified` for candidate-only manifests. Use
 has been applied.
 
 The detailed `source` field keeps candidate and verifier provenance, such as
-`stanza_ud_dependency+xlmr_nobi+iate`. The `verified_by` field stores external evidence sources.
+`stanza_ud_dependency+xlmr_nobi+local_iate`. The `verified_by` field stores external evidence
+sources.

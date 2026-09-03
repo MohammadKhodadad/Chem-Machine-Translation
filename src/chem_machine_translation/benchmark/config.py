@@ -24,6 +24,7 @@ SUPPORTED_EXTRACTORS = {
 }
 SUPPORTED_VERIFIERS = {
     "iate",
+    "local_iate",
     "wikidata",
     "wikipedia",
     "pubchem",
@@ -73,6 +74,7 @@ class BenchmarkTerminologyConfig:
     cache_path: Path | None = None
     legal_cache_path: Path | None = None
     stanza_cache_path: Path | None = None
+    local_iate_path: Path | None = None
     openai_timeout: float = 120.0
 
     @property
@@ -173,6 +175,7 @@ def terminology_config_from_mapping(
         cache_path=optional_path(payload.get("cache_path"), base_dir=base_dir),
         legal_cache_path=optional_path(payload.get("legal_cache_path"), base_dir=base_dir),
         stanza_cache_path=optional_path(payload.get("stanza_cache_path"), base_dir=base_dir),
+        local_iate_path=optional_path(payload.get("local_iate_path"), base_dir=base_dir),
         openai_timeout=float(payload.get("openai_timeout") or 120.0),
     )
 
