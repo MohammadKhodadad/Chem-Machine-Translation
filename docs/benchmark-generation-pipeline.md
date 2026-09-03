@@ -180,6 +180,49 @@ benchmark_work/
 The checkpoint files are implementation artifacts. The supported benchmark outputs remain the CSV
 files, manifests, combined manifest, and `metadata.json` written under `benchmark_datasets/`.
 
+### Continuing Interrupted Runs
+
+To continue a disrupted benchmark build, rerun the same command with the same config. The pipeline
+checks `stage_status.json` and reuses every completed stage whose stage hash still matches:
+
+```powershell
+uv run python scripts/generate_benchmark.py --config config/benchmark_generation/legal.toml
+```
+
+If extraction completed but verification did not, the rerun reuses selected rows and extractor
+candidates, then starts from verification. If a config change invalidates an earlier stage, that
+stage and dependent stages are rebuilt.
+
+To force one stage to rerun, use `[checkpoint.reuse]`. For example, this keeps selection and
+extractor outputs but recomputes verification:
+
+```toml
+[checkpoint.reuse]
+selection = true
+extractors = true
+verifiers = false
+refiner = true
+manifest = true
+```
+
+The current implementation always continues through final manifest and metadata writing. It does not
+yet support a developer-only `start_at` / `stop_after` mode that stops after verification.
+
+### Stage Hash Boundaries
+
+Stage hashes are intentionally scoped:
+
+- Selection hash: source snapshot path, language selection, `limit`, `anchor_limit`, and
+  `bidirectional`.
+- Extractor hash: selected row checksum plus extractor names, extractor models, LLM model/settings,
+  and `candidate_max_terms`.
+- Verifier hash: candidate checksum plus verifier names and `local_iate_path`.
+- Refiner hash: verified-candidate checksum plus refiner model/settings and `refined_max_terms`.
+- Manifest hash: final row content before writing public manifests.
+
+This means a refiner-only model change should reuse selection, extraction, and verification; a
+language or anchor change should invalidate the whole downstream pipeline.
+
 ## Local IATE
 
 The standard benchmark configs use `local_iate` instead of the online IATE verifier. Place official
@@ -659,6 +702,63 @@ which matters because anchored JRC rows can reuse the same target chunk across d
 The article and definition builds differ only in the source JSONL and output directory. The
 terminology pipeline is the same for both.
 
+## Continuing Development
+
+The config-driven benchmark path should remain the primary extension point. Avoid adding new
+standard behavior only to the older low-level builder scripts; add it to the shared benchmark config
+and pipeline layers first, then expose it through TOML.
+
+### Add A Verifier
+
+1. Add the verifier name to `SUPPORTED_VERIFIERS` in
+   `src/chem_machine_translation/benchmark/config.py`.
+2. Add any verifier-specific config fields to `BenchmarkTerminologyConfig`.
+3. Wire client construction in `src/chem_machine_translation/benchmark/pipeline.py`.
+4. Add or update evidence logic in `src/chem_machine_translation/data/terminology.py`.
+5. Make sure matched evidence updates `source`, `verified_by`, `candidates`, and `confidence`.
+6. Add tests in `tests/test_benchmark_pipeline.py` and focused client tests when needed.
+
+`local_iate` is the reference pattern for a local verifier: config name, local path, client class,
+index builder, provenance label, docs, and tests are all separate but wired through the same
+benchmark pipeline.
+
+### Add An Extractor
+
+1. Add the extractor name to `SUPPORTED_EXTRACTORS`.
+2. Implement the extractor class or wrapper in `src/chem_machine_translation/data/terminology.py`.
+3. Wire the extractor in `build_chemistry_generator`, `build_legal_generator`, or
+   `build_algorithmic_generator`.
+4. Include extractor model/settings in `extractor_stage_payload` so checkpoint invalidation is
+   correct.
+5. Add tests that verify the config flag maps to the expected runtime object.
+
+### Add Stage Controls
+
+The current checkpoint config supports reuse/force-rerun booleans. If a future developer needs to
+run only one stage and stop, add explicit controls such as:
+
+```toml
+[checkpoint]
+start_at = "verifiers"
+stop_after = "verifiers"
+force_stages = ["verifiers"]
+```
+
+That should be implemented in `run_benchmark_build` / `attach_terminology_to_rows`, not in the
+individual extractor or verifier classes.
+
+### Add Parallelism
+
+Parallelism should be stage-specific:
+
+- Extractors: bounded process/thread pools, with low worker counts for RAM-heavy models like XLM-R.
+- Verifiers: bounded thread or async pools because most work is network or local-index I/O.
+- LLM extractor/refiner: bounded API concurrency with retries and checkpointing.
+- Manifest/metadata: keep sequential; they are not bottlenecks.
+
+When adding parallelism, preserve deterministic output ordering before writing checkpoints and keep
+atomic write-then-replace behavior for stage files.
+
 ## Important Implementation Files
 
 - `scripts/create_google_patents_source_pairs.py`: builds Google source-pair snapshots.
@@ -667,6 +767,7 @@ terminology pipeline is the same for both.
 - `scripts/generate_chemistry_benchmark.py`: standard chemistry benchmark runner.
 - `scripts/generate_legal_benchmark.py`: standard legal benchmark runner.
 - `scripts/generate_benchmark.py`: generic config-driven runner for custom TOML configs.
+- `scripts/build_local_iate_index.py`: manual builder for the ignored local IATE SQLite index.
 - `scripts/build_google_patents_eval_subset.py`: advanced manual Google builder.
 - `scripts/build_jrc_acquis_eval_subset.py`: advanced manual JRC builder.
 - `src/chem_machine_translation/benchmark_generation/config.py`: TOML config schema and loader.
@@ -674,6 +775,8 @@ terminology pipeline is the same for both.
   orchestration.
 - `src/chem_machine_translation/data/terminology.py`: terminology schema, extractors, verifiers,
   generators, deduplication, and LLM refiner.
+- `src/chem_machine_translation/translation/iate.py`: online and local IATE lookup clients.
+- `src/chem_machine_translation/translation/iate_index.py`: local IATE CSV-to-SQLite index builder.
 - `src/chem_machine_translation/evaluation/metrics.py`: terminology group filtering and coverage
   metrics.
 - `src/chem_machine_translation/translation/terminology.py`: translation-time terminology injection

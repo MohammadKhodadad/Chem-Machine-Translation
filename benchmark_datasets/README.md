@@ -46,6 +46,24 @@ extractors or verifiers, rerunning the same command continues from the latest re
 The final benchmark outputs remain clean under `benchmark_datasets/`; checkpoint files are only
 internal build artifacts.
 
+To continue after an interrupted run, rerun the same command. Completed checkpoint stages are reused
+when their stage hash still matches the current config and inputs.
+
+To force one stage to rerun, keep earlier stages reusable and set that stage to `false`. For example,
+to reuse selected rows and extractor candidates but rerun verification:
+
+```toml
+[checkpoint.reuse]
+selection = true
+extractors = true
+verifiers = false
+refiner = true
+manifest = true
+```
+
+The pipeline will still continue through refiner, final manifest writing, and metadata after the
+forced stage. A developer-only `start_at` / `stop_after` mode is not implemented yet.
+
 ## End-To-End Experiment Command
 
 Use experiment configs when you want to generate or reuse a benchmark, run models, score outputs, and
