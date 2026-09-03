@@ -1,0 +1,15 @@
+name = "legal_one_anchor_smoke"
+
+[benchmark]
+config = "config/benchmark_generation/legal_one_anchor.toml"
+run_generation = false
+
+[[model_runs]]
+config = "config/model_runs/dry_run.toml"
+
+[evaluation]
+config = "config/evaluation/cheap.toml"
+
+[output]
+run_dir = "runs/legal_one_anchor_smoke"
+overwrite_scores = true

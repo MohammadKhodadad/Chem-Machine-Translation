@@ -153,6 +153,25 @@ The older low-level builder scripts remain available for advanced/manual experim
 - `scripts/build_google_patents_eval_subset.py`
 - `scripts/build_jrc_acquis_eval_subset.py`
 
+## End-To-End Experiment Pipeline
+
+Benchmark generation can be composed with model runs, evaluation, and aggregation through experiment
+configs:
+
+- `config/experiments/*.toml` selects the benchmark config, model-run configs, evaluation config,
+  and run output directory.
+- `config/model_runs/*.toml` defines the translator, provider, model, temperature, terminology
+  injection, and resume behavior.
+- `config/evaluation/*.toml` defines metrics, terminology groups, COMET settings, and optional MQM
+  judge settings.
+- `scripts/run_benchmark_experiment.py` runs the configured stages and writes predictions, scores,
+  `summary.json`, and `summary.md`.
+
+The experiment runner separates model prediction from scoring. This keeps expensive model calls
+reusable: predictions are written once under `runs/<experiment>/predictions/`, and scores are written
+under `runs/<experiment>/scores/`. Aggregation reads the scored JSONL files and summarizes metrics by
+model, build, direction, and target language.
+
 Each manifest row stores dataset metadata, source/target language metadata, token counts, row IDs,
 and a `terminology` array. During construction the builders keep internal `_source_text` and
 `_target_text` fields in memory; those private fields are removed before writing the final manifest.

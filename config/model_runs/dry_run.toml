@@ -1,0 +1,5 @@
+name = "dry_run_baseline"
+translator = "dry-run"
+translation_domain = "auto"
+use_manifest_terminology = false
+resume = true

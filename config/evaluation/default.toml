@@ -1,0 +1,6 @@
+name = "default_eval"
+metrics = ["sequence_similarity", "bleu", "chrf2++", "comet", "target_term_coverage"]
+terminology_groups = ["refined"]
+comet_model = "Unbabel/wmt22-comet-da"
+comet_batch_size = 8
+comet_gpus = 0

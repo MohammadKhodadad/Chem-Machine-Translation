@@ -23,6 +23,23 @@ uv sync --dev
 Copy `.env.example` to `.env` and set `OPENAI_API_KEY` before using the OpenAI strategy.
 Set `CHEM_MT_HF_TOKEN` and `CHEM_MT_HF_REPO_ID` to upload generated reports to Hugging Face.
 
+## End-To-End Experiments
+
+Use experiment configs when you want one command to connect benchmark datasets, model runs, scoring,
+and aggregate reporting:
+
+```powershell
+uv run python scripts/run_benchmark_experiment.py --config config/experiments/legal_one_anchor_smoke.toml
+```
+
+Experiment configs compose the existing step configs:
+
+- benchmark generation: `config/benchmark_generation/*.toml`
+- model runs: `config/model_runs/*.toml`
+- evaluation settings: `config/evaluation/*.toml`
+- run artifacts: `runs/<experiment>/predictions`, `runs/<experiment>/scores`, `summary.json`, and
+  `summary.md`
+
 ## Standard Terminology Pipeline
 
 The standard benchmark terminology setup is target-side and has three stages.

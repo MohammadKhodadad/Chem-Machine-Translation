@@ -27,6 +27,18 @@ Use `scripts/generate_benchmark.py --config <path>` for custom configs. The old
 `scripts/build_google_patents_eval_subset.py` and `scripts/build_jrc_acquis_eval_subset.py` scripts
 are retained only as advanced debugging tools.
 
+## End-To-End Experiment Command
+
+Use experiment configs when you want to generate or reuse a benchmark, run models, score outputs, and
+write aggregate reports in one pipeline:
+
+```powershell
+uv run python scripts/run_benchmark_experiment.py --config config/experiments/legal_one_anchor_smoke.toml
+```
+
+The experiment layer composes benchmark configs, model-run configs, evaluation configs, and output
+settings. It writes predictions, scores, `summary.json`, and `summary.md` under `runs/<experiment>/`.
+
 ## JRC Legal Benchmark
 
 Use the standard legal runner when you want the 250-anchor JRC benchmark with the full legal
