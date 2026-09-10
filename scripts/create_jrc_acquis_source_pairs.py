@@ -12,6 +12,9 @@ from typing import Any
 from urllib.request import Request, urlopen
 from xml.etree.ElementTree import iterparse
 
+from huggingface_hub import HfApi
+
+from chem_machine_translation.config import load_settings
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
 LANGUAGE_NAMES = {
@@ -102,6 +105,21 @@ def parse_args() -> argparse.Namespace:
         "--output-jsonl",
         type=Path,
         default=Path("benchmark_sources/jrc_acquis_chunks_250_per_language_pair.jsonl"),
+    )
+    parser.add_argument(
+        "--upload-to-huggingface",
+        action="store_true",
+        help="Upload the generated source JSONL and metadata to Hugging Face.",
+    )
+    parser.add_argument(
+        "--hf-repo-id",
+        default=None,
+        help="Hugging Face dataset repository ID. Defaults to CHEM_MT_HF_REPO_ID or HF_REPO_ID.",
+    )
+    parser.add_argument(
+        "--hf-path-prefix",
+        default="benchmark_sources/jrc_acquis",
+        help="Repository directory for the uploaded benchmark source artifacts.",
     )
     parser.add_argument(
         "--metadata-output",
@@ -205,8 +223,52 @@ def main() -> None:
         languages=languages,
         args=args,
     )
+    if args.upload_to_huggingface:
+        upload_source_artifacts_to_huggingface(
+            output_jsonl=args.output_jsonl,
+            metadata_output=metadata_output,
+            repo_id=args.hf_repo_id,
+            path_prefix=args.hf_path_prefix,
+        )
     print(f"Wrote {len(rows)} source pairs to {args.output_jsonl}")
     print(f"Wrote metadata to {metadata_output}")
+
+
+def upload_source_artifacts_to_huggingface(
+    *,
+    output_jsonl: Path,
+    metadata_output: Path,
+    repo_id: str | None,
+    path_prefix: str,
+) -> None:
+    settings = load_settings()
+    resolved_repo_id = repo_id or settings.hf_repo_id
+    if not resolved_repo_id:
+        raise ValueError(
+            "--hf-repo-id, CHEM_MT_HF_REPO_ID, or HF_REPO_ID is required for Hugging Face upload."
+        )
+    if not settings.hf_token:
+        raise ValueError("CHEM_MT_HF_TOKEN or HF_TOKEN is required for Hugging Face upload.")
+
+    api = HfApi(token=settings.hf_token)
+    api.create_repo(
+        repo_id=resolved_repo_id,
+        repo_type="dataset",
+        exist_ok=True,
+    )
+    normalized_prefix = path_prefix.strip("/")
+    for local_path in (output_jsonl, metadata_output):
+        path_in_repo = (
+            f"{normalized_prefix}/{local_path.name}" if normalized_prefix else local_path.name
+        )
+        api.upload_file(
+            path_or_fileobj=local_path,
+            path_in_repo=path_in_repo,
+            repo_id=resolved_repo_id,
+            repo_type="dataset",
+            commit_message=f"Upload JRC-Acquis benchmark source {local_path.name}",
+        )
+        print(f"Uploaded {local_path} to {resolved_repo_id}/{path_in_repo}")
 
 
 def build_pairwise_rows(*, languages: tuple[str, ...], args: argparse.Namespace) -> list[dict]:
