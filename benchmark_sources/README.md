@@ -135,3 +135,59 @@ language identification.
 Both preferred anchored article and definition snapshots use `--clean-legacy-markup` plus
 `--quality-mode strict`. The first step removes legacy OPUS/JRC inline tags before normalization;
 the second step applies benchmark-quality noise and boundary filters.
+
+## JRC source statistics
+
+The current anchored article and definition snapshots are built from the same five source languages
+and share the same direction structure. Each snapshot contains the same 20 ordered language pairs,
+with exactly 250 rows per pair, for a total of 5,000 rows per snapshot.
+
+### Shared language coverage
+
+- Languages: `en`, `es`, `de`, `fr`, `pt`
+- Total ordered language pairs: 20
+- Rows per pair: 250
+- Rows per snapshot: 5,000
+- Summary: each pair is constant across all snapshots, so coverage is balanced across the product
+  space and each ordered direction is equally represented
+
+### Pair counts (constant across snapshots)
+
+| Language pair | Rows |
+| --- | ---: |
+| de-en | 250 |
+| de-es | 250 |
+| de-fr | 250 |
+| de-pt | 250 |
+| en-de | 250 |
+| en-es | 250 |
+| en-fr | 250 |
+| en-pt | 250 |
+| es-de | 250 |
+| es-en | 250 |
+| es-fr | 250 |
+| es-pt | 250 |
+| fr-de | 250 |
+| fr-en | 250 |
+| fr-es | 250 |
+| fr-pt | 250 |
+| pt-de | 250 |
+| pt-en | 250 |
+| pt-es | 250 |
+| pt-fr | 250 |
+
+### Snapshot-level token length stats
+
+| Snapshot | section_type | rows | language coverage | min source tokens | max source tokens | mean source tokens |
+| --- | --- | ---: | --- | ---: | ---: | ---: |
+| `jrc_acquis_anchored_articles_250_per_language_pair.jsonl` | article | 5000 | en, es, de, fr, pt | 251 | 679 | 418.6 |
+| `jrc_acquis_anchored_definitions_250_per_language_pair.jsonl` | definition | 5000 | en, es, de, fr, pt | 246 | 756 | 487.9 |
+
+### Notes
+
+- The pair counts remain constant because the anchored selection logic expands each shared document
+  anchor to every ordered language pair.
+- The difference between article and definition snapshots is primarily the legal section type and the
+  resulting token-length distribution, not the language-pair balance.
+- `approx_source_tokens` is used for the summary statistics shown here; the metadata files also track
+  comparable `approx_target_tokens` values when needed for downstream analyses.
