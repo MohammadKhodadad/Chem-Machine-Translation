@@ -1,0 +1,43 @@
+name = "jrc_acquis_legal_5_anchor"
+domain = "jrc"
+
+[[builds]]
+name = "articles"
+kind = "jrc_acquis_snapshot"
+source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_articles_5_anchor_docs.jsonl"
+output_dir = "benchmark_datasets/jrc_acquis_anchored_articles_5_anchors"
+
+[selection]
+mode = "anchored"
+languages = ["en", "es", "de", "fr", "pt"]
+anchor_limit = 5
+
+[checkpoint]
+enabled = true
+work_dir = "benchmark_work"
+resume = true
+run_id = "auto"
+
+[checkpoint.reuse]
+selection = true
+extractors = true
+verifiers = true
+refiner = true
+manifest = true
+
+[terminology]
+domain = "jrc"
+candidate_max_terms = 40
+refined_max_terms = 8
+model = "gpt-4.1-mini"
+base_url = "https://api.openai.com/v1"
+api_mode = "responses"
+max_output_tokens = 1024
+extractors = ["llm_legal", "stanza_ud", "xlmr_nobi", "spacy"]
+verifiers = ["local_iate", "wikidata", "unterm"]
+local_iate_path = "data/iate"
+refiner = true
+workers = 2
+legal_workers = 2
+stanza_workers = 2
+openai_timeout = 120.0
