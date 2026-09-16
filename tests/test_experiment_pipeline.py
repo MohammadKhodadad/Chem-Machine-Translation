@@ -83,6 +83,66 @@ refiner = false
     assert result.summary_markdown_path.exists()
 
 
+def test_prediction_resume_retries_previous_error_rows(tmp_path: Path) -> None:
+    source_path = tmp_path / "source.jsonl"
+    benchmark_dir = tmp_path / "benchmark"
+    run_dir = tmp_path / "runs" / "retry_experiment"
+    source_path.write_text(
+        json.dumps(
+            {
+                "example_id": "example-1",
+                "doc_id": "doc-1",
+                "language_pair": "en-de",
+                "source_language": "en",
+                "target_language": "de",
+                "source_text": "Source legal text.",
+                "target_text": "Zieltext.",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    benchmark_config_path = tmp_path / "benchmark.toml"
+    benchmark_config_path.write_text(
+        f'''
+name = "tiny_legal"
+domain = "jrc"
+
+[[builds]]
+name = "articles"
+kind = "jrc_acquis_snapshot"
+source_pairs_jsonl = "{source_path.as_posix()}"
+output_dir = "{benchmark_dir.as_posix()}"
+
+[selection]
+mode = "per_direction"
+languages = ["en", "de"]
+limit = 1
+
+[terminology]
+domain = "jrc"
+extractors = []
+verifiers = []
+refiner = false
+''',
+        encoding="utf-8",
+    )
+    config = load_experiment_config(write_experiment_config(tmp_path, benchmark_config_path, run_dir))
+    first_result = run_experiment(config, settings=Settings(openai_api_key=None))
+    predictions_path = first_result.model_results[0].predictions_path
+    predictions_path.write_text(
+        json.dumps({"source_id": "example-1", "error": "AuthenticationError: unavailable"})
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = run_experiment(config, settings=Settings(openai_api_key=None))
+    rows = load_jsonl(result.model_results[0].predictions_path)
+
+    assert len(rows) == 1
+    assert any(row["predicted_translation"] == "Source legal text." for row in rows)
+
+
 def write_experiment_config(tmp_path: Path, benchmark_config_path: Path, run_dir: Path) -> Path:
     config_path = tmp_path / "experiment.toml"
     config_path.write_text(

@@ -141,9 +141,15 @@ def write_predictions(
     settings: Settings,
 ) -> list[dict[str, Any]]:
     manifest_rows = load_jsonl(build.combined_manifest_path)
-    existing_rows = (
+    loaded_rows = (
         load_jsonl(predictions_path) if model_run.resume and predictions_path.exists() else []
     )
+    existing_rows = [row for row in loaded_rows if not row.get("error")]
+    if len(existing_rows) != len(loaded_rows):
+        predictions_path.write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in existing_rows),
+            encoding="utf-8",
+        )
     completed_keys = {prediction_key(row) for row in existing_rows}
     missing_manifest_rows = [
         row for row in manifest_rows if manifest_key(row) not in completed_keys

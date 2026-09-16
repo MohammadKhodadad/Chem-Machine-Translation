@@ -89,11 +89,14 @@ def build_text_generation_provider(
     base_url: str | None = None,
     timeout: float | None = None,
 ) -> TextGenerationProvider:
-    if provider not in {"openai", "openai-compatible"}:
+    if provider not in {"openai", "opencode", "openai-compatible"}:
         raise ValueError(f"Unknown text generation provider: {provider}")
 
-    resolved_base_url = base_url or settings.openai_base_url
-    api_key = settings.openai_api_key
+    api_key, resolved_base_url, api_mode, thinking = resolve_provider_settings(
+        provider=provider,
+        settings=settings,
+        base_url=base_url,
+    )
     if not api_key and resolved_base_url:
         api_key = "local"
     if not api_key:
@@ -106,11 +109,34 @@ def build_text_generation_provider(
         api_key=api_key,
         base_url=resolved_base_url,
         timeout=timeout,
-        api_mode=settings.llm_api_mode,
+        api_mode=api_mode,
         max_output_tokens=settings.llm_max_output_tokens,
-        thinking=settings.llm_thinking,
+        thinking=thinking,
         reasoning_effort=settings.llm_reasoning_effort,
         name=provider,
+    )
+
+
+def resolve_provider_settings(
+    *,
+    provider: str,
+    settings: Settings,
+    base_url: str | None,
+) -> tuple[str | None, str | None, str, str | None]:
+    if provider == "openai":
+        return settings.openai_api_key, base_url or settings.openai_base_url, "responses", None
+    if provider == "opencode":
+        return (
+            settings.opencode_api_key,
+            base_url or settings.opencode_base_url,
+            "chat_completions",
+            "disabled",
+        )
+    return (
+        settings.openai_api_key or settings.opencode_api_key,
+        base_url or settings.openai_base_url or settings.opencode_base_url,
+        settings.llm_api_mode,
+        settings.llm_thinking,
     )
 
 

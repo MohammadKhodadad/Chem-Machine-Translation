@@ -20,7 +20,7 @@ from chem_machine_translation.evaluation.metrics import (
 )
 
 SUPPORTED_TRANSLATORS = {"dry-run", "one-shot"}
-SUPPORTED_PROVIDERS = {"openai", "openai-compatible"}
+SUPPORTED_PROVIDERS = {"openai", "opencode", "openai-compatible"}
 SUPPORTED_TRANSLATION_DOMAINS = {"auto", "chemistry", "legal", "generic"}
 
 

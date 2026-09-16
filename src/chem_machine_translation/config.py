@@ -17,6 +17,8 @@ class Settings(BaseModel):
 
     openai_api_key: str | None = Field(default=None)
     openai_base_url: str | None = Field(default=None)
+    opencode_api_key: str | None = Field(default=None)
+    opencode_base_url: str | None = Field(default=None)
     default_model: str = Field(default=DEFAULT_MODEL)
     llm_api_mode: str = Field(default=DEFAULT_LLM_API_MODE)
     llm_max_output_tokens: int = Field(default=DEFAULT_LLM_MAX_OUTPUT_TOKENS)
@@ -36,11 +38,11 @@ def load_settings(env_file: Path | None = None) -> Settings:
     else:
         load_dotenv()
 
-    provider_api_key, provider_base_url = resolve_openai_compatible_provider()
-
     return Settings(
-        openai_api_key=provider_api_key,
-        openai_base_url=provider_base_url,
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        openai_base_url=os.getenv("OPENAI_BASE_URL"),
+        opencode_api_key=os.getenv("OPENCODE_API_KEY"),
+        opencode_base_url=os.getenv("OPENCODE_BASE_URL"),
         default_model=os.getenv("CHEM_MT_MODEL") or os.getenv("OPENCODE_MODEL") or DEFAULT_MODEL,
         llm_api_mode=resolve_llm_api_mode(),
         llm_max_output_tokens=int(
@@ -68,20 +70,6 @@ def load_settings(env_file: Path | None = None) -> Settings:
         hf_repo_type=os.getenv("CHEM_MT_HF_REPO_TYPE", "dataset"),
         hf_path_prefix=os.getenv("CHEM_MT_HF_PATH_PREFIX", "translations"),
     )
-
-
-def resolve_openai_compatible_provider() -> tuple[str | None, str | None]:
-    """Resolve API credentials without mixing keys across configured provider URLs."""
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    openai_base_url = os.getenv("OPENAI_BASE_URL")
-    opencode_api_key = os.getenv("OPENCODE_API_KEY")
-    opencode_base_url = os.getenv("OPENCODE_BASE_URL")
-
-    if openai_base_url:
-        return openai_api_key or opencode_api_key, openai_base_url
-    if opencode_base_url:
-        return opencode_api_key or openai_api_key, opencode_base_url
-    return openai_api_key or opencode_api_key, None
 
 
 def resolve_llm_api_mode() -> str:

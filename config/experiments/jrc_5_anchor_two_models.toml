@@ -1,0 +1,52 @@
+name = "jrc_5_anchor_two_models"
+
+[benchmark]
+config = "config/benchmark_generation/legal_5_anchor.toml"
+run_generation = false
+
+[[model_runs]]
+name = "gpt_4_1_nano"
+translator = "one-shot"
+provider = "openai"
+model = "gpt-4.1-nano"
+temperature = 0.0
+translation_domain = "auto"
+use_manifest_terminology = true
+terminology_groups = ["refined"]
+max_manifest_terminology_terms = 8
+resume = true
+
+[[model_runs]]
+name = "gpt_4_1_mini"
+translator = "one-shot"
+provider = "openai"
+model = "gpt-4.1-mini"
+temperature = 0.0
+translation_domain = "auto"
+use_manifest_terminology = true
+terminology_groups = ["refined"]
+max_manifest_terminology_terms = 8
+resume = true
+
+[evaluation]
+name = "full_eval"
+metrics = [
+  "sequence_similarity",
+  "bleu",
+  "chrf",
+  "chrf2++",
+  "comet",
+  "terminology_success_rate",
+  "target_term_coverage",
+  "fsp_mqm",
+]
+terminology_groups = ["refined"]
+comet_model = "Unbabel/wmt22-comet-da"
+comet_batch_size = 8
+comet_gpus = 0
+fsp_mqm_model = "gpt-4.1-mini"
+fsp_mqm_timeout = 120.0
+
+[output]
+run_dir = "runs/jrc_5_anchor_two_models"
+overwrite_scores = true

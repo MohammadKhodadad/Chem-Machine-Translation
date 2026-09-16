@@ -21,6 +21,8 @@ from chem_machine_translation.translation.terminology import (
     parse_refined_terms,
 )
 from chem_machine_translation.translation.translators import DryRunTranslator, OneShotTranslator
+from chem_machine_translation.config import Settings
+from chem_machine_translation.translation.providers import resolve_provider_settings
 from chem_machine_translation.translation.wikidata import (
     WikidataTermTranslation,
     wikidata_language_code,
@@ -40,6 +42,22 @@ def test_dry_run_translator_returns_source_text() -> None:
     assert result.translated_text == document.text
     assert result.target_language == "German"
     assert result.strategy == "dry-run"
+
+
+def test_provider_settings_keep_openai_and_opencode_credentials_separate() -> None:
+    settings = Settings(
+        openai_api_key="openai-key",
+        openai_base_url="https://api.openai.test/v1",
+        opencode_api_key="opencode-key",
+        opencode_base_url="https://opencode.test/v1",
+    )
+
+    assert resolve_provider_settings(
+        provider="openai", settings=settings, base_url=None
+    ) == ("openai-key", "https://api.openai.test/v1", "responses", None)
+    assert resolve_provider_settings(
+        provider="opencode", settings=settings, base_url=None
+    ) == ("opencode-key", "https://opencode.test/v1", "chat_completions", "disabled")
 
 
 class _FakeResponse:

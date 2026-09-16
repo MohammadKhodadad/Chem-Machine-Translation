@@ -19,7 +19,7 @@ def clear_explicit_llm_runtime_overrides(monkeypatch) -> None:
 
 def test_load_settings_uses_opencode_provider_aliases(monkeypatch) -> None:
     clear_explicit_llm_runtime_overrides(monkeypatch)
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "")
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("CHEM_MT_MODEL", raising=False)
     monkeypatch.setenv("OPENCODE_API_KEY", "test-opencode-key")
@@ -28,8 +28,10 @@ def test_load_settings_uses_opencode_provider_aliases(monkeypatch) -> None:
 
     settings = load_settings()
 
-    assert settings.openai_api_key == "test-opencode-key"
-    assert settings.openai_base_url == "https://example.test/v1"
+    assert not settings.openai_api_key
+    assert settings.openai_base_url is None
+    assert settings.opencode_api_key == "test-opencode-key"
+    assert settings.opencode_base_url == "https://example.test/v1"
     assert settings.default_model == "deepseek/deepseek-v4-flash-0731"
     assert settings.llm_api_mode == "chat_completions"
     assert settings.llm_thinking == "disabled"
@@ -49,6 +51,8 @@ def test_load_settings_prefers_openai_and_chem_mt_names(monkeypatch) -> None:
 
     assert settings.openai_api_key == "test-openai-key"
     assert settings.openai_base_url == "https://openai-compatible.test/v1"
+    assert settings.opencode_api_key == "test-opencode-key"
+    assert settings.opencode_base_url == "https://example.test/v1"
     assert settings.default_model == "gpt-4.1-mini"
     assert settings.llm_api_mode == "responses"
     assert settings.llm_thinking is None
@@ -63,8 +67,10 @@ def test_load_settings_pairs_opencode_key_with_opencode_base_url(monkeypatch) ->
 
     settings = load_settings()
 
-    assert settings.openai_api_key == "test-opencode-key"
-    assert settings.openai_base_url == "https://opencode.test/v1"
+    assert settings.openai_api_key == "test-openai-key"
+    assert settings.openai_base_url is None
+    assert settings.opencode_api_key == "test-opencode-key"
+    assert settings.opencode_base_url == "https://opencode.test/v1"
     assert settings.llm_api_mode == "chat_completions"
     assert settings.llm_thinking == "disabled"
 
