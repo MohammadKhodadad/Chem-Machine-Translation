@@ -583,3 +583,107 @@ candidates. A better target is something like:
 The largest quality gain will come from populating `source_term`. A term is much more useful for
 translation benchmarking if both the source span and target span are known, not only the target-side
 reference span.
+
+## Translation Benchmark Results
+
+The terminology analysis above describes the benchmark terms and extractor quality. A separate
+experiment then evaluated LLM translations on the config-driven five-anchor article benchmark.
+This section records those translation results alongside the terminology findings without treating
+the translation metrics as extractor metrics.
+
+Experiment artifacts:
+
+```text
+config/experiments/jrc_5_anchor_two_models.toml
+runs/jrc_5_anchor_two_models/summary.json
+runs/jrc_5_anchor_two_models/summary.md
+```
+
+The benchmark contained 100 rows across 20 ordered language directions, with 10 rows per direction.
+Both models completed every row successfully, for 200 scored model rows and zero prediction or
+evaluation errors.
+
+| Model | BLEU | chrF | chrF2++ | COMET | FSP/MQM | Target-term coverage |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `gpt_4_1_mini` | 44.25 | 73.93 | 71.15 | 0.89 | 97.71 | 91.37 |
+| `gpt_4_1_nano` | 48.25 | 73.91 | 70.59 | 0.89 | 95.37 | 81.41 |
+
+### Interpretation
+
+`gpt_4_1_nano` achieved the higher mean BLEU score by 4.00 points, while the models were nearly
+identical on chrF, chrF2++, and COMET. However, `gpt_4_1_mini` achieved the stronger terminology-
+sensitive result: target-term coverage was 9.96 points higher, and FSP/MQM was 2.34 points higher.
+It also produced fewer mean major and minor MQM errors. On this sample, BLEU alone would therefore
+favor nano, while the combined quality and terminology metrics favor mini.
+
+The strongest direction by mean BLEU was `es-en` at 63.76, followed by `fr-en` at 60.16 and `pt-en`
+at 58.27. The weakest was `es-de` at 31.19, followed by `de-fr` at 32.69 and `de-pt` at 33.29.
+Target-term coverage varied by direction, from 73.17 on `de-fr` to 96.67 on `en-es`.
+
+These results are based on the verified model outputs and are separate from the terminology
+extractor counts earlier in this report. The raw LLM translations are stored under the run's
+`predictions/` directory, while per-row metric results are stored under `scores/`.
+
+### Model Distribution Statistics
+
+The following percentiles show the distribution across the 100 scored rows for each model. They
+are useful because mean scores alone can hide difficult translation segments.
+
+| Model | Metric | Min | P5 | P10 | P25 | Median | P75 | P90 | P95 | Max |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `gpt_4_1_mini` | BLEU | 1.77 | 3.66 | 14.48 | 34.48 | 43.64 | 55.81 | 69.94 | 86.92 | 88.47 |
+| `gpt_4_1_nano` | BLEU | 8.29 | 22.79 | 26.03 | 34.51 | 43.22 | 56.40 | 84.73 | 86.37 | 89.59 |
+| `gpt_4_1_mini` | chrF | 52.39 | 58.28 | 61.69 | 68.82 | 74.36 | 80.27 | 84.74 | 89.02 | 93.80 |
+| `gpt_4_1_nano` | chrF | 51.58 | 56.88 | 62.23 | 68.60 | 73.61 | 80.06 | 87.07 | 90.00 | 92.54 |
+| `gpt_4_1_mini` | FSP/MQM | 95.00 | 95.00 | 95.00 | 98.00 | 98.00 | 98.00 | 100.00 | 100.00 | 100.00 |
+| `gpt_4_1_nano` | FSP/MQM | 70.00 | 85.00 | 90.00 | 95.00 | 95.00 | 98.00 | 98.00 | 98.00 | 100.00 |
+| `gpt_4_1_mini` | Target-term coverage | 45.00 | 62.50 | 66.39 | 87.50 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 |
+| `gpt_4_1_nano` | Target-term coverage | 7.50 | 50.00 | 56.25 | 74.06 | 87.50 | 97.50 | 100.00 | 100.00 | 100.00 |
+
+The lower tail is notably stronger for `gpt_4_1_mini`: its fifth-percentile target-term coverage is
+62.50 compared with 50.00 for `gpt_4_1_nano`, and its minimum is 45.00 compared with 7.50. This
+supports the conclusion that mini is more reliable on terminology preservation, not merely better
+on average.
+
+### Results By Language Direction
+
+These aggregates combine the five rows from each direction for both models, giving 10 scored rows
+per direction. They show where the benchmark is intrinsically easier or harder, independently of
+the model-level comparison above.
+
+| Direction | Rows | BLEU | chrF | COMET | FSP/MQM | Target-term coverage |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `de-en` | 10 | 55.44 | 78.52 | 0.89 | 97.30 | 90.83 |
+| `de-es` | 10 | 40.61 | 70.66 | 0.87 | 95.50 | 89.06 |
+| `de-fr` | 10 | 32.69 | 68.45 | 0.87 | 96.80 | 73.17 |
+| `de-pt` | 10 | 33.29 | 65.45 | 0.88 | 95.70 | 82.46 |
+| `en-de` | 10 | 42.09 | 71.62 | 0.89 | 96.50 | 88.08 |
+| `en-es` | 10 | 46.51 | 74.71 | 0.89 | 97.00 | 96.67 |
+| `en-fr` | 10 | 51.75 | 75.75 | 0.90 | 97.20 | 82.36 |
+| `en-pt` | 10 | 39.88 | 69.13 | 0.89 | 97.70 | 90.92 |
+| `es-de` | 10 | 31.19 | 66.41 | 0.88 | 96.50 | 82.04 |
+| `es-en` | 10 | 63.76 | 83.41 | 0.89 | 97.70 | 91.00 |
+| `es-fr` | 10 | 50.03 | 76.98 | 0.90 | 96.90 | 79.17 |
+| `es-pt` | 10 | 52.12 | 77.58 | 0.91 | 96.40 | 93.12 |
+| `fr-de` | 10 | 33.93 | 67.26 | 0.88 | 93.00 | 76.43 |
+| `fr-en` | 10 | 60.16 | 80.29 | 0.89 | 96.90 | 92.04 |
+| `fr-es` | 10 | 49.72 | 75.95 | 0.89 | 96.70 | 94.29 |
+| `fr-pt` | 10 | 44.10 | 74.00 | 0.89 | 96.50 | 85.75 |
+| `pt-de` | 10 | 38.02 | 68.53 | 0.89 | 96.80 | 79.54 |
+| `pt-en` | 10 | 58.27 | 79.55 | 0.89 | 96.20 | 95.69 |
+| `pt-es` | 10 | 54.71 | 78.19 | 0.90 | 96.30 | 88.05 |
+| `pt-fr` | 10 | 46.74 | 75.96 | 0.90 | 97.20 | 77.14 |
+
+### Results By Target Language
+
+| Target language | Rows | BLEU | chrF | COMET | FSP/MQM | Target-term coverage |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| German (`de`) | 40 | 36.30 | 68.45 | 0.88 | 95.70 | 81.52 |
+| English (`en`) | 40 | 59.41 | 80.44 | 0.89 | 97.03 | 92.39 |
+| Spanish (`es`) | 40 | 47.89 | 74.88 | 0.89 | 96.38 | 92.02 |
+| French (`fr`) | 40 | 45.30 | 74.29 | 0.89 | 97.03 | 77.96 |
+| Portuguese (`pt`) | 40 | 42.35 | 71.54 | 0.89 | 96.58 | 88.06 |
+
+English was the strongest target language by BLEU and target-term coverage. French had the lowest
+target-term coverage despite a high FSP/MQM score, which suggests that general translation quality
+and exact glossary-term preservation are measuring different failure modes in this benchmark.
