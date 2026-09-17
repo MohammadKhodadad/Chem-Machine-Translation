@@ -83,14 +83,14 @@ def test_load_benchmark_config_resolves_standard_chemistry_config() -> None:
     assert config.checkpoint.enabled is True
     assert config.checkpoint.resume is True
     assert config.checkpoint.work_dir.name == "benchmark_work"
-    assert config.terminology.extractors == (
+    assert config.terminology.candidate_extractors == (
         "llm_chemistry",
         "stanza_ud",
         "xlmr_nobi",
         "spacy",
     )
-    assert "local_iate" in config.terminology.verifiers
-    assert "pubchem" in config.terminology.verifiers
+    assert "local_iate" in config.terminology.external_evidence_sources
+    assert "pubchem" in config.terminology.external_evidence_sources
     assert config.terminology.refined_max_terms == 8
     assert config.terminology.local_iate_path is not None
     assert config.terminology.local_iate_path.name == "iate"
@@ -111,20 +111,24 @@ def test_load_benchmark_config_resolves_standard_legal_config() -> None:
         "jrc_acquis_anchored_articles_250_anchors",
         "jrc_acquis_anchored_definitions_250_anchors",
     ]
-    assert config.terminology.extractors == (
+    assert config.terminology.candidate_extractors == (
         "llm_legal",
         "stanza_ud",
         "xlmr_nobi",
         "spacy",
     )
-    assert config.terminology.verifiers == ("local_iate", "wikidata", "unterm")
+    assert config.terminology.external_evidence_sources == (
+        "local_iate",
+        "wikidata",
+        "unterm",
+    )
 
 
 def test_generator_factories_map_extractor_and_verifier_flags() -> None:
     chemistry = BenchmarkTerminologyConfig(
         domain="chemistry",
-        extractors=("llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"),
-        verifiers=("local_iate", "wikidata", "pubchem"),
+        candidate_extractors=("llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"),
+        external_evidence_sources=("local_iate", "wikidata", "pubchem"),
     )
     chemistry_generator = build_chemistry_generator(chemistry, client=object())
 
@@ -143,8 +147,8 @@ def test_generator_factories_map_extractor_and_verifier_flags() -> None:
 
     legal = BenchmarkTerminologyConfig(
         domain="jrc",
-        extractors=("llm_legal", "stanza_ud", "spacy"),
-        verifiers=("local_iate", "wikidata", "unterm"),
+        candidate_extractors=("llm_legal", "stanza_ud", "spacy"),
+        external_evidence_sources=("local_iate", "wikidata", "unterm"),
     )
     legal_generator = build_legal_generator(legal, client=object())
     algorithmic_generator = build_algorithmic_generator(legal)
@@ -195,9 +199,9 @@ def test_run_benchmark_generation_smoke_without_terminology(tmp_path: Path) -> N
         ),
         terminology=BenchmarkTerminologyConfig(
             domain="chemistry",
-            extractors=(),
-            verifiers=(),
-            refiner=False,
+            candidate_extractors=(),
+            external_evidence_sources=(),
+            llm_curation=False,
         ),
     )
 
@@ -308,9 +312,9 @@ def test_jrc_manifest_preserves_anchor_metadata(tmp_path: Path) -> None:
         ),
         terminology=BenchmarkTerminologyConfig(
             domain="jrc",
-            extractors=(),
-            verifiers=(),
-            refiner=False,
+            candidate_extractors=(),
+            external_evidence_sources=(),
+            llm_curation=False,
         ),
     )
 
@@ -326,7 +330,7 @@ def test_jrc_manifest_preserves_anchor_metadata(tmp_path: Path) -> None:
     assert row["section_type"] == "article"
 
 
-def test_refiner_appends_refined_terms_to_manifest_rows() -> None:
+def test_llm_curation_appends_refined_terms_to_manifest_rows() -> None:
     row = {
         "source_language": "German",
         "target_language": "French",
@@ -336,9 +340,9 @@ def test_refiner_appends_refined_terms_to_manifest_rows() -> None:
     }
     terminology = BenchmarkTerminologyConfig(
         domain="chemistry",
-        extractors=("llm_chemistry",),
-        verifiers=(),
-        refiner=True,
+        candidate_extractors=("llm_chemistry",),
+        external_evidence_sources=(),
+        llm_curation=True,
         refined_max_terms=8,
     )
 
@@ -348,7 +352,7 @@ def test_refiner_appends_refined_terms_to_manifest_rows() -> None:
         terminology=terminology,
         runtime=TerminologyRuntime(
             chemistry_generator=_FakeChemistryGenerator(),  # type: ignore[arg-type]
-            refiner=_FakeRefiner(),  # type: ignore[arg-type]
+            curator=_FakeRefiner(),  # type: ignore[arg-type]
         ),
     )
 
@@ -390,9 +394,9 @@ def test_checkpointed_generation_resumes_completed_terminology_stages(tmp_path: 
         ),
         terminology=BenchmarkTerminologyConfig(
             domain="chemistry",
-            extractors=("llm_chemistry",),
-            verifiers=(),
-            refiner=True,
+            candidate_extractors=("llm_chemistry",),
+            external_evidence_sources=(),
+            llm_curation=True,
         ),
         checkpoint=BenchmarkCheckpointConfig(work_dir=work_dir),
     )
@@ -402,7 +406,7 @@ def test_checkpointed_generation_resumes_completed_terminology_stages(tmp_path: 
         settings=Settings(openai_api_key=None),
         runtime=TerminologyRuntime(
             chemistry_generator=_FakeChemistryGenerator(),  # type: ignore[arg-type]
-            refiner=_FakeRefiner(),  # type: ignore[arg-type]
+            curator=_FakeRefiner(),  # type: ignore[arg-type]
         ),
     )
     run_benchmark_generation(
@@ -410,14 +414,14 @@ def test_checkpointed_generation_resumes_completed_terminology_stages(tmp_path: 
         settings=Settings(openai_api_key=None),
         runtime=TerminologyRuntime(
             chemistry_generator=_FailingGenerator(),  # type: ignore[arg-type]
-            refiner=_FailingRefiner(),  # type: ignore[arg-type]
+            curator=_FailingRefiner(),  # type: ignore[arg-type]
         ),
     )
 
     checkpoint_dir = work_dir / "resume-smoke" / "tiny" / "directions" / "de-fr"
-    assert (checkpoint_dir / "02_extractor_candidates.jsonl").exists()
-    assert (checkpoint_dir / "03_verified_candidates.jsonl").exists()
-    assert (checkpoint_dir / "04_refined_terms.jsonl").exists()
+    assert (checkpoint_dir / "02_candidate_extraction.jsonl").exists()
+    assert (checkpoint_dir / "03_external_evidence.jsonl").exists()
+    assert (checkpoint_dir / "04_llm_curated_terms.jsonl").exists()
     assert (checkpoint_dir / "05_manifest_rows.jsonl").exists()
 
     manifest_path = output_dir / "de-fr" / "google-patents-de-fr-1-manifest.jsonl"

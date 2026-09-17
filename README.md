@@ -46,10 +46,10 @@ The standard benchmark terminology setup is target-side and has three stages.
 
 1. Candidate extraction uses four active extractor families:
    LLM target extractor, Stanza/UD, XLM-R/NOBI, and spaCy.
-2. Verifier enrichment adds external evidence. Chemistry runs use sources such as PubChem, ChEBI,
+2. External evidence enrichment adds validation and same-entity variants. Chemistry runs use sources such as PubChem, ChEBI,
    ChEMBL, MeSH, NCI, AGROVOC, IATE, and Wikidata. JRC/legal runs use IATE, Wikidata/Wikipedia,
    UNTERM, and any source-provided legal descriptors when available.
-3. The LLM refiner selects the final benchmark terms from the candidate pool. The standard final
+3. LLM terminology curation selects the final benchmark terms from the candidate pool. The standard final
    cap is `n = 8` refined terms per segment.
 
 The recommended production defaults are:
@@ -60,7 +60,7 @@ The recommended production defaults are:
 - Candidate pool target: about `40` candidates per segment before refinement
 - Final refined terms: up to `8` terms per segment
 
-`verified_by` is evidence for ranking, not an automatic keep decision. The refiner sees verifier
+`verified_by` is evidence for ranking, not an automatic keep decision. The LLM curator sees external
 evidence and should prefer verified candidates when quality is comparable, but it can keep a strong
 unverified term if it is central, complete, and translation-sensitive.
 

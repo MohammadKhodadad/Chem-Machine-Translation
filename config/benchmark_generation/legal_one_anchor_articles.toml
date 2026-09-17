@@ -1,16 +1,16 @@
-name = "jrc_acquis_legal_5_anchor"
+name = "jrc_acquis_legal_one_anchor_articles"
 domain = "jrc"
 
 [[builds]]
 name = "articles"
 kind = "jrc_acquis_snapshot"
-source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_articles_5_anchor_docs.jsonl"
-output_dir = "benchmark_datasets/jrc_acquis_anchored_articles_5_anchors"
+source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl"
+output_dir = "benchmark_datasets/jrc_acquis_anchored_articles_1_anchor"
 
 [selection]
 mode = "anchored"
 languages = ["en", "es", "de", "fr", "pt"]
-anchor_limit = 5
+anchor_limit = 1
 
 [checkpoint]
 enabled = true

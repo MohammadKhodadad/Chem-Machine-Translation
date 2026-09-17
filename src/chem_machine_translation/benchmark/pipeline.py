@@ -68,7 +68,7 @@ class TerminologyRuntime:
     chemistry_generator: DatasetTerminologyGenerator | None = None
     legal_generator: LegalTerminologyGenerator | None = None
     algorithmic_generator: DatasetTerminologyGenerator | None = None
-    refiner: LLMTerminologyRefiner | None = None
+    curator: LLMTerminologyRefiner | None = None
 
 
 @dataclass(frozen=True)
@@ -116,15 +116,15 @@ def build_terminology_runtime(
         chemistry_generator=build_chemistry_generator(terminology, client),
         legal_generator=build_legal_generator(terminology, client),
         algorithmic_generator=build_algorithmic_generator(terminology),
-        refiner=build_refiner(terminology, client),
+        curator=build_llm_curator(terminology, client),
     )
 
 
 def needs_llm_client(terminology: BenchmarkTerminologyConfig) -> bool:
     return (
-        "llm_chemistry" in terminology.extractors
-        or "llm_legal" in terminology.extractors
-        or terminology.refiner
+        "llm_chemistry" in terminology.candidate_extractors
+        or "llm_legal" in terminology.candidate_extractors
+        or terminology.llm_curation
     )
 
 
@@ -155,32 +155,35 @@ def build_chemistry_generator(
 ) -> DatasetTerminologyGenerator | None:
     if terminology.domain not in {"chemistry", "google_patents"}:
         return None
-    if not (set(terminology.extractors) & {"llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"}):
+    if not (
+        set(terminology.candidate_extractors)
+        & {"llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"}
+    ):
         return None
     return DatasetTerminologyGenerator(
         client=client,
         model=terminology.model,
         max_terms=terminology.candidate_max_terms,
-        use_llm="llm_chemistry" in terminology.extractors,
+        use_llm="llm_chemistry" in terminology.candidate_extractors,
         llm_api_mode=terminology.api_mode or "responses",
         llm_max_output_tokens=terminology.max_output_tokens,
         llm_thinking=terminology.thinking,
         llm_reasoning_effort=terminology.reasoning_effort,
-        use_stanza_extractor="stanza_ud" in terminology.extractors,
-        use_nobi_extractor="xlmr_nobi" in terminology.extractors,
+        use_stanza_extractor="stanza_ud" in terminology.candidate_extractors,
+        use_nobi_extractor="xlmr_nobi" in terminology.candidate_extractors,
         nobi_model=terminology.nobi_model,
-        use_spacy_extractor="spacy" in terminology.extractors,
+        use_spacy_extractor="spacy" in terminology.candidate_extractors,
         spacy_model=terminology.spacy_model,
-        use_iate=uses_verifier(terminology, "iate", "local_iate"),
+        use_iate=uses_external_evidence_source(terminology, "iate", "local_iate"),
         iate_client=build_iate_client(terminology),
         iate_source_name=iate_source_name(terminology),
-        use_wikidata=uses_verifier(terminology, "wikidata", "wikipedia"),
-        use_pubchem=uses_verifier(terminology, "pubchem"),
-        use_chebi=uses_verifier(terminology, "chebi"),
-        use_chembl=uses_verifier(terminology, "chembl"),
-        use_mesh=uses_verifier(terminology, "mesh"),
-        use_nci=uses_verifier(terminology, "nci"),
-        use_agrovoc=uses_verifier(terminology, "agrovoc"),
+        use_wikidata=uses_external_evidence_source(terminology, "wikidata", "wikipedia"),
+        use_pubchem=uses_external_evidence_source(terminology, "pubchem"),
+        use_chebi=uses_external_evidence_source(terminology, "chebi"),
+        use_chembl=uses_external_evidence_source(terminology, "chembl"),
+        use_mesh=uses_external_evidence_source(terminology, "mesh"),
+        use_nci=uses_external_evidence_source(terminology, "nci"),
+        use_agrovoc=uses_external_evidence_source(terminology, "agrovoc"),
         cache_path=terminology.cache_path,
     )
 
@@ -189,7 +192,10 @@ def build_legal_generator(
     terminology: BenchmarkTerminologyConfig,
     client: Any | None,
 ) -> LegalTerminologyGenerator | None:
-    if terminology.domain not in {"jrc", "legal"} or "llm_legal" not in terminology.extractors:
+    if (
+        terminology.domain not in {"jrc", "legal"}
+        or "llm_legal" not in terminology.candidate_extractors
+    ):
         return None
     if client is None:
         raise ValueError("A client is required for the legal LLM extractor.")
@@ -197,11 +203,11 @@ def build_legal_generator(
         client=client,
         model=terminology.model,
         max_terms=terminology.candidate_max_terms,
-        use_iate=uses_verifier(terminology, "iate", "local_iate"),
+        use_iate=uses_external_evidence_source(terminology, "iate", "local_iate"),
         iate_client=build_iate_client(terminology),
         iate_source_name=iate_source_name(terminology),
-        use_wikidata=uses_verifier(terminology, "wikidata", "wikipedia"),
-        use_unterm=uses_verifier(terminology, "unterm"),
+        use_wikidata=uses_external_evidence_source(terminology, "wikidata", "wikipedia"),
+        use_unterm=uses_external_evidence_source(terminology, "unterm"),
         cache_path=terminology.legal_cache_path or terminology.cache_path,
         llm_api_mode=terminology.api_mode or "responses",
         llm_max_output_tokens=terminology.max_output_tokens,
@@ -213,36 +219,36 @@ def build_legal_generator(
 def build_algorithmic_generator(
     terminology: BenchmarkTerminologyConfig,
 ) -> DatasetTerminologyGenerator | None:
-    if not (set(terminology.extractors) & {"stanza_ud", "xlmr_nobi", "spacy"}):
+    if not (set(terminology.candidate_extractors) & {"stanza_ud", "xlmr_nobi", "spacy"}):
         return None
     return DatasetTerminologyGenerator(
         max_terms=terminology.candidate_max_terms,
         use_llm=False,
-        use_stanza_extractor="stanza_ud" in terminology.extractors,
-        use_nobi_extractor="xlmr_nobi" in terminology.extractors,
+        use_stanza_extractor="stanza_ud" in terminology.candidate_extractors,
+        use_nobi_extractor="xlmr_nobi" in terminology.candidate_extractors,
         nobi_model=terminology.nobi_model,
-        use_spacy_extractor="spacy" in terminology.extractors,
+        use_spacy_extractor="spacy" in terminology.candidate_extractors,
         spacy_model=terminology.spacy_model,
-        use_iate=uses_verifier(terminology, "iate", "local_iate"),
+        use_iate=uses_external_evidence_source(terminology, "iate", "local_iate"),
         iate_client=build_iate_client(terminology),
         iate_source_name=iate_source_name(terminology),
-        use_wikidata=uses_verifier(terminology, "wikidata", "wikipedia"),
-        use_pubchem=uses_verifier(terminology, "pubchem"),
-        use_chebi=uses_verifier(terminology, "chebi"),
-        use_chembl=uses_verifier(terminology, "chembl"),
-        use_mesh=uses_verifier(terminology, "mesh"),
-        use_nci=uses_verifier(terminology, "nci"),
-        use_agrovoc=uses_verifier(terminology, "agrovoc"),
-        use_unterm=uses_verifier(terminology, "unterm"),
+        use_wikidata=uses_external_evidence_source(terminology, "wikidata", "wikipedia"),
+        use_pubchem=uses_external_evidence_source(terminology, "pubchem"),
+        use_chebi=uses_external_evidence_source(terminology, "chebi"),
+        use_chembl=uses_external_evidence_source(terminology, "chembl"),
+        use_mesh=uses_external_evidence_source(terminology, "mesh"),
+        use_nci=uses_external_evidence_source(terminology, "nci"),
+        use_agrovoc=uses_external_evidence_source(terminology, "agrovoc"),
+        use_unterm=uses_external_evidence_source(terminology, "unterm"),
         cache_path=terminology.stanza_cache_path or terminology.cache_path,
     )
 
 
-def build_refiner(
+def build_llm_curator(
     terminology: BenchmarkTerminologyConfig,
     client: Any | None,
 ) -> LLMTerminologyRefiner | None:
-    if not terminology.refiner:
+    if not terminology.llm_curation:
         return None
     if client is None:
         raise ValueError("A client is required for the LLM terminology refiner.")
@@ -256,22 +262,25 @@ def build_refiner(
     )
 
 
-def uses_verifier(terminology: BenchmarkTerminologyConfig, *names: str) -> bool:
-    return bool(set(names) & set(terminology.verifiers))
+def uses_external_evidence_source(
+    terminology: BenchmarkTerminologyConfig,
+    *names: str,
+) -> bool:
+    return bool(set(names) & set(terminology.external_evidence_sources))
 
 
 def build_iate_client(
     terminology: BenchmarkTerminologyConfig,
 ) -> IATEClient | LocalIATEClient | None:
-    if "local_iate" in terminology.verifiers:
+    if "local_iate" in terminology.external_evidence_sources:
         return LocalIATEClient(terminology.local_iate_path or Path("data/iate"))
-    if "iate" in terminology.verifiers:
+    if "iate" in terminology.external_evidence_sources:
         return IATEClient()
     return None
 
 
 def iate_source_name(terminology: BenchmarkTerminologyConfig) -> str:
-    return "local_iate" if "local_iate" in terminology.verifiers else "iate"
+    return "local_iate" if "local_iate" in terminology.external_evidence_sources else "iate"
 
 
 def run_benchmark_build(
@@ -642,12 +651,12 @@ def attach_terminology_to_rows(
             terminology=terminology,
             runtime=runtime,
         )
-    if not terminology.extractors and runtime.refiner is None:
+    if not terminology.candidate_extractors and runtime.curator is None:
         for row in rows:
             row["terminology"] = []
         return rows
 
-    candidates_by_row = load_or_run_extractor_stage(
+    candidates_by_row = load_or_run_candidate_extraction_stage(
         rows,
         build=build,
         domain=domain,
@@ -655,7 +664,7 @@ def attach_terminology_to_rows(
         runtime=runtime,
         checkpoint=checkpoint,
     )
-    verified_by_row = load_or_run_verifier_stage(
+    evidence_enriched_by_row = load_or_run_external_evidence_enrichment_stage(
         rows,
         candidates_by_row,
         build=build,
@@ -664,9 +673,9 @@ def attach_terminology_to_rows(
         runtime=runtime,
         checkpoint=checkpoint,
     )
-    refined_by_row = load_or_run_refiner_stage(
+    curated_by_row = load_or_run_llm_curation_stage(
         rows,
-        verified_by_row=verified_by_row,
+        evidence_enriched_by_row=evidence_enriched_by_row,
         build=build,
         domain=domain,
         terminology=terminology,
@@ -675,8 +684,8 @@ def attach_terminology_to_rows(
     )
     manifest_rows = apply_terminology_records(
         rows,
-        verified_by_row=verified_by_row,
-        refined_by_row=refined_by_row,
+        evidence_enriched_by_row=evidence_enriched_by_row,
+        curated_by_row=curated_by_row,
     )
     return load_or_write_manifest_stage(
         manifest_rows,
@@ -702,8 +711,8 @@ def attach_terminology_to_rows_without_checkpoints(
         )
         terms = generate_candidate_terms(row, domain=domain, runtime=runtime)
         row["terminology"] = [term.to_json() for term in terms]
-        if runtime.refiner is not None and terms:
-            refined_terms = runtime.refiner.refine(
+        if runtime.curator is not None and terms:
+            refined_terms = runtime.curator.refine(
                 text=row["_target_text"],
                 target_language=row["target_language"],
                 candidates=terms,
@@ -714,7 +723,7 @@ def attach_terminology_to_rows_without_checkpoints(
     return rows
 
 
-def load_or_run_extractor_stage(
+def load_or_run_candidate_extraction_stage(
     rows: list[dict[str, Any]],
     *,
     build: BenchmarkBuildConfig,
@@ -725,18 +734,18 @@ def load_or_run_extractor_stage(
 ) -> dict[str, list[DatasetTerminologyTerm]]:
     stage_hash = stable_hash(
         {
-            "stage": "extractors",
+            "stage": "candidate_extraction",
             "build": checkpoint_build_payload(build),
-            "terminology": extractor_stage_payload(terminology),
+            "terminology": candidate_extraction_stage_payload(terminology),
             "rows": rows_checksum(rows),
         }
     )
     cached = read_stage_jsonl(
         checkpoint=checkpoint,
-        stage_name="extractors",
-        relative_path=direction_checkpoint_path(rows, "02_extractor_candidates.jsonl"),
+        stage_name="candidate_extraction",
+        relative_path=direction_checkpoint_path(rows, "02_candidate_extraction.jsonl"),
         expected_hash=stage_hash,
-        reuse=checkpoint.config.reuse_extractors,
+        reuse=checkpoint.config.reuse_candidate_extraction,
     )
     if cached is not None:
         return terms_by_row_from_records(cached)
@@ -746,7 +755,7 @@ def load_or_run_extractor_stage(
     for index, row in enumerate(rows, start=1):
         direction = str(row.get("direction") or "unknown-direction")
         print(f"Extracting terminology candidates for {direction} row {index}/{total}.")
-        terms = generate_extractor_candidate_terms(
+        terms = generate_candidate_extraction_terms(
             row,
             domain=domain,
             terminology=terminology,
@@ -755,15 +764,15 @@ def load_or_run_extractor_stage(
         records.append(terms_record(row=row, terms=terms))
     write_stage_jsonl(
         checkpoint=checkpoint,
-        stage_name="extractors",
-        relative_path=direction_checkpoint_path(rows, "02_extractor_candidates.jsonl"),
+        stage_name="candidate_extraction",
+        relative_path=direction_checkpoint_path(rows, "02_candidate_extraction.jsonl"),
         rows=records,
         stage_hash=stage_hash,
     )
     return terms_by_row_from_records(records)
 
 
-def load_or_run_verifier_stage(
+def load_or_run_external_evidence_enrichment_stage(
     rows: list[dict[str, Any]],
     candidates_by_row: dict[str, list[DatasetTerminologyTerm]],
     *,
@@ -775,18 +784,18 @@ def load_or_run_verifier_stage(
 ) -> dict[str, list[DatasetTerminologyTerm]]:
     stage_hash = stable_hash(
         {
-            "stage": "verifiers",
+            "stage": "external_evidence_enrichment",
             "build": checkpoint_build_payload(build),
-            "terminology": verifier_stage_payload(terminology),
+            "terminology": external_evidence_enrichment_stage_payload(terminology),
             "candidates": terms_by_row_checksum(candidates_by_row),
         }
     )
     cached = read_stage_jsonl(
         checkpoint=checkpoint,
-        stage_name="verifiers",
-        relative_path=direction_checkpoint_path(rows, "03_verified_candidates.jsonl"),
+        stage_name="external_evidence_enrichment",
+        relative_path=direction_checkpoint_path(rows, "03_external_evidence.jsonl"),
         expected_hash=stage_hash,
-        reuse=checkpoint.config.reuse_verifiers,
+        reuse=checkpoint.config.reuse_external_evidence_enrichment,
     )
     if cached is not None:
         return terms_by_row_from_records(cached)
@@ -796,51 +805,51 @@ def load_or_run_verifier_stage(
     items = sorted(candidates_by_row.items())
     total = len(items)
     for index, (row_id, terms) in enumerate(items, start=1):
-        print(f"Verifying terminology candidates for row {index}/{total}.")
-        verified_terms = verify_candidate_terms(
+        print(f"Enriching terminology candidates with external evidence for row {index}/{total}.")
+        enriched_terms = enrich_candidates_with_external_evidence(
             terms,
             row=rows_by_id[row_id],
             domain=domain,
             terminology=terminology,
             runtime=runtime,
         )
-        records.append({"row_id": row_id, "terms": [term.to_json() for term in verified_terms]})
+        records.append({"row_id": row_id, "terms": [term.to_json() for term in enriched_terms]})
     write_stage_jsonl(
         checkpoint=checkpoint,
-        stage_name="verifiers",
-        relative_path=direction_checkpoint_path(rows, "03_verified_candidates.jsonl"),
+        stage_name="external_evidence_enrichment",
+        relative_path=direction_checkpoint_path(rows, "03_external_evidence.jsonl"),
         rows=records,
         stage_hash=stage_hash,
     )
     return terms_by_row_from_records(records)
 
 
-def load_or_run_refiner_stage(
+def load_or_run_llm_curation_stage(
     rows: list[dict[str, Any]],
     *,
-    verified_by_row: dict[str, list[DatasetTerminologyTerm]],
+    evidence_enriched_by_row: dict[str, list[DatasetTerminologyTerm]],
     build: BenchmarkBuildConfig,
     domain: str,
     terminology: BenchmarkTerminologyConfig,
     runtime: TerminologyRuntime,
     checkpoint: BenchmarkCheckpoint,
 ) -> dict[str, list[DatasetTerminologyTerm]]:
-    if runtime.refiner is None:
+    if runtime.curator is None:
         return {}
     stage_hash = stable_hash(
         {
-            "stage": "refiner",
+            "stage": "llm_curation",
             "build": checkpoint_build_payload(build),
-            "terminology": refiner_stage_payload(terminology),
-            "verified": terms_by_row_checksum(verified_by_row),
+            "terminology": llm_curation_stage_payload(terminology),
+            "external_evidence": terms_by_row_checksum(evidence_enriched_by_row),
         }
     )
     cached = read_stage_jsonl(
         checkpoint=checkpoint,
-        stage_name="refiner",
-        relative_path=direction_checkpoint_path(rows, "04_refined_terms.jsonl"),
+        stage_name="llm_curation",
+        relative_path=direction_checkpoint_path(rows, "04_llm_curated_terms.jsonl"),
         expected_hash=stage_hash,
-        reuse=checkpoint.config.reuse_refiner,
+        reuse=checkpoint.config.reuse_llm_curation,
     )
     if cached is not None:
         return terms_by_row_from_records(cached)
@@ -849,12 +858,12 @@ def load_or_run_refiner_stage(
     total = len(rows)
     for index, row in enumerate(rows, start=1):
         row_id = manifest_row_id(row)
-        terms = verified_by_row.get(row_id, [])
+        terms = evidence_enriched_by_row.get(row_id, [])
         refined_terms: list[DatasetTerminologyTerm] = []
         if terms:
             direction = str(row.get("direction") or "unknown-direction")
-            print(f"Refining terminology for {direction} row {index}/{total}.")
-            refined_terms = runtime.refiner.refine(
+            print(f"Curating terminology for {direction} row {index}/{total}.")
+            refined_terms = runtime.curator.refine(
                 text=row["_target_text"],
                 target_language=row["target_language"],
                 candidates=terms,
@@ -864,8 +873,8 @@ def load_or_run_refiner_stage(
         records.append(terms_record(row=row, terms=refined_terms))
     write_stage_jsonl(
         checkpoint=checkpoint,
-        stage_name="refiner",
-        relative_path=direction_checkpoint_path(rows, "04_refined_terms.jsonl"),
+        stage_name="llm_curation",
+        relative_path=direction_checkpoint_path(rows, "04_llm_curated_terms.jsonl"),
         rows=records,
         stage_hash=stage_hash,
     )
@@ -943,7 +952,7 @@ def generate_candidate_terms(
     return deduplicate_terms(terms)
 
 
-def generate_extractor_candidate_terms(
+def generate_candidate_extraction_terms(
     row: dict[str, Any],
     *,
     domain: str,
@@ -1015,7 +1024,7 @@ def extract_terms_from_dataset_generator(
     return terms
 
 
-def verify_candidate_terms(
+def enrich_candidates_with_external_evidence(
     terms: list[DatasetTerminologyTerm],
     *,
     row: dict[str, Any],
@@ -1085,14 +1094,14 @@ def verify_legal_candidate_terms(
 def apply_terminology_records(
     rows: list[dict[str, Any]],
     *,
-    verified_by_row: dict[str, list[DatasetTerminologyTerm]],
-    refined_by_row: dict[str, list[DatasetTerminologyTerm]],
+    evidence_enriched_by_row: dict[str, list[DatasetTerminologyTerm]],
+    curated_by_row: dict[str, list[DatasetTerminologyTerm]],
 ) -> list[dict[str, Any]]:
     for row in rows:
         row_id = manifest_row_id(row)
         terms = [
-            *verified_by_row.get(row_id, []),
-            *refined_by_row.get(row_id, []),
+            *evidence_enriched_by_row.get(row_id, []),
+            *curated_by_row.get(row_id, []),
         ]
         row["terminology"] = [term.to_json() for term in terms]
     return rows
@@ -1261,7 +1270,7 @@ def checkpoint_build_payload(build: BenchmarkBuildConfig) -> dict[str, Any]:
     }
 
 
-def extractor_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+def candidate_extraction_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
     return {
         "domain": terminology.domain,
         "candidate_max_terms": terminology.candidate_max_terms,
@@ -1271,26 +1280,28 @@ def extractor_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str
         "max_output_tokens": terminology.max_output_tokens,
         "thinking": terminology.thinking,
         "reasoning_effort": terminology.reasoning_effort,
-        "extractors": terminology.extractors,
+        "candidate_extractors": terminology.candidate_extractors,
         "nobi_model": terminology.nobi_model,
         "spacy_model": terminology.spacy_model,
     }
 
 
-def verifier_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+def external_evidence_enrichment_stage_payload(
+    terminology: BenchmarkTerminologyConfig,
+) -> dict[str, Any]:
     local_iate_path = str(terminology.local_iate_path) if terminology.local_iate_path else None
     return {
         "domain": terminology.domain,
         "candidate_max_terms": terminology.candidate_max_terms,
-        "verifiers": terminology.verifiers,
+        "external_evidence_sources": terminology.external_evidence_sources,
         "local_iate_path": local_iate_path,
     }
 
 
-def refiner_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+def llm_curation_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
     return {
         "domain": terminology.domain,
-        "refiner": terminology.refiner,
+        "llm_curation": terminology.llm_curation,
         "refined_max_terms": terminology.refined_max_terms,
         "model": terminology.model,
         "base_url": terminology.base_url,

@@ -21,9 +21,9 @@ run_id = "auto"
 
 [checkpoint.reuse]
 selection = true
-extractors = true
-verifiers = true
-refiner = true
+candidate_extraction = true
+external_evidence_enrichment = true
+llm_curation = true
 manifest = true
 
 [terminology]
@@ -34,10 +34,10 @@ model = "gpt-4.1-mini"
 base_url = "https://api.openai.com/v1"
 api_mode = "responses"
 max_output_tokens = 1024
-extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]
-verifiers = ["local_iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]
+candidate_extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]
+external_evidence_sources = ["local_iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]
 local_iate_path = "data/iate"
-refiner = true
+llm_curation = true
 workers = 2
 openai_timeout = 120.0
 

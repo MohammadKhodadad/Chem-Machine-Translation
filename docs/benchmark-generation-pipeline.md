@@ -30,9 +30,9 @@ Inside stage 2, terminology creation is stage-based:
 1. Select all benchmark rows for the build and write a checkpoint.
 2. Run all configured candidate extractors across the selected rows.
 3. Deduplicate and cap the broad candidate pool, normally at `40` terms per row.
-4. Run verifier/enrichment sources across the candidate pool.
+4. Run external evidence sources across the candidate pool.
 5. Rank and store candidate or `verified` terms.
-6. Run the final LLM refiner across the verified/enriched row records when enabled in config,
+6. Run LLM terminology curation across the externally enriched row records when enabled in config,
    normally capped at `8` terms per row.
 7. Write final manifests and benchmark metadata.
 
@@ -68,16 +68,16 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  A[Selected rows checkpoint] --> B[All extractors stage]
+  A[Selected rows checkpoint] --> B[Candidate extraction stage]
   B --> C[Candidate pool checkpoint]
-  C --> D[Verifier enrichment stage]
-  D --> E[Verified candidates checkpoint]
-  E --> F[LLM refiner stage]
+  C --> D[External evidence enrichment stage]
+  D --> E[External evidence checkpoint]
+  E --> F[LLM terminology curation stage]
   F --> G[Final manifest rows checkpoint]
   G --> H[manifest.jsonl and metadata.json]
 ```
 
-### Candidate Extractors To Refiner
+### Terminology Stages
 
 ```mermaid
 flowchart TB
@@ -89,9 +89,9 @@ flowchart TB
   C --> F
   D --> F
   E --> F
-  F --> G[External verifiers]
-  G --> H[verified evidence]
-  H --> I[LLM refiner]
+  F --> G[External evidence sources]
+  G --> H[external evidence]
+  H --> I[LLM terminology curation]
   I --> J[final refined terminology]
 ```
 
@@ -124,9 +124,10 @@ Standard benchmark generation is configured in TOML:
 
 - `config/benchmark_generation/chemistry.toml` points at the Google Patents source snapshot, uses
   `mode = "per_direction"` with `bidirectional = true`, and enables the chemistry
-  extractor/verifier/refiner stack.
+  candidate extraction/external evidence enrichment/LLM curation stack.
 - `config/benchmark_generation/legal.toml` points at both JRC source snapshots, sets
-  `mode = "anchored"` with `anchor_limit = 250`, and enables the legal extractor/verifier/refiner
+  `mode = "anchored"` with `anchor_limit = 250`, and enables the legal candidate-extraction,
+  external-evidence-enrichment, and LLM-curation stack.
   stack.
 
 Both configs are loaded by `src/chem_machine_translation/benchmark_generation/config.py` and
@@ -150,16 +151,17 @@ run_id = "auto"
 
 [checkpoint.reuse]
 selection = true
-extractors = true
-verifiers = true
-refiner = true
+candidate_extraction = true
+external_evidence_enrichment = true
+llm_curation = true
 manifest = true
 ```
 
 With `run_id = "auto"`, checkpoints are stored by benchmark name and build name. A rerun reuses a
 stage when its checkpoint file exists and the stage-specific hash still matches. The hash includes
-the inputs and config values relevant to that stage, so a refiner-only config change can reuse
-selection, extractor, and verifier checkpoints while rerunning refinement and final manifest writing.
+the inputs and config values relevant to that stage, so an LLM-curation-only config change can reuse
+selection, candidate extraction, and external evidence checkpoints while rerunning curation and final
+manifest writing.
 
 Each build uses this layout:
 
@@ -171,9 +173,9 @@ benchmark_work/
       01_selected_rows.jsonl
       directions/
         <language-direction>/
-          02_extractor_candidates.jsonl
-          03_verified_candidates.jsonl
-          04_refined_terms.jsonl
+          02_candidate_extraction.jsonl
+          03_external_evidence.jsonl
+          04_llm_curated_terms.jsonl
           05_manifest_rows.jsonl
 ```
 
@@ -189,8 +191,9 @@ checks `stage_status.json` and reuses every completed stage whose stage hash sti
 uv run python scripts/generate_benchmark.py --config config/benchmark_generation/legal.toml
 ```
 
-If extraction completed but verification did not, the rerun reuses selected rows and extractor
-candidates, then starts from verification. If a config change invalidates an earlier stage, that
+If candidate extraction completed but external evidence enrichment did not, the rerun reuses selected
+rows and candidate-extraction records, then starts from external evidence enrichment. If a config
+change invalidates an earlier stage, that
 stage and dependent stages are rebuilt.
 
 To force one stage to rerun, use `[checkpoint.reuse]`. For example, this keeps selection and
@@ -199,9 +202,9 @@ extractor outputs but recomputes verification:
 ```toml
 [checkpoint.reuse]
 selection = true
-extractors = true
-verifiers = false
-refiner = true
+candidate_extraction = true
+external_evidence_enrichment = false
+llm_curation = true
 manifest = true
 ```
 
@@ -214,13 +217,14 @@ Stage hashes are intentionally scoped:
 
 - Selection hash: source snapshot path, language selection, `limit`, `anchor_limit`, and
   `bidirectional`.
-- Extractor hash: selected row checksum plus extractor names, extractor models, LLM model/settings,
+- Candidate-extraction hash: selected row checksum plus extractor names, extractor models, LLM model/settings,
   and `candidate_max_terms`.
-- Verifier hash: candidate checksum plus verifier names and `local_iate_path`.
-- Refiner hash: verified-candidate checksum plus refiner model/settings and `refined_max_terms`.
+- External-evidence-enrichment hash: candidate checksum plus evidence-source names and `local_iate_path`.
+- LLM-curation hash: external-evidence checksum plus LLM model/settings and `refined_max_terms`.
 - Manifest hash: final row content before writing public manifests.
 
-This means a refiner-only model change should reuse selection, extraction, and verification; a
+This means an LLM-curation-only model change should reuse selection, candidate extraction, and external
+evidence enrichment; a
 language or anchor change should invalidate the whole downstream pipeline.
 
 ## Local IATE
@@ -528,26 +532,26 @@ that do not look terminology-like. These candidates use:
 The spaCy extractor is useful as a broad deterministic recall source, especially when named entities
 or noun chunks capture domain phrases missed by the LLM or Stanza paths.
 
-## Verifier And Enrichment Sources
+## External Evidence Sources
 
-Verifiers do not create the initial span. They check whether an extracted target-side candidate has
-external evidence, then append provenance and synonyms or labels.
+External evidence sources do not create the initial span. They check whether an extracted
+target-side candidate has external evidence, then append provenance and synonyms or labels.
 
-If a verifier matches:
+If an external evidence source matches:
 
 - its name is appended to `source`;
 - its name is added to `verified_by`;
 - matching labels or synonyms are stored in `candidates`;
-- confidence increases by `0.05` per verifier source, capped at `1.0`;
+- confidence increases by `0.05` per external evidence source, capped at `1.0`;
 - `term_group` becomes `verified`.
 
-### Chemistry Verifiers
+### Chemistry Sources
 
-Google Patents chemistry builds can use these verifier flags:
+Google Patents chemistry builds can use these external-evidence flags:
 
 - `--iate-terminology`: online IATE same-language terminology lookup.
-- `--wikidata-terminology`: Wikidata label lookup. Stored as `wikipedia` in term evidence for
-  historical naming compatibility.
+- `--wikidata-terminology`: Wikidata exact same-entity label and alias lookup. Stored as
+  `wikidata` in term evidence.
 - `--pubchem-terminology`: PubChem compound synonym lookup.
 - `--chebi-terminology`: ChEBI synonym lookup through the EBI API.
 - `--chembl-terminology`: ChEMBL molecule and synonym lookup.
@@ -555,25 +559,26 @@ Google Patents chemistry builds can use these verifier flags:
 - `--nci-terminology`: NCI Thesaurus lookup through EVS REST.
 - `--agrovoc-terminology`: AGROVOC multilingual label lookup through Skosmos.
 
-### Legal Verifiers
+### Legal Sources
 
 JRC legal builds normally use:
 
 - `--iate-terminology`: online IATE same-language legal terminology lookup.
-- `--wikipedia-terminology`: Wikidata label lookup, stored as `wikipedia`.
+- `--wikipedia-terminology`: Wikidata exact same-entity label and alias lookup, stored as
+  `wikidata`.
 - `--unterm-terminology`: UNTERM public search-page evidence.
 
 There is also EuroVoc descriptor matching support in the legal terminology code. The current JRC
 builder passes an empty descriptor map, so EuroVoc is not part of the standard JRC command unless
 that metadata is supplied.
 
-## LLM Refiner
+## LLM Terminology Curation
 
 Class: `LLMTerminologyRefiner`
 
-The refiner is the final selection stage. It receives the full target/reference text and the existing
-candidate pool. It must select from provided candidate IDs only. It cannot invent new terms, rewrite
-terms, or repair spans.
+LLM terminology curation is the final selection stage. It receives the full target/reference text and
+the existing candidate pool. It must select from provided candidate IDs only. It cannot invent new
+terms, rewrite terms, or repair spans.
 
 Domain routing:
 
@@ -581,13 +586,13 @@ Domain routing:
   `llm_refiner_chem` to `source`.
 - `jrc` and `legal` use the legal refiner prompt and append `llm_refiner_jrc` to `source`.
 
-The standard refiner target is:
+The standard LLM-curation target is:
 
 ```text
 max_terms = 8
 ```
 
-The refiner is allowed to return fewer than eight terms when fewer candidates are truly useful. It
+The curator is allowed to return fewer than eight terms when fewer candidates are truly useful. It
 should prefer externally verified terms when quality is comparable, but it can keep an unverified
 term when the term is central and translation-sensitive.
 
@@ -602,10 +607,10 @@ Accepted refined terms use:
 
 - `term_group`: `refined`
 - `decision`: `keep_refined`
-- `source`: original provenance plus the refiner tag
+- `source`: original provenance plus the curator implementation tag
 
-The config-driven dataset builders now integrate the final refiner stage directly. When
-`refiner = true`, the final manifest contains both the verified/candidate terms and the appended
+The config-driven dataset builders now integrate the final LLM-terminology-curation stage directly. When
+`llm_curation = true`, the final manifest contains both the verified/candidate terms and the appended
 `refined` terms selected by `LLMTerminologyRefiner`.
 
 ## Evaluation Terminology Groups
@@ -615,10 +620,10 @@ Terminology metrics support these groups:
 - `llm`: target-side LLM extractor candidates.
 - `algorithmic`: deterministic candidates from Stanza/UD, XLM-R/NOBI, or spaCy.
 - `verified`: candidates with external verifier evidence.
-- `refined`: final LLM-refiner-selected terms.
+- `refined`: final LLM-curated terms. This persisted group name remains for compatibility.
 
 The default terminology metric group is `verified`, which is appropriate for candidate-only
-manifests. Final benchmark scoring should use `refined` after the refiner stage has been applied.
+manifests. Final benchmark scoring should use `refined` after LLM terminology curation has run.
 
 For candidate-only manifests:
 
@@ -630,7 +635,7 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --max-manifest-terminology-terms 8
 ```
 
-For finalized refiner manifests:
+For finalized curated manifests:
 
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
@@ -644,17 +649,18 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
 
 The copy-paste commands live in `benchmark_datasets/README.md`.
 
-Use the Google Patents command there for chemistry benchmarks. It enables the LLM chemistry
-extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the chemistry verifier set.
+Use the Google Patents command there for chemistry benchmarks. It enables candidate extraction with
+the LLM chemistry extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the chemistry external-evidence set.
 
 Use `config/benchmark_generation/legal.toml` for legal benchmarks. It defines both the article and
-definition builds and enables the legal LLM extractor, Stanza/UD, XLM-R/NOBI, spaCy, and the legal
-verifier set.
+definition builds and enables legal candidate extraction, external evidence enrichment, and LLM
+terminology curation.
 
 ## Benchmark Creator Orchestration
 
 This section is intentionally near the end because it describes how the dataset builders wire
-together the extractor, verifier, and refiner pieces described above.
+together the candidate-extraction, external-evidence-enrichment, and LLM-curation pieces described
+above.
 
 ### Google Patents
 
@@ -662,23 +668,23 @@ When `config/benchmark_generation/chemistry.toml` is used, the benchmark creator
 
 1. Build manifest rows from the Google source-pair snapshot.
 2. Write or reuse the selected-row checkpoint.
-3. Run the chemistry LLM extractor, Stanza/UD, XLM-R/NOBI, and spaCy across the selected rows.
-4. Merge extractor outputs and deduplicate by normalized target surface.
-5. Write or reuse the extractor-candidate checkpoint.
-6. Run chemistry verifiers on the candidate pool.
+3. Run chemistry candidate extraction with the LLM, Stanza/UD, XLM-R/NOBI, and spaCy.
+4. Merge candidate-extraction outputs and deduplicate by normalized target surface.
+5. Write or reuse the candidate-extraction checkpoint.
+6. Run chemistry external evidence enrichment on the candidate pool.
 7. Rank terms through `select_dataset_terms`.
-8. Write or reuse the verified-candidate checkpoint.
-9. Run the LLM refiner across the verified/enriched row records when `refiner = true`.
+8. Write or reuse the external-evidence checkpoint.
+9. Run LLM terminology curation across the externally enriched row records when `llm_curation = true`.
 10. Write or reuse the manifest-row checkpoint.
 11. Write final direction manifests, combined manifest, and `metadata.json`.
 
 The relevant config entries are:
 
-- `extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]`
-- `verifiers = ["local_iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]`
+- `candidate_extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]`
+- `external_evidence_sources = ["local_iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]`
 - `candidate_max_terms = 40`
 - `refined_max_terms = 8`
-- `refiner = true`
+- `llm_curation = true`
 
 ### JRC-Acquis
 
@@ -686,14 +692,14 @@ JRC uses the same stage checkpoints, with legal-specific extraction and ranking:
 
 1. Build manifest rows from the JRC article or definition source-pair snapshot.
 2. Write or reuse the selected-row checkpoint.
-3. Run the legal LLM extractor when `llm_legal` is configured.
-4. Run Stanza/UD, XLM-R/NOBI, and spaCy when the deterministic extractors are configured.
-5. Merge all extractor outputs and deduplicate with `deduplicate_terms`.
-6. Write or reuse the extractor-candidate checkpoint.
+3. Run the legal LLM candidate extractor when `llm_legal` is configured.
+4. Run Stanza/UD, XLM-R/NOBI, and spaCy when the deterministic candidate extractors are configured.
+5. Merge all candidate-extraction outputs and deduplicate with `deduplicate_terms`.
+6. Write or reuse the candidate-extraction checkpoint.
 7. Run local IATE, Wikidata, UNTERM, and optional EuroVoc evidence over the candidate pool.
 8. Rank legal terms through `select_legal_terms`.
-9. Write or reuse the verified-candidate checkpoint.
-10. Run the LLM refiner across the verified/enriched row records when `refiner = true`.
+9. Write or reuse the external-evidence checkpoint.
+10. Run LLM terminology curation across the externally enriched row records when `llm_curation = true`.
 11. Write final direction manifests, combined manifest, and `metadata.json`.
 
 The JRC builder also caches deterministic target-term extraction by target language and target text,

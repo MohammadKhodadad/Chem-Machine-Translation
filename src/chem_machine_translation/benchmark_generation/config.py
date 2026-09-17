@@ -1,9 +1,9 @@
 from chem_machine_translation.benchmark.config import (
     SUPPORTED_DOMAINS,
-    SUPPORTED_EXTRACTORS,
+    SUPPORTED_CANDIDATE_EXTRACTORS,
+    SUPPORTED_EXTERNAL_EVIDENCE_SOURCES,
     SUPPORTED_SELECTION_MODES,
     SUPPORTED_SOURCE_KINDS,
-    SUPPORTED_VERIFIERS,
     BenchmarkBuildConfig,
     BenchmarkCheckpointConfig,
     BenchmarkGenerationConfig,
@@ -29,10 +29,10 @@ from chem_machine_translation.benchmark.config import (
 
 __all__ = [
     "SUPPORTED_DOMAINS",
-    "SUPPORTED_EXTRACTORS",
+    "SUPPORTED_CANDIDATE_EXTRACTORS",
+    "SUPPORTED_EXTERNAL_EVIDENCE_SOURCES",
     "SUPPORTED_SELECTION_MODES",
     "SUPPORTED_SOURCE_KINDS",
-    "SUPPORTED_VERIFIERS",
     "BenchmarkBuildConfig",
     "BenchmarkCheckpointConfig",
     "BenchmarkGenerationConfig",

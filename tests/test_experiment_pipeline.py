@@ -59,9 +59,9 @@ limit = 1
 
 [terminology]
 domain = "jrc"
-extractors = []
-verifiers = []
-refiner = false
+candidate_extractors = []
+external_evidence_sources = []
+llm_curation = false
 """,
         encoding="utf-8",
     )
@@ -121,9 +121,9 @@ limit = 1
 
 [terminology]
 domain = "jrc"
-extractors = []
-verifiers = []
-refiner = false
+candidate_extractors = []
+external_evidence_sources = []
+llm_curation = false
 ''',
         encoding="utf-8",
     )

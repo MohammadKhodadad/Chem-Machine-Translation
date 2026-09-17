@@ -15,14 +15,14 @@ from chem_machine_translation.data.terminology import DEFAULT_SPACY_MODEL
 SUPPORTED_DOMAINS = {"chemistry", "google_patents", "jrc", "legal"}
 SUPPORTED_SOURCE_KINDS = {"google_patents_snapshot", "jrc_acquis_snapshot"}
 SUPPORTED_SELECTION_MODES = {"per_direction", "anchored"}
-SUPPORTED_EXTRACTORS = {
+SUPPORTED_CANDIDATE_EXTRACTORS = {
     "llm_chemistry",
     "llm_legal",
     "stanza_ud",
     "xlmr_nobi",
     "spacy",
 }
-SUPPORTED_VERIFIERS = {
+SUPPORTED_EXTERNAL_EVIDENCE_SOURCES = {
     "iate",
     "local_iate",
     "wikidata",
@@ -63,9 +63,9 @@ class BenchmarkTerminologyConfig:
     max_output_tokens: int = DEFAULT_LLM_MAX_OUTPUT_TOKENS
     thinking: str | None = None
     reasoning_effort: str | None = None
-    extractors: tuple[str, ...] = ()
-    verifiers: tuple[str, ...] = ()
-    refiner: bool = True
+    candidate_extractors: tuple[str, ...] = ()
+    external_evidence_sources: tuple[str, ...] = ()
+    llm_curation: bool = True
     workers: int = 1
     legal_workers: int | None = None
     stanza_workers: int | None = None
@@ -93,9 +93,9 @@ class BenchmarkCheckpointConfig:
     resume: bool = True
     run_id: str = "auto"
     reuse_selection: bool = True
-    reuse_extractors: bool = True
-    reuse_verifiers: bool = True
-    reuse_refiner: bool = True
+    reuse_candidate_extraction: bool = True
+    reuse_external_evidence_enrichment: bool = True
+    reuse_llm_curation: bool = True
     reuse_manifest: bool = True
 
 
@@ -164,9 +164,9 @@ def terminology_config_from_mapping(
         max_output_tokens=int(payload.get("max_output_tokens") or DEFAULT_LLM_MAX_OUTPUT_TOKENS),
         thinking=optional_string(payload.get("thinking")),
         reasoning_effort=optional_string(payload.get("reasoning_effort")),
-        extractors=string_tuple(payload.get("extractors")),
-        verifiers=string_tuple(payload.get("verifiers")),
-        refiner=bool(payload.get("refiner", True)),
+        candidate_extractors=string_tuple(payload.get("candidate_extractors")),
+        external_evidence_sources=string_tuple(payload.get("external_evidence_sources")),
+        llm_curation=bool(payload.get("llm_curation", True)),
         workers=int(payload.get("workers") or 1),
         legal_workers=optional_int(payload.get("legal_workers")),
         stanza_workers=optional_int(payload.get("stanza_workers")),
@@ -193,9 +193,11 @@ def checkpoint_config_from_mapping(
         resume=bool(payload.get("resume", True)),
         run_id=str(payload.get("run_id") or "auto"),
         reuse_selection=bool(reuse_payload.get("selection", True)),
-        reuse_extractors=bool(reuse_payload.get("extractors", True)),
-        reuse_verifiers=bool(reuse_payload.get("verifiers", True)),
-        reuse_refiner=bool(reuse_payload.get("refiner", True)),
+        reuse_candidate_extraction=bool(reuse_payload.get("candidate_extraction", True)),
+        reuse_external_evidence_enrichment=bool(
+            reuse_payload.get("external_evidence_enrichment", True)
+        ),
+        reuse_llm_curation=bool(reuse_payload.get("llm_curation", True)),
         reuse_manifest=bool(reuse_payload.get("manifest", True)),
     )
 
@@ -294,8 +296,16 @@ def validate_benchmark_config(
         raise ValueError("At least one benchmark build is required.")
     if not str(config.checkpoint.work_dir):
         raise ValueError("checkpoint.work_dir must not be empty.")
-    validate_terms("extractors", config.terminology.extractors, SUPPORTED_EXTRACTORS)
-    validate_terms("verifiers", config.terminology.verifiers, SUPPORTED_VERIFIERS)
+    validate_terms(
+        "candidate_extractors",
+        config.terminology.candidate_extractors,
+        SUPPORTED_CANDIDATE_EXTRACTORS,
+    )
+    validate_terms(
+        "external_evidence_sources",
+        config.terminology.external_evidence_sources,
+        SUPPORTED_EXTERNAL_EVIDENCE_SOURCES,
+    )
     if config.terminology.candidate_max_terms < 1:
         raise ValueError("terminology.candidate_max_terms must be positive.")
     if config.terminology.refined_max_terms < 1:
