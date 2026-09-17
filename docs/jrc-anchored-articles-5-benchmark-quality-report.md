@@ -687,3 +687,54 @@ the model-level comparison above.
 English was the strongest target language by BLEU and target-term coverage. French had the lowest
 target-term coverage despite a high FSP/MQM score, which suggests that general translation quality
 and exact glossary-term preservation are measuring different failure modes in this benchmark.
+
+### Per-Model Results By Target Language
+
+The tables below split the results by model and target language. Each cell aggregates 20 rows: five
+benchmark rows from each of the four source languages translating into that target language.
+
+#### Term-Based Metrics
+
+`target_term_coverage` measures direct coverage of the accepted target terms from the benchmark
+manifest. `terminology_success_rate` is shown as `n/a` because these score rows did not produce an
+applicable value for that metric; missing values are not treated as zero.
+
+| Model | Target | Rows | Target-term coverage | Terminology success rate |
+| --- | --- | ---: | ---: | ---: |
+| `gpt_4_1_mini` | `de` | 20 | 91.22 | n/a |
+| `gpt_4_1_mini` | `en` | 20 | 97.40 | n/a |
+| `gpt_4_1_mini` | `es` | 20 | 95.72 | n/a |
+| `gpt_4_1_mini` | `fr` | 20 | 77.47 | n/a |
+| `gpt_4_1_mini` | `pt` | 20 | 95.04 | n/a |
+| `gpt_4_1_nano` | `de` | 20 | 71.83 | n/a |
+| `gpt_4_1_nano` | `en` | 20 | 87.38 | n/a |
+| `gpt_4_1_nano` | `es` | 20 | 88.32 | n/a |
+| `gpt_4_1_nano` | `fr` | 20 | 78.44 | n/a |
+| `gpt_4_1_nano` | `pt` | 20 | 81.08 | n/a |
+
+`gpt_4_1_mini` leads `gpt_4_1_nano` in target-term coverage for German, English, Spanish, and
+Portuguese. Nano is marginally higher for French, 78.44 versus 77.47, but mini has the stronger
+overall terminology result.
+
+#### General and Non-Glossary Metrics
+
+These metrics assess translation overlap, semantic quality, fluency, and judged translation quality.
+FSP/MQM can identify terminology errors as part of its broader judgment, but it is not a direct
+glossary-coverage metric.
+
+| Model | Target | Rows | BLEU | chrF | chrF2++ | COMET | FSP/MQM | Sequence similarity |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `gpt_4_1_mini` | `de` | 20 | 33.59 | 68.44 | 64.47 | 0.88 | 97.10 | 26.02 |
+| `gpt_4_1_mini` | `en` | 20 | 61.44 | 81.62 | 79.08 | 0.89 | 97.95 | 39.65 |
+| `gpt_4_1_mini` | `es` | 20 | 43.47 | 73.76 | 71.80 | 0.89 | 97.65 | 36.68 |
+| `gpt_4_1_mini` | `fr` | 20 | 43.46 | 74.58 | 71.42 | 0.89 | 98.25 | 46.03 |
+| `gpt_4_1_mini` | `pt` | 20 | 39.29 | 71.26 | 68.98 | 0.89 | 97.60 | 40.08 |
+| `gpt_4_1_nano` | `de` | 20 | 39.02 | 68.47 | 64.27 | 0.88 | 94.30 | 25.03 |
+| `gpt_4_1_nano` | `en` | 20 | 57.38 | 79.27 | 76.59 | 0.89 | 96.10 | 39.43 |
+| `gpt_4_1_nano` | `es` | 20 | 52.30 | 75.99 | 73.20 | 0.89 | 95.10 | 38.09 |
+| `gpt_4_1_nano` | `fr` | 20 | 47.15 | 73.99 | 70.44 | 0.89 | 95.80 | 42.76 |
+| `gpt_4_1_nano` | `pt` | 20 | 45.41 | 71.82 | 68.43 | 0.89 | 95.55 | 39.42 |
+
+For general metrics, nano has higher BLEU for German, Spanish, French, and Portuguese, while mini
+is higher for English. Mini has higher FSP/MQM in every target language, consistent with its stronger
+overall judged quality and lower terminology loss.
