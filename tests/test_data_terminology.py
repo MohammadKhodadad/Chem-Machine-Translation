@@ -1,9 +1,12 @@
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from urllib.parse import parse_qs, urlparse
 
 from chem_machine_translation.data.terminology import (
     TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT,
+    UNTERM_LANGUAGE_CODES,
+    UNTERMClient,
     DatasetTerminologyGenerator,
     DatasetTerminologyTerm,
     LLMTargetCandidateExtractor,
@@ -133,6 +136,60 @@ def test_target_candidate_prompt_requires_exact_target_spans() -> None:
         TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT
     )
     assert "Do not translate" in TARGET_CANDIDATE_EXTRACTOR_SYSTEM_PROMPT
+
+
+def test_unterm_client_requires_exact_result_match() -> None:
+    payload = """
+    <html>
+      <div>Results 1-10 of 120</div>
+      <a href="/en/search?searchTerm=water">water</a>
+      <a href="/en/search?searchTerm=watery">watery</a>
+    </html>
+    """
+
+    assert UNTERMClient._result_contains_exact_match(payload, "water") is True
+    assert UNTERMClient._result_contains_exact_match(payload, "wate") is False
+
+
+def test_unterm_client_supports_all_six_un_languages_only() -> None:
+    assert UNTERM_LANGUAGE_CODES == {"ar", "zh", "en", "fr", "ru", "es"}
+    assert "de" not in UNTERM_LANGUAGE_CODES
+
+
+def test_unterm_search_uses_language_filter_not_language_route() -> None:
+    client = UNTERMClient(endpoint="https://example.test/unterm2")
+    captured = {}
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return b""
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["timeout"] = timeout
+        return _Response()
+
+    import chem_machine_translation.data.terminology as terminology_module
+
+    original_urlopen = terminology_module.urlopen
+    terminology_module.urlopen = fake_urlopen
+    try:
+        client._search("water", "de")
+    finally:
+        terminology_module.urlopen = original_urlopen
+
+    parsed = urlparse(captured["url"])
+    query = parse_qs(parsed.query)
+    assert parsed.path == "/unterm2/en/search"
+    assert query["searchTerm"] == ["water"]
+    assert query["searchLanguages"] == ["de"]
+    assert query["languagesDisplay"] == ["de"]
 
 
 def test_dataset_term_round_trips_json_shape() -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import re
 import threading
@@ -35,6 +36,7 @@ _MESH_LOOKUP_ENDPOINT = "https://id.nlm.nih.gov/mesh/lookup/descriptor"
 _NCI_ENDPOINT = "https://api-evsrest.nci.nih.gov/api/v1"
 _AGROVOC_ENDPOINT = "https://agrovoc.fao.org/browse/rest/v1"
 _USER_AGENT = "chem-machine-translation/0.1 (benchmark terminology lookup)"
+UNTERM_LANGUAGE_CODES = frozenset({"ar", "zh", "en", "fr", "ru", "es"})
 _TERMINOLOGY_PIPELINE_VERSION = "target-llm-stanza-ud-candidate-v5"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 _UD_HEAD_UPOS = {"NOUN", "PROPN", "NUM", "SYM", "X"}
@@ -841,18 +843,60 @@ class UNTERMClient:
         self._cache: dict[tuple[str, str], bool] = {}
 
     def term_exists(self, term: str, language_code: str) -> bool:
-        if language_code not in {"ar", "zh", "en", "fr", "ru", "es"}:
+        if language_code not in UNTERM_LANGUAGE_CODES:
             return False
         cache_key = (normalize_term_key(term), language_code)
         if cache_key in self._cache:
             return self._cache[cache_key]
         payload = self._search(term, language_code)
-        exists = bool(re.search(r"Results\s+1-\d+\s+of\s+[1-9]\d*", payload))
+        exists = self._result_contains_exact_match(payload, term)
         self._cache[cache_key] = exists
         return exists
 
+    @staticmethod
+    def _result_contains_exact_match(payload: str, term: str) -> bool:
+        normalized_term = normalize_term_key(term)
+        if not normalized_term:
+            return False
+
+        result_fragments = [
+            UNTERMClient._clean_result_text(match.group(1))
+            for match in re.finditer(r"<a\b[^>]*>(.*?)</a>", payload, flags=re.IGNORECASE | re.DOTALL)
+            if UNTERMClient._clean_result_text(match.group(1))
+        ]
+        if not result_fragments:
+            return False
+
+        for fragment in result_fragments:
+            if fragment == normalized_term:
+                return True
+            if re.search(rf"(?<![A-Za-z0-9]){re.escape(normalized_term)}(?![A-Za-z0-9])", fragment):
+                return True
+        return False
+
+    @staticmethod
+    def _clean_result_text(value: str) -> str:
+        text = html.unescape(value)
+        text = re.sub(r"<[^>]+>", " ", text, flags=re.DOTALL)
+        text = re.sub(r"[\u00A0\s]+", " ", text)
+        return " ".join(text.split()).casefold()
+
     def _search(self, term: str, language_code: str) -> str:
-        url = f"{self.endpoint}/{language_code}/search?{urlencode({'searchTerm': term})}"
+        query = [
+            ("searchTerm", term),
+            ("searchType", "0"),
+            ("searchLanguages", language_code),
+            ("languagesDisplay", language_code),
+            ("acronymSearch", "true"),
+            ("localDBSearch", "true"),
+            ("termTitleSearch", "true"),
+            ("phraseologySearch", "false"),
+            ("footnoteSearch", "false"),
+            ("fullTextSearch", "false"),
+            ("facetedSearch", "false"),
+            ("buildSubjectList", "true"),
+        ]
+        url = f"{self.endpoint}/en/search?{urlencode(query)}"
         request = Request(url, headers={"User-Agent": _USER_AGENT})
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
