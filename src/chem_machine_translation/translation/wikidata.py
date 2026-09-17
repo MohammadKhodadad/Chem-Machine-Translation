@@ -44,6 +44,7 @@ class WikidataClient:
         self.endpoint = endpoint
         self.timeout_seconds = timeout_seconds
         self._cache: dict[tuple[str, str, str], WikidataTermTranslation | None] = {}
+        self._synonym_cache: dict[tuple[str, str], list[str]] = {}
 
     def translate_term(
         self,
@@ -68,6 +69,20 @@ class WikidataClient:
         )
         self._cache[cache_key] = translation
         return translation
+
+    def lookup_synonyms(self, term: str, language_code: str) -> list[str]:
+        cache_key = (_normalize_label(term), language_code)
+        if cache_key in self._synonym_cache:
+            return self._synonym_cache[cache_key]
+
+        entity_id = self._find_entity_id(term, language_code)
+        if not entity_id:
+            self._synonym_cache[cache_key] = []
+            return []
+        entity = self._get_entity(entity_id, {language_code})
+        synonyms = _same_language_entity_terms(entity, term, language_code)
+        self._synonym_cache[cache_key] = synonyms
+        return synonyms
 
     def _find_entity_id(self, source_term: str, source_language_code: str) -> str | None:
         payload = self._get_json(
@@ -95,20 +110,7 @@ class WikidataClient:
         source_language_code: str,
         target_language_code: str,
     ) -> WikidataTermTranslation | None:
-        languages = "|".join(sorted({source_language_code, target_language_code, "en"}))
-        payload = self._get_json(
-            {
-                "action": "wbgetentities",
-                "format": "json",
-                "ids": entity_id,
-                "props": "labels|aliases|descriptions",
-                "languages": languages,
-                "languagefallback": "1",
-            }
-        )
-        if not payload:
-            return None
-        entity = payload.get("entities", {}).get(entity_id, {})
+        entity = self._get_entity(entity_id, {source_language_code, target_language_code, "en"})
         target_label = _get_label_or_alias(entity, target_language_code)
         if not target_label:
             return None
@@ -124,6 +126,20 @@ class WikidataClient:
             source_label=source_label,
             description=description,
         )
+
+    def _get_entity(self, entity_id: str, languages: set[str]) -> dict[str, Any]:
+        payload = self._get_json(
+            {
+                "action": "wbgetentities",
+                "format": "json",
+                "ids": entity_id,
+                "props": "labels|aliases|descriptions",
+                "languages": "|".join(sorted(languages)),
+                "languagefallback": "1",
+            }
+        )
+        entity = payload.get("entities", {}).get(entity_id, {})
+        return entity if isinstance(entity, dict) else {}
 
     def _get_json(self, params: dict[str, str]) -> dict[str, Any]:
         url = f"{self.endpoint}?{urlencode(params)}"
@@ -151,6 +167,24 @@ def _get_label_or_alias(entity: dict[str, Any], language_code: str) -> str:
             return str(alias)
 
     return ""
+
+
+def _same_language_entity_terms(
+    entity: dict[str, Any],
+    queried_term: str,
+    language_code: str,
+) -> list[str]:
+    label = entity.get("labels", {}).get(language_code, {}).get("value")
+    aliases = entity.get("aliases", {}).get(language_code, [])
+    terms = [str(label).strip()] if label else []
+    terms.extend(
+        str(alias.get("value", "")).strip()
+        for alias in aliases
+        if isinstance(alias, dict) and str(alias.get("value", "")).strip()
+    )
+    if _normalize_label(queried_term) not in {_normalize_label(term) for term in terms}:
+        return []
+    return list(dict.fromkeys(terms))
 
 
 def _labels_match(source_term: str, source_label: str) -> bool:

@@ -1401,26 +1401,18 @@ class DatasetTerminologyGenerator:
         if self.iate_client:
             language_code = iate_language_code(target_language)
             if language_code:
-                translation = self.iate_client.translate_term(
-                    source_term=target_term,
-                    source_language_code=language_code,
-                    target_language_code=language_code,
-                )
-                if translation:
-                    candidates[self.iate_source_name] = [translation.target_label]
+                synonyms = self.iate_client.lookup_synonyms(target_term, language_code)
+                if synonyms:
+                    candidates[self.iate_source_name] = synonyms
                     source_parts.append(self.iate_source_name)
 
         if self.wikidata_client:
             language_code = wikidata_language_code(target_language)
             if language_code:
-                translation = self.wikidata_client.translate_term(
-                    source_term=target_term,
-                    source_language_code=language_code,
-                    target_language_code=language_code,
-                )
-                if translation:
-                    candidates["wikipedia"] = [translation.target_label]
-                    source_parts.append("wikipedia")
+                synonyms = self.wikidata_client.lookup_synonyms(target_term, language_code)
+                if synonyms:
+                    candidates["wikidata"] = synonyms
+                    source_parts.append("wikidata")
 
         if self.unterm_client:
             language_code = iate_language_code(target_language)
@@ -1556,24 +1548,16 @@ class LegalTerminologyGenerator:
         source_parts = [term.source]
 
         if self.iate_client and iate_code:
-            translation = self.iate_client.translate_term(
-                source_term=target_term,
-                source_language_code=iate_code,
-                target_language_code=iate_code,
-            )
-            if translation:
-                candidates[self.iate_source_name] = [translation.target_label]
+            synonyms = self.iate_client.lookup_synonyms(target_term, iate_code)
+            if synonyms:
+                candidates[self.iate_source_name] = synonyms
                 source_parts.append(self.iate_source_name)
 
         if self.wikidata_client and wikidata_code:
-            translation = self.wikidata_client.translate_term(
-                source_term=target_term,
-                source_language_code=wikidata_code,
-                target_language_code=wikidata_code,
-            )
-            if translation:
-                candidates["wikipedia"] = [translation.target_label]
-                source_parts.append("wikipedia")
+            synonyms = self.wikidata_client.lookup_synonyms(target_term, wikidata_code)
+            if synonyms:
+                candidates["wikidata"] = synonyms
+                source_parts.append("wikidata")
 
         if self.unterm_client and language_code and self.unterm_client.term_exists(
             target_term,

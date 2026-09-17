@@ -3,8 +3,10 @@ import sqlite3
 from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.translation.iate import (
     IATETermTranslation,
+    IATEClient,
     LocalIATEClient,
     iate_language_code,
+    parse_iate_synonyms,
     parse_iate_translation,
 )
 from chem_machine_translation.translation.prompts import (
@@ -25,6 +27,7 @@ from chem_machine_translation.config import Settings
 from chem_machine_translation.translation.providers import resolve_provider_settings
 from chem_machine_translation.translation.wikidata import (
     WikidataTermTranslation,
+    WikidataClient,
     wikidata_language_code,
 )
 
@@ -120,6 +123,48 @@ class _FakeIATEClient:
     ) -> IATETermTranslation | None:
         self.calls.append((source_term, source_language_code, target_language_code))
         return self.translations.get(source_term)
+
+
+def test_wikidata_synonyms_require_an_exact_same_language_entity_term() -> None:
+    client = WikidataClient(endpoint="https://example.test/wikidata")
+    payloads = iter(
+        [
+            {"search": [{"id": "Q1"}]},
+            {
+                "entities": {
+                    "Q1": {
+                        "labels": {"en": {"value": "European Union"}},
+                        "aliases": {
+                            "en": [
+                                {"value": "EU"},
+                                {"value": "the Union"},
+                            ]
+                        },
+                    }
+                }
+            },
+        ]
+    )
+    client._get_json = lambda params: next(payloads)  # type: ignore[method-assign]
+
+    assert client.lookup_synonyms("EU", "en") == [
+        "European Union",
+        "EU",
+        "the Union",
+    ]
+
+
+def test_wikidata_synonyms_reject_a_fuzzy_search_result() -> None:
+    client = WikidataClient(endpoint="https://example.test/wikidata")
+    payloads = iter(
+        [
+            {"search": [{"id": "Q1"}]},
+            {"entities": {"Q1": {"labels": {"en": {"value": "water"}}}}},
+        ]
+    )
+    client._get_json = lambda params: next(payloads)  # type: ignore[method-assign]
+
+    assert client.lookup_synonyms("wate", "en") == []
 
 
 def test_one_shot_translator_uses_provider_and_terminology() -> None:
@@ -343,12 +388,39 @@ def test_parse_iate_translation_from_payload() -> None:
     )
 
 
+def test_parse_iate_synonyms_requires_an_exact_same_language_match() -> None:
+    payload = {
+        "items": [
+            {
+                "language": {
+                    "de": {
+                        "term_entries": [
+                            {"term_value": "Katalysator"},
+                            {"term_value": "Katalyseur"},
+                        ]
+                    }
+                }
+            },
+            {
+                "language": {"de": {"term_entries": [{"term_value": "Katalysatorin"}]}},
+            },
+        ]
+    }
+
+    assert parse_iate_synonyms(payload, "Katalysator", "de") == [
+        "Katalysator",
+        "Katalyseur",
+    ]
+    assert parse_iate_synonyms(payload, "Katalys", "de") == []
+
+
 def test_local_iate_client_reads_csv_export(tmp_path) -> None:
     csv_path = tmp_path / "iate.csv"
     csv_path.write_text(
         "entry_id,language_code,term\n"
         "IATE-1,en,catalyst\n"
         "IATE-1,de,Katalysator\n"
+        "IATE-1,de,Katalyseur\n"
         "IATE-2,fr,fluor\n",
         encoding="utf-8",
     )
@@ -367,6 +439,7 @@ def test_local_iate_client_reads_csv_export(tmp_path) -> None:
         target_label="fluor",
         entry_id="IATE-2",
     )
+    assert client.lookup_synonyms("Katalysator", "de") == ["Katalysator", "Katalyseur"]
 
 
 def test_local_iate_client_auto_builds_sqlite_index(tmp_path) -> None:
@@ -413,6 +486,7 @@ def test_local_iate_client_uses_sqlite_index(tmp_path) -> None:
             [
                 ("IATE-1", "en", "catalyst", "catalyst"),
                 ("IATE-1", "fr", "catalyseur", "catalyseur"),
+                ("IATE-1", "fr", "catalystes", "catalystes"),
                 ("IATE-2", "fr", "induit", "induit"),
                 ("IATE-2", "fr", "rotor", "rotor"),
             ],
@@ -430,6 +504,7 @@ def test_local_iate_client_uses_sqlite_index(tmp_path) -> None:
         target_label="rotor",
         entry_id="IATE-2",
     )
+    assert client.lookup_synonyms("catalyseur", "fr") == ["catalyseur", "catalystes"]
 
 
 def test_llm_terminology_layer_adds_wikidata_candidates() -> None:

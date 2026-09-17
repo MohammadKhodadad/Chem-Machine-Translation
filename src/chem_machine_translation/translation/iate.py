@@ -81,6 +81,7 @@ class IATEClient:
         self.endpoint = endpoint
         self.timeout_seconds = timeout_seconds
         self._cache: dict[tuple[str, str, str], IATETermTranslation | None] = {}
+        self._synonym_cache: dict[tuple[str, str], list[str]] = {}
 
     def translate_term(
         self,
@@ -100,6 +101,20 @@ class IATEClient:
         )
         self._cache[cache_key] = translation
         return translation
+
+    def lookup_synonyms(self, term: str, language_code: str) -> list[str]:
+        cache_key = (normalize_iate_term(term), language_code)
+        if cache_key in self._synonym_cache:
+            return self._synonym_cache[cache_key]
+
+        payload = self._search(term, language_code, language_code)
+        synonyms = parse_iate_synonyms(
+            payload=payload,
+            term=term,
+            language_code=language_code,
+        )
+        self._synonym_cache[cache_key] = synonyms
+        return synonyms
 
     def _search(
         self,
@@ -152,6 +167,7 @@ class LocalIATEClient:
         self._entries: dict[str, dict[str, list[str]]] = {}
         self._term_index: dict[tuple[str, str], list[str]] = {}
         self._cache: dict[tuple[str, str, str], IATETermTranslation | None] = {}
+        self._synonym_cache: dict[tuple[str, str], list[str]] = {}
 
     def translate_term(
         self,
@@ -177,6 +193,22 @@ class LocalIATEClient:
         translation = self._lookup(source_term, source_language_code, target_language_code)
         self._cache[cache_key] = translation
         return translation
+
+    def lookup_synonyms(self, term: str, language_code: str) -> list[str]:
+        cache_key = (normalize_iate_term(term), language_code)
+        if cache_key in self._synonym_cache:
+            return self._synonym_cache[cache_key]
+
+        sqlite_path = self._sqlite_path()
+        if sqlite_path is None and self.auto_build_index:
+            sqlite_path = self._build_sqlite_index_if_possible()
+        synonyms = (
+            self._lookup_synonyms_sqlite(term, language_code)
+            if sqlite_path is not None
+            else self._lookup_synonyms(term, language_code)
+        )
+        self._synonym_cache[cache_key] = synonyms
+        return synonyms
 
     def _lookup_sqlite(
         self,
@@ -248,6 +280,31 @@ class LocalIATEClient:
             pass
         self._cache[cache_key] = None
         return None
+
+    def _lookup_synonyms_sqlite(self, term: str, language_code: str) -> list[str]:
+        term_key = normalize_iate_term(term)
+        if not term_key:
+            return []
+        sqlite_path = self._sqlite_path()
+        if sqlite_path is None:
+            return []
+        try:
+            with sqlite3.connect(sqlite_path) as connection:
+                rows = connection.execute(
+                    """
+                    SELECT DISTINCT candidate.term
+                    FROM terms AS matched
+                    JOIN terms AS candidate ON candidate.entry_id = matched.entry_id
+                    WHERE matched.language_code = ?
+                      AND matched.normalized_term = ?
+                      AND candidate.language_code = ?
+                    ORDER BY candidate.rowid
+                    """,
+                    (language_code, term_key, language_code),
+                ).fetchall()
+        except sqlite3.Error:
+            return []
+        return unique_iate_terms(str(row[0]) for row in rows)
 
     def _sqlite_path(self) -> Path | None:
         if self.path.is_file() and self.path.suffix.lower() in {".sqlite", ".sqlite3", ".db"}:
@@ -350,6 +407,18 @@ class LocalIATEClient:
                 )
         return None
 
+    def _lookup_synonyms(self, term: str, language_code: str) -> list[str]:
+        term_key = normalize_iate_term(term)
+        if not term_key:
+            return []
+        self._ensure_loaded()
+        entry_ids = self._term_index.get((language_code, term_key), [])
+        return unique_iate_terms(
+            candidate
+            for entry_id in entry_ids
+            for candidate in self._entries.get(entry_id, {}).get(language_code, [])
+        )
+
     def _ensure_loaded(self) -> None:
         if self._loaded:
             return
@@ -443,6 +512,45 @@ def parse_iate_translation(
         )
 
     return None
+
+
+def parse_iate_synonyms(
+    payload: dict[str, Any],
+    term: str,
+    language_code: str,
+) -> list[str]:
+    """Return same-language IATE terms from entries containing an exact queried term."""
+    query_key = normalize_iate_term(term)
+    if not query_key:
+        return []
+    synonyms = []
+    for item in payload.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        language = item.get("language", {}).get(language_code, {})
+        if not isinstance(language, dict):
+            continue
+        labels = [
+            str(term_entry.get("term_value", "")).strip()
+            for term_entry in language.get("term_entries", [])
+            if isinstance(term_entry, dict) and str(term_entry.get("term_value", "")).strip()
+        ]
+        if any(normalize_iate_term(label) == query_key for label in labels):
+            synonyms.extend(labels)
+    return unique_iate_terms(synonyms)
+
+
+def unique_iate_terms(terms: Iterable[str]) -> list[str]:
+    unique = []
+    seen = set()
+    for term in terms:
+        value = str(term).strip()
+        key = normalize_iate_term(value)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique.append(value)
+    return unique
 
 
 def _first_term_value(term_entries: Any) -> str:

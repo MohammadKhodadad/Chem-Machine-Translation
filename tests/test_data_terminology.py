@@ -33,6 +33,13 @@ class _FakePubChemClient:
         return ["sodium chloride", "chlorure de sodium"] if term == "chlorure de sodium" else []
 
 
+class _FakeIATEClient:
+    def lookup_synonyms(self, term: str, language_code: str) -> list[str]:
+        if term == "chlorure de sodium" and language_code == "fr":
+            return ["chlorure de sodium", "sel de table"]
+        return []
+
+
 class _FakeExtractor:
     def extract(
         self,
@@ -399,6 +406,24 @@ def test_target_terminology_extractor_deduplicates_terms() -> None:
     target_terms = [term.target_terms[0] for term in terms]
     assert len(target_terms) == len(set(target_terms))
     assert terms[0].confidence == 0.8
+
+
+def test_generator_attaches_iate_same_language_variants() -> None:
+    generator = DatasetTerminologyGenerator(
+        max_terms=5,
+        extractor=_FakeExtractor(),
+        use_iate=True,
+        iate_client=_FakeIATEClient(),
+    )
+
+    terms = generator.generate(
+        source_text="The solution contains sodium chloride.",
+        reference_text="La solution contient du chlorure de sodium.",
+        target_language="French",
+    )
+
+    assert terms[0].verified_by == ("iate",)
+    assert terms[0].candidates == {"iate": ["chlorure de sodium", "sel de table"]}
 
 
 def test_generator_unions_multiple_candidate_extractors() -> None:
