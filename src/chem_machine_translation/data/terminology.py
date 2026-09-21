@@ -236,22 +236,30 @@ You receive target/reference text and a numbered list of candidate terms that we
 by other systems. Your job is to select only candidates that are useful benchmark terminology.
 
 Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
-candidate IDs. A selected term must be an exact span in the target/reference text.
+candidate IDs. Candidate text and category are immutable. A selected term must be an exact span in
+the target/reference text.
 
 Do not fill the quota. Select fewer than the requested maximum when fewer candidates are strong
 benchmark terms.
+
+Do not select overlapping candidates. When candidates overlap, choose the single most complete and
+specific exact span that carries the terminology meaning.
 
 Selection procedure:
 1. First discard candidates that are generic, partial, overly broad, or not useful for evaluating
    translation quality.
 2. Rank the remaining candidates by benchmark value: domain specificity, completeness, centrality in
    the text, and risk if mistranslated.
-3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term
-   quality is comparable to unverified candidates.
+3. Treat verified_by and the compact external-evidence summary as precision evidence. Multiple
+    evidence sources and variants strengthen an otherwise good candidate, but do not make a generic,
+    partial, or contextually weak candidate useful terminology.
 4. Keep an unverified candidate only when it is clearly central, complete, and more
    translation-sensitive than the verified alternatives.
 5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning
    weak terms.
+
+External variants are supporting evidence only. They are not selectable terms and must never replace,
+shorten, expand, or rewrite the candidate text.
 
 Keep candidates when they are complete, domain-specific, and translation-sensitive:
 - chemical names, compounds, materials, formulas, reagents, solvents, polymers, proteins;
@@ -276,8 +284,6 @@ Return only valid JSON with this shape:
   "terms": [
     {
       "candidate_id": 0,
-      "target_term": "exact candidate text",
-      "category": "one allowed chemistry category",
       "quality_score": 0.0,
       "reason": "short reason"
     }
@@ -292,22 +298,30 @@ You receive target/reference text and a numbered list of candidate terms that we
 by other systems. Your job is to select only candidates that are useful benchmark terminology.
 
 Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
-candidate IDs. A selected term must be an exact span in the target/reference text.
+candidate IDs. Candidate text and category are immutable. A selected term must be an exact span in
+the target/reference text.
 
 Do not fill the quota. Select fewer than the requested maximum when fewer candidates are strong
 benchmark terms.
+
+Do not select overlapping candidates. When candidates overlap, choose the single most complete and
+specific exact span that carries the terminology meaning.
 
 Selection procedure:
 1. First discard candidates that are generic, partial, overly broad, boilerplate, or not useful for
    evaluating translation quality.
 2. Rank the remaining candidates by benchmark value: legal specificity, completeness, centrality in
    the text, and risk if mistranslated.
-3. Treat verified_by as strong precision evidence. Prefer verified candidates when their term
-   quality is comparable to unverified candidates.
+3. Treat verified_by and the compact external-evidence summary as precision evidence. Multiple
+    evidence sources and variants strengthen an otherwise good candidate, but do not make a generic,
+    partial, or contextually weak candidate useful terminology.
 4. Keep an unverified candidate only when it is clearly central, complete, and more
    translation-sensitive than the verified alternatives.
 5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning
    weak terms.
+
+External variants are supporting evidence only. They are not selectable terms and must never replace,
+shorten, expand, or rewrite the candidate text.
 
 Keep candidates when they are complete, domain-specific, and translation-sensitive:
 - legal instruments, named legal acts, institutions, committees, agencies, programmes, and funds;
@@ -333,8 +347,6 @@ Return only valid JSON with this shape:
   "terms": [
     {
       "candidate_id": 0,
-      "target_term": "exact candidate text",
-      "category": "one allowed legal category",
       "quality_score": 0.0,
       "reason": "short reason"
     }
@@ -1662,6 +1674,13 @@ def llm_refiner_candidate_payload(candidates: list[DatasetTerminologyTerm]) -> l
         target_term = candidate.target_terms[0] if candidate.target_terms else ""
         if not target_term:
             continue
+        target_key = normalize_term_key(target_term)
+        variant_keys = {
+            normalize_term_key(variant)
+            for variants in candidate.candidates.values()
+            for variant in variants
+            if normalize_term_key(variant) and normalize_term_key(variant) != target_key
+        }
         payload.append(
             {
                 "candidate_id": index,
@@ -1669,6 +1688,8 @@ def llm_refiner_candidate_payload(candidates: list[DatasetTerminologyTerm]) -> l
                 "category": candidate.category,
                 "source": candidate.source,
                 "verified_by": list(candidate.verified_by),
+                "evidence_source_count": len(candidate.verified_by),
+                "variant_count": len(variant_keys),
                 "confidence": candidate.confidence,
             }
         )
@@ -1708,7 +1729,6 @@ def parse_llm_refined_terms(
         reason = str(raw_term.get("reason", "")).strip() or (
             "LLM refiner selected this existing exact-span candidate for final terminology."
         )
-        category = str(raw_term.get("category", original.category)).strip() or original.category
         refined_terms.append(
             replace_dataset_term(
                 original,
@@ -1716,7 +1736,7 @@ def parse_llm_refined_terms(
                 reference_candidates=merge_unique_strings(
                     original.reference_candidates, (verified_span,)
                 ),
-                category=category,
+                category=original.category,
                 source="+".join(merge_source_tags(original.source, source_tag)),
                 term_group="refined",
                 confidence=max(original.confidence, quality_score),
@@ -1724,7 +1744,30 @@ def parse_llm_refined_terms(
                 reason=reason,
             )
         )
-    return deduplicate_terms(refined_terms)
+    return select_non_overlapping_terms(refined_terms)
+
+
+def select_non_overlapping_terms(
+    terms: list[DatasetTerminologyTerm],
+) -> list[DatasetTerminologyTerm]:
+    selected = []
+    for term in sorted(
+        deduplicate_terms(terms),
+        key=lambda item: (len(normalize_term_key(item.target_terms[0])), item.confidence),
+        reverse=True,
+    ):
+        target_key = normalize_term_key(term.target_terms[0] if term.target_terms else "")
+        if not target_key or any(
+            terms_overlap(target_key, normalize_term_key(existing.target_terms[0]))
+            for existing in selected
+        ):
+            continue
+        selected.append(term)
+    return selected
+
+
+def terms_overlap(left: str, right: str) -> bool:
+    return left == right or f" {left} " in f" {right} " or f" {right} " in f" {left} "
 
 
 def terminology_language_code(language: str) -> str:

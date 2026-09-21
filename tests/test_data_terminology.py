@@ -18,6 +18,7 @@ from chem_machine_translation.data.terminology import (
     deduplicate_terms,
     load_manifest_terminology,
     load_terminology_cache,
+    llm_refiner_candidate_payload,
     make_stanza_terms,
     parse_llm_refined_terms,
     parse_llm_target_candidates,
@@ -350,6 +351,66 @@ def test_parse_llm_refined_terms_requires_existing_candidate_and_exact_span() ->
     assert terms[0].term_group == "refined"
     assert terms[0].verified_by == ("pubchem",)
     assert terms[0].decision == "keep_refined"
+
+
+def test_llm_refiner_keeps_candidate_category_and_discards_overlapping_terms() -> None:
+    candidates = [
+        DatasetTerminologyTerm(
+            target_terms=("European Economic Community",),
+            category="institution",
+            source="llm_legal",
+            confidence=0.8,
+        ),
+        DatasetTerminologyTerm(
+            target_terms=("Community",),
+            category="other",
+            source="spacy_ngram",
+            confidence=0.99,
+        ),
+    ]
+
+    terms = parse_llm_refined_terms(
+        json.dumps(
+            {
+                "terms": [
+                    {"candidate_id": 1, "category": "legal_act", "quality_score": 0.99},
+                    {"candidate_id": 0, "category": "other", "quality_score": 0.8},
+                ]
+            }
+        ),
+        reference_text="The European Economic Community shall act.",
+        candidates=candidates,
+        source_tag="llm_refiner_jrc",
+    )
+
+    assert [term.target_terms[0] for term in terms] == ["European Economic Community"]
+    assert terms[0].category == "institution"
+
+
+def test_llm_refiner_payload_summarizes_external_evidence_without_variants() -> None:
+    payload = llm_refiner_candidate_payload(
+        [
+            DatasetTerminologyTerm(
+                target_terms=("European Economic Community",),
+                category="institution",
+                source="legal_llm+local_iate+wikidata",
+                verified_by=("local_iate", "wikidata"),
+                candidates={
+                    "local_iate": ["EEC", "European Economic Community"],
+                    "wikidata": [
+                        "European Economic Community",
+                        "EEC",
+                        "European Common Market",
+                        "ECM",
+                    ],
+                },
+            )
+        ]
+    )
+
+    assert payload[0]["evidence_source_count"] == 2
+    assert payload[0]["variant_count"] == 3
+    assert "candidates" not in payload[0]
 
 
 def test_llm_terminology_refiner_uses_candidate_ids_only() -> None:
