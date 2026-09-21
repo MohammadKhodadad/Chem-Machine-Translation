@@ -20,7 +20,9 @@ GENERAL_METRIC_NAMES = (
     "chrf2++",
     "comet",
     "terminology_success_rate",
+    "variant_aware_terminology_success_rate",
     "target_term_coverage",
+    "variant_aware_target_term_coverage",
     "fsp_mqm",
 )
 DEFAULT_METRIC_NAMES = (
@@ -230,6 +232,17 @@ def compute_translation_metrics(
         if terminology_score is not None:
             metrics["terminology_success_rate"] = terminology_score
 
+    if "variant_aware_terminology_success_rate" in selected_metrics:
+        terminology_score = compute_variant_aware_terminology_success_rate(
+            prediction=prediction,
+            terminology=terminology or [],
+            source=source,
+            reference=reference,
+            term_groups=terminology_term_groups,
+        )
+        if terminology_score is not None:
+            metrics["variant_aware_terminology_success_rate"] = terminology_score
+
     if "target_term_coverage" in selected_metrics:
         target_term_coverage = compute_target_term_coverage(
             prediction=prediction,
@@ -239,6 +252,16 @@ def compute_translation_metrics(
         )
         if target_term_coverage is not None:
             metrics["target_term_coverage"] = target_term_coverage
+
+    if "variant_aware_target_term_coverage" in selected_metrics:
+        target_term_coverage = compute_variant_aware_target_term_coverage(
+            prediction=prediction,
+            reference=reference,
+            terminology=terminology or [],
+            term_groups=terminology_term_groups,
+        )
+        if target_term_coverage is not None:
+            metrics["variant_aware_target_term_coverage"] = target_term_coverage
 
     if "fsp_mqm" in selected_metrics:
         if source is None:
@@ -275,27 +298,68 @@ def compute_terminology_success_rate(
             continue
         if not terminology_term_group_matches(term, term_groups):
             continue
-        target_terms = accepted_target_terms(term)
-        if not target_terms:
+        canonical_target_terms = accepted_target_terms(term)
+        if not canonical_target_terms:
             continue
 
         source_count = applicable_source_count(term, source)
         if source_count == 0:
             continue
         if reference is not None and not any(
-            count_normalized_occurrences(reference, target_term) > 0 for target_term in target_terms
+            count_normalized_occurrences(reference, target_term) > 0
+            for target_term in canonical_target_terms
         ):
             continue
 
         output_count = sum(
             count_normalized_occurrences(prediction, target_term)
-            for target_term in target_terms
+            for target_term in canonical_target_terms
         )
         applicable_scores.append(min(output_count / source_count, 1.0))
 
     if not applicable_scores:
         return None
 
+    return 100 * sum(applicable_scores) / len(applicable_scores)
+
+
+def compute_variant_aware_terminology_success_rate(
+    prediction: str,
+    terminology: list[dict[str, Any]],
+    source: str | None = None,
+    reference: str | None = None,
+    term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
+) -> float | None:
+    """Return WMT-style terminology success using canonical or external candidate variants."""
+    applicable_scores = []
+    for term in terminology:
+        if not isinstance(term, dict):
+            continue
+        if str(term.get("decision", "")).strip().lower() == "drop":
+            continue
+        if not terminology_term_group_matches(term, term_groups):
+            continue
+        canonical_target_terms = accepted_target_terms(term)
+        if not canonical_target_terms:
+            continue
+
+        source_count = applicable_source_count(term, source)
+        if source_count == 0:
+            continue
+        if reference is not None and not any(
+            count_normalized_occurrences(reference, target_term) > 0
+            for target_term in canonical_target_terms
+        ):
+            continue
+
+        output_count = sum(
+            count_normalized_occurrences(prediction, target_term)
+            for target_term in accepted_target_terms(term, include_external_candidates=True)
+        )
+        applicable_scores.append(min(output_count / source_count, 1.0))
+
+    if not applicable_scores:
+        return None
     return 100 * sum(applicable_scores) / len(applicable_scores)
 
 
@@ -337,6 +401,43 @@ def compute_target_term_coverage(
     return 100 * sum(applicable_scores) / len(applicable_scores)
 
 
+def compute_variant_aware_target_term_coverage(
+    prediction: str,
+    reference: str,
+    terminology: list[dict[str, Any]],
+    term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
+) -> float | None:
+    """Return coverage when a canonical target term or its external candidate variant occurs."""
+    applicable_scores = []
+    for term in terminology:
+        if not isinstance(term, dict):
+            continue
+        if str(term.get("decision", "")).strip().lower() == "drop":
+            continue
+        if not terminology_term_group_matches(term, term_groups):
+            continue
+        canonical_target_terms = accepted_target_terms(term)
+        if not canonical_target_terms:
+            continue
+
+        reference_count = sum(
+            count_normalized_occurrences(reference, target_term)
+            for target_term in canonical_target_terms
+        )
+        if reference_count == 0:
+            continue
+
+        prediction_count = sum(
+            count_normalized_occurrences(prediction, target_term)
+            for target_term in accepted_target_terms(term, include_external_candidates=True)
+        )
+        applicable_scores.append(min(prediction_count / reference_count, 1.0))
+
+    if not applicable_scores:
+        return None
+    return 100 * sum(applicable_scores) / len(applicable_scores)
+
+
 def applicable_source_count(term: dict[str, Any], source: str | None) -> int:
     if source is None:
         return 1
@@ -346,7 +447,11 @@ def applicable_source_count(term: dict[str, Any], source: str | None) -> int:
     return count_normalized_occurrences(source, source_term)
 
 
-def accepted_target_terms(term: dict[str, Any]) -> tuple[str, ...]:
+def accepted_target_terms(
+    term: dict[str, Any],
+    *,
+    include_external_candidates: bool = False,
+) -> tuple[str, ...]:
     raw_target_terms = term.get("target_terms", [])
     if not isinstance(raw_target_terms, list):
         raw_target_terms = []
@@ -357,11 +462,35 @@ def accepted_target_terms(term: dict[str, Any]) -> tuple[str, ...]:
     )
     decision = str(term.get("decision", "")).strip().lower()
     if target_terms:
-        return target_terms
-    if decision == "preserve":
+        accepted_terms = target_terms
+    elif decision == "preserve":
         source_term = str(term.get("source_term", "")).strip()
-        return (source_term,) if source_term else ()
-    return ()
+        accepted_terms = (source_term,) if source_term else ()
+    else:
+        accepted_terms = ()
+
+    if include_external_candidates:
+        external_candidates = term.get("external_candidates") or term.get("candidates") or {}
+        if isinstance(external_candidates, dict):
+            accepted_terms += tuple(
+                str(candidate).strip()
+                for candidates in external_candidates.values()
+                if isinstance(candidates, list)
+                for candidate in candidates
+                if str(candidate).strip()
+            )
+    return unique_normalized_terms(accepted_terms)
+
+
+def unique_normalized_terms(terms: tuple[str, ...]) -> tuple[str, ...]:
+    unique = []
+    seen = set()
+    for term in terms:
+        key = normalize_metric_text(term)
+        if key and key not in seen:
+            seen.add(key)
+            unique.append(term)
+    return tuple(unique)
 
 
 def terminology_term_group_matches(

@@ -37,7 +37,9 @@ metrics = [
   "chrf2++",
   "comet",
   "terminology_success_rate",
+  "variant_aware_terminology_success_rate",
   "target_term_coverage",
+  "variant_aware_target_term_coverage",
   "fsp_mqm",
 ]
 terminology_groups = ["refined"]

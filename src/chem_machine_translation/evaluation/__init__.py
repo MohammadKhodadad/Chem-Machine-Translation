@@ -18,6 +18,8 @@ from chem_machine_translation.evaluation.metrics import (
     compute_target_term_coverage,
     compute_terminology_success_rate,
     compute_translation_metrics,
+    compute_variant_aware_target_term_coverage,
+    compute_variant_aware_terminology_success_rate,
     parse_metric_names,
     terminology_term_group,
 )
@@ -37,6 +39,8 @@ __all__ = [
     "compute_target_term_coverage",
     "compute_terminology_success_rate",
     "compute_translation_metrics",
+    "compute_variant_aware_target_term_coverage",
+    "compute_variant_aware_terminology_success_rate",
     "parse_metric_names",
     "terminology_term_group",
     "timestamped_report_path",

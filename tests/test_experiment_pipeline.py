@@ -17,7 +17,10 @@ def test_load_standard_experiment_config() -> None:
         "sequence_similarity",
         "bleu",
         "chrf2++",
+        "terminology_success_rate",
+        "variant_aware_terminology_success_rate",
         "target_term_coverage",
+        "variant_aware_target_term_coverage",
     )
 
 

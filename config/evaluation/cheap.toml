@@ -1,3 +1,3 @@
 name = "cheap_eval"
-metrics = ["sequence_similarity", "bleu", "chrf2++", "target_term_coverage"]
+metrics = ["sequence_similarity", "bleu", "chrf2++", "terminology_success_rate", "variant_aware_terminology_success_rate", "target_term_coverage", "variant_aware_target_term_coverage"]
 terminology_groups = ["refined"]

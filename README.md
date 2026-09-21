@@ -221,6 +221,7 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --metric bleu `
   --metric chrf2++ `
   --metric target_term_coverage `
+  --metric variant_aware_target_term_coverage `
   --terminology-term-group verified `
   --max-manifest-terminology-terms 8 `
   --output reports/google-patents-en-de-verified.jsonl

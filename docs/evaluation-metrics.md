@@ -35,9 +35,9 @@ We separate metrics into two groups:
   things like formula preservation, terminology consistency, and chemical identity.
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
-reference-based COMET, target-side `target_term_coverage`, source-conditioned
-`terminology_success_rate`, and optional `fsp_mqm` LLM judging. The benchmark builders can generate
-terminology mappings in manifest rows. Terminology consistency is not wired into
+reference-based COMET, strict and variant-aware target-side terminology coverage, strict and
+variant-aware source-conditioned terminology success rates, and optional `fsp_mqm` LLM judging. The
+benchmark builders can generate terminology mappings in manifest rows. Terminology consistency is not wired into
 `compute_translation_metrics` yet.
 
 Terminology metrics can filter manifest terms by `term_group`. The supported groups are `verified`,
@@ -56,8 +56,12 @@ Implemented in code:
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
 - `target_term_coverage`: manifest-based target terminology coverage. It is included in defaults,
   but only produces a row score when manifest terminology exists for that row.
+- `variant_aware_target_term_coverage`: accepts the canonical target term or an explicit external
+  candidate variant stored in the manifest. It is included beside strict coverage in standard configs.
 - `terminology_success_rate`: source-conditioned WMT-style terminology accuracy. It is still
   available explicitly, but is not in defaults.
+- `variant_aware_terminology_success_rate`: source-conditioned terminology accuracy that accepts
+  explicit external candidate variants in addition to canonical target terms.
 - `fsp_mqm`: optional LLM-as-judge MQM-style metric. It is implemented, but not included in defaults
   because it requires extra API calls.
 
@@ -85,8 +89,8 @@ Current terminology data status:
   `reference_candidates`, `external_candidates`, `term_group`, `verified_by`, `category`,
   `confidence`, `decision`, and `reason`.
 - The latest terminology flow is documented in `docs/terminology-extraction.md`.
-- `target_term_coverage` and `terminology_success_rate` consume these manifest terms instead of
-  extracting terminology during evaluation.
+- All four terminology metrics consume these manifest terms instead of extracting terminology during
+  evaluation.
 
 ## General Metrics
 
@@ -504,9 +508,14 @@ Planned domain-specific metrics include:
   units, sequence IDs, and identifiers from the source are preserved in the translation.
 - **Target terminology coverage**: **implemented** as `target_term_coverage`. It consumes manifest
   `terminology` rows and is included in defaults.
+- **Variant-aware target terminology coverage**: **implemented** as
+  `variant_aware_target_term_coverage`. It accepts explicit manifest evidence variants alongside the
+  strict canonical target term.
 - **Source-conditioned terminology accuracy / terminology success rate**: **implemented** as
   `terminology_success_rate`. It consumes manifest `terminology` rows and can be selected
   explicitly.
+- **Variant-aware source-conditioned terminology accuracy**: **implemented** as
+  `variant_aware_terminology_success_rate`. It can be selected explicitly.
 - **Terminology consistency**: **not implemented**. This should check consistency across repeated
   manifest terms.
 - **Chemical name/structure validation**: **not implemented**. This should compare parsed or
@@ -578,6 +587,18 @@ Operationally, the target-only version works like this:
 This is stricter than a pure "does any glossary term appear" check because reference absence makes a
 term non-applicable for that row. It is also simpler than WMT Track 1 because it does not use
 lemmatization or source-term matching.
+
+### Variant-Aware Terminology Metrics
+
+`variant_aware_target_term_coverage` and `variant_aware_terminology_success_rate` preserve the
+same applicability rules as their strict counterparts: the canonical `target_terms` must appear in
+the reference for a term to be scored. They then accept a prediction match for either the canonical
+target term or any explicit value under `external_candidates` / `candidates` in the manifest.
+
+This mirrors WMT25 Track 2's target-term-list behavior: alternatives are accepted only when the
+benchmark data explicitly provides them. The strict metrics remain alongside these scores so reports
+make the distinction visible. External variants are evidence supplied by the benchmark; they are not
+generated or inferred during evaluation.
 
 ## WMT25 Terminology Metrics Review
 

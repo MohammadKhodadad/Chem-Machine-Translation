@@ -9,6 +9,8 @@ from chem_machine_translation.evaluation.metrics import (
     compute_target_term_coverage,
     compute_terminology_success_rate,
     compute_translation_metrics,
+    compute_variant_aware_target_term_coverage,
+    compute_variant_aware_terminology_success_rate,
     parse_metric_names,
     parse_mqm_judge_response,
     terminology_term_group,
@@ -120,6 +122,26 @@ def test_compute_terminology_success_rate_matches_manifest_target_terms() -> Non
     )
 
     assert score == 50
+
+
+def test_variant_aware_terminology_success_rate_accepts_external_candidate_variants() -> None:
+    terminology = [
+        {
+            "source_term": "European Economic Community",
+            "target_terms": ["Communauté économique européenne"],
+            "external_candidates": {"local_iate": ["CEE", "Communauté économique européenne"]},
+            "decision": "keep_reference",
+        }
+    ]
+
+    assert compute_terminology_success_rate(
+        prediction="La CEE agit.",
+        terminology=terminology,
+    ) == 0
+    assert compute_variant_aware_terminology_success_rate(
+        prediction="La CEE agit.",
+        terminology=terminology,
+    ) == 100
 
 
 def test_compute_terminology_success_rate_uses_wmt_style_applicability_and_counts() -> None:
@@ -241,6 +263,31 @@ def test_compute_target_term_coverage_counts_reference_target_terms() -> None:
     )
 
     assert score == 50
+
+
+def test_variant_aware_target_term_coverage_accepts_external_candidate_variants() -> None:
+    terminology = [
+        {
+            "target_terms": ["European Economic Community"],
+            "candidates": {
+                "local_iate": ["EEC", "European Economic Community"],
+                "wikidata": ["European Common Market", "ECM"],
+            },
+            "term_group": "verified",
+            "decision": "keep_reference",
+        }
+    ]
+
+    assert compute_target_term_coverage(
+        prediction="The EEC acts.",
+        reference="The European Economic Community acts.",
+        terminology=terminology,
+    ) == 0
+    assert compute_variant_aware_target_term_coverage(
+        prediction="The EEC acts.",
+        reference="The European Economic Community acts.",
+        terminology=terminology,
+    ) == 100
 
 
 def test_target_term_coverage_defaults_to_verified_terms() -> None:
