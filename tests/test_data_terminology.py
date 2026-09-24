@@ -404,12 +404,20 @@ def test_llm_refiner_payload_summarizes_external_evidence_without_variants() -> 
                         "ECM",
                     ],
                 },
+                external_metadata={
+                    "local_iate": {"domains": ["EU relations", "international agreement"]},
+                    "wikidata": {"instance_of": ["international organization"]},
+                },
             )
         ]
     )
 
     assert payload[0]["evidence_source_count"] == 2
     assert payload[0]["variant_count"] == 3
+    assert payload[0]["external_categories"] == {
+        "local_iate": ["EU relations", "international agreement"],
+        "wikidata": ["international organization"],
+    }
     assert "candidates" not in payload[0]
 
 

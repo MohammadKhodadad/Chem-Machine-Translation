@@ -1,5 +1,6 @@
 from chem_machine_translation.translation.iate import (
     IATEClient,
+    IATEEntryMetadata,
     IATETermTranslation,
     iate_language_code,
     parse_iate_translation,
@@ -33,6 +34,7 @@ from chem_machine_translation.translation.translators import (
 )
 from chem_machine_translation.translation.wikidata import (
     WikidataClient,
+    WikidataEntityMetadata,
     WikidataTermTranslation,
     wikidata_language_code,
 )
@@ -43,6 +45,7 @@ __all__ = [
     "EmptyTerminologyLayer",
     "ExtractedTerm",
     "IATEClient",
+    "IATEEntryMetadata",
     "IATETermTranslation",
     "LLMTerminologyLayer",
     "ManifestTerminologyLayer",
@@ -54,6 +57,7 @@ __all__ = [
     "TextGenerationProvider",
     "Translator",
     "WikidataClient",
+    "WikidataEntityMetadata",
     "WikidataTermTranslation",
     "build_terminology_layer",
     "build_translator",

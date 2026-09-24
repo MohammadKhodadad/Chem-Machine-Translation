@@ -37,7 +37,7 @@ _NCI_ENDPOINT = "https://api-evsrest.nci.nih.gov/api/v1"
 _AGROVOC_ENDPOINT = "https://agrovoc.fao.org/browse/rest/v1"
 _USER_AGENT = "chem-machine-translation/0.1 (benchmark terminology lookup)"
 UNTERM_LANGUAGE_CODES = frozenset({"ar", "zh", "en", "fr", "ru", "es"})
-_TERMINOLOGY_PIPELINE_VERSION = "target-llm-stanza-ud-candidate-v5"
+_TERMINOLOGY_PIPELINE_VERSION = "target-llm-stanza-ud-candidate-v6"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 _UD_HEAD_UPOS = {"NOUN", "PROPN", "NUM", "SYM", "X"}
 _UD_CONTENT_UPOS = {"ADJ", "NOUN", "NUM", "PROPN", "SYM", "X"}
@@ -156,6 +156,11 @@ Extract only terms that a domain translator should preserve consistently:
 - technical processes, methods, assay/analytical terms, properties, hazards, identifiers;
 - compact numeric/unit expressions only when the quantity itself is technically meaningful.
 
+When external metadata is available later, terms classified as chemistry, chemical compounds,
+materials, formulations, processes, methods, hazards, or biological entities are particularly
+useful. Do not promote a term solely because an external source labels it that way; the exact span
+must still be relevant in this text.
+
 Reject:
 - common prose, generic verbs/adjectives, boilerplate patent wording, and broad field labels;
 - whole clauses, sentence fragments, headings, dates, citations, inventor/applicant names;
@@ -197,6 +202,11 @@ Extract only terms that a legal translator should preserve consistently:
 - procedures, rights, obligations, restrictions, sanctions, remedies, legal effects;
 - regulatory domains and named legal acts when they are not just generic prose;
 - defined terms introduced by definition wording, such as "shall mean" or "for the purposes of".
+
+When external metadata is available later, terms classified in legal, regulatory, institutional,
+international-agreement, policy, or environmental-regulation domains are particularly useful. Do not
+promote a term solely because an external source labels it that way; the exact span must still be
+relevant in this text.
 
 Reject:
 - dates, article numbers alone, paragraph references alone, names of people, signatures;
@@ -251,8 +261,10 @@ Selection procedure:
 2. Rank the remaining candidates by benchmark value: domain specificity, completeness, centrality in
    the text, and risk if mistranslated.
 3. Treat verified_by and the compact external-evidence summary as precision evidence. Multiple
-    evidence sources and variants strengthen an otherwise good candidate, but do not make a generic,
+    evidence sources, variants, and field-relevant external categories strengthen an otherwise good candidate, but do not make a generic,
     partial, or contextually weak candidate useful terminology.
+    Prefer candidates whose external categories are chemistry-relevant, such as chemical compound,
+    material, formulation, process, method, hazard, or biological entity.
 4. Keep an unverified candidate only when it is clearly central, complete, and more
    translation-sensitive than the verified alternatives.
 5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning
@@ -313,8 +325,10 @@ Selection procedure:
 2. Rank the remaining candidates by benchmark value: legal specificity, completeness, centrality in
    the text, and risk if mistranslated.
 3. Treat verified_by and the compact external-evidence summary as precision evidence. Multiple
-    evidence sources and variants strengthen an otherwise good candidate, but do not make a generic,
+    evidence sources, variants, and field-relevant external categories strengthen an otherwise good candidate, but do not make a generic,
     partial, or contextually weak candidate useful terminology.
+    Prefer candidates whose external categories are legal- or regulatory-relevant, such as legal act,
+    institution, agreement, policy, procedure, right, obligation, or regulatory domain.
 4. Keep an unverified candidate only when it is clearly central, complete, and more
    translation-sensitive than the verified alternatives.
 5. Return only candidates with quality_score >= 0.75. Returning fewer terms is better than returning
@@ -368,6 +382,7 @@ class DatasetTerminologyTerm:
     decision: str = "keep_reference"
     reason: str = ""
     candidates: dict[str, list[str]] = field(default_factory=dict)
+    external_metadata: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -383,6 +398,7 @@ class DatasetTerminologyTerm:
             "reason": self.reason,
             "external_candidates": self.candidates,
             "candidates": self.candidates,
+            "external_metadata": self.external_metadata,
         }
 
 
@@ -1434,6 +1450,14 @@ class DatasetTerminologyGenerator:
 
         confidence = min(1.0, term.confidence + 0.05 * len(candidates))
         verified_by = tuple(candidates)
+        external_metadata = collect_external_metadata(
+            iate_client=self.iate_client,
+            iate_source_name=self.iate_source_name,
+            wikidata_client=self.wikidata_client,
+            target_term=target_term,
+            iate_code=iate_language_code(target_language),
+            wikidata_code=wikidata_language_code(target_language),
+        )
         return replace_dataset_term(
             term,
             source="+".join(dict.fromkeys(source_parts)),
@@ -1441,6 +1465,7 @@ class DatasetTerminologyGenerator:
             verified_by=verified_by,
             confidence=confidence,
             candidates=candidates,
+            external_metadata=external_metadata,
         )
 
     def add_target_candidates(
@@ -1589,6 +1614,14 @@ class LegalTerminologyGenerator:
 
         if not candidates:
             return term
+        external_metadata = collect_external_metadata(
+            iate_client=self.iate_client,
+            iate_source_name=self.iate_source_name,
+            wikidata_client=self.wikidata_client,
+            target_term=target_term,
+            iate_code=iate_code,
+            wikidata_code=wikidata_code,
+        )
         return replace_dataset_term(
             term,
             source="+".join(dict.fromkeys(source_parts)),
@@ -1596,6 +1629,7 @@ class LegalTerminologyGenerator:
             verified_by=tuple(candidates),
             confidence=min(1.0, term.confidence + 0.05 * len(candidates)),
             candidates=candidates,
+            external_metadata=external_metadata,
         )
 
 
@@ -1690,10 +1724,58 @@ def llm_refiner_candidate_payload(candidates: list[DatasetTerminologyTerm]) -> l
                 "verified_by": list(candidate.verified_by),
                 "evidence_source_count": len(candidate.verified_by),
                 "variant_count": len(variant_keys),
+                "external_categories": compact_external_categories(candidate.external_metadata),
                 "confidence": candidate.confidence,
             }
         )
     return payload
+
+
+def collect_external_metadata(
+    *,
+    iate_client: Any,
+    iate_source_name: str,
+    wikidata_client: Any,
+    target_term: str,
+    iate_code: str | None,
+    wikidata_code: str | None,
+) -> dict[str, dict[str, Any]]:
+    metadata: dict[str, dict[str, Any]] = {}
+    if iate_client is not None and iate_code and hasattr(iate_client, "lookup_metadata"):
+        iate_metadata = iate_client.lookup_metadata(target_term, iate_code)
+        if iate_metadata is not None:
+            values = {
+                "domains": list(iate_metadata.domains),
+                "term_type": iate_metadata.term_type,
+                "reliability": iate_metadata.reliability,
+                "institution": iate_metadata.institution,
+            }
+            metadata[iate_source_name] = {key: value for key, value in values.items() if value}
+    if wikidata_client is not None and wikidata_code and hasattr(wikidata_client, "lookup_metadata"):
+        wikidata_metadata = wikidata_client.lookup_metadata(target_term, wikidata_code)
+        if wikidata_metadata is not None:
+            values = {
+                "entity_id": wikidata_metadata.entity_id,
+                "description": wikidata_metadata.description,
+                "instance_of": list(wikidata_metadata.instance_of),
+                "subclass_of": list(wikidata_metadata.subclass_of),
+            }
+            metadata["wikidata"] = {key: value for key, value in values.items() if value}
+    return metadata
+
+
+def compact_external_categories(external_metadata: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
+    categories: dict[str, list[str]] = {}
+    for source, metadata in external_metadata.items():
+        values = [
+            *metadata.get("domains", []),
+            *metadata.get("instance_of", []),
+            *metadata.get("subclass_of", []),
+        ]
+        cleaned = list(merge_unique_strings(str(value) for value in values))
+        if cleaned:
+            categories[source] = cleaned
+    return categories
 
 
 def parse_llm_refined_terms(
@@ -2188,6 +2270,10 @@ def merge_duplicate_dataset_terms(
     source = "+".join(merge_source_tags(left.source, right.source))
     verified_by = merge_unique_strings(left.verified_by, right.verified_by)
     candidates = merge_external_candidate_maps(left.candidates, right.candidates)
+    external_metadata = merge_external_metadata_maps(
+        left.external_metadata,
+        right.external_metadata,
+    )
     term_group = merged_term_group(left, right, verified_by)
     decision = "preserve" if "preserve" in {left.decision, right.decision} else base.decision
     return replace_dataset_term(
@@ -2204,6 +2290,7 @@ def merge_duplicate_dataset_terms(
         confidence=max(left.confidence, right.confidence),
         decision=decision,
         candidates=candidates,
+        external_metadata=external_metadata,
     )
 
 
@@ -2241,6 +2328,16 @@ def merge_external_candidate_maps(
     return merged
 
 
+def merge_external_metadata_maps(
+    left: dict[str, dict[str, Any]],
+    right: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    merged = {source: dict(metadata) for source, metadata in left.items()}
+    for source, metadata in right.items():
+        merged[source] = {**merged.get(source, {}), **metadata}
+    return merged
+
+
 def merged_term_group(
     left: DatasetTerminologyTerm,
     right: DatasetTerminologyTerm,
@@ -2273,6 +2370,9 @@ def dataset_term_from_json(payload: dict[str, Any]) -> DatasetTerminologyTerm:
     raw_candidates = payload.get("external_candidates", payload.get("candidates", {}))
     if not isinstance(raw_candidates, dict):
         raw_candidates = {}
+    raw_external_metadata = payload.get("external_metadata", {})
+    if not isinstance(raw_external_metadata, dict):
+        raw_external_metadata = {}
     return DatasetTerminologyTerm(
         source_term=str(payload.get("source_term", "")).strip(),
         target_terms=tuple(
@@ -2306,6 +2406,11 @@ def dataset_term_from_json(payload: dict[str, Any]) -> DatasetTerminologyTerm:
             for source, terms in raw_candidates.items()
             if isinstance(terms, list)
         },
+        external_metadata={
+            str(source): dict(metadata)
+            for source, metadata in raw_external_metadata.items()
+            if isinstance(metadata, dict)
+        },
     )
 
 
@@ -2321,6 +2426,7 @@ def replace_dataset_term(
     decision: str | None = None,
     reason: str | None = None,
     candidates: dict[str, list[str]] | None = None,
+    external_metadata: dict[str, dict[str, Any]] | None = None,
 ) -> DatasetTerminologyTerm:
     return DatasetTerminologyTerm(
         source_term=term.source_term,
@@ -2336,6 +2442,9 @@ def replace_dataset_term(
         decision=term.decision if decision is None else decision,
         reason=term.reason if reason is None else reason,
         candidates=term.candidates if candidates is None else candidates,
+        external_metadata=(
+            term.external_metadata if external_metadata is None else external_metadata
+        ),
     )
 
 

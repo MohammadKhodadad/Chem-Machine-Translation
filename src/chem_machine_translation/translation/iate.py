@@ -74,6 +74,14 @@ class IATETermTranslation:
     reliability: str = ""
 
 
+@dataclass(frozen=True)
+class IATEEntryMetadata:
+    domains: tuple[str, ...] = ()
+    term_type: str = ""
+    reliability: str = ""
+    institution: str = ""
+
+
 class IATEClient:
     """Looks up candidate target-language terms through the IATE public API."""
 
@@ -82,6 +90,7 @@ class IATEClient:
         self.timeout_seconds = timeout_seconds
         self._cache: dict[tuple[str, str, str], IATETermTranslation | None] = {}
         self._synonym_cache: dict[tuple[str, str], list[str]] = {}
+        self._metadata_cache: dict[tuple[str, str], IATEEntryMetadata | None] = {}
 
     def translate_term(
         self,
@@ -115,6 +124,15 @@ class IATEClient:
         )
         self._synonym_cache[cache_key] = synonyms
         return synonyms
+
+    def lookup_metadata(self, term: str, language_code: str) -> IATEEntryMetadata | None:
+        cache_key = (normalize_iate_term(term), language_code)
+        if cache_key in self._metadata_cache:
+            return self._metadata_cache[cache_key]
+        payload = self._search(term, language_code, language_code)
+        metadata = parse_iate_metadata(payload=payload, term=term, language_code=language_code)
+        self._metadata_cache[cache_key] = metadata
+        return metadata
 
     def _search(
         self,
@@ -165,9 +183,11 @@ class LocalIATEClient:
         self.build_wait_seconds = build_wait_seconds
         self._loaded = False
         self._entries: dict[str, dict[str, list[str]]] = {}
+        self._entry_metadata: dict[str, IATEEntryMetadata] = {}
         self._term_index: dict[tuple[str, str], list[str]] = {}
         self._cache: dict[tuple[str, str, str], IATETermTranslation | None] = {}
         self._synonym_cache: dict[tuple[str, str], list[str]] = {}
+        self._metadata_cache: dict[tuple[str, str], IATEEntryMetadata | None] = {}
 
     def translate_term(
         self,
@@ -209,6 +229,23 @@ class LocalIATEClient:
         )
         self._synonym_cache[cache_key] = synonyms
         return synonyms
+
+    def lookup_metadata(self, term: str, language_code: str) -> IATEEntryMetadata | None:
+        cache_key = (normalize_iate_term(term), language_code)
+        if cache_key in self._metadata_cache:
+            return self._metadata_cache[cache_key]
+        sqlite_path = self._sqlite_path()
+        if sqlite_path is None and self.auto_build_index:
+            sqlite_path = self._build_sqlite_index_if_possible()
+        metadata = (
+            self._lookup_metadata_sqlite(term, language_code)
+            if sqlite_path is not None
+            else self._lookup_metadata(term, language_code)
+        )
+        if metadata is None and sqlite_path is not None and self._index_source_csv_path() is not None:
+            metadata = self._lookup_metadata(term, language_code)
+        self._metadata_cache[cache_key] = metadata
+        return metadata
 
     def _lookup_sqlite(
         self,
@@ -305,6 +342,33 @@ class LocalIATEClient:
         except sqlite3.Error:
             return []
         return unique_iate_terms(str(row[0]) for row in rows)
+
+    def _lookup_metadata_sqlite(
+        self,
+        term: str,
+        language_code: str,
+    ) -> IATEEntryMetadata | None:
+        term_key = normalize_iate_term(term)
+        if not term_key:
+            return None
+        sqlite_path = self._sqlite_path()
+        if sqlite_path is None:
+            return None
+        try:
+            with sqlite3.connect(sqlite_path) as connection:
+                row = connection.execute(
+                    """
+                    SELECT domains, term_type, reliability, institution
+                    FROM terms
+                    WHERE language_code = ? AND normalized_term = ?
+                    ORDER BY rowid
+                    LIMIT 1
+                    """,
+                    (language_code, term_key),
+                ).fetchone()
+        except sqlite3.Error:
+            return None
+        return metadata_from_values(*row) if row else None
 
     def _sqlite_path(self) -> Path | None:
         if self.path.is_file() and self.path.suffix.lower() in {".sqlite", ".sqlite3", ".db"}:
@@ -419,6 +483,17 @@ class LocalIATEClient:
             for candidate in self._entries.get(entry_id, {}).get(language_code, [])
         )
 
+    def _lookup_metadata(self, term: str, language_code: str) -> IATEEntryMetadata | None:
+        term_key = normalize_iate_term(term)
+        if not term_key:
+            return None
+        self._ensure_loaded()
+        for entry_id in self._term_index.get((language_code, term_key), []):
+            metadata = self._entry_metadata.get(entry_id)
+            if metadata:
+                return metadata
+        return None
+
     def _ensure_loaded(self) -> None:
         if self._loaded:
             return
@@ -481,6 +556,14 @@ class LocalIATEClient:
         self._entries.setdefault(entry_id, {}).setdefault(language_code, [])
         if term not in self._entries[entry_id][language_code]:
             self._entries[entry_id][language_code].append(term)
+        metadata = metadata_from_values(
+            first_iate_csv_value(normalized, "edomains", "domains", "domain"),
+            first_iate_csv_value(normalized, "ttype", "termtype", "type"),
+            first_iate_csv_value(normalized, "treliability", "reliability"),
+            first_iate_csv_value(normalized, "tinstitution", "institution"),
+        )
+        if metadata and entry_id not in self._entry_metadata:
+            self._entry_metadata[entry_id] = metadata
         self._term_index.setdefault((language_code, normalize_iate_term(term)), [])
         if entry_id not in self._term_index[(language_code, normalize_iate_term(term))]:
             self._term_index[(language_code, normalize_iate_term(term))].append(entry_id)
@@ -538,6 +621,55 @@ def parse_iate_synonyms(
         if any(normalize_iate_term(label) == query_key for label in labels):
             synonyms.extend(labels)
     return unique_iate_terms(synonyms)
+
+
+def parse_iate_metadata(
+    payload: dict[str, Any],
+    term: str,
+    language_code: str,
+) -> IATEEntryMetadata | None:
+    query_key = normalize_iate_term(term)
+    if not query_key:
+        return None
+    for item in payload.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        language = item.get("language", {}).get(language_code, {})
+        if not isinstance(language, dict):
+            continue
+        labels = [
+            str(term_entry.get("term_value", "")).strip()
+            for term_entry in language.get("term_entries", [])
+            if isinstance(term_entry, dict)
+        ]
+        if not any(normalize_iate_term(label) == query_key for label in labels):
+            continue
+        return metadata_from_values(
+            item.get("domains", item.get("domain", "")),
+            language.get("term_type", item.get("term_type", "")),
+            language.get("reliability", item.get("reliability", "")),
+            language.get("institution", item.get("institution", "")),
+        )
+    return None
+
+
+def metadata_from_values(
+    domains: Any,
+    term_type: Any,
+    reliability: Any,
+    institution: Any,
+) -> IATEEntryMetadata | None:
+    if isinstance(domains, list):
+        domain_values = [str(value).strip() for value in domains]
+    else:
+        domain_values = str(domains or "").split(";")
+    metadata = IATEEntryMetadata(
+        domains=tuple(value.strip() for value in domain_values if value.strip()),
+        term_type=str(term_type or "").strip(),
+        reliability=str(reliability or "").strip(),
+        institution=str(institution or "").strip(),
+    )
+    return metadata if any((metadata.domains, metadata.term_type, metadata.reliability, metadata.institution)) else None
 
 
 def unique_iate_terms(terms: Iterable[str]) -> list[str]:

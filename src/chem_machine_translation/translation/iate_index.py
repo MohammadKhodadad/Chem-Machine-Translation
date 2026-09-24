@@ -46,7 +46,11 @@ def prepare_database(connection: sqlite3.Connection) -> None:
             entry_id TEXT NOT NULL,
             language_code TEXT NOT NULL,
             normalized_term TEXT NOT NULL,
-            term TEXT NOT NULL
+            term TEXT NOT NULL,
+            domains TEXT NOT NULL DEFAULT '',
+            term_type TEXT NOT NULL DEFAULT '',
+            reliability TEXT NOT NULL DEFAULT '',
+            institution TEXT NOT NULL DEFAULT ''
         );
 
         CREATE TABLE metadata (
@@ -59,7 +63,7 @@ def prepare_database(connection: sqlite3.Connection) -> None:
 
 def load_csv_terms(connection: sqlite3.Connection, input_path: Path) -> int:
     inserted = 0
-    batch: list[tuple[str, str, str, str]] = []
+    batch: list[tuple[str, str, str, str, str, str, str, str]] = []
     with input_path.open("r", encoding="utf-8-sig", newline="") as handle:
         sample = handle.read(4096)
         handle.seek(0)
@@ -89,7 +93,7 @@ def iate_record_from_csv_row(
     row: dict[str, str],
     *,
     fallback_entry_id: str,
-) -> tuple[str, str, str, str] | None:
+) -> tuple[str, str, str, str, str, str, str, str] | None:
     normalized = {normalize_iate_column(key): value for key, value in row.items()}
     term = first_iate_csv_value(normalized, "term", "termvalue", "termtext", "label", "tterm")
     language_code = first_iate_csv_value(
@@ -113,17 +117,29 @@ def iate_record_from_csv_row(
     normalized_term = normalize_iate_term(term)
     if not term or not language_code or not normalized_term:
         return None
-    return entry_id, language_code, normalized_term, term
+    return (
+        entry_id,
+        language_code,
+        normalized_term,
+        term,
+        first_iate_csv_value(normalized, "edomains", "domains", "domain"),
+        first_iate_csv_value(normalized, "ttype", "termtype", "type"),
+        first_iate_csv_value(normalized, "treliability", "reliability"),
+        first_iate_csv_value(normalized, "tinstitution", "institution"),
+    )
 
 
 def insert_batch(
     connection: sqlite3.Connection,
-    batch: list[tuple[str, str, str, str]],
+    batch: list[tuple[str, str, str, str, str, str, str, str]],
 ) -> int:
     connection.executemany(
         """
-        INSERT INTO terms(entry_id, language_code, normalized_term, term)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO terms(
+            entry_id, language_code, normalized_term, term,
+            domains, term_type, reliability, institution
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         batch,
     )

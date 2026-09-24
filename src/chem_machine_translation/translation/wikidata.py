@@ -37,6 +37,14 @@ class WikidataTermTranslation:
     description: str = ""
 
 
+@dataclass(frozen=True)
+class WikidataEntityMetadata:
+    entity_id: str
+    description: str = ""
+    instance_of: tuple[str, ...] = ()
+    subclass_of: tuple[str, ...] = ()
+
+
 class WikidataClient:
     """Looks up candidate target-language labels for terms through Wikidata."""
 
@@ -45,6 +53,7 @@ class WikidataClient:
         self.timeout_seconds = timeout_seconds
         self._cache: dict[tuple[str, str, str], WikidataTermTranslation | None] = {}
         self._synonym_cache: dict[tuple[str, str], list[str]] = {}
+        self._metadata_cache: dict[tuple[str, str], WikidataEntityMetadata | None] = {}
 
     def translate_term(
         self,
@@ -83,6 +92,31 @@ class WikidataClient:
         synonyms = _same_language_entity_terms(entity, term, language_code)
         self._synonym_cache[cache_key] = synonyms
         return synonyms
+
+    def lookup_metadata(self, term: str, language_code: str) -> WikidataEntityMetadata | None:
+        cache_key = (_normalize_label(term), language_code)
+        if cache_key in self._metadata_cache:
+            return self._metadata_cache[cache_key]
+        entity_id = self._find_entity_id(term, language_code)
+        if not entity_id:
+            self._metadata_cache[cache_key] = None
+            return None
+        entity = self._get_entity(entity_id, {language_code, "en"}, include_claims=True)
+        if not _same_language_entity_terms(entity, term, language_code):
+            self._metadata_cache[cache_key] = None
+            return None
+        claims = entity.get("claims", {})
+        instance_ids = _claim_entity_ids(claims.get("P31", []))
+        subclass_ids = _claim_entity_ids(claims.get("P279", []))
+        class_labels = self._get_entity_labels(set(instance_ids) | set(subclass_ids), language_code)
+        metadata = WikidataEntityMetadata(
+            entity_id=entity_id,
+            description=str(entity.get("descriptions", {}).get("en", {}).get("value", "")),
+            instance_of=tuple(class_labels.get(item_id, item_id) for item_id in instance_ids),
+            subclass_of=tuple(class_labels.get(item_id, item_id) for item_id in subclass_ids),
+        )
+        self._metadata_cache[cache_key] = metadata
+        return metadata
 
     def _find_entity_id(self, source_term: str, source_language_code: str) -> str | None:
         payload = self._get_json(
@@ -127,19 +161,44 @@ class WikidataClient:
             description=description,
         )
 
-    def _get_entity(self, entity_id: str, languages: set[str]) -> dict[str, Any]:
+    def _get_entity(
+        self,
+        entity_id: str,
+        languages: set[str],
+        *,
+        include_claims: bool = False,
+    ) -> dict[str, Any]:
         payload = self._get_json(
             {
                 "action": "wbgetentities",
                 "format": "json",
                 "ids": entity_id,
-                "props": "labels|aliases|descriptions",
+                "props": "labels|aliases|descriptions|claims" if include_claims else "labels|aliases|descriptions",
                 "languages": "|".join(sorted(languages)),
                 "languagefallback": "1",
             }
         )
         entity = payload.get("entities", {}).get(entity_id, {})
         return entity if isinstance(entity, dict) else {}
+
+    def _get_entity_labels(self, entity_ids: set[str], language_code: str) -> dict[str, str]:
+        if not entity_ids:
+            return {}
+        payload = self._get_json(
+            {
+                "action": "wbgetentities",
+                "format": "json",
+                "ids": "|".join(sorted(entity_ids)),
+                "props": "labels",
+                "languages": f"{language_code}|en",
+                "languagefallback": "1",
+            }
+        )
+        return {
+            entity_id: _get_label_or_alias(entity, language_code) or entity_id
+            for entity_id, entity in payload.get("entities", {}).items()
+            if isinstance(entity, dict)
+        }
 
     def _get_json(self, params: dict[str, str]) -> dict[str, Any]:
         url = f"{self.endpoint}?{urlencode(params)}"
@@ -193,3 +252,13 @@ def _labels_match(source_term: str, source_label: str) -> bool:
 
 def _normalize_label(label: str) -> str:
     return " ".join(label.casefold().split())
+
+
+def _claim_entity_ids(claims: list[dict[str, Any]]) -> tuple[str, ...]:
+    entity_ids = []
+    for claim in claims:
+        value = claim.get("mainsnak", {}).get("datavalue", {}).get("value", {})
+        entity_id = value.get("id") if isinstance(value, dict) else None
+        if entity_id:
+            entity_ids.append(str(entity_id))
+    return tuple(dict.fromkeys(entity_ids))

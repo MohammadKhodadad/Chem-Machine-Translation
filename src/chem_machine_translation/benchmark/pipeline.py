@@ -1295,6 +1295,7 @@ def external_evidence_enrichment_stage_payload(
         "candidate_max_terms": terminology.candidate_max_terms,
         "external_evidence_sources": terminology.external_evidence_sources,
         "local_iate_path": local_iate_path,
+        "enrichment_version": "external-metadata-v1",
     }
 
 
@@ -1309,6 +1310,7 @@ def llm_curation_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[
         "max_output_tokens": terminology.max_output_tokens,
         "thinking": terminology.thinking,
         "reasoning_effort": terminology.reasoning_effort,
+        "curation_version": "external-categories-v1",
     }
 
 

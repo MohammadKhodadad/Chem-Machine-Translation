@@ -329,6 +329,10 @@ Important fields:
 - `decision`: preservation/refinement decision such as `preserve`, `translate`, or `keep_refined`.
 - `reason`: short human-readable explanation.
 - `candidates`: external synonym or label evidence collected from verifier APIs.
+- `external_metadata`: source-scoped classifications stored beside the term. Local IATE contributes
+  entry domains, term type, reliability, and institution; Wikidata contributes an entity ID,
+  description, and exact-match-gated `instance of` / `subclass of` labels. These fields inform LLM
+  curation but do not replace the benchmark's own `category`.
 
 The code deduplicates terms by normalized target surface. When duplicates are merged, provenance and
 verifier evidence are unioned rather than discarded.

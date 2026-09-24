@@ -2,6 +2,7 @@ import sqlite3
 
 from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.translation.iate import (
+    IATEEntryMetadata,
     IATETermTranslation,
     IATEClient,
     LocalIATEClient,
@@ -26,6 +27,7 @@ from chem_machine_translation.translation.translators import DryRunTranslator, O
 from chem_machine_translation.config import Settings
 from chem_machine_translation.translation.providers import resolve_provider_settings
 from chem_machine_translation.translation.wikidata import (
+    WikidataEntityMetadata,
     WikidataTermTranslation,
     WikidataClient,
     wikidata_language_code,
@@ -165,6 +167,45 @@ def test_wikidata_synonyms_reject_a_fuzzy_search_result() -> None:
     client._get_json = lambda params: next(payloads)  # type: ignore[method-assign]
 
     assert client.lookup_synonyms("wate", "en") == []
+
+
+def test_wikidata_metadata_returns_exact_match_entity_classes() -> None:
+    client = WikidataClient(endpoint="https://example.test/wikidata")
+    payloads = iter(
+        [
+            {"search": [{"id": "Q1"}]},
+            {
+                "entities": {
+                    "Q1": {
+                        "labels": {"en": {"value": "sodium chloride"}},
+                        "descriptions": {"en": {"value": "chemical compound"}},
+                        "claims": {
+                            "P31": [
+                                {"mainsnak": {"datavalue": {"value": {"id": "Q2"}}}}
+                            ],
+                            "P279": [
+                                {"mainsnak": {"datavalue": {"value": {"id": "Q3"}}}}
+                            ],
+                        },
+                    }
+                }
+            },
+            {
+                "entities": {
+                    "Q2": {"labels": {"en": {"value": "chemical compound"}}},
+                    "Q3": {"labels": {"en": {"value": "salt"}}},
+                }
+            },
+        ]
+    )
+    client._get_json = lambda params: next(payloads)  # type: ignore[method-assign]
+
+    assert client.lookup_metadata("sodium chloride", "en") == WikidataEntityMetadata(
+        entity_id="Q1",
+        description="chemical compound",
+        instance_of=("chemical compound",),
+        subclass_of=("salt",),
+    )
 
 
 def test_one_shot_translator_uses_provider_and_terminology() -> None:
@@ -460,6 +501,23 @@ def test_local_iate_client_auto_builds_sqlite_index(tmp_path) -> None:
         source_term="catalyst",
         target_label="Katalysator",
         entry_id="IATE-1",
+    )
+
+
+def test_local_iate_client_retains_export_metadata(tmp_path) -> None:
+    csv_path = tmp_path / "iate.csv"
+    csv_path.write_text(
+        "E_ID|E_DOMAINS|L_CODE|T_TERM|T_TYPE|T_RELIABILITY|T_INSTITUTION\n"
+        "IATE-1|chemistry;environment|en|catalyst|Term|Reliable|Commission\n",
+        encoding="utf-8",
+    )
+    client = LocalIATEClient(tmp_path)
+
+    assert client.lookup_metadata("catalyst", "en") == IATEEntryMetadata(
+        domains=("chemistry", "environment"),
+        term_type="Term",
+        reliability="Reliable",
+        institution="Commission",
     )
 
 
