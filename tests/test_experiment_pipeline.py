@@ -84,6 +84,10 @@ llm_curation = false
     assert "sequence_similarity" in scores[0]["metrics"]
     assert summary["row_count"] == 1
     assert result.summary_markdown_path.exists()
+    summary_markdown = result.summary_markdown_path.read_text(encoding="utf-8")
+    assert "| Build | Rows | Directions | Output | Manifest | Metadata |" in summary_markdown
+    assert "| Group | Rows | Errors |" in summary_markdown
+    assert "sequence_similarity" in summary_markdown
 
 
 def test_prediction_resume_retries_previous_error_rows(tmp_path: Path) -> None:

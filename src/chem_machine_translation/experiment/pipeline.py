@@ -432,26 +432,29 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
     lines = [
         f"# Benchmark Experiment Summary: {summary['name']}",
         "",
-        f"- Run directory: `{summary['run_dir']}`",
-        f"- Scored rows: `{summary['row_count']}`",
-        f"- Rows with errors: `{summary['error_count']}`",
+        f"**Run directory:** `{summary['run_dir']}`  ",
+        f"**Scored rows:** `{summary['row_count']}`  ",
+        f"**Rows with errors:** `{summary['error_count']}`",
         "",
         "## Benchmark Builds",
         "",
     ]
-    for build in summary["benchmark_builds"]:
-        lines.extend(
-            [
-                f"### {build['name']}",
-                "",
-                f"- Output: `{build['output_dir']}`",
-                f"- Rows: `{build['rows']}`",
-                f"- Directions: `{build['directions']}`",
-                f"- Manifest: `{build['manifest']}`",
-                f"- Metadata: `{build['metadata']}`",
-                "",
-            ]
+    lines.extend(
+        render_markdown_table(
+            headers=["Build", "Rows", "Directions", "Output", "Manifest", "Metadata"],
+            rows=[
+                [
+                    build["name"],
+                    build["rows"],
+                    build["directions"],
+                    f"`{build['output_dir']}`",
+                    f"`{build['manifest']}`",
+                    f"`{build['metadata']}`",
+                ]
+                for build in summary["benchmark_builds"]
+            ],
         )
+    )
     lines.extend(render_group_section("Model Results", summary["by_model"]))
     lines.extend(render_group_section("Direction Results", summary["by_direction"]))
     lines.extend(render_group_section("Target Language Results", summary["by_target_language"]))
@@ -459,16 +462,42 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
 
 
 def render_group_section(title: str, groups: dict[str, Any]) -> list[str]:
-    lines = [f"## {title}", ""]
-    for name, summary in groups.items():
-        metric_parts = [
-            f"`{metric_name}` mean `{metric_values['mean']}`"
-            for metric_name, metric_values in summary.get("metrics", {}).items()
-        ]
-        lines.append(
-            f"- `{name}`: rows `{summary['row_count']}`, errors `{summary['error_count']}`"
-            + (f", {', '.join(metric_parts)}" if metric_parts else "")
+    metric_names = sorted(
+        {
+            metric_name
+            for group_summary in groups.values()
+            for metric_name in group_summary.get("metrics", {})
+        }
+    )
+    headers = ["Group", "Rows", "Errors", *metric_names]
+    rows = []
+    for name, group_summary in groups.items():
+        rows.append(
+            [
+                name,
+                group_summary["row_count"],
+                group_summary["error_count"],
+                *[
+                    group_summary.get("metrics", {}).get(metric_name, {}).get("mean", "")
+                    for metric_name in metric_names
+                ],
+            ]
         )
+    return [f"## {title}", "", *render_markdown_table(headers, rows)]
+
+
+def render_markdown_table(headers: list[str], rows: list[list[Any]]) -> list[str]:
+    def format_cell(value: Any) -> str:
+        return str(value).replace("|", "\\|").replace("\n", " ")
+
+    formatted_headers = [format_cell(header) for header in headers]
+    formatted_rows = [[format_cell(value) for value in row] for row in rows]
+    separator = ["---" for _ in headers]
+    lines = [
+        "| " + " | ".join(formatted_headers) + " |",
+        "| " + " | ".join(separator) + " |",
+    ]
+    lines.extend("| " + " | ".join(row) + " |" for row in formatted_rows)
     lines.append("")
     return lines
 
