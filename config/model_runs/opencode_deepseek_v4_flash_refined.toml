@@ -1,0 +1,11 @@
+name = "opencode_deepseek_v4_flash_refined_terms"
+translator = "one-shot"
+provider = "opencode"
+model = "deepseek-v4-flash"
+temperature = 0.0
+provider_timeout = 180.0
+translation_domain = "legal"
+use_manifest_terminology = true
+terminology_groups = ["refined"]
+max_manifest_terminology_terms = 8
+resume = true

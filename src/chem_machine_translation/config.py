@@ -19,6 +19,7 @@ class Settings(BaseModel):
     openai_base_url: str | None = Field(default=None)
     opencode_api_key: str | None = Field(default=None)
     opencode_base_url: str | None = Field(default=None)
+    opencode_session_id: str = Field(default="chem-machine-translation")
     default_model: str = Field(default=DEFAULT_MODEL)
     llm_api_mode: str = Field(default=DEFAULT_LLM_API_MODE)
     llm_max_output_tokens: int = Field(default=DEFAULT_LLM_MAX_OUTPUT_TOKENS)
@@ -43,6 +44,7 @@ def load_settings(env_file: Path | None = None) -> Settings:
         openai_base_url=os.getenv("OPENAI_BASE_URL"),
         opencode_api_key=os.getenv("OPENCODE_API_KEY"),
         opencode_base_url=os.getenv("OPENCODE_BASE_URL"),
+        opencode_session_id=os.getenv("OPENCODE_SESSION_ID", "chem-machine-translation"),
         default_model=os.getenv("CHEM_MT_MODEL") or os.getenv("OPENCODE_MODEL") or DEFAULT_MODEL,
         llm_api_mode=resolve_llm_api_mode(),
         llm_max_output_tokens=int(

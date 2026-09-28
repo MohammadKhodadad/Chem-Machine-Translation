@@ -26,6 +26,7 @@ class TextGenerationProvider(Protocol):
 class OpenAIResponsesProvider:
     api_key: str
     base_url: str | None = None
+    default_headers: dict[str, str] | None = None
     timeout: float | None = None
     api_mode: str = "responses"
     max_output_tokens: int | None = 1024
@@ -37,6 +38,7 @@ class OpenAIResponsesProvider:
         self._client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url,
+            default_headers=self.default_headers,
             timeout=self.timeout,
         )
 
@@ -108,6 +110,14 @@ def build_text_generation_provider(
     return OpenAIResponsesProvider(
         api_key=api_key,
         base_url=resolved_base_url,
+        default_headers=(
+            {
+                "User-Agent": "chem-machine-translation/1.0",
+                "x-opencode-session": settings.opencode_session_id,
+            }
+            if provider == "opencode"
+            else None
+        ),
         timeout=timeout,
         api_mode=api_mode,
         max_output_tokens=settings.llm_max_output_tokens,

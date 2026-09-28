@@ -5,11 +5,11 @@ config = "config/benchmark_generation/legal_one_anchor.toml"
 run_generation = false
 
 [[model_runs]]
-config = "config/model_runs/dry_run.toml"
+config = "config/model_runs/opencode_deepseek_v4_flash_refined.toml"
 
 [evaluation]
 config = "config/evaluation/cheap.toml"
 
 [output]
-run_dir = "runs/legal_one_anchor_smoke"
+run_dir = "runs/legal_one_anchor_opencode_deepseek_v4_flash"
 overwrite_scores = true

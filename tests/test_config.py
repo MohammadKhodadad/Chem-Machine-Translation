@@ -13,6 +13,7 @@ def clear_explicit_llm_runtime_overrides(monkeypatch) -> None:
         "OPENCODE_API_MODE",
         "OPENCODE_THINKING",
         "OPENCODE_REASONING_EFFORT",
+        "OPENCODE_SESSION_ID",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -25,6 +26,7 @@ def test_load_settings_uses_opencode_provider_aliases(monkeypatch) -> None:
     monkeypatch.setenv("OPENCODE_API_KEY", "test-opencode-key")
     monkeypatch.setenv("OPENCODE_BASE_URL", "https://example.test/v1")
     monkeypatch.setenv("OPENCODE_MODEL", "deepseek/deepseek-v4-flash-0731")
+    monkeypatch.setenv("OPENCODE_SESSION_ID", "test-session")
 
     settings = load_settings()
 
@@ -32,6 +34,7 @@ def test_load_settings_uses_opencode_provider_aliases(monkeypatch) -> None:
     assert settings.openai_base_url is None
     assert settings.opencode_api_key == "test-opencode-key"
     assert settings.opencode_base_url == "https://example.test/v1"
+    assert settings.opencode_session_id == "test-session"
     assert settings.default_model == "deepseek/deepseek-v4-flash-0731"
     assert settings.llm_api_mode == "chat_completions"
     assert settings.llm_thinking == "disabled"
