@@ -1,0 +1,15 @@
+name = "legal_20_anchor_luna"
+
+[benchmark]
+config = "config/benchmark_generation/legal_20_anchor.toml"
+run_generation = true
+
+[[model_runs]]
+config = "config/model_runs/openai_gpt6_luna_refined.toml"
+
+[evaluation]
+config = "config/evaluation/cheap.toml"
+
+[output]
+run_dir = "runs/legal_20_anchor_luna"
+overwrite_scores = true

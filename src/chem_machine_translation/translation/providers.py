@@ -90,11 +90,13 @@ def build_text_generation_provider(
     settings: Settings,
     base_url: str | None = None,
     timeout: float | None = None,
+    thinking: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> TextGenerationProvider:
     if provider not in {"openai", "opencode", "openai-compatible"}:
         raise ValueError(f"Unknown text generation provider: {provider}")
 
-    api_key, resolved_base_url, api_mode, thinking = resolve_provider_settings(
+    api_key, resolved_base_url, api_mode, provider_thinking = resolve_provider_settings(
         provider=provider,
         settings=settings,
         base_url=base_url,
@@ -121,8 +123,10 @@ def build_text_generation_provider(
         timeout=timeout,
         api_mode=api_mode,
         max_output_tokens=settings.llm_max_output_tokens,
-        thinking=thinking,
-        reasoning_effort=settings.llm_reasoning_effort,
+        thinking=thinking if thinking is not None else provider_thinking,
+        reasoning_effort=(
+            reasoning_effort if reasoning_effort is not None else settings.llm_reasoning_effort
+        ),
         name=provider,
     )
 

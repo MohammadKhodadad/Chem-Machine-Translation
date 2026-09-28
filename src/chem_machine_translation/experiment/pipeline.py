@@ -4,6 +4,7 @@ import csv
 import json
 import re
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -170,30 +171,43 @@ def write_predictions(
         if model_run.use_manifest_terminology
         else None
     )
-    translator = build_translator(
-        translator=model_run.translator,
-        settings=settings,
-        model=model_run.model,
-        temperature=model_run.temperature,
-        terminology_layer=terminology_layer,
-        provider=model_run.provider,
-        provider_base_url=model_run.provider_base_url,
-        provider_timeout=model_run.provider_timeout,
-        translation_domain=resolve_translation_domain(model_run.translation_domain, manifest_rows),
-    )
-    row_loader = ParallelRowsLoader(build.output_dir)
+    translation_domain = resolve_translation_domain(model_run.translation_domain, manifest_rows)
+
+    def build_row_translator() -> Any:
+        return build_translator(
+            translator=model_run.translator,
+            settings=settings,
+            model=model_run.model,
+            temperature=model_run.temperature,
+            terminology_layer=terminology_layer,
+            provider=model_run.provider,
+            provider_base_url=model_run.provider_base_url,
+            provider_timeout=model_run.provider_timeout,
+            llm_thinking=model_run.llm_thinking,
+            llm_reasoning_effort=model_run.llm_reasoning_effort,
+            translation_domain=translation_domain,
+        )
+
+    def translate_row(manifest_row: dict[str, Any]) -> dict[str, Any]:
+        return translate_manifest_row(
+            manifest_row=manifest_row,
+            build_name=build.name,
+            model_run=model_run,
+            translator=build_row_translator(),
+            row_loader=ParallelRowsLoader(build.output_dir),
+        )
 
     with predictions_path.open("a", encoding="utf-8") as handle:
-        for manifest_row in missing_manifest_rows:
-            prediction_row = translate_manifest_row(
-                manifest_row=manifest_row,
-                build_name=build.name,
-                model_run=model_run,
-                translator=translator,
-                row_loader=row_loader,
-            )
-            existing_rows.append(prediction_row)
-            handle.write(json.dumps(prediction_row, ensure_ascii=False) + "\n")
+        if model_run.prediction_workers == 1:
+            prediction_rows = map(translate_row, missing_manifest_rows)
+            for prediction_row in prediction_rows:
+                existing_rows.append(prediction_row)
+                handle.write(json.dumps(prediction_row, ensure_ascii=False) + "\n")
+        else:
+            with ThreadPoolExecutor(max_workers=model_run.prediction_workers) as executor:
+                for prediction_row in executor.map(translate_row, missing_manifest_rows):
+                    existing_rows.append(prediction_row)
+                    handle.write(json.dumps(prediction_row, ensure_ascii=False) + "\n")
     return existing_rows
 
 

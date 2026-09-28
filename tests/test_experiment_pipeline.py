@@ -11,8 +11,9 @@ def test_load_standard_experiment_config() -> None:
 
     assert config.name == "legal_one_anchor_smoke"
     assert config.benchmark.run_generation is False
-    assert config.model_runs[0].name == "dry_run_baseline"
-    assert config.model_runs[0].translator == "dry-run"
+    assert config.model_runs[0].name == "opencode_deepseek_v4_flash_refined_terms"
+    assert config.model_runs[0].provider == "opencode"
+    assert config.model_runs[0].model == "deepseek-v4-flash"
     assert config.evaluation.metrics == (
         "sequence_similarity",
         "bleu",
@@ -22,6 +23,17 @@ def test_load_standard_experiment_config() -> None:
         "target_term_coverage",
         "variant_aware_target_term_coverage",
     )
+
+
+def test_load_luna_20_anchor_experiment_config() -> None:
+    config = load_experiment_config("config/experiments/legal_20_anchor_luna.toml")
+
+    assert config.name == "legal_20_anchor_luna"
+    assert config.benchmark.run_generation is True
+    assert config.model_runs[0].model == "gpt-6-luna"
+    assert config.model_runs[0].llm_thinking == "disabled"
+    assert config.model_runs[0].llm_reasoning_effort == "none"
+    assert config.model_runs[0].prediction_workers == 4
 
 
 def test_run_experiment_generates_predictions_scores_and_summary(tmp_path: Path) -> None:

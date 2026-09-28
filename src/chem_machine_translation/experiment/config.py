@@ -39,6 +39,9 @@ class ModelRunConfig:
     temperature: float = 0.0
     provider_base_url: str | None = None
     provider_timeout: float | None = None
+    llm_thinking: str | None = None
+    llm_reasoning_effort: str | None = None
+    prediction_workers: int = 1
     translation_domain: str = "auto"
     use_manifest_terminology: bool = False
     terminology_groups: tuple[str, ...] = DEFAULT_TERMINOLOGY_TERM_GROUPS
@@ -135,6 +138,9 @@ def model_run_config_from_mapping(
         temperature=float(payload.get("temperature") or 0.0),
         provider_base_url=optional_string(payload.get("provider_base_url")),
         provider_timeout=optional_float(payload.get("provider_timeout")),
+        llm_thinking=optional_string(payload.get("llm_thinking")),
+        llm_reasoning_effort=optional_string(payload.get("llm_reasoning_effort")),
+        prediction_workers=max(1, int(payload.get("prediction_workers") or 1)),
         translation_domain=str(payload.get("translation_domain") or "auto"),
         use_manifest_terminology=bool(payload.get("use_manifest_terminology", False)),
         terminology_groups=string_tuple(

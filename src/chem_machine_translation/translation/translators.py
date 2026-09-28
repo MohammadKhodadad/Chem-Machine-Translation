@@ -119,6 +119,8 @@ def build_translator(
     provider: str = "openai",
     provider_base_url: str | None = None,
     provider_timeout: float | None = None,
+    llm_thinking: str | None = None,
+    llm_reasoning_effort: str | None = None,
     translation_domain: str = "chemistry",
 ) -> Translator:
     selected_translator = normalize_translator_name(translator or strategy or "one-shot")
@@ -130,6 +132,8 @@ def build_translator(
             settings=settings,
             base_url=provider_base_url,
             timeout=provider_timeout,
+            thinking=llm_thinking,
+            reasoning_effort=llm_reasoning_effort,
         )
         return OneShotTranslator(
             provider=text_provider,
