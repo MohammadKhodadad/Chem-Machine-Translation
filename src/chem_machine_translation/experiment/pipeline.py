@@ -21,6 +21,9 @@ from chem_machine_translation.evaluation.metrics import (
     OpenAIMqmJudge,
     UnbabelCometScorer,
     compute_translation_metrics,
+    compute_target_term_coverage,
+    compute_variant_aware_target_term_coverage,
+    select_terminology_terms,
 )
 from chem_machine_translation.experiment.config import (
     EvaluationRunConfig,
@@ -330,16 +333,49 @@ def score_prediction_row(
     if prediction_row.get("error"):
         return {**prediction_row, "metrics": {}, "evaluation_error": "prediction_error"}
     try:
+        metric_names = evaluation.metrics
+        if evaluation.terminology_metric_sets:
+            metric_names = tuple(
+                name
+                for name in evaluation.metrics
+                if name
+                not in {"target_term_coverage", "variant_aware_target_term_coverage"}
+            )
         metrics = compute_translation_metrics(
             prediction=str(prediction_row["predicted_translation"]),
             reference=str(prediction_row["ground_truth_translation"]),
             source=str(prediction_row["source_text"]),
-            metric_names=evaluation.metrics,
+            metric_names=metric_names,
             comet_scorer=comet_scorer,
             terminology=prediction_row.get("metadata", {}).get("terminology"),
             terminology_term_groups=evaluation.terminology_groups,
             mqm_judge=mqm_judge,
         )
+        terminology = prediction_row.get("metadata", {}).get("terminology") or []
+        for metric_set in evaluation.terminology_metric_sets:
+            selected_terms = select_terminology_terms(
+                terminology,
+                term_groups=metric_set.term_groups,
+                require_verified=metric_set.require_verified,
+            )
+            coverage = compute_target_term_coverage(
+                prediction=str(prediction_row["predicted_translation"]),
+                reference=str(prediction_row["ground_truth_translation"]),
+                terminology=selected_terms,
+                term_groups=(),
+            )
+            if coverage is not None:
+                metrics[f"{metric_set.name}_target_term_coverage"] = coverage
+            variant_coverage = compute_variant_aware_target_term_coverage(
+                prediction=str(prediction_row["predicted_translation"]),
+                reference=str(prediction_row["ground_truth_translation"]),
+                terminology=selected_terms,
+                term_groups=(),
+            )
+            if variant_coverage is not None:
+                metrics[f"{metric_set.name}_variant_aware_target_term_coverage"] = (
+                    variant_coverage
+                )
         return {**prediction_row, "metrics": metrics, "evaluation_error": ""}
     except Exception as exc:
         return {

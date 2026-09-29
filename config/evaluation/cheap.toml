@@ -1,3 +1,17 @@
 name = "cheap_eval"
 metrics = ["sequence_similarity", "bleu", "chrf2++", "terminology_success_rate", "variant_aware_terminology_success_rate", "target_term_coverage", "variant_aware_target_term_coverage"]
 terminology_groups = ["refined"]
+
+[[terminology_metric_sets]]
+name = "all"
+term_groups = ["llm", "algorithmic", "verified", "refined"]
+
+[[terminology_metric_sets]]
+name = "verified_external"
+term_groups = ["verified"]
+require_verified = true
+
+[[terminology_metric_sets]]
+name = "verified_external_refined"
+term_groups = ["refined"]
+require_verified = true

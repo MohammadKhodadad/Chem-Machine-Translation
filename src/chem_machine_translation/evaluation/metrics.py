@@ -438,6 +438,66 @@ def compute_variant_aware_target_term_coverage(
     return 100 * sum(applicable_scores) / len(applicable_scores)
 
 
+def select_terminology_terms(
+    terminology: list[dict[str, Any]],
+    *,
+    term_groups: list[str] | tuple[str, ...] | None,
+    require_verified: bool = False,
+) -> list[dict[str, Any]]:
+    """Select distinct target-side terms for a named evaluation slice."""
+    selected: dict[tuple[str, ...], dict[str, Any]] = {}
+    for term in terminology:
+        if not isinstance(term, dict):
+            continue
+        if str(term.get("decision", "")).strip().lower() == "drop":
+            continue
+        if not terminology_term_group_matches(term, term_groups):
+            continue
+        if require_verified and not term.get("verified_by"):
+            continue
+        target_terms = accepted_target_terms(term)
+        key = tuple(normalize_metric_text(target_term) for target_term in target_terms)
+        if not key:
+            continue
+        existing = selected.get(key)
+        if existing is None:
+            selected[key] = dict(term)
+            continue
+        merge_external_candidates(existing, term)
+        if terminology_selection_priority(term) > terminology_selection_priority(existing):
+            replacement = dict(term)
+            merge_external_candidates(replacement, existing)
+            selected[key] = replacement
+    return list(selected.values())
+
+
+def merge_external_candidates(target: dict[str, Any], source: dict[str, Any]) -> None:
+    target_candidates = target.get("external_candidates") or target.get("candidates") or {}
+    source_candidates = source.get("external_candidates") or source.get("candidates") or {}
+    if not isinstance(target_candidates, dict) or not isinstance(source_candidates, dict):
+        return
+    merged = {
+        str(name): list(values)
+        for name, values in target_candidates.items()
+        if isinstance(values, list)
+    }
+    for name, values in source_candidates.items():
+        if not isinstance(values, list):
+            continue
+        merged[str(name)] = list(
+            unique_normalized_terms(
+                tuple(str(value) for value in merged.get(str(name), []) + values)
+            )
+        )
+    if merged:
+        target["external_candidates"] = merged
+
+
+def terminology_selection_priority(term: dict[str, Any]) -> int:
+    group = terminology_term_group(term)
+    return {"refined": 3, "verified": 2, "llm": 1, "algorithmic": 0}.get(group, 0)
+
+
 def applicable_source_count(term: dict[str, Any], source: str | None) -> int:
     if source is None:
         return 1

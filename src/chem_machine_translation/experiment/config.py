@@ -50,10 +50,18 @@ class ModelRunConfig:
 
 
 @dataclass(frozen=True)
+class TerminologyMetricSetConfig:
+    name: str
+    term_groups: tuple[str, ...] = DEFAULT_TERMINOLOGY_TERM_GROUPS
+    require_verified: bool = False
+
+
+@dataclass(frozen=True)
 class EvaluationRunConfig:
     name: str
     metrics: tuple[str, ...] = DEFAULT_METRIC_NAMES
     terminology_groups: tuple[str, ...] = DEFAULT_TERMINOLOGY_TERM_GROUPS
+    terminology_metric_sets: tuple[TerminologyMetricSetConfig, ...] = ()
     comet_model: str = COMET_DEFAULT_MODEL
     comet_batch_size: int = 8
     comet_gpus: int = 0
@@ -170,11 +178,23 @@ def evaluation_config_from_mapping(
         terminology_groups=string_tuple(
             payload.get("terminology_groups") or DEFAULT_TERMINOLOGY_TERM_GROUPS
         ),
+        terminology_metric_sets=tuple(
+            terminology_metric_set_from_mapping(dict(item))
+            for item in payload.get("terminology_metric_sets", [])
+        ),
         comet_model=str(payload.get("comet_model") or COMET_DEFAULT_MODEL),
         comet_batch_size=int(payload.get("comet_batch_size") or 8),
         comet_gpus=int(payload.get("comet_gpus") or 0),
         fsp_mqm_model=str(payload.get("fsp_mqm_model") or MQM_DEFAULT_MODEL),
         fsp_mqm_timeout=float(payload.get("fsp_mqm_timeout") or 120.0),
+    )
+
+
+def terminology_metric_set_from_mapping(payload: dict[str, Any]) -> TerminologyMetricSetConfig:
+    return TerminologyMetricSetConfig(
+        name=str(payload.get("name") or "").strip(),
+        term_groups=string_tuple(payload.get("term_groups") or DEFAULT_TERMINOLOGY_TERM_GROUPS),
+        require_verified=bool(payload.get("require_verified", False)),
     )
 
 
@@ -213,6 +233,18 @@ def validate_experiment_config(config: ExperimentPipelineConfig) -> None:
         config.evaluation.terminology_groups,
         TERMINOLOGY_TERM_GROUPS,
     )
+    metric_set_names = set()
+    for metric_set in config.evaluation.terminology_metric_sets:
+        if not metric_set.name:
+            raise ValueError("Terminology metric sets require a name.")
+        if metric_set.name in metric_set_names:
+            raise ValueError(f"Duplicate terminology metric set name: {metric_set.name}")
+        metric_set_names.add(metric_set.name)
+        validate_terms(
+            f"terminology metric set {metric_set.name}",
+            metric_set.term_groups,
+            TERMINOLOGY_TERM_GROUPS,
+        )
 
 
 def validate_terms(name: str, values: tuple[str, ...], supported: tuple[str, ...]) -> None:

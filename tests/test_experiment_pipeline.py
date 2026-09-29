@@ -34,6 +34,11 @@ def test_load_luna_20_anchor_experiment_config() -> None:
     assert config.model_runs[0].llm_thinking == "disabled"
     assert config.model_runs[0].llm_reasoning_effort == "none"
     assert config.model_runs[0].prediction_workers == 4
+    assert [metric_set.name for metric_set in config.evaluation.terminology_metric_sets] == [
+        "all",
+        "verified_external",
+        "verified_external_refined",
+    ]
 
 
 def test_run_experiment_generates_predictions_scores_and_summary(tmp_path: Path) -> None:

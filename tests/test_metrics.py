@@ -13,6 +13,7 @@ from chem_machine_translation.evaluation.metrics import (
     compute_variant_aware_terminology_success_rate,
     parse_metric_names,
     parse_mqm_judge_response,
+    select_terminology_terms,
     terminology_term_group,
 )
 
@@ -122,6 +123,59 @@ def test_compute_terminology_success_rate_matches_manifest_target_terms() -> Non
     )
 
     assert score == 50
+
+
+def test_select_terminology_terms_filters_verification_and_deduplicates() -> None:
+    terminology = [
+        {
+            "term_group": "algorithmic",
+            "target_terms": ["common term"],
+            "decision": "keep_reference",
+            "verified_by": [],
+        },
+        {
+            "term_group": "verified",
+            "target_terms": ["verified term"],
+            "decision": "keep_reference",
+            "verified_by": ["local_iate"],
+        },
+        {
+            "term_group": "refined",
+            "target_terms": ["verified term"],
+            "decision": "keep_refined",
+            "verified_by": ["local_iate"],
+        },
+        {
+            "term_group": "refined",
+            "target_terms": ["unverified refined term"],
+            "decision": "keep_refined",
+            "verified_by": [],
+        },
+    ]
+
+    all_terms = select_terminology_terms(
+        terminology,
+        term_groups=("algorithmic", "verified", "refined"),
+    )
+    verified_terms = select_terminology_terms(
+        terminology,
+        term_groups=("verified",),
+        require_verified=True,
+    )
+    verified_refined_terms = select_terminology_terms(
+        terminology,
+        term_groups=("refined",),
+        require_verified=True,
+    )
+
+    assert [term["target_terms"][0] for term in all_terms] == [
+        "common term",
+        "verified term",
+        "unverified refined term",
+    ]
+    assert all_terms[1]["term_group"] == "refined"
+    assert [term["target_terms"][0] for term in verified_terms] == ["verified term"]
+    assert [term["target_terms"][0] for term in verified_refined_terms] == ["verified term"]
 
 
 def test_variant_aware_terminology_success_rate_accepts_external_candidate_variants() -> None:
