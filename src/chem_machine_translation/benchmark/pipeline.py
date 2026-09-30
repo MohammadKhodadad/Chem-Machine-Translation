@@ -152,7 +152,10 @@ def load_external_dataset_terms(
                     f"{manifest_path}"
                 )
             terms_by_source_id.setdefault(source_id, []).extend(
-                tag_external_dataset_term(dataset_term_from_json(term))
+                tag_external_dataset_term(
+                    dataset_term_from_json(term),
+                    source_tag=terminology.external_dataset_source,
+                )
                 for term in raw_terms
                 if isinstance(term, dict)
             )
@@ -162,8 +165,12 @@ def load_external_dataset_terms(
     }
 
 
-def tag_external_dataset_term(term: DatasetTerminologyTerm) -> DatasetTerminologyTerm:
-    source_tags = ["external_dataset", *filter(None, term.source.split("+"))]
+def tag_external_dataset_term(
+    term: DatasetTerminologyTerm,
+    *,
+    source_tag: str,
+) -> DatasetTerminologyTerm:
+    source_tags = [source_tag, *filter(None, term.source.split("+"))]
     return replace(term, source="+".join(dict.fromkeys(source_tags)))
 
 

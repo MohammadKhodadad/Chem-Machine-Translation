@@ -150,6 +150,7 @@ def test_external_dataset_terms_are_merged_before_generated_candidates(tmp_path:
         candidate_max_terms=1,
         candidate_extractors=("external_dataset",),
         external_dataset_manifest=manifest_path,
+        external_dataset_source="glm_flash_ext",
         llm_curation=False,
     )
     runtime = build_terminology_runtime(terminology, settings=Settings())
@@ -168,7 +169,7 @@ def test_external_dataset_terms_are_merged_before_generated_candidates(tmp_path:
     )
 
     assert [term.target_terms for term in terms] == [("Council of Europe",)]
-    assert terms[0].source == "external_dataset+legal_llm"
+    assert terms[0].source == "glm_flash_ext+legal_llm"
 
 
 def test_generator_factories_map_extractor_and_verifier_flags() -> None:

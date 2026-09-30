@@ -66,6 +66,7 @@ class BenchmarkTerminologyConfig:
     reasoning_effort: str | None = None
     candidate_extractors: tuple[str, ...] = ()
     external_dataset_manifest: Path | None = None
+    external_dataset_source: str = "external_dataset"
     external_evidence_sources: tuple[str, ...] = ()
     llm_curation: bool = True
     workers: int = 1
@@ -171,6 +172,7 @@ def terminology_config_from_mapping(
             payload.get("external_dataset_manifest"),
             base_dir=base_dir,
         ),
+        external_dataset_source=str(payload.get("external_dataset_source") or "external_dataset"),
         external_evidence_sources=string_tuple(payload.get("external_evidence_sources")),
         llm_curation=bool(payload.get("llm_curation", True)),
         workers=int(payload.get("workers") or 1),
@@ -325,6 +327,8 @@ def validate_benchmark_config(
             )
         if validate_paths and not manifest.exists():
             raise FileNotFoundError(f"External dataset manifest not found: {manifest}")
+        if not config.terminology.external_dataset_source.strip():
+            raise ValueError("terminology.external_dataset_source must not be empty.")
     for build in config.builds:
         if build.kind not in SUPPORTED_SOURCE_KINDS:
             raise ValueError(f"Unsupported source kind: {build.kind}")

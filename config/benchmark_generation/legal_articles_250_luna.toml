@@ -37,6 +37,7 @@ thinking = "disabled"
 reasoning_effort = "none"
 candidate_extractors = ["external_dataset", "llm_legal", "stanza_ud", "xlmr_nobi", "spacy"]
 external_dataset_manifest = "benchmark_datasets/jrc_acquis_anchored_articles_250_anchors_glm_flash/jrc-acquis-20-directions-5000-chunks-manifest.jsonl"
+external_dataset_source = "glm_flash_ext"
 external_evidence_sources = ["local_iate", "wikidata", "unterm"]
 local_iate_path = "data/iate"
 llm_curation = true
