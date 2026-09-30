@@ -5,11 +5,12 @@ import hashlib
 import json
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from openai import OpenAI
+from tqdm.auto import tqdm
 
 from chem_machine_translation.benchmark.config import (
     BenchmarkBuildConfig,
@@ -69,6 +70,9 @@ class TerminologyRuntime:
     legal_generator: LegalTerminologyGenerator | None = None
     algorithmic_generator: DatasetTerminologyGenerator | None = None
     curator: LLMTerminologyRefiner | None = None
+    external_terms_by_source_id: dict[str, tuple[DatasetTerminologyTerm, ...]] = field(
+        default_factory=dict,
+    )
 
 
 @dataclass(frozen=True)
@@ -117,7 +121,45 @@ def build_terminology_runtime(
         legal_generator=build_legal_generator(terminology, client),
         algorithmic_generator=build_algorithmic_generator(terminology),
         curator=build_llm_curator(terminology, client),
+        external_terms_by_source_id=load_external_dataset_terms(terminology),
     )
+
+
+def load_external_dataset_terms(
+    terminology: BenchmarkTerminologyConfig,
+) -> dict[str, tuple[DatasetTerminologyTerm, ...]]:
+    if "external_dataset" not in terminology.candidate_extractors:
+        return {}
+    manifest_path = terminology.external_dataset_manifest
+    if manifest_path is None:
+        raise ValueError("external_dataset requires an external_dataset_manifest.")
+
+    terms_by_source_id: dict[str, list[DatasetTerminologyTerm]] = {}
+    with manifest_path.open(encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            source_id = str(record.get("source_id") or "").strip()
+            if not source_id:
+                raise ValueError(
+                    f"External dataset manifest row {line_number} has no source_id: {manifest_path}"
+                )
+            raw_terms = record.get("terminology", [])
+            if not isinstance(raw_terms, list):
+                raise ValueError(
+                    f"External dataset manifest row {line_number} has invalid terminology: "
+                    f"{manifest_path}"
+                )
+            terms_by_source_id.setdefault(source_id, []).extend(
+                dataset_term_from_json(term)
+                for term in raw_terms
+                if isinstance(term, dict)
+            )
+    return {
+        source_id: tuple(deduplicate_terms(terms))
+        for source_id, terms in terms_by_source_id.items()
+    }
 
 
 def needs_llm_client(terminology: BenchmarkTerminologyConfig) -> bool:
@@ -300,24 +342,27 @@ def run_benchmark_build(
     pair_rows = load_or_select_source_pair_rows(build, checkpoint=checkpoint_context)
     build.output_dir.mkdir(parents=True, exist_ok=True)
     combined_rows = []
-    for direction, rows in sorted(pair_rows.items()):
-        print(f"Building {build.name} {direction}: {len(rows)} rows.", flush=True)
-        direction_dir = build.output_dir / direction
-        direction_dir.mkdir(parents=True, exist_ok=True)
-        manifest_rows = [build_manifest_row(row=row, kind=build.kind) for row in rows]
-        manifest_rows = attach_terminology_to_rows(
-            manifest_rows,
-            build=build,
-            domain=domain,
-            terminology=terminology,
-            runtime=runtime,
-            checkpoint=checkpoint_context,
-        )
-        write_csv(direction_dir / "source.csv", [row["_source_row"] for row in manifest_rows])
-        write_csv(direction_dir / "target.csv", [row["_target_row"] for row in manifest_rows])
-        manifest_path = direction_dir / manifest_filename(build.kind, direction, len(manifest_rows))
-        write_manifest(manifest_path, manifest_rows)
-        combined_rows.extend(manifest_rows)
+    total_rows = sum(len(rows) for rows in pair_rows.values())
+    with tqdm(total=total_rows, desc=f"Building {build.name}", unit="rows") as progress:
+        for direction, rows in sorted(pair_rows.items()):
+            print(f"Building {build.name} {direction}: {len(rows)} rows.", flush=True)
+            direction_dir = build.output_dir / direction
+            direction_dir.mkdir(parents=True, exist_ok=True)
+            manifest_rows = [build_manifest_row(row=row, kind=build.kind) for row in rows]
+            manifest_rows = attach_terminology_to_rows(
+                manifest_rows,
+                build=build,
+                domain=domain,
+                terminology=terminology,
+                runtime=runtime,
+                checkpoint=checkpoint_context,
+            )
+            write_csv(direction_dir / "source.csv", [row["_source_row"] for row in manifest_rows])
+            write_csv(direction_dir / "target.csv", [row["_target_row"] for row in manifest_rows])
+            manifest_path = direction_dir / manifest_filename(build.kind, direction, len(manifest_rows))
+            write_manifest(manifest_path, manifest_rows)
+            combined_rows.extend(manifest_rows)
+            progress.update(len(manifest_rows))
 
     combined_manifest_path = build.output_dir / combined_manifest_filename(
         build.kind,
@@ -959,18 +1004,22 @@ def generate_candidate_extraction_terms(
     terminology: BenchmarkTerminologyConfig,
     runtime: TerminologyRuntime,
 ) -> list[DatasetTerminologyTerm]:
+    external_terms = list(
+        runtime.external_terms_by_source_id.get(str(row.get("source_id") or ""), ())
+    )
     if domain in {"chemistry", "google_patents"}:
         generator = runtime.chemistry_generator
         if generator is None:
-            return []
+            return external_terms
         if not hasattr(generator, "extractors"):
-            return generate_candidate_terms(row, domain=domain, runtime=runtime)
-        terms = extract_terms_from_dataset_generator(
+            generated_terms = generate_candidate_terms(row, domain=domain, runtime=runtime)
+            return merge_candidate_terms(external_terms, generated_terms, terminology.candidate_max_terms)
+        generated_terms = extract_terms_from_dataset_generator(
             generator=generator,
             row=row,
             max_terms=terminology.candidate_max_terms,
         )
-        return deduplicate_terms(terms)[: terminology.candidate_max_terms]
+        return merge_candidate_terms(external_terms, generated_terms, terminology.candidate_max_terms)
 
     terms: list[DatasetTerminologyTerm] = []
     legal_generator = runtime.legal_generator
@@ -994,7 +1043,20 @@ def generate_candidate_extraction_terms(
                 max_terms=terminology.candidate_max_terms,
             )
         )
-    return deduplicate_terms(terms)[: terminology.candidate_max_terms]
+    return merge_candidate_terms(external_terms, terms, terminology.candidate_max_terms)
+
+
+def merge_candidate_terms(
+    external_terms: list[DatasetTerminologyTerm],
+    generated_terms: list[DatasetTerminologyTerm],
+    candidate_max_terms: int,
+) -> list[DatasetTerminologyTerm]:
+    merged_terms = deduplicate_terms([*external_terms, *generated_terms])
+    # Imported manifest terms are the requested first-layer candidates; downstream
+    # evidence selection still applies the configured candidate cap.
+    if external_terms:
+        return merged_terms
+    return merged_terms[:candidate_max_terms]
 
 
 def extract_terms_from_dataset_generator(
@@ -1271,6 +1333,15 @@ def checkpoint_build_payload(build: BenchmarkBuildConfig) -> dict[str, Any]:
 
 
 def candidate_extraction_stage_payload(terminology: BenchmarkTerminologyConfig) -> dict[str, Any]:
+    manifest_path = terminology.external_dataset_manifest
+    manifest_signature = None
+    if manifest_path is not None and manifest_path.exists():
+        stats = manifest_path.stat()
+        manifest_signature = {
+            "path": str(manifest_path),
+            "size": stats.st_size,
+            "modified_ns": stats.st_mtime_ns,
+        }
     return {
         "domain": terminology.domain,
         "candidate_max_terms": terminology.candidate_max_terms,
@@ -1281,6 +1352,7 @@ def candidate_extraction_stage_payload(terminology: BenchmarkTerminologyConfig) 
         "thinking": terminology.thinking,
         "reasoning_effort": terminology.reasoning_effort,
         "candidate_extractors": terminology.candidate_extractors,
+        "external_dataset_manifest": manifest_signature,
         "nobi_model": terminology.nobi_model,
         "spacy_model": terminology.spacy_model,
     }

@@ -2,6 +2,7 @@ import json
 import runpy
 from pathlib import Path
 
+from chem_machine_translation.benchmark.pipeline import generate_candidate_extraction_terms
 from chem_machine_translation.benchmark_generation.config import (
     BenchmarkBuildConfig,
     BenchmarkCheckpointConfig,
@@ -12,6 +13,7 @@ from chem_machine_translation.benchmark_generation.config import (
 from chem_machine_translation.benchmark_generation.pipeline import (
     TerminologyRuntime,
     attach_terminology_to_rows,
+    build_terminology_runtime,
     refined_terms_from_manifest,
     run_benchmark_generation,
     select_source_pair_rows,
@@ -122,6 +124,50 @@ def test_load_benchmark_config_resolves_standard_legal_config() -> None:
         "wikidata",
         "unterm",
     )
+
+
+def test_external_dataset_terms_are_merged_before_generated_candidates(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "external-manifest.jsonl"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "source_id": "example-1",
+                "terminology": [
+                    {
+                        "target_terms": ["Council of Europe"],
+                        "source": "legal_llm",
+                        "term_group": "llm",
+                        "confidence": 0.9,
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    terminology = BenchmarkTerminologyConfig(
+        domain="jrc",
+        candidate_max_terms=1,
+        candidate_extractors=("external_dataset",),
+        external_dataset_manifest=manifest_path,
+        llm_curation=False,
+    )
+    runtime = build_terminology_runtime(terminology, settings=Settings())
+
+    terms = generate_candidate_extraction_terms(
+        {
+            "source_id": "example-1",
+            "_source_text": "Source text.",
+            "_target_text": "Council of Europe.",
+            "source_language": "English",
+            "target_language": "English",
+        },
+        domain="jrc",
+        terminology=terminology,
+        runtime=runtime,
+    )
+
+    assert [term.target_terms for term in terms] == [("Council of Europe",)]
 
 
 def test_generator_factories_map_extractor_and_verifier_flags() -> None:

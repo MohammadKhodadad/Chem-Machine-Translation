@@ -1,0 +1,46 @@
+name = "jrc_acquis_legal_articles_250_luna"
+domain = "jrc"
+
+[[builds]]
+name = "articles"
+kind = "jrc_acquis_snapshot"
+source_pairs_jsonl = "benchmark_sources/jrc_acquis_anchored_articles_250_per_language_pair.jsonl"
+output_dir = "benchmark_datasets/jrc_acquis_anchored_articles_250_luna"
+
+[selection]
+mode = "anchored"
+languages = ["en", "es", "de", "fr", "pt"]
+anchor_limit = 250
+
+[checkpoint]
+enabled = true
+work_dir = "benchmark_work"
+resume = true
+run_id = "auto"
+
+[checkpoint.reuse]
+selection = true
+candidate_extraction = true
+external_evidence_enrichment = true
+llm_curation = true
+manifest = true
+
+[terminology]
+domain = "jrc"
+candidate_max_terms = 80
+refined_max_terms = 16
+model = "gpt-6-luna"
+base_url = "https://api.openai.com/v1"
+api_mode = "responses"
+max_output_tokens = 1024
+thinking = "disabled"
+reasoning_effort = "none"
+candidate_extractors = ["external_dataset", "llm_legal", "stanza_ud", "xlmr_nobi", "spacy"]
+external_dataset_manifest = "benchmark_datasets/jrc_acquis_anchored_articles_250_anchors_glm_flash/jrc-acquis-20-directions-5000-chunks-manifest.jsonl"
+external_evidence_sources = ["local_iate", "wikidata", "unterm"]
+local_iate_path = "data/iate"
+llm_curation = true
+workers = 2
+legal_workers = 2
+stanza_workers = 2
+openai_timeout = 120.0

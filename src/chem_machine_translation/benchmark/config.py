@@ -16,6 +16,7 @@ SUPPORTED_DOMAINS = {"chemistry", "google_patents", "jrc", "legal"}
 SUPPORTED_SOURCE_KINDS = {"google_patents_snapshot", "jrc_acquis_snapshot"}
 SUPPORTED_SELECTION_MODES = {"per_direction", "anchored"}
 SUPPORTED_CANDIDATE_EXTRACTORS = {
+    "external_dataset",
     "llm_chemistry",
     "llm_legal",
     "stanza_ud",
@@ -64,6 +65,7 @@ class BenchmarkTerminologyConfig:
     thinking: str | None = None
     reasoning_effort: str | None = None
     candidate_extractors: tuple[str, ...] = ()
+    external_dataset_manifest: Path | None = None
     external_evidence_sources: tuple[str, ...] = ()
     llm_curation: bool = True
     workers: int = 1
@@ -165,6 +167,10 @@ def terminology_config_from_mapping(
         thinking=optional_string(payload.get("thinking")),
         reasoning_effort=optional_string(payload.get("reasoning_effort")),
         candidate_extractors=string_tuple(payload.get("candidate_extractors")),
+        external_dataset_manifest=optional_path(
+            payload.get("external_dataset_manifest"),
+            base_dir=base_dir,
+        ),
         external_evidence_sources=string_tuple(payload.get("external_evidence_sources")),
         llm_curation=bool(payload.get("llm_curation", True)),
         workers=int(payload.get("workers") or 1),
@@ -310,6 +316,15 @@ def validate_benchmark_config(
         raise ValueError("terminology.candidate_max_terms must be positive.")
     if config.terminology.refined_max_terms < 1:
         raise ValueError("terminology.refined_max_terms must be positive.")
+    if "external_dataset" in config.terminology.candidate_extractors:
+        manifest = config.terminology.external_dataset_manifest
+        if manifest is None:
+            raise ValueError(
+                "terminology.external_dataset_manifest is required when "
+                "candidate_extractors includes 'external_dataset'."
+            )
+        if validate_paths and not manifest.exists():
+            raise FileNotFoundError(f"External dataset manifest not found: {manifest}")
     for build in config.builds:
         if build.kind not in SUPPORTED_SOURCE_KINDS:
             raise ValueError(f"Unsupported source kind: {build.kind}")
