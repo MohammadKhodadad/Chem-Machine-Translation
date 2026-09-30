@@ -168,6 +168,7 @@ def test_external_dataset_terms_are_merged_before_generated_candidates(tmp_path:
     )
 
     assert [term.target_terms for term in terms] == [("Council of Europe",)]
+    assert terms[0].source == "external_dataset+legal_llm"
 
 
 def test_generator_factories_map_extractor_and_verifier_flags() -> None:

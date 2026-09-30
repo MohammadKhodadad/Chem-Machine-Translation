@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -152,7 +152,7 @@ def load_external_dataset_terms(
                     f"{manifest_path}"
                 )
             terms_by_source_id.setdefault(source_id, []).extend(
-                dataset_term_from_json(term)
+                tag_external_dataset_term(dataset_term_from_json(term))
                 for term in raw_terms
                 if isinstance(term, dict)
             )
@@ -160,6 +160,11 @@ def load_external_dataset_terms(
         source_id: tuple(deduplicate_terms(terms))
         for source_id, terms in terms_by_source_id.items()
     }
+
+
+def tag_external_dataset_term(term: DatasetTerminologyTerm) -> DatasetTerminologyTerm:
+    source_tags = ["external_dataset", *filter(None, term.source.split("+"))]
+    return replace(term, source="+".join(dict.fromkeys(source_tags)))
 
 
 def needs_llm_client(terminology: BenchmarkTerminologyConfig) -> bool:
