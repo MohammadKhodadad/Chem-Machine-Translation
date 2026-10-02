@@ -1,1 +1,2 @@
 benchmark_datasets/jrc_acquis_anchored_articles_250_anchors_glm_flash/** filter=lfs diff=lfs merge=lfs -text
+benchmark_datasets/google_patents_judged_exact_high_glm_flash_local/** filter=lfs diff=lfs merge=lfs -text
