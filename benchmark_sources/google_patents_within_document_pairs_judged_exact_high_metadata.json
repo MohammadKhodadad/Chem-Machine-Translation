@@ -1,0 +1,22 @@
+{
+  "dataset": "google_patents",
+  "source_dataset_dir": "benchmark_datasets\\google_patents_judged_exact_high_glm_flash_local",
+  "selection_rule": "Reconstructed from paired source.csv and target.csv files in the judged-exact-high GLM Flash dataset; deterministic direction and source CSV order",
+  "row_count": 10397,
+  "direction_count": 13,
+  "direction_counts": {
+    "de-es": 16,
+    "de-fr": 973,
+    "en-de": 941,
+    "en-es": 855,
+    "en-fr": 944,
+    "en-ja": 932,
+    "en-ru": 976,
+    "en-zh": 883,
+    "es-ru": 1,
+    "fr-es": 978,
+    "fr-ja": 977,
+    "fr-ru": 934,
+    "zh-fr": 987
+  }
+}
