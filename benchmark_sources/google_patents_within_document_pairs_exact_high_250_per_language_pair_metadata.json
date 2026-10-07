@@ -1,0 +1,53 @@
+{
+  "backfill_shortfalls": true,
+  "dataset_id": "BASF-AI/ai4chem-clir-google-patents-within-document-abstract-pairs",
+  "exact_high_only": true,
+  "language_filter": [],
+  "language_pair_counts": {
+    "de-fr": 250,
+    "en-de": 250,
+    "en-es": 250,
+    "en-fr": 250,
+    "en-ja": 250,
+    "en-ru": 250,
+    "en-zh": 250,
+    "fr-es": 250,
+    "fr-ja": 250,
+    "fr-ru": 250,
+    "zh-fr": 250
+  },
+  "length_filter_tokenizer": "chem_machine_translation.utils.text.approximate_token_count",
+  "length_priority_counts": {
+    "backfill_out_of_range": 237,
+    "source_and_target_in_range": 1521,
+    "source_only_in_range": 626,
+    "target_only_in_range": 366
+  },
+  "limit_per_pair": 250,
+  "max_source_tokens": 384,
+  "max_target_tokens": 384,
+  "min_source_tokens": 128,
+  "min_target_tokens": 128,
+  "output_jsonl": "benchmark_sources/google_patents_within_document_pairs_exact_high_250_per_language_pair.jsonl",
+  "require_full_limit": true,
+  "revision": null,
+  "rows": 2750,
+  "schema_version": "hf-google-patents-within-document-abstract-pairs-v1",
+  "selection_policy": "Streaming export from the Hugging Face Google Patents within-document abstract-pair dataset in dataset order. Rows matching both source and target token bounds are preferred, then source-only matches, then target-only matches, then remaining rows. Each language_pair is capped when limit_per_pair is positive. Only accepted rows with exact or high judge verdicts are retained.",
+  "skipped_empty_text_rows": 0,
+  "source_language_counts": {
+    "de": 250,
+    "en": 1500,
+    "fr": 750,
+    "zh": 250
+  },
+  "split": "train",
+  "target_language_counts": {
+    "de": 250,
+    "es": 500,
+    "fr": 750,
+    "ja": 500,
+    "ru": 500,
+    "zh": 250
+  }
+}

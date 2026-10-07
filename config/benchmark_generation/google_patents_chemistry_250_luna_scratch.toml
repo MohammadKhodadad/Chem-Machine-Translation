@@ -4,7 +4,7 @@ domain = "chemistry"
 [[builds]]
 name = "google_patents"
 kind = "google_patents_snapshot"
-source_pairs_jsonl = "benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl"
+source_pairs_jsonl = "benchmark_sources/google_patents_within_document_pairs_exact_high_250_per_language_pair.jsonl"
 output_dir = "benchmark_datasets/google_patents_within_document_pairs_250_luna_scratch"
 
 [selection]

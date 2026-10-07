@@ -26,6 +26,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset-id", default=DEFAULT_DATASET_ID)
     parser.add_argument("--split", default="train")
     parser.add_argument("--revision", default=None)
+    parser.add_argument(
+        "--local-parquet",
+        type=Path,
+        default=None,
+        help="Read rows from a downloaded Parquet file instead of streaming Hugging Face.",
+    )
     parser.add_argument("--output-jsonl", type=Path, default=DEFAULT_OUTPUT_JSONL)
     parser.add_argument("--metadata-output", type=Path, default=DEFAULT_METADATA_OUTPUT)
     parser.add_argument(
@@ -49,6 +55,11 @@ def parse_args() -> argparse.Namespace:
         help="Drop language pairs that cannot reach --limit-per-pair rows.",
     )
     parser.add_argument(
+        "--exact-high-only",
+        action="store_true",
+        help="Keep only accepted rows with exact or high judge verdicts.",
+    )
+    parser.add_argument(
         "--language",
         action="append",
         dest="languages",
@@ -59,12 +70,17 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    rows, metadata = export_google_patents_source_pairs(
-        rows=iter_hf_dataset_rows(
+    input_rows = (
+        iter_local_parquet_rows(args.local_parquet)
+        if args.local_parquet is not None
+        else iter_hf_dataset_rows(
             dataset_id=args.dataset_id,
             split=args.split,
             revision=args.revision,
-        ),
+        )
+    )
+    rows, metadata = export_google_patents_source_pairs(
+        rows=input_rows,
         output_jsonl=args.output_jsonl,
         metadata_output=args.metadata_output,
         dataset_id=args.dataset_id,
@@ -78,6 +94,7 @@ def main() -> None:
         backfill_shortfalls=args.backfill_shortfalls,
         require_full_limit=args.require_full_limit,
         languages=args.languages,
+        exact_high_only=args.exact_high_only,
     )
     print(f"Wrote {rows} source pairs to {args.output_jsonl}")
     print(f"Metadata: {args.metadata_output}")
@@ -97,6 +114,13 @@ def iter_hf_dataset_rows(
         yield dict(row)
 
 
+def iter_local_parquet_rows(path: Path) -> Iterator[dict[str, Any]]:
+    import pyarrow.parquet as pq
+
+    for batch in pq.ParquetFile(path).iter_batches():
+        yield from batch.to_pylist()
+
+
 def export_google_patents_source_pairs(
     *,
     rows: Iterable[dict[str, Any]],
@@ -113,6 +137,7 @@ def export_google_patents_source_pairs(
     backfill_shortfalls: bool,
     require_full_limit: bool,
     languages: list[str] | None,
+    exact_high_only: bool = False,
 ) -> tuple[int, dict[str, Any]]:
     language_filter = {language.lower() for language in languages or []}
     selected_rows, skipped_empty = select_source_pair_rows(
@@ -125,6 +150,7 @@ def export_google_patents_source_pairs(
         max_target_tokens=max_target_tokens,
         backfill_shortfalls=backfill_shortfalls,
         require_full_limit=require_full_limit,
+        exact_high_only=exact_high_only,
     )
     output_jsonl.parent.mkdir(parents=True, exist_ok=True)
     metadata_output.parent.mkdir(parents=True, exist_ok=True)
@@ -147,6 +173,7 @@ def export_google_patents_source_pairs(
         backfill_shortfalls=backfill_shortfalls,
         require_full_limit=require_full_limit,
         language_filter=language_filter,
+        exact_high_only=exact_high_only,
     )
     metadata_output.write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
@@ -166,6 +193,7 @@ def select_source_pair_rows(
     max_target_tokens: int | None,
     backfill_shortfalls: bool,
     require_full_limit: bool,
+    exact_high_only: bool = False,
 ) -> tuple[list[dict[str, Any]], int]:
     if backfill_shortfalls:
         return select_source_pair_rows_with_backfill(
@@ -177,12 +205,15 @@ def select_source_pair_rows(
             min_target_tokens=min_target_tokens,
             max_target_tokens=max_target_tokens,
             require_full_limit=require_full_limit,
+            exact_high_only=exact_high_only,
         )
 
     selected = []
     counts: Counter[str] = Counter()
     skipped_empty = 0
     for raw_row in rows:
+        if exact_high_only and not is_exact_or_high(raw_row):
+            continue
         row = normalize_google_patents_source_row(raw_row)
         if not row["source_text"] or not row["target_text"]:
             skipped_empty += 1
@@ -218,10 +249,13 @@ def select_source_pair_rows_with_backfill(
     min_target_tokens: int | None,
     max_target_tokens: int | None,
     require_full_limit: bool,
+    exact_high_only: bool = False,
 ) -> tuple[list[dict[str, Any]], int]:
     grouped: dict[str, list[tuple[int, int, dict[str, Any]]]] = {}
     skipped_empty = 0
     for index, raw_row in enumerate(rows):
+        if exact_high_only and not is_exact_or_high(raw_row):
+            continue
         row = normalize_google_patents_source_row(raw_row)
         if not row["source_text"] or not row["target_text"]:
             skipped_empty += 1
@@ -249,6 +283,13 @@ def select_source_pair_rows_with_backfill(
             candidates = candidates[:limit_per_pair]
         selected.extend(row for _, _, row in candidates)
     return selected, skipped_empty
+
+
+def is_exact_or_high(row: dict[str, Any]) -> bool:
+    return bool(row.get("pair_ok")) and str(row.get("judge_verdict") or "").lower() in {
+        "exact",
+        "high",
+    }
 
 
 def length_priority(
@@ -371,6 +412,7 @@ def build_metadata(
     backfill_shortfalls: bool,
     require_full_limit: bool,
     language_filter: set[str],
+    exact_high_only: bool = False,
 ) -> dict[str, Any]:
     language_pair_counts = Counter(row["language_pair"] for row in rows)
     source_language_counts = Counter(row["source_language"] for row in rows)
@@ -399,6 +441,7 @@ def build_metadata(
         "max_target_tokens": max_target_tokens,
         "backfill_shortfalls": backfill_shortfalls,
         "require_full_limit": require_full_limit,
+        "exact_high_only": exact_high_only,
         "length_filter_tokenizer": "chem_machine_translation.utils.text.approximate_token_count",
         "language_filter": sorted(language_filter),
         "language_pair_counts": dict(sorted(language_pair_counts.items())),
@@ -411,24 +454,29 @@ def build_metadata(
             "backfill_out_of_range": priority_counts[3],
         },
         "skipped_empty_text_rows": skipped_empty,
-        "selection_policy": source_selection_policy(backfill_shortfalls),
+        "selection_policy": source_selection_policy(backfill_shortfalls, exact_high_only),
     }
 
 
-def source_selection_policy(backfill_shortfalls: bool) -> str:
+def source_selection_policy(backfill_shortfalls: bool, exact_high_only: bool = False) -> str:
     base = (
         "Streaming export from the Hugging Face Google Patents within-document abstract-pair "
         "dataset in dataset order."
+    )
+    verdict_filter = (
+        " Only accepted rows with exact or high judge verdicts are retained."
+        if exact_high_only
+        else ""
     )
     if backfill_shortfalls:
         return (
             f"{base} Rows matching both source and target token bounds are preferred, then "
             "source-only matches, then target-only matches, then remaining rows. Each "
-            "language_pair is capped when limit_per_pair is positive."
+            f"language_pair is capped when limit_per_pair is positive.{verdict_filter}"
         )
     return (
         f"{base} Rows are filtered by this repository's approximate token-count bounds when "
-        "provided, and capped per language_pair when limit_per_pair is positive."
+        f"provided, and capped per language_pair when limit_per_pair is positive.{verdict_filter}"
     )
 
 

@@ -139,6 +139,32 @@ def test_select_source_pair_rows_with_backfill_prefers_length_then_fills() -> No
     ]
 
 
+def test_select_source_pair_rows_keeps_only_accepted_exact_or_high_rows() -> None:
+    exact = _row("en-de", "en", "de", "exact")
+    exact.update({"pair_ok": True, "judge_verdict": "exact"})
+    high = _row("en-de", "en", "de", "high")
+    high.update({"pair_ok": True, "judge_verdict": "high"})
+    medium = _row("en-de", "en", "de", "medium")
+    medium.update({"pair_ok": False, "judge_verdict": "medium"})
+    mislabeled = _row("en-de", "en", "de", "mislabeled")
+    mislabeled.update({"pair_ok": False, "judge_verdict": "exact"})
+
+    selected, _ = source_exporter.select_source_pair_rows(
+        rows=[exact, high, medium, mislabeled],
+        language_filter=set(),
+        limit_per_pair=10,
+        min_source_tokens=None,
+        max_source_tokens=None,
+        min_target_tokens=None,
+        max_target_tokens=None,
+        backfill_shortfalls=False,
+        require_full_limit=False,
+        exact_high_only=True,
+    )
+
+    assert [row["doc_id"] for row in selected] == ["exact", "high"]
+
+
 def _row(
     language_pair: str,
     source_language: str,
