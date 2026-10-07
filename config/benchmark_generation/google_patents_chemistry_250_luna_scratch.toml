@@ -1,0 +1,44 @@
+name = "google_patents_chemistry_250_luna_scratch"
+domain = "chemistry"
+
+[[builds]]
+name = "google_patents"
+kind = "google_patents_snapshot"
+source_pairs_jsonl = "benchmark_sources/google_patents_within_document_pairs_250_per_language_pair.jsonl"
+output_dir = "benchmark_datasets/google_patents_within_document_pairs_250_luna_scratch"
+
+[selection]
+mode = "per_direction"
+languages = ["de", "en", "es", "fr", "ru", "zh"]
+limit = 250
+bidirectional = true
+
+[checkpoint]
+enabled = true
+work_dir = "benchmark_work"
+resume = true
+run_id = "auto"
+
+[checkpoint.reuse]
+selection = true
+candidate_extraction = true
+external_evidence_enrichment = true
+llm_curation = true
+manifest = true
+
+[terminology]
+domain = "chemistry"
+candidate_max_terms = 80
+refined_max_terms = 16
+model = "gpt-6-luna"
+base_url = "https://api.openai.com/v1"
+api_mode = "responses"
+max_output_tokens = 1024
+thinking = "disabled"
+reasoning_effort = "none"
+candidate_extractors = ["llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"]
+external_evidence_sources = ["local_iate", "wikidata", "pubchem", "chebi", "chembl", "mesh", "nci", "agrovoc"]
+local_iate_path = "data/iate"
+llm_curation = true
+workers = 4
+openai_timeout = 180.0
