@@ -13,6 +13,7 @@ authors = [
   { name = "BASF AI" }
 ]
 dependencies = [
+  "bert-score>=0.3.13",
   "datasets>=2.20.0",
   "huggingface-hub>=0.25.0",
   "matplotlib>=3.10.9",

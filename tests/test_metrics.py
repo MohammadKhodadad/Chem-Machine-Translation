@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from chem_machine_translation.evaluation.metrics import (
+    BertScoreResult,
     DEFAULT_METRIC_NAMES,
     DEFAULT_TERMINOLOGY_TERM_GROUPS,
     TERMINOLOGY_TERM_GROUPS,
@@ -30,6 +31,15 @@ class _FakeCometScorer:
     def score(self, source: str, prediction: str, reference: str) -> float:
         self.calls.append((source, prediction, reference))
         return 0.87
+
+
+class _FakeBertScoreScorer:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def score(self, prediction: str, reference: str) -> BertScoreResult:
+        self.calls.append((prediction, reference))
+        return BertScoreResult(precision=0.91, recall=0.83, f1=0.87)
 
 
 class _FakeMqmJudge:
@@ -130,6 +140,24 @@ def test_compute_translation_metrics_adds_comet_with_source_text() -> None:
             "Festelektrolytbatterie",
         )
     ]
+
+
+def test_compute_translation_metrics_adds_bertscore_components() -> None:
+    scorer = _FakeBertScoreScorer()
+
+    metrics = compute_translation_metrics(
+        prediction="Batterie mit Festelektrolyt",
+        reference="Festelektrolytbatterie",
+        metric_names=["bertscore"],
+        bertscore_scorer=scorer,
+    )
+
+    assert metrics == {
+        "bertscore": 0.87,
+        "bertscore_precision": 0.91,
+        "bertscore_recall": 0.83,
+    }
+    assert scorer.calls == [("Batterie mit Festelektrolyt", "Festelektrolytbatterie")]
 
 
 def test_compute_translation_metrics_requires_source_for_comet() -> None:

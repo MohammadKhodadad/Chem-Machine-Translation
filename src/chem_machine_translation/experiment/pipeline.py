@@ -18,6 +18,7 @@ from chem_machine_translation.benchmark.pipeline import (
 from chem_machine_translation.config import Settings, load_settings
 from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.evaluation.metrics import (
+    HuggingFaceBertScoreScorer,
     OpenAIMqmJudge,
     UnbabelCometScorer,
     UnbabelXCometScorer,
@@ -290,6 +291,15 @@ def write_scores(
         return load_jsonl(scores_path)
 
     scores_path.parent.mkdir(parents=True, exist_ok=True)
+    bertscore_scorer = (
+        HuggingFaceBertScoreScorer(
+            model_name=evaluation.bertscore_model,
+            batch_size=evaluation.bertscore_batch_size,
+            device=evaluation.bertscore_device,
+        )
+        if "bertscore" in evaluation.metrics
+        else None
+    )
     comet_scorer = (
         UnbabelCometScorer(
             model_name=evaluation.comet_model,
@@ -334,6 +344,7 @@ def write_scores(
             score_row = score_prediction_row(
                 prediction_row,
                 evaluation=evaluation,
+                bertscore_scorer=bertscore_scorer,
                 comet_scorer=comet_scorer,
                 cometkiwi_scorer=cometkiwi_scorer,
                 xcomet_scorer=xcomet_scorer,
@@ -348,6 +359,7 @@ def score_prediction_row(
     prediction_row: dict[str, Any],
     *,
     evaluation: EvaluationRunConfig,
+    bertscore_scorer: Any | None,
     comet_scorer: Any | None,
     cometkiwi_scorer: Any | None,
     xcomet_scorer: Any | None,
@@ -370,6 +382,7 @@ def score_prediction_row(
             reference=str(prediction_row["ground_truth_translation"]),
             source=str(prediction_row["source_text"]),
             metric_names=metric_names,
+            bertscore_scorer=bertscore_scorer,
             comet_scorer=comet_scorer,
             cometkiwi_scorer=cometkiwi_scorer,
             xcomet_scorer=xcomet_scorer,

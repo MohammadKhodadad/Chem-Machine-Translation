@@ -18,6 +18,7 @@ GENERAL_METRIC_NAMES = (
     "bleu",
     "chrf",
     "chrf2++",
+    "bertscore",
     "comet",
     "cometkiwi_qe",
     "xcomet_xl",
@@ -39,6 +40,7 @@ DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
 COMETKIWI_DEFAULT_MODEL = "Unbabel/wmt22-cometkiwi-da"
 XCOMET_XL_DEFAULT_MODEL = "Unbabel/XCOMET-XL"
+BERTSCORE_DEFAULT_MODEL = "xlm-roberta-large"
 MQM_DEFAULT_MODEL = "gpt-4.1-mini"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 _MQM_SEVERITY_WEIGHTS = {"minor": 1, "major": 2, "critical": 5}
@@ -78,6 +80,18 @@ return an empty `errors` list.
 class CometScorer(Protocol):
     def score(self, source: str, prediction: str, reference: str) -> float:
         """Return a segment-level COMET score."""
+
+
+@dataclass(frozen=True)
+class BertScoreResult:
+    precision: float
+    recall: float
+    f1: float
+
+
+class BertScoreScorer(Protocol):
+    def score(self, prediction: str, reference: str) -> BertScoreResult:
+        """Return segment-level BERTScore precision, recall, and F1."""
 
 
 class CometQeScorer(Protocol):
@@ -151,6 +165,45 @@ class UnbabelCometScorer:
             model_path = download_model(self.model_name)
             self._model = load_from_checkpoint(model_path)
         return self._model
+
+
+class HuggingFaceBertScoreScorer:
+    """Lazy wrapper around bert-score with a multilingual encoder default."""
+
+    def __init__(
+        self,
+        model_name: str = BERTSCORE_DEFAULT_MODEL,
+        batch_size: int = 8,
+        device: str | None = None,
+    ) -> None:
+        self.model_name = model_name
+        self.batch_size = batch_size
+        self.device = device
+
+    def score(self, prediction: str, reference: str) -> BertScoreResult:
+        try:
+            from bert_score import score as bert_score
+        except ImportError as exc:  # pragma: no cover - depends on optional install
+            raise RuntimeError(
+                "BERTScore metric requested but bert-score could not be imported. "
+                "Install dependencies with `uv sync` or select metrics explicitly."
+            ) from exc
+
+        options: dict[str, Any] = {
+            "cands": [prediction],
+            "refs": [reference],
+            "model_type": self.model_name,
+            "batch_size": self.batch_size,
+            "verbose": False,
+        }
+        if self.device is not None:
+            options["device"] = self.device
+        precision, recall, f1 = bert_score(**options)
+        return BertScoreResult(
+            precision=float(precision[0]),
+            recall=float(recall[0]),
+            f1=float(f1[0]),
+        )
 
 
 class UnbabelXCometScorer(UnbabelCometScorer):
@@ -242,6 +295,7 @@ def compute_translation_metrics(
     reference: str,
     source: str | None = None,
     metric_names: list[str] | tuple[str, ...] | None = None,
+    bertscore_scorer: BertScoreScorer | None = None,
     comet_scorer: CometScorer | None = None,
     cometkiwi_scorer: CometQeScorer | None = None,
     xcomet_scorer: XCometScorer | None = None,
@@ -270,6 +324,15 @@ def compute_translation_metrics(
             char_order=6,
             word_order=2,
         ).sentence_score(prediction, [reference]).score
+
+    if "bertscore" in selected_metrics:
+        result = (bertscore_scorer or HuggingFaceBertScoreScorer()).score(
+            prediction=prediction,
+            reference=reference,
+        )
+        metrics["bertscore"] = result.f1
+        metrics["bertscore_precision"] = result.precision
+        metrics["bertscore_recall"] = result.recall
 
     if "comet" in selected_metrics:
         if source is None:

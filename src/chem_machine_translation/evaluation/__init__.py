@@ -5,6 +5,8 @@ from chem_machine_translation.evaluation.comparison import (
     write_jsonl,
 )
 from chem_machine_translation.evaluation.metrics import (
+    BERTSCORE_DEFAULT_MODEL,
+    BertScoreResult,
     COMET_DEFAULT_MODEL,
     COMETKIWI_DEFAULT_MODEL,
     DEFAULT_METRIC_NAMES,
@@ -14,6 +16,7 @@ from chem_machine_translation.evaluation.metrics import (
     TERMINOLOGY_TERM_GROUPS,
     MqmJudgeResult,
     OpenAIMqmJudge,
+    HuggingFaceBertScoreScorer,
     UnbabelCometScorer,
     UnbabelXCometScorer,
     XCOMET_XL_DEFAULT_MODEL,
@@ -29,11 +32,14 @@ from chem_machine_translation.evaluation.metrics import (
 )
 
 __all__ = [
+    "BERTSCORE_DEFAULT_MODEL",
+    "BertScoreResult",
     "COMET_DEFAULT_MODEL",
     "COMETKIWI_DEFAULT_MODEL",
     "DEFAULT_METRIC_NAMES",
     "DEFAULT_TERMINOLOGY_TERM_GROUPS",
     "GENERAL_METRIC_NAMES",
+    "HuggingFaceBertScoreScorer",
     "MQM_DEFAULT_MODEL",
     "MqmJudgeResult",
     "OpenAIMqmJudge",

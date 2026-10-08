@@ -18,6 +18,7 @@ def compute_translation_metrics(
     reference: str,
     source: str | None = None,
     metric_names: list[str] | tuple[str, ...] | None = None,
+    bertscore_scorer: BertScoreScorer | None = None,
     comet_scorer: CometScorer | None = None,
     cometkiwi_scorer: CometQeScorer | None = None,
     xcomet_scorer: XCometScorer | None = None,
@@ -43,10 +44,10 @@ We separate metrics into two groups:
   things like formula preservation, terminology consistency, and chemical identity.
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
-reference-based COMET, reference-free COMETKiwi QE, XCOMET-XL, strict and variant-aware target-side
-terminology coverage, strict and variant-aware source-conditioned terminology success rates, and optional
-`fsp_mqm` LLM judging. The benchmark builders can generate terminology mappings in manifest rows.
-Terminology consistency is not wired into `compute_translation_metrics` yet.
+reference-based BERTScore and COMET, reference-free COMETKiwi QE, XCOMET-XL, strict and
+variant-aware target-side terminology coverage, strict and variant-aware source-conditioned terminology
+success rates, and optional `fsp_mqm` LLM judging. The benchmark builders can generate terminology
+mappings in manifest rows. Terminology consistency is not wired into `compute_translation_metrics` yet.
 
 Terminology metrics can filter manifest terms by `term_group`. The supported groups are `llm`,
 `algorithmic`, `verified`, and `refined`. The code-level default is `verified`; the standard
@@ -62,6 +63,8 @@ Implemented in code:
 - `chrf`: SacreBLEU chrF. Row reports use sentence chrF; printed summaries use corpus chrF.
 - `chrf2++`: WMT-style chrF with word bigrams. Row reports use sentence chrF2++; printed summaries
   use corpus chrF2++.
+- `bertscore`: contextual token-alignment F1 with `xlm-roberta-large`. It also records precision and
+  recall; it is not whole-text embedding cosine similarity.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
 - `cometkiwi_qe`: reference-free COMET quality estimation with `Unbabel/wmt22-cometkiwi-da`. It uses
   source and prediction only, so it is useful when a trusted reference is unavailable or reference overlap
@@ -87,6 +90,7 @@ Implemented in code:
 | BLEU | `bleu` | prediction, reference | Yes |
 | chrF | `chrf` | prediction, reference | No |
 | chrF2++ | `chrf2++` | prediction, reference | Yes |
+| BERTScore | `bertscore` | prediction, reference | No, opt-in |
 | Reference-based COMET | `comet` | source, prediction, reference | `default.toml` only |
 | COMETKiwi QE | `cometkiwi_qe` | source, prediction | No, opt-in |
 | XCOMET-XL | `xcomet_xl` | source, prediction, reference | No, opt-in diagnostic metric |
@@ -132,6 +136,24 @@ Their published licenses include non-commercial restrictions, so confirm that th
 permitted before running either model. XCOMET-XL is approximately 3.5B parameters and should be
 piloted on a small sample with suitable accelerator memory rather than scheduled as a CPU or full-corpus
 default metric.
+
+## BERTScore
+
+`bertscore` is opt-in and reference-based. It uses contextual token embeddings to align prediction
+and reference tokens, then stores F1 as `bertscore` plus `bertscore_precision` and
+`bertscore_recall`. It does not compare one whole-text embedding per segment. The default
+`xlm-roberta-large` encoder is multilingual; override it with `--bertscore-model` or the
+experiment TOML's `bertscore_model` when a different model is justified.
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <report.jsonl> `
+  --metric bertscore --bertscore-device cuda
+```
+
+The first run downloads the selected Hugging Face encoder. BERTScore evaluates reference similarity,
+not source faithfulness, and is not chemistry-specific; retain terminology and structural checks for
+chemical or patent decisions.
 
 Reviewed from the WMT25 Terminology Shared Task repository:
 

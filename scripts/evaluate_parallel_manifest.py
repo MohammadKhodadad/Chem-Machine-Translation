@@ -9,12 +9,14 @@ from pathlib import Path
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
 from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.evaluation.metrics import (
+    BERTSCORE_DEFAULT_MODEL,
     COMET_DEFAULT_MODEL,
     COMETKIWI_DEFAULT_MODEL,
     GENERAL_METRIC_NAMES,
     MQM_DEFAULT_MODEL,
     TERMINOLOGY_TERM_GROUPS,
     OpenAIMqmJudge,
+    HuggingFaceBertScoreScorer,
     UnbabelCometScorer,
     UnbabelXCometScorer,
     XCOMET_XL_DEFAULT_MODEL,
@@ -79,6 +81,9 @@ def parse_args() -> argparse.Namespace:
         help="Metric to compute. Repeat to select multiple metrics.",
     )
     parser.add_argument("--comet-model", default=COMET_DEFAULT_MODEL)
+    parser.add_argument("--bertscore-model", default=BERTSCORE_DEFAULT_MODEL)
+    parser.add_argument("--bertscore-batch-size", type=int, default=8)
+    parser.add_argument("--bertscore-device", default=None)
     parser.add_argument("--cometkiwi-model", default=COMETKIWI_DEFAULT_MODEL)
     parser.add_argument("--xcomet-model", default=XCOMET_XL_DEFAULT_MODEL)
     parser.add_argument("--comet-batch-size", type=int, default=8)
@@ -116,6 +121,15 @@ def main() -> None:
             gpus=args.comet_gpus,
         )
         if "comet" in metric_names
+        else None
+    )
+    bertscore_scorer = (
+        HuggingFaceBertScoreScorer(
+            model_name=args.bertscore_model,
+            batch_size=args.bertscore_batch_size,
+            device=args.bertscore_device,
+        )
+        if "bertscore" in metric_names
         else None
     )
     cometkiwi_scorer = (
@@ -186,6 +200,7 @@ def main() -> None:
                 reference=target_text,
                 source=source_text,
                 metric_names=metric_names,
+                bertscore_scorer=bertscore_scorer,
                 comet_scorer=comet_scorer,
                 cometkiwi_scorer=cometkiwi_scorer,
                 xcomet_scorer=xcomet_scorer,
