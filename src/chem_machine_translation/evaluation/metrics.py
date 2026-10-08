@@ -19,6 +19,8 @@ GENERAL_METRIC_NAMES = (
     "chrf",
     "chrf2++",
     "comet",
+    "cometkiwi_qe",
+    "xcomet_xl",
     "terminology_success_rate",
     "variant_aware_terminology_success_rate",
     "target_term_coverage",
@@ -35,6 +37,8 @@ DEFAULT_METRIC_NAMES = (
 TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified", "refined")
 DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
+COMETKIWI_DEFAULT_MODEL = "Unbabel/wmt22-cometkiwi-da"
+XCOMET_XL_DEFAULT_MODEL = "Unbabel/XCOMET-XL"
 MQM_DEFAULT_MODEL = "gpt-4.1-mini"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 _MQM_SEVERITY_WEIGHTS = {"minor": 1, "major": 2, "critical": 5}
@@ -76,6 +80,22 @@ class CometScorer(Protocol):
         """Return a segment-level COMET score."""
 
 
+class CometQeScorer(Protocol):
+    def score(self, source: str, prediction: str, reference: str | None = None) -> float:
+        """Return a segment-level reference-free COMET QE score."""
+
+
+@dataclass(frozen=True)
+class XCometResult:
+    score: float
+    error_spans: tuple[dict[str, Any], ...]
+
+
+class XCometScorer(Protocol):
+    def score(self, source: str, prediction: str, reference: str) -> XCometResult:
+        """Return an XCOMET score and its target-side error spans."""
+
+
 @dataclass(frozen=True)
 class MqmJudgeResult:
     quality_score: float
@@ -104,10 +124,13 @@ class UnbabelCometScorer:
         self.gpus = gpus
         self._model = None
 
-    def score(self, source: str, prediction: str, reference: str) -> float:
+    def score(self, source: str, prediction: str, reference: str | None = None) -> float:
         model = self._load_model()
+        payload = {"src": source, "mt": prediction}
+        if reference is not None:
+            payload["ref"] = reference
         result = model.predict(
-            [{"src": source, "mt": prediction, "ref": reference}],
+            [payload],
             batch_size=self.batch_size,
             gpus=self.gpus,
         )
@@ -128,6 +151,40 @@ class UnbabelCometScorer:
             model_path = download_model(self.model_name)
             self._model = load_from_checkpoint(model_path)
         return self._model
+
+
+class UnbabelXCometScorer(UnbabelCometScorer):
+    """XCOMET wrapper that retains target-side MQM-style error spans."""
+
+    def score(self, source: str, prediction: str, reference: str) -> XCometResult:
+        model = self._load_model()
+        result = model.predict(
+            [{"src": source, "mt": prediction, "ref": reference}],
+            batch_size=self.batch_size,
+            gpus=self.gpus,
+        )
+        return XCometResult(
+            score=float(result.scores[0]),
+            error_spans=extract_xcomet_error_spans(result),
+        )
+
+
+def extract_xcomet_error_spans(result: Any) -> tuple[dict[str, Any], ...]:
+    metadata = getattr(result, "metadata", None)
+    raw_spans = getattr(metadata, "error_spans", ())
+    if not isinstance(raw_spans, (list, tuple)):
+        return ()
+    spans = raw_spans[0] if raw_spans and isinstance(raw_spans[0], (list, tuple)) else raw_spans
+    return tuple(dict(span) for span in spans if isinstance(span, dict))
+
+
+def xcomet_severity_counts(error_spans: tuple[dict[str, Any], ...]) -> dict[str, int]:
+    counts = {"minor": 0, "major": 0, "critical": 0}
+    for span in error_spans:
+        severity = str(span.get("severity", "")).strip().lower()
+        if severity in counts:
+            counts[severity] += 1
+    return counts
 
 
 class OpenAIMqmJudge:
@@ -186,9 +243,12 @@ def compute_translation_metrics(
     source: str | None = None,
     metric_names: list[str] | tuple[str, ...] | None = None,
     comet_scorer: CometScorer | None = None,
+    cometkiwi_scorer: CometQeScorer | None = None,
+    xcomet_scorer: XCometScorer | None = None,
     terminology: list[dict[str, Any]] | None = None,
     terminology_term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
     mqm_judge: MqmJudge | None = None,
+    metric_details: dict[str, Any] | None = None,
 ) -> dict[str, float]:
     selected_metrics = parse_metric_names(metric_names)
     metrics: dict[str, float] = {}
@@ -220,6 +280,24 @@ def compute_translation_metrics(
             prediction=prediction,
             reference=reference,
         )
+
+    if "cometkiwi_qe" in selected_metrics:
+        if source is None:
+            raise ValueError("COMETKiwi QE metric requires source text.")
+        scorer = cometkiwi_scorer or UnbabelCometScorer(COMETKIWI_DEFAULT_MODEL)
+        metrics["cometkiwi_qe"] = scorer.score(source=source, prediction=prediction)
+
+    if "xcomet_xl" in selected_metrics:
+        if source is None:
+            raise ValueError("XCOMET-XL metric requires source text.")
+        scorer = xcomet_scorer or UnbabelXCometScorer(XCOMET_XL_DEFAULT_MODEL)
+        result = scorer.score(source=source, prediction=prediction, reference=reference)
+        metrics["xcomet_xl"] = result.score
+        severity_counts = xcomet_severity_counts(result.error_spans)
+        for severity, count in severity_counts.items():
+            metrics[f"xcomet_xl_{severity}_error_spans"] = float(count)
+        if metric_details is not None:
+            metric_details["xcomet_xl_error_spans"] = list(result.error_spans)
 
     if "terminology_success_rate" in selected_metrics:
         terminology_score = compute_terminology_success_rate(

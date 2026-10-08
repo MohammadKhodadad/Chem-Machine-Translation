@@ -1,9 +1,14 @@
 # Evaluation Metrics
 
 This project computes automatic reference-based metrics for source-pair benchmark datasets using
-`scripts/evaluate_parallel_manifest.py`. By default, benchmark evaluation can compute
-`sequence_similarity`, BLEU, chrF2++, COMET, and `target_term_coverage`. Use repeated `--metric`
-flags to override the default set.
+`scripts/evaluate_parallel_manifest.py`. The bare CLI default computes
+`sequence_similarity`, BLEU, chrF2++, COMET, and strict `target_term_coverage`. Use repeated
+`--metric` flags to override that set.
+
+The checked-in evaluation configurations use the fuller metric suite. Both
+`config/evaluation/default.toml` and `config/evaluation/cheap.toml` enable strict and
+variant-aware terminology success and target-term coverage; `default.toml` additionally enables
+COMET.
 
 The implementation lives in `src/chem_machine_translation/evaluation/metrics.py`:
 
@@ -14,8 +19,11 @@ def compute_translation_metrics(
     source: str | None = None,
     metric_names: list[str] | tuple[str, ...] | None = None,
     comet_scorer: CometScorer | None = None,
+    cometkiwi_scorer: CometQeScorer | None = None,
+    xcomet_scorer: XCometScorer | None = None,
     terminology: list[dict[str, Any]] | None = None,
     mqm_judge: MqmJudge | None = None,
+    metric_details: dict[str, Any] | None = None,
 ) -> dict[str, float]:
     ...
 ```
@@ -35,14 +43,15 @@ We separate metrics into two groups:
   things like formula preservation, terminology consistency, and chemical identity.
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
-reference-based COMET, strict and variant-aware target-side terminology coverage, strict and
-variant-aware source-conditioned terminology success rates, and optional `fsp_mqm` LLM judging. The
-benchmark builders can generate terminology mappings in manifest rows. Terminology consistency is not wired into
-`compute_translation_metrics` yet.
+reference-based COMET, reference-free COMETKiwi QE, XCOMET-XL, strict and variant-aware target-side
+terminology coverage, strict and variant-aware source-conditioned terminology success rates, and optional
+`fsp_mqm` LLM judging. The benchmark builders can generate terminology mappings in manifest rows.
+Terminology consistency is not wired into `compute_translation_metrics` yet.
 
-Terminology metrics can filter manifest terms by `term_group`. The supported groups are `verified`,
-`llm`, and `algorithmic`. The default for target terminology evaluation is `verified`, meaning terms
-with PubChem, IATE, or Wikipedia/Wikidata evidence.
+Terminology metrics can filter manifest terms by `term_group`. The supported groups are `llm`,
+`algorithmic`, `verified`, and `refined`. The code-level default is `verified`; the standard
+evaluation configurations select `refined` terms. A metric set can also require `verified_by`
+evidence.
 
 ## Current Status
 
@@ -54,6 +63,11 @@ Implemented in code:
 - `chrf2++`: WMT-style chrF with word bigrams. Row reports use sentence chrF2++; printed summaries
   use corpus chrF2++.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
+- `cometkiwi_qe`: reference-free COMET quality estimation with `Unbabel/wmt22-cometkiwi-da`. It uses
+  source and prediction only, so it is useful when a trusted reference is unavailable or reference overlap
+  would be misleading.
+- `xcomet_xl`: reference-based `Unbabel/XCOMET-XL` score plus target-side MQM-style error spans. It is
+  intended for small diagnostic pilots, not standard benchmark runs.
 - `target_term_coverage`: manifest-based target terminology coverage. It is included in defaults,
   but only produces a row score when manifest terminology exists for that row.
 - `variant_aware_target_term_coverage`: accepts the canonical target term or an explicit external
@@ -64,6 +78,60 @@ Implemented in code:
   explicit external candidate variants in addition to canonical target terms.
 - `fsp_mqm`: optional LLM-as-judge MQM-style metric. It is implemented, but not included in defaults
   because it requires extra API calls.
+
+### Metric Selection Reference
+
+| Metric | Registry name | Inputs | Standard configurations |
+| --- | --- | --- | --- |
+| Sequence similarity | `sequence_similarity` | prediction, reference | Yes |
+| BLEU | `bleu` | prediction, reference | Yes |
+| chrF | `chrf` | prediction, reference | No |
+| chrF2++ | `chrf2++` | prediction, reference | Yes |
+| Reference-based COMET | `comet` | source, prediction, reference | `default.toml` only |
+| COMETKiwi QE | `cometkiwi_qe` | source, prediction | No, opt-in |
+| XCOMET-XL | `xcomet_xl` | source, prediction, reference | No, opt-in diagnostic metric |
+| Target term coverage | `target_term_coverage` | prediction, reference, manifest terminology | Yes |
+| Variant-aware target coverage | `variant_aware_target_term_coverage` | prediction, reference, terminology variants | Yes |
+| Terminology success rate | `terminology_success_rate` | source, prediction, reference, manifest terminology | Yes |
+| Variant-aware terminology success | `variant_aware_terminology_success_rate` | source, prediction, reference, terminology variants | Yes |
+| MQM-style LLM judge | `fsp_mqm` | source, prediction, reference, judge API | No |
+
+The four terminology metrics return no row score when no applicable manifest terms remain after
+filtering. Reports should retain their applicable-row count when comparing systems.
+
+## COMETKiwi And XCOMET-XL
+
+Both metrics are deliberately excluded from the default TOML configurations. Select them explicitly
+with the manifest evaluator:
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <report.jsonl> `
+  --metric cometkiwi_qe
+```
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <report.jsonl> `
+  --metric xcomet_xl --comet-gpus 1
+```
+
+Experiment TOMLs can use the same registry names under `evaluation.metrics`. Override the model IDs
+with `cometkiwi_model` or `xcomet_model`; both use the shared `comet_batch_size` and `comet_gpus`
+settings.
+
+`cometkiwi_qe` writes a scalar in `metrics`. `xcomet_xl` writes its scalar score and numeric
+`xcomet_xl_minor_error_spans`, `xcomet_xl_major_error_spans`, and
+`xcomet_xl_critical_error_spans` counts in `metrics`. The complete target-side spans are preserved in
+the JSONL row's `metric_details.xcomet_xl_error_spans` field, including the model-provided text,
+offsets, and severity. Aggregate only the numeric `metrics` values.
+
+The Hugging Face repositories for `Unbabel/wmt22-cometkiwi-da` and `Unbabel/XCOMET-XL` are gated;
+the account running the evaluation must accept their terms and be able to download the models.
+Their published licenses include non-commercial restrictions, so confirm that the intended use is
+permitted before running either model. XCOMET-XL is approximately 3.5B parameters and should be
+piloted on a small sample with suitable accelerator memory rather than scheduled as a CPU or full-corpus
+default metric.
 
 Reviewed from the WMT25 Terminology Shared Task repository:
 
@@ -494,7 +562,8 @@ German: n=50, bleu=46.01, chrf2++=72.24, comet=0.81, sequence_similarity=46.70
 For BLEU, chrF, and chrF2++, the printed summary recomputes the metric over the full language-level
 corpus with SacreBLEU `corpus_score`, which is closer to WMT reporting. Sequence similarity, COMET,
 target term coverage, terminology success rate, and FSP/MQM fields are averaged over the evaluated
-rows.
+rows that produced that metric. The experiment pipeline additionally summarizes metrics by model,
+build, direction, and target language.
 
 ## Domain-Specific Metrics
 
@@ -873,7 +942,7 @@ Why it is good:
 
 - it can capture errors that lexical metrics miss;
 - it can provide interpretable error categories;
-- it is suitable for document-level translation review.
+- it supplies a segment-level review signal for translation quality.
 
 Why it is expensive:
 
@@ -947,6 +1016,7 @@ metrics. The most useful additions for this codebase would be:
 - **structure validation for chemical names**: where possible, parse source/reference/predicted
   chemical names and compare canonical structures.
 
-Until those are implemented, `sequence_similarity`, BLEU, chrF2++, and COMET should be treated as
-general baseline automatic metrics. They are useful but not enough to prove chemistry or patent
-terminology correctness.
+The terminology success and target-term coverage metrics are already implemented. Until the remaining
+chemistry-specific checks are implemented, `sequence_similarity`, BLEU, chrF2++, COMET, and the
+current terminology metrics should be treated as comparative signals rather than proof of chemistry
+or patent terminology correctness.

@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 
 from chem_machine_translation.evaluation.metrics import (
@@ -5,6 +7,9 @@ from chem_machine_translation.evaluation.metrics import (
     DEFAULT_TERMINOLOGY_TERM_GROUPS,
     TERMINOLOGY_TERM_GROUPS,
     MqmJudgeResult,
+    UnbabelCometScorer,
+    UnbabelXCometScorer,
+    XCometResult,
     compute_corpus_overlap_metrics,
     compute_target_term_coverage,
     compute_terminology_success_rate,
@@ -40,6 +45,40 @@ class _FakeMqmJudge:
             major_errors=1,
             critical_errors=0,
         )
+
+
+class _FakeCometKiwiScorer:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def score(self, source: str, prediction: str, reference: str | None = None) -> float:
+        self.calls.append((source, prediction, reference))
+        return 0.76
+
+
+class _FakeXCometScorer:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def score(self, source: str, prediction: str, reference: str) -> XCometResult:
+        self.calls.append((source, prediction, reference))
+        return XCometResult(
+            score=0.81,
+            error_spans=(
+                {"text": "wrong term", "start": 2, "end": 12, "severity": "major"},
+                {"text": "unit", "start": 20, "end": 24, "severity": "minor"},
+            ),
+        )
+
+
+class _FakeCometModel:
+    def __init__(self, result: object) -> None:
+        self.result = result
+        self.calls = []
+
+    def predict(self, payload: list[dict[str, str]], **kwargs: object) -> object:
+        self.calls.append((payload, kwargs))
+        return self.result
 
 
 def test_parse_metric_names_defaults_to_all_general_metrics() -> None:
@@ -101,6 +140,86 @@ def test_compute_translation_metrics_requires_source_for_comet() -> None:
             metric_names=["comet"],
             comet_scorer=_FakeCometScorer(),
         )
+
+
+def test_compute_translation_metrics_adds_reference_free_cometkiwi_qe() -> None:
+    scorer = _FakeCometKiwiScorer()
+
+    metrics = compute_translation_metrics(
+        prediction="Batterie mit Festelektrolyt",
+        reference="Festelektrolytbatterie",
+        source="solid electrolyte battery",
+        metric_names=["cometkiwi_qe"],
+        cometkiwi_scorer=scorer,
+    )
+
+    assert metrics == {"cometkiwi_qe": 0.76}
+    assert scorer.calls == [("solid electrolyte battery", "Batterie mit Festelektrolyt", None)]
+
+
+def test_compute_translation_metrics_keeps_xcomet_error_spans() -> None:
+    scorer = _FakeXCometScorer()
+    metric_details = {}
+
+    metrics = compute_translation_metrics(
+        prediction="Batterie mit falschem Begriff und Einheit",
+        reference="Festelektrolytbatterie",
+        source="solid electrolyte battery",
+        metric_names=["xcomet_xl"],
+        xcomet_scorer=scorer,
+        metric_details=metric_details,
+    )
+
+    assert metrics == {
+        "xcomet_xl": 0.81,
+        "xcomet_xl_minor_error_spans": 1.0,
+        "xcomet_xl_major_error_spans": 1.0,
+        "xcomet_xl_critical_error_spans": 0.0,
+    }
+    assert scorer.calls == [
+        (
+            "solid electrolyte battery",
+            "Batterie mit falschem Begriff und Einheit",
+            "Festelektrolytbatterie",
+        )
+    ]
+    assert metric_details["xcomet_xl_error_spans"] == [
+        {"text": "wrong term", "start": 2, "end": 12, "severity": "major"},
+        {"text": "unit", "start": 20, "end": 24, "severity": "minor"},
+    ]
+
+
+def test_unbabel_comet_scorers_use_expected_payloads_and_preserve_spans() -> None:
+    kiwi_model = _FakeCometModel(SimpleNamespace(scores=[0.73]))
+    kiwi_scorer = UnbabelCometScorer(model_name="fake-kiwi", batch_size=3, gpus=0)
+    kiwi_scorer._model = kiwi_model
+
+    assert kiwi_scorer.score("source", "translation") == 0.73
+    assert kiwi_model.calls == [([{"src": "source", "mt": "translation"}], {"batch_size": 3, "gpus": 0})]
+
+    xcomet_model = _FakeCometModel(
+        SimpleNamespace(
+            scores=[0.84],
+            metadata=SimpleNamespace(
+                error_spans=[[{"text": "error", "start": 0, "end": 5, "severity": "critical"}]]
+            ),
+        )
+    )
+    xcomet_scorer = UnbabelXCometScorer(model_name="fake-xcomet", batch_size=2, gpus=1)
+    xcomet_scorer._model = xcomet_model
+
+    assert xcomet_scorer.score("source", "translation", "reference") == XCometResult(
+        score=0.84,
+        error_spans=(
+            {"text": "error", "start": 0, "end": 5, "severity": "critical"},
+        ),
+    )
+    assert xcomet_model.calls == [
+        (
+            [{"src": "source", "mt": "translation", "ref": "reference"}],
+            {"batch_size": 2, "gpus": 1},
+        )
+    ]
 
 
 def test_compute_terminology_success_rate_matches_manifest_target_terms() -> None:

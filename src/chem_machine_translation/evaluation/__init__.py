@@ -6,6 +6,7 @@ from chem_machine_translation.evaluation.comparison import (
 )
 from chem_machine_translation.evaluation.metrics import (
     COMET_DEFAULT_MODEL,
+    COMETKIWI_DEFAULT_MODEL,
     DEFAULT_METRIC_NAMES,
     DEFAULT_TERMINOLOGY_TERM_GROUPS,
     GENERAL_METRIC_NAMES,
@@ -14,6 +15,9 @@ from chem_machine_translation.evaluation.metrics import (
     MqmJudgeResult,
     OpenAIMqmJudge,
     UnbabelCometScorer,
+    UnbabelXCometScorer,
+    XCOMET_XL_DEFAULT_MODEL,
+    XCometResult,
     compute_corpus_overlap_metrics,
     compute_target_term_coverage,
     compute_terminology_success_rate,
@@ -26,6 +30,7 @@ from chem_machine_translation.evaluation.metrics import (
 
 __all__ = [
     "COMET_DEFAULT_MODEL",
+    "COMETKIWI_DEFAULT_MODEL",
     "DEFAULT_METRIC_NAMES",
     "DEFAULT_TERMINOLOGY_TERM_GROUPS",
     "GENERAL_METRIC_NAMES",
@@ -35,6 +40,9 @@ __all__ = [
     "REPORT_COLUMNS",
     "TERMINOLOGY_TERM_GROUPS",
     "UnbabelCometScorer",
+    "UnbabelXCometScorer",
+    "XCOMET_XL_DEFAULT_MODEL",
+    "XCometResult",
     "compute_corpus_overlap_metrics",
     "compute_target_term_coverage",
     "compute_terminology_success_rate",

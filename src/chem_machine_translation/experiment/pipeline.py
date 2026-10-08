@@ -20,6 +20,7 @@ from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.evaluation.metrics import (
     OpenAIMqmJudge,
     UnbabelCometScorer,
+    UnbabelXCometScorer,
     compute_translation_metrics,
     compute_target_term_coverage,
     compute_variant_aware_target_term_coverage,
@@ -298,6 +299,24 @@ def write_scores(
         if "comet" in evaluation.metrics
         else None
     )
+    cometkiwi_scorer = (
+        UnbabelCometScorer(
+            model_name=evaluation.cometkiwi_model,
+            batch_size=evaluation.comet_batch_size,
+            gpus=evaluation.comet_gpus,
+        )
+        if "cometkiwi_qe" in evaluation.metrics
+        else None
+    )
+    xcomet_scorer = (
+        UnbabelXCometScorer(
+            model_name=evaluation.xcomet_model,
+            batch_size=evaluation.comet_batch_size,
+            gpus=evaluation.comet_gpus,
+        )
+        if "xcomet_xl" in evaluation.metrics
+        else None
+    )
     mqm_judge = (
         OpenAIMqmJudge(
             api_key=settings.openai_api_key,
@@ -316,6 +335,8 @@ def write_scores(
                 prediction_row,
                 evaluation=evaluation,
                 comet_scorer=comet_scorer,
+                cometkiwi_scorer=cometkiwi_scorer,
+                xcomet_scorer=xcomet_scorer,
                 mqm_judge=mqm_judge,
             )
             score_rows.append(score_row)
@@ -328,6 +349,8 @@ def score_prediction_row(
     *,
     evaluation: EvaluationRunConfig,
     comet_scorer: Any | None,
+    cometkiwi_scorer: Any | None,
+    xcomet_scorer: Any | None,
     mqm_judge: Any | None,
 ) -> dict[str, Any]:
     if prediction_row.get("error"):
@@ -341,15 +364,19 @@ def score_prediction_row(
                 if name
                 not in {"target_term_coverage", "variant_aware_target_term_coverage"}
             )
+        metric_details: dict[str, Any] = {}
         metrics = compute_translation_metrics(
             prediction=str(prediction_row["predicted_translation"]),
             reference=str(prediction_row["ground_truth_translation"]),
             source=str(prediction_row["source_text"]),
             metric_names=metric_names,
             comet_scorer=comet_scorer,
+            cometkiwi_scorer=cometkiwi_scorer,
+            xcomet_scorer=xcomet_scorer,
             terminology=prediction_row.get("metadata", {}).get("terminology"),
             terminology_term_groups=evaluation.terminology_groups,
             mqm_judge=mqm_judge,
+            metric_details=metric_details,
         )
         terminology = prediction_row.get("metadata", {}).get("terminology") or []
         for metric_set in evaluation.terminology_metric_sets:
@@ -376,7 +403,12 @@ def score_prediction_row(
                 metrics[f"{metric_set.name}_variant_aware_target_term_coverage"] = (
                     variant_coverage
                 )
-        return {**prediction_row, "metrics": metrics, "evaluation_error": ""}
+        return {
+            **prediction_row,
+            "metrics": metrics,
+            "metric_details": metric_details,
+            "evaluation_error": "",
+        }
     except Exception as exc:
         return {
             **prediction_row,

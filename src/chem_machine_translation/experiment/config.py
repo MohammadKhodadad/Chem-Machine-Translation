@@ -12,11 +12,13 @@ except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback when in
 from chem_machine_translation.config import DEFAULT_MODEL
 from chem_machine_translation.evaluation.metrics import (
     COMET_DEFAULT_MODEL,
+    COMETKIWI_DEFAULT_MODEL,
     DEFAULT_METRIC_NAMES,
     DEFAULT_TERMINOLOGY_TERM_GROUPS,
     GENERAL_METRIC_NAMES,
     MQM_DEFAULT_MODEL,
     TERMINOLOGY_TERM_GROUPS,
+    XCOMET_XL_DEFAULT_MODEL,
 )
 
 SUPPORTED_TRANSLATORS = {"dry-run", "one-shot"}
@@ -63,6 +65,8 @@ class EvaluationRunConfig:
     terminology_groups: tuple[str, ...] = DEFAULT_TERMINOLOGY_TERM_GROUPS
     terminology_metric_sets: tuple[TerminologyMetricSetConfig, ...] = ()
     comet_model: str = COMET_DEFAULT_MODEL
+    cometkiwi_model: str = COMETKIWI_DEFAULT_MODEL
+    xcomet_model: str = XCOMET_XL_DEFAULT_MODEL
     comet_batch_size: int = 8
     comet_gpus: int = 0
     fsp_mqm_model: str = MQM_DEFAULT_MODEL
@@ -183,6 +187,8 @@ def evaluation_config_from_mapping(
             for item in payload.get("terminology_metric_sets", [])
         ),
         comet_model=str(payload.get("comet_model") or COMET_DEFAULT_MODEL),
+        cometkiwi_model=str(payload.get("cometkiwi_model") or COMETKIWI_DEFAULT_MODEL),
+        xcomet_model=str(payload.get("xcomet_model") or XCOMET_XL_DEFAULT_MODEL),
         comet_batch_size=int(payload.get("comet_batch_size") or 8),
         comet_gpus=int(payload.get("comet_gpus") or 0),
         fsp_mqm_model=str(payload.get("fsp_mqm_model") or MQM_DEFAULT_MODEL),

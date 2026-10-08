@@ -10,11 +10,14 @@ from chem_machine_translation.config import DEFAULT_MODEL, load_settings
 from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.evaluation.metrics import (
     COMET_DEFAULT_MODEL,
+    COMETKIWI_DEFAULT_MODEL,
     GENERAL_METRIC_NAMES,
     MQM_DEFAULT_MODEL,
     TERMINOLOGY_TERM_GROUPS,
     OpenAIMqmJudge,
     UnbabelCometScorer,
+    UnbabelXCometScorer,
+    XCOMET_XL_DEFAULT_MODEL,
     compute_corpus_overlap_metrics,
     compute_translation_metrics,
     parse_metric_names,
@@ -76,6 +79,8 @@ def parse_args() -> argparse.Namespace:
         help="Metric to compute. Repeat to select multiple metrics.",
     )
     parser.add_argument("--comet-model", default=COMET_DEFAULT_MODEL)
+    parser.add_argument("--cometkiwi-model", default=COMETKIWI_DEFAULT_MODEL)
+    parser.add_argument("--xcomet-model", default=XCOMET_XL_DEFAULT_MODEL)
     parser.add_argument("--comet-batch-size", type=int, default=8)
     parser.add_argument("--comet-gpus", type=int, default=0)
     parser.add_argument("--fsp-mqm-model", default=MQM_DEFAULT_MODEL)
@@ -111,6 +116,24 @@ def main() -> None:
             gpus=args.comet_gpus,
         )
         if "comet" in metric_names
+        else None
+    )
+    cometkiwi_scorer = (
+        UnbabelCometScorer(
+            model_name=args.cometkiwi_model,
+            batch_size=args.comet_batch_size,
+            gpus=args.comet_gpus,
+        )
+        if "cometkiwi_qe" in metric_names
+        else None
+    )
+    xcomet_scorer = (
+        UnbabelXCometScorer(
+            model_name=args.xcomet_model,
+            batch_size=args.comet_batch_size,
+            gpus=args.comet_gpus,
+        )
+        if "xcomet_xl" in metric_names
         else None
     )
     mqm_judge = (
@@ -157,15 +180,19 @@ def main() -> None:
                 target_language=str(manifest_row["target_language"]),
                 source_language=str(manifest_row["source_language"]),
             )
+            metric_details: dict[str, object] = {}
             metrics = compute_translation_metrics(
                 prediction=result.translated_text,
                 reference=target_text,
                 source=source_text,
                 metric_names=metric_names,
                 comet_scorer=comet_scorer,
+                cometkiwi_scorer=cometkiwi_scorer,
+                xcomet_scorer=xcomet_scorer,
                 terminology=manifest_row.get("terminology"),
                 terminology_term_groups=args.terminology_term_group,
                 mqm_judge=mqm_judge,
+                metric_details=metric_details,
             )
             output_row = {
                 "dataset": document.dataset,
@@ -185,6 +212,7 @@ def main() -> None:
                 "predicted_translation": result.translated_text,
                 "ground_truth_translation": target_text,
                 "metrics": metrics,
+                "metric_details": metric_details,
                 "metadata": manifest_row,
             }
             rows.append(output_row)
