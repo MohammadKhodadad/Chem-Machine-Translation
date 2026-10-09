@@ -19,11 +19,12 @@ from chem_machine_translation.config import Settings, load_settings
 from chem_machine_translation.core.schemas import Document
 from chem_machine_translation.evaluation.metrics import (
     HuggingFaceBertScoreScorer,
+    OfficialBleurtScorer,
     OpenAIMqmJudge,
     UnbabelCometScorer,
     UnbabelXCometScorer,
-    compute_translation_metrics,
     compute_target_term_coverage,
+    compute_translation_metrics,
     compute_variant_aware_target_term_coverage,
     select_terminology_terms,
 )
@@ -300,6 +301,11 @@ def write_scores(
         if {"bertscore", "term_bertscore_recall"}.intersection(evaluation.metrics)
         else None
     )
+    bleurt_scorer = (
+        OfficialBleurtScorer(checkpoint=evaluation.bleurt_checkpoint or "")
+        if "bleurt" in evaluation.metrics
+        else None
+    )
     comet_scorer = (
         UnbabelCometScorer(
             model_name=evaluation.comet_model,
@@ -349,6 +355,7 @@ def write_scores(
                 prediction_row,
                 evaluation=evaluation,
                 bertscore_scorer=bertscore_scorer,
+                bleurt_scorer=bleurt_scorer,
                 comet_scorer=comet_scorer,
                 cometkiwi_scorer=cometkiwi_scorer,
                 xcomet_scorer=xcomet_scorer,
@@ -364,6 +371,7 @@ def score_prediction_row(
     *,
     evaluation: EvaluationRunConfig,
     bertscore_scorer: Any | None,
+    bleurt_scorer: Any | None,
     comet_scorer: Any | None,
     cometkiwi_scorer: Any | None,
     xcomet_scorer: Any | None,
@@ -387,6 +395,7 @@ def score_prediction_row(
             source=str(prediction_row["source_text"]),
             metric_names=metric_names,
             bertscore_scorer=bertscore_scorer,
+            bleurt_scorer=bleurt_scorer,
             comet_scorer=comet_scorer,
             cometkiwi_scorer=cometkiwi_scorer,
             xcomet_scorer=xcomet_scorer,

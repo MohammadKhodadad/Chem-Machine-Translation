@@ -3,11 +3,12 @@ from types import SimpleNamespace
 import pytest
 
 from chem_machine_translation.evaluation.metrics import (
-    BertScoreResult,
     DEFAULT_METRIC_NAMES,
     DEFAULT_TERMINOLOGY_TERM_GROUPS,
     GENERAL_METRIC_NAMES,
     TERMINOLOGY_TERM_GROUPS,
+    BertScoreResult,
+    BleurtScorer,
     MqmJudgeResult,
     UnbabelCometScorer,
     UnbabelXCometScorer,
@@ -43,6 +44,15 @@ class _FakeBertScoreScorer:
     def score(self, prediction: str, reference: str) -> BertScoreResult:
         self.calls.append((prediction, reference))
         return BertScoreResult(precision=0.91, recall=0.83, f1=0.87)
+
+
+class _FakeBleurtScorer:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def score(self, prediction: str, reference: str) -> float:
+        self.calls.append((prediction, reference))
+        return 0.42
 
 
 class _FakeMqmJudge:
@@ -95,8 +105,9 @@ class _FakeCometModel:
 
 
 def test_parse_metric_names_defaults_to_all_general_metrics() -> None:
-    assert DEFAULT_METRIC_NAMES == GENERAL_METRIC_NAMES
-    assert parse_metric_names(None) == GENERAL_METRIC_NAMES
+    assert "bleurt" in GENERAL_METRIC_NAMES
+    assert "bleurt" not in DEFAULT_METRIC_NAMES
+    assert parse_metric_names(None) == DEFAULT_METRIC_NAMES
     assert "chrf2++" in DEFAULT_METRIC_NAMES
     assert "chrf" in DEFAULT_METRIC_NAMES
     assert "target_term_coverage" in DEFAULT_METRIC_NAMES
@@ -161,6 +172,20 @@ def test_compute_translation_metrics_adds_bertscore_components() -> None:
         "bertscore_precision": 0.91,
         "bertscore_recall": 0.83,
     }
+    assert scorer.calls == [("Batterie mit Festelektrolyt", "Festelektrolytbatterie")]
+
+
+def test_compute_translation_metrics_adds_bleurt() -> None:
+    scorer: BleurtScorer = _FakeBleurtScorer()
+
+    metrics = compute_translation_metrics(
+        prediction="Batterie mit Festelektrolyt",
+        reference="Festelektrolytbatterie",
+        metric_names=["bleurt"],
+        bleurt_scorer=scorer,
+    )
+
+    assert metrics == {"bleurt": 0.42}
     assert scorer.calls == [("Batterie mit Festelektrolyt", "Festelektrolytbatterie")]
 
 

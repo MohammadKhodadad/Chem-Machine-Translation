@@ -68,6 +68,7 @@ class EvaluationRunConfig:
     bertscore_model: str = BERTSCORE_DEFAULT_MODEL
     bertscore_batch_size: int = 8
     bertscore_device: str | None = None
+    bleurt_checkpoint: str | None = None
     comet_model: str = COMET_DEFAULT_MODEL
     cometkiwi_model: str = COMETKIWI_DEFAULT_MODEL
     xcomet_model: str = XCOMET_XL_DEFAULT_MODEL
@@ -193,6 +194,7 @@ def evaluation_config_from_mapping(
         bertscore_model=str(payload.get("bertscore_model") or BERTSCORE_DEFAULT_MODEL),
         bertscore_batch_size=int(payload.get("bertscore_batch_size") or 8),
         bertscore_device=optional_string(payload.get("bertscore_device")),
+        bleurt_checkpoint=optional_string(payload.get("bleurt_checkpoint")),
         comet_model=str(payload.get("comet_model") or COMET_DEFAULT_MODEL),
         cometkiwi_model=str(payload.get("cometkiwi_model") or COMETKIWI_DEFAULT_MODEL),
         xcomet_model=str(payload.get("xcomet_model") or XCOMET_XL_DEFAULT_MODEL),

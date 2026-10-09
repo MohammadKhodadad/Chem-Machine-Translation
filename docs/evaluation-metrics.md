@@ -44,7 +44,7 @@ We separate metrics into two groups:
   things like formula preservation, terminology consistency, and chemical identity.
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
-reference-based BERTScore and COMET, reference-free COMETKiwi QE, XCOMET-XL, strict and
+reference-based BERTScore, BLEURT, and COMET, reference-free COMETKiwi QE, XCOMET-XL, strict and
 variant-aware target-side terminology coverage, term-only BERTScore recall, strict and variant-aware
 source-conditioned terminology success rates, and optional `fsp_mqm` LLM judging. The benchmark
 builders can generate terminology mappings in manifest rows. Terminology consistency is not wired into
@@ -66,6 +66,8 @@ Implemented in code:
   use corpus chrF2++.
 - `bertscore`: contextual token-alignment F1 with `xlm-roberta-large`. It also records precision and
   recall; it is not whole-text embedding cosine similarity.
+- `bleurt`: optional reference-based BLEURT score from a local BLEURT checkpoint. It is selectable,
+  but excluded from defaults because its TensorFlow-based package is an optional Git dependency.
 - `term_bertscore_recall`: multilingual BERTScore recall from selected curated reference target terms
   to the full prediction. It is a soft term-retention metric, not precision or F1.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
@@ -93,6 +95,7 @@ Implemented in code:
 | chrF | `chrf` | prediction, reference | No |
 | chrF2++ | `chrf2++` | prediction, reference | Yes |
 | BERTScore | `bertscore` | prediction, reference | Full default |
+| BLEURT | `bleurt` | prediction, reference, local checkpoint | Optional |
 | Term BERTScore recall | `term_bertscore_recall` | prediction, reference, manifest terminology | Full default |
 | Reference-based COMET | `comet` | source, prediction, reference | Full default |
 | COMETKiwi QE | `cometkiwi_qe` | source, prediction | Full default |
@@ -105,6 +108,22 @@ Implemented in code:
 
 The four terminology metrics return no row score when no applicable manifest terms remain after
 filtering. Reports should retain their applicable-row count when comparing systems.
+
+### BLEURT
+
+BLEURT is optional. Install its TensorFlow-based official package and provide a downloaded local
+checkpoint when selecting it:
+
+```powershell
+uv sync --extra bleurt
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <report.jsonl> `
+  --metric bleurt --bleurt-checkpoint <local-bleurt-checkpoint>
+```
+
+Experiment configurations use `bleurt_checkpoint = "<local-bleurt-checkpoint>"` alongside
+`metrics = ["bleurt"]`. BLEURT is intentionally excluded from the bare CLI and standard evaluation
+defaults.
 
 ## COMETKiwi And XCOMET-XL
 

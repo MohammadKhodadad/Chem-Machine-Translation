@@ -32,6 +32,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+bleurt = [
+  "bleurt @ git+https://github.com/google-research/bleurt.git",
+]
 tokens = [
   "tiktoken>=0.7.0",
 ]

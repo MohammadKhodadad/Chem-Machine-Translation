@@ -15,11 +15,12 @@ from chem_machine_translation.evaluation.metrics import (
     GENERAL_METRIC_NAMES,
     MQM_DEFAULT_MODEL,
     TERMINOLOGY_TERM_GROUPS,
-    OpenAIMqmJudge,
+    XCOMET_XL_DEFAULT_MODEL,
     HuggingFaceBertScoreScorer,
+    OfficialBleurtScorer,
+    OpenAIMqmJudge,
     UnbabelCometScorer,
     UnbabelXCometScorer,
-    XCOMET_XL_DEFAULT_MODEL,
     compute_corpus_overlap_metrics,
     compute_translation_metrics,
     parse_metric_names,
@@ -84,6 +85,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bertscore-model", default=BERTSCORE_DEFAULT_MODEL)
     parser.add_argument("--bertscore-batch-size", type=int, default=8)
     parser.add_argument("--bertscore-device", default=None)
+    parser.add_argument(
+        "--bleurt-checkpoint",
+        default=None,
+        help="Local BLEURT checkpoint directory. Required when selecting --metric bleurt.",
+    )
     parser.add_argument("--cometkiwi-model", default=COMETKIWI_DEFAULT_MODEL)
     parser.add_argument("--xcomet-model", default=XCOMET_XL_DEFAULT_MODEL)
     parser.add_argument("--comet-batch-size", type=int, default=8)
@@ -130,6 +136,11 @@ def main() -> None:
             device=args.bertscore_device,
         )
         if {"bertscore", "term_bertscore_recall"}.intersection(metric_names)
+        else None
+    )
+    bleurt_scorer = (
+        OfficialBleurtScorer(checkpoint=args.bleurt_checkpoint or "")
+        if "bleurt" in metric_names
         else None
     )
     cometkiwi_scorer = (
@@ -202,6 +213,7 @@ def main() -> None:
                 source=source_text,
                 metric_names=metric_names,
                 bertscore_scorer=bertscore_scorer,
+                bleurt_scorer=bleurt_scorer,
                 comet_scorer=comet_scorer,
                 cometkiwi_scorer=cometkiwi_scorer,
                 xcomet_scorer=xcomet_scorer,

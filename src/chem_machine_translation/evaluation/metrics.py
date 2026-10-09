@@ -19,6 +19,7 @@ GENERAL_METRIC_NAMES = (
     "chrf",
     "chrf2++",
     "bertscore",
+    "bleurt",
     "term_bertscore_recall",
     "comet",
     "cometkiwi_qe",
@@ -29,7 +30,7 @@ GENERAL_METRIC_NAMES = (
     "variant_aware_target_term_coverage",
     "fsp_mqm",
 )
-DEFAULT_METRIC_NAMES = GENERAL_METRIC_NAMES
+DEFAULT_METRIC_NAMES = tuple(metric for metric in GENERAL_METRIC_NAMES if metric != "bleurt")
 TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified", "refined")
 DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
@@ -119,6 +120,11 @@ class BertScoreResult:
 class BertScoreScorer(Protocol):
     def score(self, prediction: str, reference: str) -> BertScoreResult:
         """Return segment-level BERTScore precision, recall, and F1."""
+
+
+class BleurtScorer(Protocol):
+    def score(self, prediction: str, reference: str) -> float:
+        """Return a segment-level BLEURT score."""
 
 
 class CometQeScorer(Protocol):
@@ -233,6 +239,38 @@ class HuggingFaceBertScoreScorer:
         )
 
 
+class OfficialBleurtScorer:
+    """Lazy wrapper around the official BLEURT checkpoint scorer."""
+
+    def __init__(self, checkpoint: str) -> None:
+        if not checkpoint:
+            raise ValueError(
+                "BLEURT metric requires a local checkpoint. Set `bleurt_checkpoint` or pass "
+                "`--bleurt-checkpoint`."
+            )
+        self.checkpoint = checkpoint
+        self._scorer = None
+
+    def score(self, prediction: str, reference: str) -> float:
+        scores = self._load_scorer().score(
+            references=[reference],
+            candidates=[prediction],
+        )
+        return float(scores[0])
+
+    def _load_scorer(self):
+        if self._scorer is None:
+            try:
+                from bleurt import score  # type: ignore[reportMissingImports]
+            except ImportError as exc:  # pragma: no cover - depends on optional install
+                raise RuntimeError(
+                    "BLEURT metric requested but the optional BLEURT package could not be imported. "
+                    "Install it with `uv sync --extra bleurt`."
+                ) from exc
+            self._scorer = score.BleurtScorer(self.checkpoint)
+        return self._scorer
+
+
 class UnbabelXCometScorer(UnbabelCometScorer):
     """XCOMET wrapper that retains target-side MQM-style error spans."""
 
@@ -339,6 +377,7 @@ def compute_translation_metrics(
     source: str | None = None,
     metric_names: list[str] | tuple[str, ...] | None = None,
     bertscore_scorer: BertScoreScorer | None = None,
+    bleurt_scorer: BleurtScorer | None = None,
     comet_scorer: CometScorer | None = None,
     cometkiwi_scorer: CometQeScorer | None = None,
     xcomet_scorer: XCometScorer | None = None,
@@ -376,6 +415,11 @@ def compute_translation_metrics(
         metrics["bertscore"] = result.f1
         metrics["bertscore_precision"] = result.precision
         metrics["bertscore_recall"] = result.recall
+
+    if "bleurt" in selected_metrics:
+        if bleurt_scorer is None:
+            raise ValueError("BLEURT metric requires a BLEURT scorer with a local checkpoint.")
+        metrics["bleurt"] = bleurt_scorer.score(prediction=prediction, reference=reference)
 
     if "term_bertscore_recall" in selected_metrics:
         reference_terms = reference_target_terms(
