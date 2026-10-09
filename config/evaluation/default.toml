@@ -1,5 +1,5 @@
 name = "default_eval"
-metrics = ["sequence_similarity", "bleu", "chrf2++", "comet", "terminology_success_rate", "variant_aware_terminology_success_rate", "target_term_coverage", "variant_aware_target_term_coverage"]
+metrics = ["sequence_similarity", "bleu", "chrf", "chrf2++", "bertscore", "term_bertscore_recall", "comet", "cometkiwi_qe", "xcomet_xl", "terminology_success_rate", "variant_aware_terminology_success_rate", "target_term_coverage", "variant_aware_target_term_coverage", "fsp_mqm"]
 terminology_groups = ["refined"]
 comet_model = "Unbabel/wmt22-comet-da"
 comet_batch_size = 8

@@ -29,13 +29,7 @@ GENERAL_METRIC_NAMES = (
     "variant_aware_target_term_coverage",
     "fsp_mqm",
 )
-DEFAULT_METRIC_NAMES = (
-    "sequence_similarity",
-    "bleu",
-    "chrf2++",
-    "comet",
-    "target_term_coverage",
-)
+DEFAULT_METRIC_NAMES = GENERAL_METRIC_NAMES
 TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified", "refined")
 DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
@@ -46,7 +40,7 @@ MQM_DEFAULT_MODEL = "gpt-4.1-mini"
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 _MQM_SEVERITY_WEIGHTS = {"minor": 1, "major": 2, "critical": 5}
 
-MQM_JUDGE_SYSTEM_PROMPT = """You are an MQM-style evaluator for chemistry and patent machine
+CHEMISTRY_MQM_JUDGE_SYSTEM_PROMPT = """You are an MQM-style evaluator for chemistry and patent machine
 translation.
 
 Evaluate the candidate translation against the source and reference. Focus on meaning preservation,
@@ -71,6 +65,38 @@ Return only valid JSON with this shape:
       "description": "short explanation"
     }
   ]
+}
+
+`quality_score` must be from 0 to 100, where 100 is a perfect translation. If there are no errors,
+return an empty `errors` list.
+"""
+
+LEGAL_MQM_JUDGE_SYSTEM_PROMPT = """You are an MQM-style evaluator for legal and regulatory machine
+translation.
+
+Evaluate the candidate translation against the source and reference. Focus on preservation of legal
+effect, terminology, defined terms, obligations, prohibitions, permissions, conditions, exceptions,
+scope, institutional names, citations, dates, numbers, omissions, hallucinations, and target-language
+fluency. Penalize errors that change rights, duties, legal scope, or a referenced instrument more
+strongly than harmless wording differences.
+
+Use these severities:
+- minor: local wording or style issue that does not change legal meaning;
+- major: mistranslation, omission, wrong terminology, reference/date/number issue, or fluency issue
+    that changes or obscures legal meaning;
+- critical: a change to a right, duty, prohibition, permission, condition, exception, legal scope, or
+    institutional/legal identity that could materially alter the legal effect.
+
+Return only valid JSON with this shape:
+{
+    "quality_score": 0.0,
+    "errors": [
+        {
+            "severity": "minor|major|critical",
+            "category": "accuracy|terminology|legal_effect|reference|number_date|omission|addition|fluency|style",
+            "description": "short explanation"
+        }
+    ]
 }
 
 `quality_score` must be from 0 to 100, where 100 is a perfect translation. If there are no errors,
@@ -242,7 +268,7 @@ def xcomet_severity_counts(error_spans: tuple[dict[str, Any], ...]) -> dict[str,
 
 
 class OpenAIMqmJudge:
-    """LLM-as-judge wrapper for optional FSP/MQM-style evaluation."""
+    """LLM-as-judge wrapper for chemistry or legal MQM-style evaluation."""
 
     def __init__(
         self,
@@ -250,6 +276,7 @@ class OpenAIMqmJudge:
         base_url: str | None = None,
         model: str = MQM_DEFAULT_MODEL,
         timeout: float = 120.0,
+        domain: str = "chemistry",
     ) -> None:
         try:
             from openai import OpenAI
@@ -258,17 +285,19 @@ class OpenAIMqmJudge:
 
         self.client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
         self.model = model
+        self.domain = normalize_mqm_domain(domain)
+        self.system_prompt = mqm_judge_system_prompt(self.domain)
 
     def score(self, source: str, prediction: str, reference: str) -> MqmJudgeResult:
         response = self.client.responses.create(
             model=self.model,
             temperature=0.0,
             input=[
-                {"role": "system", "content": MQM_JUDGE_SYSTEM_PROMPT},
+                {"role": "system", "content": self.system_prompt},
                 {
                     "role": "user",
                     "content": (
-                        "Evaluate this translation for chemistry and patent MT quality.\n\n"
+                        "Evaluate this translation.\n\n"
                         f"Source:\n{source}\n\n"
                         f"Reference translation:\n{reference}\n\n"
                         f"Candidate translation:\n{prediction}"
@@ -277,6 +306,19 @@ class OpenAIMqmJudge:
             ],
         )
         return parse_mqm_judge_response(response.output_text)
+
+
+def normalize_mqm_domain(domain: str | None) -> str:
+    normalized = str(domain or "").strip().casefold()
+    if normalized in {"legal", "jrc", "eurolex", "acquis", "law", "regulatory"}:
+        return "legal"
+    return "chemistry"
+
+
+def mqm_judge_system_prompt(domain: str | None) -> str:
+    if normalize_mqm_domain(domain) == "legal":
+        return LEGAL_MQM_JUDGE_SYSTEM_PROMPT
+    return CHEMISTRY_MQM_JUDGE_SYSTEM_PROMPT
 
 
 def parse_metric_names(metric_names: list[str] | tuple[str, ...] | None) -> tuple[str, ...]:

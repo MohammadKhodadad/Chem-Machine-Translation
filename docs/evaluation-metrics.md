@@ -1,14 +1,14 @@
 # Evaluation Metrics
 
 This project computes automatic reference-based metrics for source-pair benchmark datasets using
-`scripts/evaluate_parallel_manifest.py`. The bare CLI default computes
-`sequence_similarity`, BLEU, chrF2++, COMET, and strict `target_term_coverage`. Use repeated
-`--metric` flags to override that set.
+`scripts/evaluate_parallel_manifest.py`. The bare CLI default computes every registered metric,
+including learned model metrics and `fsp_mqm`. Use repeated `--metric` flags to override that set.
+The default requires downloaded BERTScore, COMET, COMETKiwi, and XCOMET models, accepted model
+terms where applicable, and an OpenAI-compatible API configuration for `fsp_mqm`; it incurs one
+judge request per evaluated row.
 
-The checked-in evaluation configurations use the fuller metric suite. Both
-`config/evaluation/default.toml` and `config/evaluation/cheap.toml` enable strict and
-variant-aware terminology success and target-term coverage; `default.toml` additionally enables
-COMET.
+`config/evaluation/default.toml` explicitly selects the same full suite. Use
+`config/evaluation/cheap.toml` when model downloads and LLM judge calls are not appropriate.
 
 The implementation lives in `src/chem_machine_translation/evaluation/metrics.py`:
 
@@ -72,8 +72,7 @@ Implemented in code:
 - `cometkiwi_qe`: reference-free COMET quality estimation with `Unbabel/wmt22-cometkiwi-da`. It uses
   source and prediction only, so it is useful when a trusted reference is unavailable or reference overlap
   would be misleading.
-- `xcomet_xl`: reference-based `Unbabel/XCOMET-XL` score plus target-side MQM-style error spans. It is
-  intended for small diagnostic pilots, not standard benchmark runs.
+- `xcomet_xl`: reference-based `Unbabel/XCOMET-XL` score plus target-side MQM-style error spans.
 - `target_term_coverage`: manifest-based target terminology coverage. It is included in defaults,
   but only produces a row score when manifest terminology exists for that row.
 - `variant_aware_target_term_coverage`: accepts the canonical target term or an explicit external
@@ -82,8 +81,8 @@ Implemented in code:
   available explicitly, but is not in defaults.
 - `variant_aware_terminology_success_rate`: source-conditioned terminology accuracy that accepts
   explicit external candidate variants in addition to canonical target terms.
-- `fsp_mqm`: optional LLM-as-judge MQM-style metric. It is implemented, but not included in defaults
-  because it requires extra API calls.
+- `fsp_mqm`: LLM-as-judge MQM-style metric. It is included in the full default and makes one API call
+  per evaluated row.
 
 ### Metric Selection Reference
 
@@ -93,24 +92,24 @@ Implemented in code:
 | BLEU | `bleu` | prediction, reference | Yes |
 | chrF | `chrf` | prediction, reference | No |
 | chrF2++ | `chrf2++` | prediction, reference | Yes |
-| BERTScore | `bertscore` | prediction, reference | No, opt-in |
-| Term BERTScore recall | `term_bertscore_recall` | prediction, reference, manifest terminology | No, opt-in |
-| Reference-based COMET | `comet` | source, prediction, reference | `default.toml` only |
-| COMETKiwi QE | `cometkiwi_qe` | source, prediction | No, opt-in |
-| XCOMET-XL | `xcomet_xl` | source, prediction, reference | No, opt-in diagnostic metric |
+| BERTScore | `bertscore` | prediction, reference | Full default |
+| Term BERTScore recall | `term_bertscore_recall` | prediction, reference, manifest terminology | Full default |
+| Reference-based COMET | `comet` | source, prediction, reference | Full default |
+| COMETKiwi QE | `cometkiwi_qe` | source, prediction | Full default |
+| XCOMET-XL | `xcomet_xl` | source, prediction, reference | Full default |
 | Target term coverage | `target_term_coverage` | prediction, reference, manifest terminology | Yes |
 | Variant-aware target coverage | `variant_aware_target_term_coverage` | prediction, reference, terminology variants | Yes |
 | Terminology success rate | `terminology_success_rate` | source, prediction, reference, manifest terminology | Yes |
 | Variant-aware terminology success | `variant_aware_terminology_success_rate` | source, prediction, reference, terminology variants | Yes |
-| MQM-style LLM judge | `fsp_mqm` | source, prediction, reference, judge API | No |
+| MQM-style LLM judge | `fsp_mqm` | source, prediction, reference, judge API | Full default |
 
 The four terminology metrics return no row score when no applicable manifest terms remain after
 filtering. Reports should retain their applicable-row count when comparing systems.
 
 ## COMETKiwi And XCOMET-XL
 
-Both metrics are deliberately excluded from the default TOML configurations. Select them explicitly
-with the manifest evaluator:
+Both metrics are included in the full defaults and require accepted model terms plus local model
+downloads. Select them explicitly to run a narrower evaluation:
 
 ```powershell
 uv run --no-sync python scripts/evaluate_parallel_manifest.py `
@@ -143,7 +142,7 @@ default metric.
 
 ## BERTScore
 
-`bertscore` is opt-in and reference-based. It uses contextual token embeddings to align prediction
+`bertscore` is reference-based. It uses contextual token embeddings to align prediction
 and reference tokens, then stores F1 as `bertscore` plus `bertscore_precision` and
 `bertscore_recall`. It does not compare one whole-text embedding per segment. The default
 `xlm-roberta-large` encoder is multilingual; override it with `--bertscore-model` or the
@@ -959,13 +958,14 @@ Why not first:
 
 ### FSP / MQM LLM Judge
 
-Status: **implemented** as optional metric `fsp_mqm`, but not included in the default metric set.
-Use `--metric fsp_mqm` to enable it.
+Status: **implemented** as `fsp_mqm` and included in the full default metric set. Use explicit
+`--metric` flags to run a narrower metric set.
 
 The WMT25 repository includes FSP, or Focus Sentence Prompting, as an additional metric. It is an
 LLM-as-judge evaluation method based on MQM-style error analysis. Our implementation is a lightweight
 segment-level MQM-style judge: it gives the judge the source, reference translation, and candidate
-translation, then asks for a quality score and severity-labeled errors.
+translation, then asks for a quality score and severity-labeled errors. It selects a chemistry/patent
+prompt for chemistry datasets and a legal/regulatory prompt for JRC, EuroLex, and Acquis datasets.
 
 The scoring code produces these report metrics:
 
@@ -1005,8 +1005,8 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
   --fsp-mqm-model gpt-4.1-mini
 ```
 
-For this project, FSP/MQM should be treated as an optional review metric, not a default benchmark
-metric.
+FSP/MQM is resource-intensive: the full default runs one judge request per row. Use the cheap
+configuration or explicit metric selection when that cost is not appropriate.
 
 ## What The General Metrics Do Not Measure
 

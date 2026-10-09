@@ -6,6 +6,7 @@ from chem_machine_translation.evaluation.metrics import (
     BertScoreResult,
     DEFAULT_METRIC_NAMES,
     DEFAULT_TERMINOLOGY_TERM_GROUPS,
+    GENERAL_METRIC_NAMES,
     TERMINOLOGY_TERM_GROUPS,
     MqmJudgeResult,
     UnbabelCometScorer,
@@ -17,6 +18,8 @@ from chem_machine_translation.evaluation.metrics import (
     compute_translation_metrics,
     compute_variant_aware_target_term_coverage,
     compute_variant_aware_terminology_success_rate,
+    mqm_judge_system_prompt,
+    normalize_mqm_domain,
     parse_metric_names,
     parse_mqm_judge_response,
     select_terminology_terms,
@@ -92,12 +95,13 @@ class _FakeCometModel:
 
 
 def test_parse_metric_names_defaults_to_all_general_metrics() -> None:
-    assert parse_metric_names(None) == DEFAULT_METRIC_NAMES
+    assert DEFAULT_METRIC_NAMES == GENERAL_METRIC_NAMES
+    assert parse_metric_names(None) == GENERAL_METRIC_NAMES
     assert "chrf2++" in DEFAULT_METRIC_NAMES
-    assert "chrf" not in DEFAULT_METRIC_NAMES
+    assert "chrf" in DEFAULT_METRIC_NAMES
     assert "target_term_coverage" in DEFAULT_METRIC_NAMES
-    assert "terminology_success_rate" not in DEFAULT_METRIC_NAMES
-    assert "fsp_mqm" not in DEFAULT_METRIC_NAMES
+    assert "terminology_success_rate" in DEFAULT_METRIC_NAMES
+    assert "fsp_mqm" in DEFAULT_METRIC_NAMES
     assert DEFAULT_TERMINOLOGY_TERM_GROUPS == ("verified",)
     assert set(TERMINOLOGY_TERM_GROUPS) == {"llm", "algorithmic", "verified", "refined"}
 
@@ -755,6 +759,14 @@ def test_parse_mqm_judge_response_counts_severity_weighted_errors() -> None:
         major_errors=1,
         critical_errors=1,
     )
+
+
+def test_mqm_judge_prompts_select_the_legal_domain() -> None:
+    assert normalize_mqm_domain("jrc") == "legal"
+    assert normalize_mqm_domain("eurolex") == "legal"
+    assert normalize_mqm_domain("chemistry") == "chemistry"
+    assert "legal effect" in mqm_judge_system_prompt("legal")
+    assert "chemical formulas" in mqm_judge_system_prompt("chemistry")
 
 
 def test_compute_translation_metrics_can_select_fsp_mqm() -> None:

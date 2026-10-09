@@ -156,6 +156,7 @@ def main() -> None:
             base_url=settings.openai_base_url,
             model=args.fsp_mqm_model,
             timeout=args.fsp_mqm_timeout,
+            domain=translation_domain,
         )
         if "fsp_mqm" in metric_names
         else None

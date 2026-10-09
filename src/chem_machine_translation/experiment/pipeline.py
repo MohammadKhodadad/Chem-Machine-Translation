@@ -333,6 +333,10 @@ def write_scores(
             base_url=settings.openai_base_url,
             model=evaluation.fsp_mqm_model,
             timeout=evaluation.fsp_mqm_timeout,
+            domain=resolve_translation_domain(
+                "auto",
+                [row.get("metadata", {}) for row in prediction_rows],
+            ),
         )
         if "fsp_mqm" in evaluation.metrics
         else None
