@@ -129,7 +129,7 @@ def main() -> None:
             batch_size=args.bertscore_batch_size,
             device=args.bertscore_device,
         )
-        if "bertscore" in metric_names
+        if {"bertscore", "term_bertscore_recall"}.intersection(metric_names)
         else None
     )
     cometkiwi_scorer = (

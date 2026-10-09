@@ -45,9 +45,10 @@ We separate metrics into two groups:
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
 reference-based BERTScore and COMET, reference-free COMETKiwi QE, XCOMET-XL, strict and
-variant-aware target-side terminology coverage, strict and variant-aware source-conditioned terminology
-success rates, and optional `fsp_mqm` LLM judging. The benchmark builders can generate terminology
-mappings in manifest rows. Terminology consistency is not wired into `compute_translation_metrics` yet.
+variant-aware target-side terminology coverage, term-only BERTScore recall, strict and variant-aware
+source-conditioned terminology success rates, and optional `fsp_mqm` LLM judging. The benchmark
+builders can generate terminology mappings in manifest rows. Terminology consistency is not wired into
+`compute_translation_metrics` yet.
 
 Terminology metrics can filter manifest terms by `term_group`. The supported groups are `llm`,
 `algorithmic`, `verified`, and `refined`. The code-level default is `verified`; the standard
@@ -65,6 +66,8 @@ Implemented in code:
   use corpus chrF2++.
 - `bertscore`: contextual token-alignment F1 with `xlm-roberta-large`. It also records precision and
   recall; it is not whole-text embedding cosine similarity.
+- `term_bertscore_recall`: multilingual BERTScore recall from selected curated reference target terms
+  to the full prediction. It is a soft term-retention metric, not precision or F1.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
 - `cometkiwi_qe`: reference-free COMET quality estimation with `Unbabel/wmt22-cometkiwi-da`. It uses
   source and prediction only, so it is useful when a trusted reference is unavailable or reference overlap
@@ -91,6 +94,7 @@ Implemented in code:
 | chrF | `chrf` | prediction, reference | No |
 | chrF2++ | `chrf2++` | prediction, reference | Yes |
 | BERTScore | `bertscore` | prediction, reference | No, opt-in |
+| Term BERTScore recall | `term_bertscore_recall` | prediction, reference, manifest terminology | No, opt-in |
 | Reference-based COMET | `comet` | source, prediction, reference | `default.toml` only |
 | COMETKiwi QE | `cometkiwi_qe` | source, prediction | No, opt-in |
 | XCOMET-XL | `xcomet_xl` | source, prediction, reference | No, opt-in diagnostic metric |
@@ -154,6 +158,25 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
 The first run downloads the selected Hugging Face encoder. BERTScore evaluates reference similarity,
 not source faithfulness, and is not chemistry-specific; retain terminology and structural checks for
 chemical or patent decisions.
+
+### Term BERTScore Recall
+
+`term_bertscore_recall` uses the same multilingual BERTScore encoder, but its reference side is only
+the selected manifest `target_terms` that occur in the row's reference translation. The candidate side
+is the complete predicted translation. It reports `term_bertscore_recall` and
+`term_bertscore_reference_term_count`; the selected reference terms are retained in
+`metric_details.term_bertscore_reference_terms`.
+
+This is intentionally recall-only: the manifests annotate known reference terms, not every term that
+could legitimately appear in a prediction. It can measure whether known terms have a semantically
+similar match in the prediction, including inflectional or lexical variation, but cannot penalize extra
+or hallucinated candidate terminology. Keep strict and variant-aware terminology coverage alongside it.
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <report.jsonl> `
+  --metric term_bertscore_recall --bertscore-device cuda
+```
 
 Reviewed from the WMT25 Terminology Shared Task repository:
 

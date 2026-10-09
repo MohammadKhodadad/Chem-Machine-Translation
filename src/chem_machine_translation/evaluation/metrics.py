@@ -19,6 +19,7 @@ GENERAL_METRIC_NAMES = (
     "chrf",
     "chrf2++",
     "bertscore",
+    "term_bertscore_recall",
     "comet",
     "cometkiwi_qe",
     "xcomet_xl",
@@ -334,6 +335,22 @@ def compute_translation_metrics(
         metrics["bertscore_precision"] = result.precision
         metrics["bertscore_recall"] = result.recall
 
+    if "term_bertscore_recall" in selected_metrics:
+        reference_terms = reference_target_terms(
+            reference=reference,
+            terminology=terminology or [],
+            term_groups=terminology_term_groups,
+        )
+        if reference_terms:
+            result = (bertscore_scorer or HuggingFaceBertScoreScorer()).score(
+                prediction=prediction,
+                reference="; ".join(reference_terms),
+            )
+            metrics["term_bertscore_recall"] = result.recall
+            metrics["term_bertscore_reference_term_count"] = float(len(reference_terms))
+            if metric_details is not None:
+                metric_details["term_bertscore_reference_terms"] = list(reference_terms)
+
     if "comet" in selected_metrics:
         if source is None:
             raise ValueError("COMET metric requires source text.")
@@ -540,6 +557,34 @@ def compute_target_term_coverage(
         return None
 
     return 100 * sum(applicable_scores) / len(applicable_scores)
+
+
+def reference_target_terms(
+    *,
+    reference: str,
+    terminology: list[dict[str, Any]],
+    term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
+) -> tuple[str, ...]:
+    """Return selected canonical target terms that occur in the reference translation."""
+    terms: list[str] = []
+    seen = set()
+    for term in terminology:
+        if not isinstance(term, dict):
+            continue
+        if str(term.get("decision", "")).strip().lower() == "drop":
+            continue
+        if not terminology_term_group_matches(term, term_groups):
+            continue
+        for target_term in accepted_target_terms(term):
+            normalized = normalize_metric_text(target_term)
+            if (
+                normalized
+                and normalized not in seen
+                and count_normalized_occurrences(reference, target_term) > 0
+            ):
+                terms.append(target_term)
+                seen.add(normalized)
+    return tuple(terms)
 
 
 def compute_variant_aware_target_term_coverage(

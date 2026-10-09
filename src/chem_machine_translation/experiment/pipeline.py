@@ -297,7 +297,7 @@ def write_scores(
             batch_size=evaluation.bertscore_batch_size,
             device=evaluation.bertscore_device,
         )
-        if "bertscore" in evaluation.metrics
+        if {"bertscore", "term_bertscore_recall"}.intersection(evaluation.metrics)
         else None
     )
     comet_scorer = (

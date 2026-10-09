@@ -160,6 +160,76 @@ def test_compute_translation_metrics_adds_bertscore_components() -> None:
     assert scorer.calls == [("Batterie mit Festelektrolyt", "Festelektrolytbatterie")]
 
 
+def test_compute_translation_metrics_adds_term_bertscore_recall() -> None:
+    scorer = _FakeBertScoreScorer()
+    metric_details = {}
+
+    metrics = compute_translation_metrics(
+        prediction="Le tube digestif est traité avec un chélateur.",
+        reference="Le tube digestif reçoit des chélateurs du phosphate.",
+        terminology=[
+            {
+                "target_terms": ["tube digestif"],
+                "term_group": "refined",
+                "decision": "keep_reference",
+            },
+            {
+                "target_terms": ["chélateurs du phosphate"],
+                "term_group": "refined",
+                "decision": "keep_reference",
+            },
+            {
+                "target_terms": ["term absent"],
+                "term_group": "refined",
+                "decision": "keep_reference",
+            },
+        ],
+        terminology_term_groups=("refined",),
+        metric_names=["term_bertscore_recall"],
+        bertscore_scorer=scorer,
+        metric_details=metric_details,
+    )
+
+    assert metrics == {
+        "term_bertscore_recall": 0.83,
+        "term_bertscore_reference_term_count": 2.0,
+    }
+    assert scorer.calls == [
+        (
+            "Le tube digestif est traité avec un chélateur.",
+            "tube digestif; chélateurs du phosphate",
+        )
+    ]
+    assert metric_details == {
+        "term_bertscore_reference_terms": [
+            "tube digestif",
+            "chélateurs du phosphate",
+        ]
+    }
+
+
+def test_compute_translation_metrics_skips_term_bertscore_without_reference_terms() -> None:
+    scorer = _FakeBertScoreScorer()
+
+    metrics = compute_translation_metrics(
+        prediction="candidate",
+        reference="reference",
+        terminology=[
+            {
+                "target_terms": ["term absent"],
+                "term_group": "refined",
+                "decision": "keep_reference",
+            }
+        ],
+        terminology_term_groups=("refined",),
+        metric_names=["term_bertscore_recall"],
+        bertscore_scorer=scorer,
+    )
+
+    assert metrics == {}
+    assert scorer.calls == []
+
+
 def test_compute_translation_metrics_requires_source_for_comet() -> None:
     with pytest.raises(ValueError, match="requires source"):
         compute_translation_metrics(
