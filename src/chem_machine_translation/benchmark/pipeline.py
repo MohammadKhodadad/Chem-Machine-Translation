@@ -22,16 +22,24 @@ from chem_machine_translation.benchmark.config import (
 from chem_machine_translation.benchmark.metadata import write_benchmark_metadata
 from chem_machine_translation.config import Settings, load_settings
 from chem_machine_translation.data.terminology import (
+    AGROVOCClient,
+    ChEBIClient,
+    ChEMBLClient,
     DatasetTerminologyGenerator,
     DatasetTerminologyTerm,
     LegalTerminologyGenerator,
     LLMTerminologyRefiner,
+    MeSHClient,
+    NCIThesaurusClient,
+    PubChemClient,
+    UNTERMClient,
     dataset_term_from_json,
     deduplicate_terms,
     select_dataset_terms,
     select_legal_terms,
 )
 from chem_machine_translation.translation.iate import IATEClient, LocalIATEClient
+from chem_machine_translation.translation.wikidata import WikidataClient
 from chem_machine_translation.utils.text import approximate_token_count, normalize_text
 
 LANGUAGE_NAMES = {
@@ -232,12 +240,19 @@ def build_chemistry_generator(
         iate_client=build_iate_client(terminology),
         iate_source_name=iate_source_name(terminology),
         use_wikidata=uses_external_evidence_source(terminology, "wikidata", "wikipedia"),
+        wikidata_client=build_wikidata_client(terminology),
         use_pubchem=uses_external_evidence_source(terminology, "pubchem"),
+        pubchem_client=build_pubchem_client(terminology),
         use_chebi=uses_external_evidence_source(terminology, "chebi"),
+        chebi_client=build_chebi_client(terminology),
         use_chembl=uses_external_evidence_source(terminology, "chembl"),
+        chembl_client=build_chembl_client(terminology),
         use_mesh=uses_external_evidence_source(terminology, "mesh"),
+        mesh_client=build_mesh_client(terminology),
         use_nci=uses_external_evidence_source(terminology, "nci"),
+        nci_client=build_nci_client(terminology),
         use_agrovoc=uses_external_evidence_source(terminology, "agrovoc"),
+        agrovoc_client=build_agrovoc_client(terminology),
         cache_path=terminology.cache_path,
     )
 
@@ -261,7 +276,9 @@ def build_legal_generator(
         iate_client=build_iate_client(terminology),
         iate_source_name=iate_source_name(terminology),
         use_wikidata=uses_external_evidence_source(terminology, "wikidata", "wikipedia"),
+        wikidata_client=build_wikidata_client(terminology),
         use_unterm=uses_external_evidence_source(terminology, "unterm"),
+        unterm_client=build_unterm_client(terminology),
         cache_path=terminology.legal_cache_path or terminology.cache_path,
         llm_api_mode=terminology.api_mode or "responses",
         llm_max_output_tokens=terminology.max_output_tokens,
@@ -287,13 +304,21 @@ def build_algorithmic_generator(
         iate_client=build_iate_client(terminology),
         iate_source_name=iate_source_name(terminology),
         use_wikidata=uses_external_evidence_source(terminology, "wikidata", "wikipedia"),
+        wikidata_client=build_wikidata_client(terminology),
         use_pubchem=uses_external_evidence_source(terminology, "pubchem"),
+        pubchem_client=build_pubchem_client(terminology),
         use_chebi=uses_external_evidence_source(terminology, "chebi"),
+        chebi_client=build_chebi_client(terminology),
         use_chembl=uses_external_evidence_source(terminology, "chembl"),
+        chembl_client=build_chembl_client(terminology),
         use_mesh=uses_external_evidence_source(terminology, "mesh"),
+        mesh_client=build_mesh_client(terminology),
         use_nci=uses_external_evidence_source(terminology, "nci"),
+        nci_client=build_nci_client(terminology),
         use_agrovoc=uses_external_evidence_source(terminology, "agrovoc"),
+        agrovoc_client=build_agrovoc_client(terminology),
         use_unterm=uses_external_evidence_source(terminology, "unterm"),
+        unterm_client=build_unterm_client(terminology),
         cache_path=terminology.stanza_cache_path or terminology.cache_path,
     )
 
@@ -329,7 +354,55 @@ def build_iate_client(
     if "local_iate" in terminology.external_evidence_sources:
         return LocalIATEClient(terminology.local_iate_path or Path("data/iate"))
     if "iate" in terminology.external_evidence_sources:
-        return IATEClient()
+        return IATEClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_wikidata_client(terminology: BenchmarkTerminologyConfig) -> WikidataClient | None:
+    if uses_external_evidence_source(terminology, "wikidata", "wikipedia"):
+        return WikidataClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_pubchem_client(terminology: BenchmarkTerminologyConfig) -> PubChemClient | None:
+    if "pubchem" in terminology.external_evidence_sources:
+        return PubChemClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_chebi_client(terminology: BenchmarkTerminologyConfig) -> ChEBIClient | None:
+    if "chebi" in terminology.external_evidence_sources:
+        return ChEBIClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_chembl_client(terminology: BenchmarkTerminologyConfig) -> ChEMBLClient | None:
+    if "chembl" in terminology.external_evidence_sources:
+        return ChEMBLClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_mesh_client(terminology: BenchmarkTerminologyConfig) -> MeSHClient | None:
+    if "mesh" in terminology.external_evidence_sources:
+        return MeSHClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_nci_client(terminology: BenchmarkTerminologyConfig) -> NCIThesaurusClient | None:
+    if "nci" in terminology.external_evidence_sources:
+        return NCIThesaurusClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_agrovoc_client(terminology: BenchmarkTerminologyConfig) -> AGROVOCClient | None:
+    if "agrovoc" in terminology.external_evidence_sources:
+        return AGROVOCClient(timeout_seconds=terminology.external_evidence_timeout)
+    return None
+
+
+def build_unterm_client(terminology: BenchmarkTerminologyConfig) -> UNTERMClient | None:
+    if "unterm" in terminology.external_evidence_sources:
+        return UNTERMClient(timeout_seconds=terminology.external_evidence_timeout)
     return None
 
 
@@ -1379,7 +1452,8 @@ def external_evidence_enrichment_stage_payload(
         "candidate_max_terms": terminology.candidate_max_terms,
         "external_evidence_sources": terminology.external_evidence_sources,
         "local_iate_path": local_iate_path,
-        "enrichment_version": "external-metadata-v1",
+        "external_evidence_timeout": terminology.external_evidence_timeout,
+        "enrichment_version": "external-metadata-v2",
     }
 
 

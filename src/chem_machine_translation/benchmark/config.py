@@ -78,6 +78,7 @@ class BenchmarkTerminologyConfig:
     legal_cache_path: Path | None = None
     stanza_cache_path: Path | None = None
     local_iate_path: Path | None = None
+    external_evidence_timeout: float = 5.0
     openai_timeout: float = 120.0
 
     @property
@@ -184,6 +185,7 @@ def terminology_config_from_mapping(
         legal_cache_path=optional_path(payload.get("legal_cache_path"), base_dir=base_dir),
         stanza_cache_path=optional_path(payload.get("stanza_cache_path"), base_dir=base_dir),
         local_iate_path=optional_path(payload.get("local_iate_path"), base_dir=base_dir),
+        external_evidence_timeout=float(payload.get("external_evidence_timeout") or 5.0),
         openai_timeout=float(payload.get("openai_timeout") or 120.0),
     )
 

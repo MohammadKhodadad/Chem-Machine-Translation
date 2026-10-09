@@ -541,6 +541,17 @@ or noun chunks capture domain phrases missed by the LLM or Stanza paths.
 External evidence sources do not create the initial span. They check whether an extracted
 target-side candidate has external evidence, then append provenance and synonyms or labels.
 
+Remote verifier requests use `external_evidence_timeout` seconds per request (default `5.0`). A
+timeout fails closed for that source and term, allowing enrichment to continue with other sources
+and rows. Include the setting in a benchmark TOML when a large run needs a stricter fail-fast limit:
+
+```toml
+external_evidence_timeout = 1.0
+```
+
+Changing this setting invalidates the external-evidence checkpoint only; candidate extraction can be
+reused on the next resumable run.
+
 If an external evidence source matches:
 
 - its name is appended to `source`;

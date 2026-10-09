@@ -177,6 +177,7 @@ def test_generator_factories_map_extractor_and_verifier_flags() -> None:
         domain="chemistry",
         candidate_extractors=("llm_chemistry", "stanza_ud", "xlmr_nobi", "spacy"),
         external_evidence_sources=("local_iate", "wikidata", "pubchem"),
+        external_evidence_timeout=1.5,
     )
     chemistry_generator = build_chemistry_generator(chemistry, client=object())
 
@@ -187,6 +188,8 @@ def test_generator_factories_map_extractor_and_verifier_flags() -> None:
     assert chemistry_generator.iate_source_name == "local_iate"
     assert chemistry_generator.use_wikidata is True
     assert chemistry_generator.use_pubchem is True
+    assert chemistry_generator.wikidata_client.timeout_seconds == 1.5
+    assert chemistry_generator.pubchem_client.timeout_seconds == 1.5
     assert chemistry_generator.extractor_names == (
         "TargetTerminologyExtractor",
         "XLMRNOBITerminologyExtractor",
