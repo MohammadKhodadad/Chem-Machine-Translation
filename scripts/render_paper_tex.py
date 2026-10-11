@@ -26,6 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--paper-dir", type=Path, default=Path("docs/paper"))
     parser.add_argument("--output-dir", type=Path, default=Path("docs/paper/build"))
     parser.add_argument("--compile-pdf", action="store_true")
+    parser.add_argument("--include-appendix", action="store_true")
     parser.add_argument("--tex-engine", default="tectonic")
     return parser.parse_args()
 
@@ -34,20 +35,25 @@ def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     tex_path = args.output_dir / "paper.tex"
-    tex_path.write_text(assemble_tex(args.paper_dir), encoding="utf-8")
+    tex_path.write_text(
+        assemble_tex(args.paper_dir, include_appendix=args.include_appendix), encoding="utf-8"
+    )
     print(f"Wrote {tex_path}")
     if args.compile_pdf:
         compile_pdf(tex_path=tex_path, tex_engine=args.tex_engine)
 
 
-def assemble_tex(paper_dir: Path) -> str:
-    body = "\n\n".join(read_fragment(path) for path in fragment_paths(paper_dir))
+def assemble_tex(paper_dir: Path, *, include_appendix: bool = False) -> str:
+    body = "\n\n".join(
+        read_fragment(path) for path in fragment_paths(paper_dir, include_appendix=include_appendix)
+    )
     return latex_preamble() + "\n\\begin{document}\n\n" + body + "\n\n\\end{document}\n"
 
 
-def fragment_paths(paper_dir: Path) -> list[Path]:
+def fragment_paths(paper_dir: Path, *, include_appendix: bool = False) -> list[Path]:
     paths = [paper_dir / "latex" / "sections" / name for name in SECTION_ORDER]
-    paths.extend(paper_dir / "latex" / "appendix" / name for name in APPENDIX_ORDER)
+    if include_appendix:
+        paths.extend(paper_dir / "latex" / "appendix" / name for name in APPENDIX_ORDER)
     return paths
 
 

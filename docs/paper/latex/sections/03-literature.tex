@@ -1,23 +1,15 @@
-\section{Literature}
+\section{Related Work and Resources}
+\label{sec:resources}
 
-This section is intentionally not filled yet. A deep research note exists in
-\texttt{docs/paper/deep-research-report.md}, but the final paper should only import references after
-a dedicated citation pass.
+JRC-Acquis comprises multilingual, predominantly legal EU texts \cite{steinberger2006}; OPUS provides
+parallel distributions and tools \cite{tiedemann2012}. These aligned articles test transfer beyond
+chemistry. Patent pairs come from a repository-documented Google Patents Chemical derivative
+\cite{basfpatents}. Both supply evaluation text, unlike terminology databases.
 
-\subsection{Topics to cover}
-
-\begin{itemize}
-  \item General LLM-based machine translation and document-level MT.
-  \item Patent and technical-domain machine translation.
-  \item Chemistry text processing, chemical named-entity recognition, and terminology extraction.
-  \item Chemistry notation translation and validation, including SMILES, InChI, IUPAC names, OPSIN,
-  and RDKit-based validation.
-  \item Legal and regulatory terminology resources such as IATE, UNTERM, EuroVoc, and JRC-Acquis.
-  \item MT evaluation metrics: BLEU, chrF/chrF++, COMET-like learned metrics, terminology coverage,
-  and human error annotation.
-\end{itemize}
-
-\subsection{Current draft constraint}
-
-Do not cite papers from memory in this section. Use the research report as a starting point, verify
-each source, and then migrate references into the final bibliography.
+BLEU measures clipped word $n$-gram overlap \cite{papineni2002}; SacreBLEU makes parameterization
+explicit \cite{post2018}; chrF++ incorporates character and word overlap \cite{popovic2017}.
+COMET estimates MT quality from source, hypothesis, and reference \cite{rei2020}, while BERTScore
+aligns contextual hypothesis/reference embeddings \cite{zhang2020}. Explicit term coverage
+complements these measures; semantic similarity is not chemical identity validation. Stanza supplies
+linguistic analyses \cite{qi2020}. The configured XLM-R/NOBI extractor is English-trained
+\cite{nobi}; its multilingual backbone does not establish equal extraction accuracy across languages.

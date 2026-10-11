@@ -1,33 +1,19 @@
 \section{Introduction}
+\label{sec:introduction}
 
-Machine translation for chemical, patent, and regulatory documents is sensitive to terminology
-errors that ordinary corpus-level metrics can obscure. A translation may preserve the general
-meaning of a passage while mistranslating a compound class, material property, dosage form,
-institutional name, or legal obligation. A practical benchmark for chemistry-aware translation should
-therefore evaluate both sentence-level quality and term-level fidelity.
+Chemical translation requires preserving distinctions in names, materials, processes, formulas,
+and quantities. General MT metrics assess overlap or learned similarity
+\cite{papineni2002,post2018,rei2020,zhang2020}; these differ from checking whether a specific technical
+term is retained correctly. We investigate how reference-side terminology annotations complement
+conventional evaluation, and how providing such terminology affects a controlled translation comparison.
 
-This project currently addresses the data and terminology-evaluation parts of that problem. We have
-constructed or rebuilt two benchmark sources: a Google Patents chemistry abstract source and an
-anchored JRC-Acquis legal source. We have also implemented a terminology pipeline that extracts
-candidate terms from reference text, verifies them against external evidence, and refines them using
-domain-specific prompts with exact-span constraints.
+The primary domain is chemistry patent abstracts. JRC-Acquis legal articles offer a distinct,
+terminology-sensitive comparison domain, not additional chemical training data. The evaluation unit
+is a bounded segment, potentially containing several sentences, rather than a complete patent or
+long legal document. The intended scale is a few hundred tokens; actual corpus lengths are reported
+instead of assuming a shared 256-token mean.
 
-This draft does not yet present final model comparisons. The model-evaluation stage is planned but
-not complete. The contribution described here is therefore narrower: reproducible benchmark-source
-construction and a terminology selection method intended to support later translation evaluation.
-
-\subsection{Planned contributions}
-
-The final paper should make the following contributions once all experiments are complete:
-
-\begin{itemize}
-  \item a multilingual chemistry patent benchmark source with controlled source length and balanced
-  retained language directions;
-  \item an anchored multilingual JRC-Acquis benchmark source for legal and regulatory text;
-  \item a terminology extraction, verification, and refinement pipeline for target-reference
-  evaluation;
-  \item model evaluations and ablations over standard MT metrics and terminology-specific coverage
-  metrics.
-\end{itemize}
-
-Only the first three items are partially or fully implemented at this stage.
+The contributions are multilingual benchmark construction, provenance-preserving terminology
+extraction and curation, and an evaluation protocol separating general quality from term retention.
+These preserve the chemistry-aware evaluation objective. The infrastructure is implemented, but
+the full translation comparison remains planned; no model ranking or superiority claim is made.

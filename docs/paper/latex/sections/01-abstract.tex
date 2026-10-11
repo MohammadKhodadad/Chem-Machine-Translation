@@ -1,28 +1,13 @@
 \begin{abstract}
-Evaluating machine translation for chemistry and regulatory text requires more than sentence-level
-overlap metrics: benchmark examples must preserve domain terminology, and evaluation data must make
-term-level failures visible. We present the current stage of a chemistry-aware translation benchmark
-effort built around two multilingual source-pair datasets and a terminology-centered evaluation
-pipeline. The first benchmark source contains within-publication chemistry patent abstract pairs from
-Google Patents, rebuilt from the public
-\texttt{BASF-AI/ai4chem-clir-google-patents-within-document-abstract-pairs} dataset. It contains
-2,750 source-target pairs across 11 language directions, with 250 examples per retained direction.
-Source selection prefers examples where both source and target lengths fall in the 128--384
-approximate-token range, then backfills from lower-priority rows to preserve balanced direction
-counts. The second benchmark source is an anchored JRC-Acquis legal dataset built from OPUS
-JRC-Acquis aligned segment files. Its article-focused and definition-focused variants each contain
-5,000 aligned chunks across 20 ordered directions for English, Spanish, German, French, and
-Portuguese.
-
-The completed methodology centers on terminology extraction and validation rather than final model
-ranking. Candidate terms are extracted from target/reference text using complementary signals:
-target-side LLM extraction, Stanza/UD dependency spans, XLM-R/NOBI token classification, and spaCy
-linguistic spans. Duplicate candidates are merged with provenance, then checked against external
-knowledge sources such as IATE, Wikidata/Wikipedia, PubChem, ChEBI, ChEMBL, MeSH, NCI Thesaurus,
-AGROVOC, and UNTERM where applicable. Finally, domain-specific LLM refiners for chemistry/patents and
-JRC/legal text select benchmark-worthy terms only from existing candidate IDs. Exact-span validation
-rejects hallucinated, rewritten, or non-existing terms. Preliminary qualitative inspection on four
-examples shows that this refinement layer removes generic verified words while retaining more useful
-translation-sensitive terminology. Full model evaluation, ablation studies, and statistical results
-remain future work and are not claimed in this draft.
+Chemical translation evaluation must distinguish general quality from retention of technical
+terminology. We describe a segment-level methodology combining Google Patents Chemical abstract
+pairs with an article-focused JRC-Acquis legal comparison corpus. The pipeline constructs source
+snapshots, extracts reference-side terminology using complementary linguistic and learned approaches,
+attaches external evidence, and selects exact reference spans through domain-specific large language
+model curation. Translation generation separates a source-only baseline from an explicitly
+reference-derived, oracle terminology condition. Evaluation combines corpus lexical overlap,
+segment-level learned similarity, and strict and variant-aware term coverage. Intermediate artifacts
+and provenance support controlled comparisons. Benchmark preparation is ongoing; comparative
+translation results are not yet available. The protocol therefore makes no claim of improved MT
+quality or chemically validated annotations.
 \end{abstract}

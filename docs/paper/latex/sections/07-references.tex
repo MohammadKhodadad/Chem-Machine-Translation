@@ -1,20 +1,28 @@
-\section{References}
-
-This section is intentionally not finalized yet.
-
-Use \texttt{docs/paper/deep-research-report.md} as a source-gathering note, but verify every
-citation before adding it to the paper bibliography. The final references section should use the
-citation format required by the target venue.
-
-\subsection{Repository artifacts for drafting}
-
-\begin{itemize}
-  \item Google Patents source metadata:
-  \texttt{benchmark\_sources/google\_patents\_within\_document\_pairs\_250\_per\_language\_pair\_metadata.json}
-  \item JRC anchored article source metadata:
-  \texttt{benchmark\_sources/jrc\_acquis\_anchored\_articles\_250\_per\_language\_pair\_metadata.json}
-  \item JRC anchored definition source metadata:
-  \texttt{benchmark\_sources/jrc\_acquis\_anchored\_definitions\_250\_per\_language\_pair\_metadata.json}
-  \item Terminology implementation:
-  \texttt{src/chem\_machine\_translation/data/terminology.py}
-\end{itemize}
+\begin{thebibliography}{10}
+\bibitem{papineni2002} K. Papineni, S. Roukos, T. Ward, and W.-J. Zhu.
+Bleu: a Method for Automatic Evaluation of Machine Translation. ACL, 2002, pp. 311--318.
+doi:10.3115/1073083.1073135.
+\bibitem{post2018} M. Post. A Call for Clarity in Reporting BLEU Scores.
+WMT, 2018, pp. 186--191. doi:10.18653/v1/W18-6319.
+\bibitem{rei2020} R. Rei, C. Stewart, A. C. Farinha, and A. Lavie.
+COMET: A Neural Framework for MT Evaluation. EMNLP, 2020, pp. 2685--2702.
+doi:10.18653/v1/2020.emnlp-main.213.
+\bibitem{zhang2020} T. Zhang, V. Kishore, F. Wu, K. Q. Weinberger, and Y. Artzi.
+BERTScore: Evaluating Text Generation with BERT. 2020. arXiv:1904.09675.
+\bibitem{steinberger2006} R. Steinberger, B. Pouliquen, A. Widiger, C. Ignat,
+T. Erjavec, D. Tufis, and D. Varga. The JRC-Acquis: A multilingual aligned parallel corpus
+with 20+ languages. LREC, 2006, pp. 2142--2147. arXiv:cs/0609058.
+\bibitem{tiedemann2012} J. Tiedemann. Parallel Data, Tools and Interfaces in OPUS.
+LREC, 2012, pp. 2214--2218. \url{https://aclanthology.org/L12-1246/}.
+\bibitem{basfpatents} BASF-AI. AI4Chem CLIR Google Patents within-document abstract pairs.
+Dataset artifact.
+\href{https://huggingface.co/datasets/BASF-AI/ai4chem-clir-google-patents-within-document-abstract-pairs}{Hugging Face dataset record}.
+\bibitem{popovic2017} M. Popovi\'{c}. chrF++: words helping character n-grams.
+WMT, 2017, pp. 612--618. doi:10.18653/v1/W17-4770.
+\bibitem{qi2020} P. Qi, Y. Zhang, Y. Zhang, J. Bolton, and C. D. Manning.
+Stanza: A Python Natural Language Processing Toolkit for Many Human Languages.
+ACL System Demonstrations, 2020, pp. 101--108. doi:10.18653/v1/2020.acl-demos.14.
+\bibitem{nobi} tthhanh. XLMR Token Classifier for Term Extraction.
+Model card, \texttt{xlm-ate-nobi-en-nes}.
+\url{https://huggingface.co/tthhanh/xlm-ate-nobi-en-nes}.
+\end{thebibliography}
