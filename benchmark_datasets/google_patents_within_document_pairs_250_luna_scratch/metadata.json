@@ -1,0 +1,4823 @@
+{
+  "build_name": "google_patents",
+  "kind": "google_patents_snapshot",
+  "source_pairs_jsonl": "benchmark_sources/google_patents_within_document_pairs_exact_high_250_per_language_pair.jsonl",
+  "output_dir": "benchmark_datasets/google_patents_within_document_pairs_250_luna_scratch",
+  "selection": {
+    "mode": "per_direction",
+    "languages": [
+      "de",
+      "en",
+      "es",
+      "fr",
+      "ru",
+      "zh"
+    ],
+    "limit": 250,
+    "anchor_limit": null,
+    "bidirectional": true
+  },
+  "row_count": 4500,
+  "direction_count": 18,
+  "anchor_count": 0,
+  "directions": [
+    "de-en",
+    "de-fr",
+    "en-de",
+    "en-es",
+    "en-fr",
+    "en-ru",
+    "en-zh",
+    "es-en",
+    "es-fr",
+    "fr-de",
+    "fr-en",
+    "fr-es",
+    "fr-ru",
+    "fr-zh",
+    "ru-en",
+    "ru-fr",
+    "zh-en",
+    "zh-fr"
+  ],
+  "overall": {
+    "row_count": 4500,
+    "source_tokens": {
+      "count": 4500,
+      "min": 1.0,
+      "mean": 298.63,
+      "max": 728.0,
+      "p5": 4.95,
+      "p10": 169.0,
+      "p25": 239.0,
+      "p50": 301.0,
+      "p75": 361.0,
+      "p90": 462.0,
+      "p95": 529.0
+    },
+    "target_tokens": {
+      "count": 0,
+      "min": null,
+      "mean": null,
+      "max": null,
+      "p5": null,
+      "p10": null,
+      "p25": null,
+      "p50": null,
+      "p75": null,
+      "p90": null,
+      "p95": null
+    },
+    "candidate_terms_per_row": {
+      "stats": {
+        "count": 4500,
+        "min": 30.0,
+        "mean": 79.79,
+        "max": 81.0,
+        "p5": 80.0,
+        "p10": 80.0,
+        "p25": 80.0,
+        "p50": 80.0,
+        "p75": 80.0,
+        "p90": 80.0,
+        "p95": 80.0
+      },
+      "buckets": {
+        "0": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "1-2": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "3-5": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "6-8": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "9-15": {
+          "count": 0,
+          "pct": 0.0
+        },
+        "16+": {
+          "count": 4500,
+          "pct": 100.0
+        }
+      }
+    },
+    "refined_terms_per_row": {
+      "stats": {
+        "count": 4500,
+        "min": 0.0,
+        "mean": 9.28,
+        "max": 16.0,
+        "p5": 3.0,
+        "p10": 4.0,
+        "p25": 7.0,
+        "p50": 9.0,
+        "p75": 12.0,
+        "p90": 14.0,
+        "p95": 16.0
+      },
+      "buckets": {
+        "0": {
+          "count": 111,
+          "pct": 2.47
+        },
+        "1-2": {
+          "count": 57,
+          "pct": 1.27
+        },
+        "3-5": {
+          "count": 542,
+          "pct": 12.04
+        },
+        "6-8": {
+          "count": 1178,
+          "pct": 26.18
+        },
+        "9-15": {
+          "count": 2380,
+          "pct": 52.89
+        },
+        "16+": {
+          "count": 232,
+          "pct": 5.16
+        }
+      }
+    },
+    "verified_refined_terms_per_row": {
+      "stats": {
+        "count": 4500,
+        "min": 0.0,
+        "mean": 1.84,
+        "max": 16.0,
+        "p5": 0.0,
+        "p10": 0.0,
+        "p25": 0.0,
+        "p50": 1.0,
+        "p75": 3.0,
+        "p90": 5.0,
+        "p95": 6.0
+      },
+      "buckets": {
+        "0": {
+          "count": 1786,
+          "pct": 39.69
+        },
+        "1-2": {
+          "count": 1432,
+          "pct": 31.82
+        },
+        "3-5": {
+          "count": 940,
+          "pct": 20.89
+        },
+        "6-8": {
+          "count": 253,
+          "pct": 5.62
+        },
+        "9-15": {
+          "count": 74,
+          "pct": 1.64
+        },
+        "16+": {
+          "count": 15,
+          "pct": 0.33
+        }
+      }
+    },
+    "rows_with_terms_pct": 100.0,
+    "rows_with_refined_terms_pct": 97.53
+  },
+  "by_direction": {
+    "de-en": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 138.0,
+        "mean": 279.34,
+        "max": 382.0,
+        "p5": 197.0,
+        "p10": 227.4,
+        "p25": 257.0,
+        "p50": 288.5,
+        "p75": 306.75,
+        "p90": 321.4,
+        "p95": 338.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 9.94,
+          "max": 16.0,
+          "p5": 4.0,
+          "p10": 5.0,
+          "p25": 8.0,
+          "p50": 10.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 2,
+            "pct": 0.8
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 31,
+            "pct": 12.4
+          },
+          "6-8": {
+            "count": 53,
+            "pct": 21.2
+          },
+          "9-15": {
+            "count": 150,
+            "pct": 60.0
+          },
+          "16+": {
+            "count": 14,
+            "pct": 5.6
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.31,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.25,
+          "p50": 2.0,
+          "p75": 3.0,
+          "p90": 5.0,
+          "p95": 7.0
+        },
+        "buckets": {
+          "0": {
+            "count": 63,
+            "pct": 25.2
+          },
+          "1-2": {
+            "count": 101,
+            "pct": 40.4
+          },
+          "3-5": {
+            "count": 67,
+            "pct": 26.8
+          },
+          "6-8": {
+            "count": 10,
+            "pct": 4.0
+          },
+          "9-15": {
+            "count": 6,
+            "pct": 2.4
+          },
+          "16+": {
+            "count": 3,
+            "pct": 1.2
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 99.2
+    },
+    "de-fr": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 138.0,
+        "mean": 266.84,
+        "max": 338.0,
+        "p5": 189.15,
+        "p10": 205.0,
+        "p25": 249.0,
+        "p50": 276.0,
+        "p75": 291.0,
+        "p90": 305.0,
+        "p95": 315.65
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 81.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 8.78,
+          "max": 16.0,
+          "p5": 2.0,
+          "p10": 4.0,
+          "p25": 6.0,
+          "p50": 9.0,
+          "p75": 11.0,
+          "p90": 14.0,
+          "p95": 14.55
+        },
+        "buckets": {
+          "0": {
+            "count": 9,
+            "pct": 3.6
+          },
+          "1-2": {
+            "count": 5,
+            "pct": 2.0
+          },
+          "3-5": {
+            "count": 28,
+            "pct": 11.2
+          },
+          "6-8": {
+            "count": 74,
+            "pct": 29.6
+          },
+          "9-15": {
+            "count": 128,
+            "pct": 51.2
+          },
+          "16+": {
+            "count": 6,
+            "pct": 2.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.04,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 1.0,
+          "p75": 3.0,
+          "p90": 5.0,
+          "p95": 6.0
+        },
+        "buckets": {
+          "0": {
+            "count": 53,
+            "pct": 21.2
+          },
+          "1-2": {
+            "count": 125,
+            "pct": 50.0
+          },
+          "3-5": {
+            "count": 53,
+            "pct": 21.2
+          },
+          "6-8": {
+            "count": 14,
+            "pct": 5.6
+          },
+          "9-15": {
+            "count": 4,
+            "pct": 1.6
+          },
+          "16+": {
+            "count": 1,
+            "pct": 0.4
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 96.4
+    },
+    "en-de": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 169.0,
+        "mean": 330.83,
+        "max": 384.0,
+        "p5": 222.0,
+        "p10": 240.9,
+        "p25": 316.0,
+        "p50": 347.5,
+        "p75": 366.0,
+        "p90": 379.0,
+        "p95": 382.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 64.0,
+          "mean": 79.87,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 8.61,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 4.0,
+          "p25": 6.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 14.55
+        },
+        "buckets": {
+          "0": {
+            "count": 9,
+            "pct": 3.6
+          },
+          "1-2": {
+            "count": 3,
+            "pct": 1.2
+          },
+          "3-5": {
+            "count": 39,
+            "pct": 15.6
+          },
+          "6-8": {
+            "count": 72,
+            "pct": 28.8
+          },
+          "9-15": {
+            "count": 118,
+            "pct": 47.2
+          },
+          "16+": {
+            "count": 9,
+            "pct": 3.6
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 1.4,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 1.0,
+          "p75": 2.0,
+          "p90": 3.0,
+          "p95": 5.0
+        },
+        "buckets": {
+          "0": {
+            "count": 111,
+            "pct": 44.4
+          },
+          "1-2": {
+            "count": 95,
+            "pct": 38.0
+          },
+          "3-5": {
+            "count": 32,
+            "pct": 12.8
+          },
+          "6-8": {
+            "count": 8,
+            "pct": 3.2
+          },
+          "9-15": {
+            "count": 1,
+            "pct": 0.4
+          },
+          "16+": {
+            "count": 3,
+            "pct": 1.2
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 96.4
+    },
+    "en-es": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 184.0,
+        "mean": 323.38,
+        "max": 382.0,
+        "p5": 266.0,
+        "p10": 283.9,
+        "p25": 309.0,
+        "p50": 325.0,
+        "p75": 344.0,
+        "p90": 360.1,
+        "p95": 366.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 9.53,
+          "max": 16.0,
+          "p5": 5.0,
+          "p10": 6.0,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 1,
+            "pct": 0.4
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 21,
+            "pct": 8.4
+          },
+          "6-8": {
+            "count": 85,
+            "pct": 34.0
+          },
+          "9-15": {
+            "count": 135,
+            "pct": 54.0
+          },
+          "16+": {
+            "count": 8,
+            "pct": 3.2
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.2,
+          "max": 12.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 3.0,
+          "p90": 5.0,
+          "p95": 6.0
+        },
+        "buckets": {
+          "0": {
+            "count": 61,
+            "pct": 24.4
+          },
+          "1-2": {
+            "count": 99,
+            "pct": 39.6
+          },
+          "3-5": {
+            "count": 68,
+            "pct": 27.2
+          },
+          "6-8": {
+            "count": 19,
+            "pct": 7.6
+          },
+          "9-15": {
+            "count": 3,
+            "pct": 1.2
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 99.6
+    },
+    "en-fr": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 169.0,
+        "mean": 400.79,
+        "max": 676.0,
+        "p5": 238.8,
+        "p10": 253.0,
+        "p25": 310.75,
+        "p50": 373.5,
+        "p75": 506.5,
+        "p90": 536.0,
+        "p95": 554.7
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 8.9,
+          "max": 16.0,
+          "p5": 2.0,
+          "p10": 3.0,
+          "p25": 6.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 15.1,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 8,
+            "pct": 3.2
+          },
+          "1-2": {
+            "count": 6,
+            "pct": 2.4
+          },
+          "3-5": {
+            "count": 41,
+            "pct": 16.4
+          },
+          "6-8": {
+            "count": 60,
+            "pct": 24.0
+          },
+          "9-15": {
+            "count": 110,
+            "pct": 44.0
+          },
+          "16+": {
+            "count": 25,
+            "pct": 10.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.32,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 1.0,
+          "p75": 3.75,
+          "p90": 7.0,
+          "p95": 9.0
+        },
+        "buckets": {
+          "0": {
+            "count": 84,
+            "pct": 33.6
+          },
+          "1-2": {
+            "count": 84,
+            "pct": 33.6
+          },
+          "3-5": {
+            "count": 50,
+            "pct": 20.0
+          },
+          "6-8": {
+            "count": 17,
+            "pct": 6.8
+          },
+          "9-15": {
+            "count": 14,
+            "pct": 5.6
+          },
+          "16+": {
+            "count": 1,
+            "pct": 0.4
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 96.8
+    },
+    "en-ru": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 158.0,
+        "mean": 507.32,
+        "max": 659.0,
+        "p5": 408.45,
+        "p10": 429.0,
+        "p25": 467.25,
+        "p50": 510.5,
+        "p75": 553.75,
+        "p90": 591.0,
+        "p95": 607.65
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 10.58,
+          "max": 16.0,
+          "p5": 6.0,
+          "p10": 7.0,
+          "p25": 9.0,
+          "p50": 11.0,
+          "p75": 13.0,
+          "p90": 15.0,
+          "p95": 15.55
+        },
+        "buckets": {
+          "0": {
+            "count": 6,
+            "pct": 2.4
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 6,
+            "pct": 2.4
+          },
+          "6-8": {
+            "count": 48,
+            "pct": 19.2
+          },
+          "9-15": {
+            "count": 177,
+            "pct": 70.8
+          },
+          "16+": {
+            "count": 13,
+            "pct": 5.2
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 0.04,
+          "max": 2.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "buckets": {
+          "0": {
+            "count": 241,
+            "pct": 96.4
+          },
+          "1-2": {
+            "count": 9,
+            "pct": 3.6
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 97.6
+    },
+    "en-zh": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 137.0,
+        "mean": 260.32,
+        "max": 384.0,
+        "p5": 165.0,
+        "p10": 180.6,
+        "p25": 212.0,
+        "p50": 254.0,
+        "p75": 304.0,
+        "p90": 355.2,
+        "p95": 367.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 49.0,
+          "mean": 79.76,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 6.8,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 3.0,
+          "p50": 6.0,
+          "p75": 11.0,
+          "p90": 15.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 44,
+            "pct": 17.6
+          },
+          "1-2": {
+            "count": 18,
+            "pct": 7.2
+          },
+          "3-5": {
+            "count": 53,
+            "pct": 21.2
+          },
+          "6-8": {
+            "count": 45,
+            "pct": 18.0
+          },
+          "9-15": {
+            "count": 69,
+            "pct": 27.6
+          },
+          "16+": {
+            "count": 21,
+            "pct": 8.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 0.6,
+          "max": 13.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 2.0,
+          "p95": 4.0
+        },
+        "buckets": {
+          "0": {
+            "count": 194,
+            "pct": 77.6
+          },
+          "1-2": {
+            "count": 35,
+            "pct": 14.0
+          },
+          "3-5": {
+            "count": 13,
+            "pct": 5.2
+          },
+          "6-8": {
+            "count": 6,
+            "pct": 2.4
+          },
+          "9-15": {
+            "count": 2,
+            "pct": 0.8
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 82.4
+    },
+    "es-en": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 180.0,
+        "mean": 347.15,
+        "max": 384.0,
+        "p5": 299.0,
+        "p10": 309.9,
+        "p25": 330.0,
+        "p50": 353.5,
+        "p75": 370.0,
+        "p90": 378.0,
+        "p95": 381.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 74.0,
+          "mean": 79.96,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 3.0,
+          "mean": 9.7,
+          "max": 16.0,
+          "p5": 4.0,
+          "p10": 5.0,
+          "p25": 7.0,
+          "p50": 10.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 30,
+            "pct": 12.0
+          },
+          "6-8": {
+            "count": 62,
+            "pct": 24.8
+          },
+          "9-15": {
+            "count": 147,
+            "pct": 58.8
+          },
+          "16+": {
+            "count": 11,
+            "pct": 4.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.92,
+          "max": 12.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 4.75,
+          "p90": 7.0,
+          "p95": 8.0
+        },
+        "buckets": {
+          "0": {
+            "count": 48,
+            "pct": 19.2
+          },
+          "1-2": {
+            "count": 87,
+            "pct": 34.8
+          },
+          "3-5": {
+            "count": 73,
+            "pct": 29.2
+          },
+          "6-8": {
+            "count": 33,
+            "pct": 13.2
+          },
+          "9-15": {
+            "count": 9,
+            "pct": 3.6
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 100.0
+    },
+    "es-fr": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 134.0,
+        "mean": 261.34,
+        "max": 377.0,
+        "p5": 218.0,
+        "p10": 223.0,
+        "p25": 237.0,
+        "p50": 254.0,
+        "p75": 280.0,
+        "p90": 313.2,
+        "p95": 338.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 3.0,
+          "mean": 9.7,
+          "max": 16.0,
+          "p5": 5.0,
+          "p10": 6.0,
+          "p25": 7.0,
+          "p50": 10.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 15,
+            "pct": 6.0
+          },
+          "6-8": {
+            "count": 77,
+            "pct": 30.8
+          },
+          "9-15": {
+            "count": 153,
+            "pct": 61.2
+          },
+          "16+": {
+            "count": 5,
+            "pct": 2.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.97,
+          "max": 10.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 3.0,
+          "p75": 4.0,
+          "p90": 6.0,
+          "p95": 7.0
+        },
+        "buckets": {
+          "0": {
+            "count": 30,
+            "pct": 12.0
+          },
+          "1-2": {
+            "count": 89,
+            "pct": 35.6
+          },
+          "3-5": {
+            "count": 98,
+            "pct": 39.2
+          },
+          "6-8": {
+            "count": 32,
+            "pct": 12.8
+          },
+          "9-15": {
+            "count": 1,
+            "pct": 0.4
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 100.0
+    },
+    "fr-de": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 195.0,
+        "mean": 339.04,
+        "max": 384.0,
+        "p5": 232.0,
+        "p10": 264.5,
+        "p25": 334.0,
+        "p50": 353.0,
+        "p75": 371.0,
+        "p90": 378.0,
+        "p95": 381.1
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 64.0,
+          "mean": 79.87,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 8.92,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 5.0,
+          "p25": 6.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 13.0,
+          "p95": 14.0
+        },
+        "buckets": {
+          "0": {
+            "count": 6,
+            "pct": 2.4
+          },
+          "1-2": {
+            "count": 2,
+            "pct": 0.8
+          },
+          "3-5": {
+            "count": 36,
+            "pct": 14.4
+          },
+          "6-8": {
+            "count": 73,
+            "pct": 29.2
+          },
+          "9-15": {
+            "count": 122,
+            "pct": 48.8
+          },
+          "16+": {
+            "count": 11,
+            "pct": 4.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 1.42,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 1.0,
+          "p75": 2.0,
+          "p90": 3.1,
+          "p95": 5.0
+        },
+        "buckets": {
+          "0": {
+            "count": 104,
+            "pct": 41.6
+          },
+          "1-2": {
+            "count": 107,
+            "pct": 42.8
+          },
+          "3-5": {
+            "count": 29,
+            "pct": 11.6
+          },
+          "6-8": {
+            "count": 5,
+            "pct": 2.0
+          },
+          "9-15": {
+            "count": 2,
+            "pct": 0.8
+          },
+          "16+": {
+            "count": 3,
+            "pct": 1.2
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 97.6
+    },
+    "fr-en": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 183.0,
+        "mean": 451.74,
+        "max": 728.0,
+        "p5": 250.0,
+        "p10": 287.0,
+        "p25": 352.0,
+        "p50": 454.5,
+        "p75": 563.75,
+        "p90": 589.0,
+        "p95": 618.2
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 9.6,
+          "max": 16.0,
+          "p5": 2.45,
+          "p10": 4.0,
+          "p25": 7.0,
+          "p50": 9.5,
+          "p75": 13.0,
+          "p90": 16.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 5,
+            "pct": 2.0
+          },
+          "1-2": {
+            "count": 8,
+            "pct": 3.2
+          },
+          "3-5": {
+            "count": 36,
+            "pct": 14.4
+          },
+          "6-8": {
+            "count": 53,
+            "pct": 21.2
+          },
+          "9-15": {
+            "count": 117,
+            "pct": 46.8
+          },
+          "16+": {
+            "count": 31,
+            "pct": 12.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.84,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 4.0,
+          "p90": 6.1,
+          "p95": 11.55
+        },
+        "buckets": {
+          "0": {
+            "count": 61,
+            "pct": 24.4
+          },
+          "1-2": {
+            "count": 85,
+            "pct": 34.0
+          },
+          "3-5": {
+            "count": 74,
+            "pct": 29.6
+          },
+          "6-8": {
+            "count": 10,
+            "pct": 4.0
+          },
+          "9-15": {
+            "count": 16,
+            "pct": 6.4
+          },
+          "16+": {
+            "count": 4,
+            "pct": 1.6
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 98.0
+    },
+    "fr-es": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 132.0,
+        "mean": 263.84,
+        "max": 382.0,
+        "p5": 213.0,
+        "p10": 221.0,
+        "p25": 238.25,
+        "p50": 256.5,
+        "p75": 283.25,
+        "p90": 316.1,
+        "p95": 348.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 3.0,
+          "mean": 9.06,
+          "max": 16.0,
+          "p5": 4.45,
+          "p10": 5.0,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 11.0,
+          "p90": 13.0,
+          "p95": 14.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 31,
+            "pct": 12.4
+          },
+          "6-8": {
+            "count": 82,
+            "pct": 32.8
+          },
+          "9-15": {
+            "count": 132,
+            "pct": 52.8
+          },
+          "16+": {
+            "count": 5,
+            "pct": 2.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.22,
+          "max": 7.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 3.0,
+          "p90": 5.0,
+          "p95": 6.0
+        },
+        "buckets": {
+          "0": {
+            "count": 36,
+            "pct": 14.4
+          },
+          "1-2": {
+            "count": 124,
+            "pct": 49.6
+          },
+          "3-5": {
+            "count": 73,
+            "pct": 29.2
+          },
+          "6-8": {
+            "count": 17,
+            "pct": 6.8
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 100.0
+    },
+    "fr-ru": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 204.0,
+        "mean": 295.69,
+        "max": 380.0,
+        "p5": 234.0,
+        "p10": 249.8,
+        "p25": 272.0,
+        "p50": 291.5,
+        "p75": 324.0,
+        "p90": 348.0,
+        "p95": 360.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 9.33,
+          "max": 16.0,
+          "p5": 5.0,
+          "p10": 5.0,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 11.0,
+          "p90": 13.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 4,
+            "pct": 1.6
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 22,
+            "pct": 8.8
+          },
+          "6-8": {
+            "count": 77,
+            "pct": 30.8
+          },
+          "9-15": {
+            "count": 137,
+            "pct": 54.8
+          },
+          "16+": {
+            "count": 10,
+            "pct": 4.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 0.0,
+          "max": 0.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "buckets": {
+          "0": {
+            "count": 250,
+            "pct": 100.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 98.4
+    },
+    "fr-zh": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 154.0,
+        "mean": 304.2,
+        "max": 383.0,
+        "p5": 205.45,
+        "p10": 249.0,
+        "p25": 280.75,
+        "p50": 310.0,
+        "p75": 334.75,
+        "p90": 361.2,
+        "p95": 373.65
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 30.0,
+          "mean": 77.0,
+          "max": 80.0,
+          "p5": 63.45,
+          "p10": 69.0,
+          "p25": 78.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 9.02,
+          "max": 16.0,
+          "p5": 1.0,
+          "p10": 4.0,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 12,
+            "pct": 4.8
+          },
+          "1-2": {
+            "count": 4,
+            "pct": 1.6
+          },
+          "3-5": {
+            "count": 27,
+            "pct": 10.8
+          },
+          "6-8": {
+            "count": 66,
+            "pct": 26.4
+          },
+          "9-15": {
+            "count": 130,
+            "pct": 52.0
+          },
+          "16+": {
+            "count": 11,
+            "pct": 4.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 0.07,
+          "max": 3.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.0,
+          "p95": 1.0
+        },
+        "buckets": {
+          "0": {
+            "count": 236,
+            "pct": 94.4
+          },
+          "1-2": {
+            "count": 12,
+            "pct": 4.8
+          },
+          "3-5": {
+            "count": 2,
+            "pct": 0.8
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 95.2
+    },
+    "ru-en": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 145.0,
+        "mean": 400.66,
+        "max": 547.0,
+        "p5": 331.9,
+        "p10": 347.9,
+        "p25": 365.0,
+        "p50": 384.0,
+        "p75": 441.75,
+        "p90": 472.1,
+        "p95": 487.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 4.0,
+          "mean": 10.93,
+          "max": 16.0,
+          "p5": 5.0,
+          "p10": 7.0,
+          "p25": 9.0,
+          "p50": 11.0,
+          "p75": 13.0,
+          "p90": 15.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 14,
+            "pct": 5.6
+          },
+          "6-8": {
+            "count": 48,
+            "pct": 19.2
+          },
+          "9-15": {
+            "count": 168,
+            "pct": 67.2
+          },
+          "16+": {
+            "count": 20,
+            "pct": 8.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 3.58,
+          "max": 13.0,
+          "p5": 0.0,
+          "p10": 1.0,
+          "p25": 2.0,
+          "p50": 3.0,
+          "p75": 5.0,
+          "p90": 7.0,
+          "p95": 7.0
+        },
+        "buckets": {
+          "0": {
+            "count": 17,
+            "pct": 6.8
+          },
+          "1-2": {
+            "count": 77,
+            "pct": 30.8
+          },
+          "3-5": {
+            "count": 104,
+            "pct": 41.6
+          },
+          "6-8": {
+            "count": 48,
+            "pct": 19.2
+          },
+          "9-15": {
+            "count": 4,
+            "pct": 1.6
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 100.0
+    },
+    "ru-fr": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 155.0,
+        "mean": 206.36,
+        "max": 274.0,
+        "p5": 170.9,
+        "p10": 176.0,
+        "p25": 188.0,
+        "p50": 204.0,
+        "p75": 223.0,
+        "p90": 240.0,
+        "p95": 253.65
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 4.0,
+          "mean": 10.03,
+          "max": 16.0,
+          "p5": 6.0,
+          "p10": 6.0,
+          "p25": 8.0,
+          "p50": 10.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 10,
+            "pct": 4.0
+          },
+          "6-8": {
+            "count": 70,
+            "pct": 28.0
+          },
+          "9-15": {
+            "count": 165,
+            "pct": 66.0
+          },
+          "16+": {
+            "count": 5,
+            "pct": 2.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 2.92,
+          "max": 10.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 3.0,
+          "p75": 4.0,
+          "p90": 6.0,
+          "p95": 7.0
+        },
+        "buckets": {
+          "0": {
+            "count": 26,
+            "pct": 10.4
+          },
+          "1-2": {
+            "count": 90,
+            "pct": 36.0
+          },
+          "3-5": {
+            "count": 106,
+            "pct": 42.4
+          },
+          "6-8": {
+            "count": 25,
+            "pct": 10.0
+          },
+          "9-15": {
+            "count": 3,
+            "pct": 1.2
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 100.0
+    },
+    "zh-en": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 1.0,
+        "mean": 120.26,
+        "max": 347.0,
+        "p5": 1.0,
+        "p10": 1.0,
+        "p25": 18.5,
+        "p50": 141.5,
+        "p75": 183.0,
+        "p90": 217.1,
+        "p95": 252.9
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 64.0,
+          "mean": 79.89,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 8.68,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 3.0,
+          "p25": 5.0,
+          "p50": 8.0,
+          "p75": 12.0,
+          "p90": 15.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 2,
+            "pct": 0.8
+          },
+          "1-2": {
+            "count": 8,
+            "pct": 3.2
+          },
+          "3-5": {
+            "count": 66,
+            "pct": 26.4
+          },
+          "6-8": {
+            "count": 55,
+            "pct": 22.0
+          },
+          "9-15": {
+            "count": 99,
+            "pct": 39.6
+          },
+          "16+": {
+            "count": 20,
+            "pct": 8.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 1.7,
+          "max": 14.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 1.0,
+          "p75": 2.0,
+          "p90": 4.0,
+          "p95": 6.0
+        },
+        "buckets": {
+          "0": {
+            "count": 87,
+            "pct": 34.8
+          },
+          "1-2": {
+            "count": 110,
+            "pct": 44.0
+          },
+          "3-5": {
+            "count": 39,
+            "pct": 15.6
+          },
+          "6-8": {
+            "count": 6,
+            "pct": 2.4
+          },
+          "9-15": {
+            "count": 8,
+            "pct": 3.2
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 99.2
+    },
+    "zh-fr": {
+      "row_count": 250,
+      "source_tokens": {
+        "count": 250,
+        "min": 1.0,
+        "mean": 16.27,
+        "max": 231.0,
+        "p5": 1.0,
+        "p10": 1.0,
+        "p25": 1.0,
+        "p50": 1.0,
+        "p75": 17.0,
+        "p90": 58.1,
+        "p95": 77.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 65.0,
+          "mean": 79.92,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 8.87,
+          "max": 16.0,
+          "p5": 4.0,
+          "p10": 5.0,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 11.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 3,
+            "pct": 1.2
+          },
+          "1-2": {
+            "count": 3,
+            "pct": 1.2
+          },
+          "3-5": {
+            "count": 36,
+            "pct": 14.4
+          },
+          "6-8": {
+            "count": 78,
+            "pct": 31.2
+          },
+          "9-15": {
+            "count": 123,
+            "pct": 49.2
+          },
+          "16+": {
+            "count": 7,
+            "pct": 2.8
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 250,
+          "min": 0.0,
+          "mean": 1.55,
+          "max": 10.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 1.0,
+          "p75": 2.75,
+          "p90": 4.0,
+          "p95": 4.0
+        },
+        "buckets": {
+          "0": {
+            "count": 84,
+            "pct": 33.6
+          },
+          "1-2": {
+            "count": 103,
+            "pct": 41.2
+          },
+          "3-5": {
+            "count": 59,
+            "pct": 23.6
+          },
+          "6-8": {
+            "count": 3,
+            "pct": 1.2
+          },
+          "9-15": {
+            "count": 1,
+            "pct": 0.4
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 98.8
+    }
+  },
+  "by_source_language": {
+    "de": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 138.0,
+        "mean": 273.09,
+        "max": 382.0,
+        "p5": 193.0,
+        "p10": 213.0,
+        "p25": 254.0,
+        "p50": 281.5,
+        "p75": 299.0,
+        "p90": 314.0,
+        "p95": 326.05
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 81.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 9.36,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 5.0,
+          "p25": 7.0,
+          "p50": 10.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 11,
+            "pct": 2.2
+          },
+          "1-2": {
+            "count": 5,
+            "pct": 1.0
+          },
+          "3-5": {
+            "count": 59,
+            "pct": 11.8
+          },
+          "6-8": {
+            "count": 127,
+            "pct": 25.4
+          },
+          "9-15": {
+            "count": 278,
+            "pct": 55.6
+          },
+          "16+": {
+            "count": 20,
+            "pct": 4.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 2.18,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 3.0,
+          "p90": 5.0,
+          "p95": 6.0
+        },
+        "buckets": {
+          "0": {
+            "count": 116,
+            "pct": 23.2
+          },
+          "1-2": {
+            "count": 226,
+            "pct": 45.2
+          },
+          "3-5": {
+            "count": 120,
+            "pct": 24.0
+          },
+          "6-8": {
+            "count": 24,
+            "pct": 4.8
+          },
+          "9-15": {
+            "count": 10,
+            "pct": 2.0
+          },
+          "16+": {
+            "count": 4,
+            "pct": 0.8
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 97.8
+    },
+    "en": {
+      "row_count": 1250,
+      "source_tokens": {
+        "count": 1250,
+        "min": 137.0,
+        "mean": 364.53,
+        "max": 676.0,
+        "p5": 201.45,
+        "p10": 233.0,
+        "p25": 294.0,
+        "p50": 346.0,
+        "p75": 447.5,
+        "p90": 531.2,
+        "p95": 562.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 49.0,
+          "mean": 79.93,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 1250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 8.89,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 3.0,
+          "p25": 6.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 68,
+            "pct": 5.44
+          },
+          "1-2": {
+            "count": 27,
+            "pct": 2.16
+          },
+          "3-5": {
+            "count": 160,
+            "pct": 12.8
+          },
+          "6-8": {
+            "count": 310,
+            "pct": 24.8
+          },
+          "9-15": {
+            "count": 609,
+            "pct": 48.72
+          },
+          "16+": {
+            "count": 76,
+            "pct": 6.08
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 1.31,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 2.0,
+          "p90": 4.0,
+          "p95": 6.0
+        },
+        "buckets": {
+          "0": {
+            "count": 691,
+            "pct": 55.28
+          },
+          "1-2": {
+            "count": 322,
+            "pct": 25.76
+          },
+          "3-5": {
+            "count": 163,
+            "pct": 13.04
+          },
+          "6-8": {
+            "count": 50,
+            "pct": 4.0
+          },
+          "9-15": {
+            "count": 20,
+            "pct": 1.6
+          },
+          "16+": {
+            "count": 4,
+            "pct": 0.32
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 94.56
+    },
+    "es": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 134.0,
+        "mean": 304.24,
+        "max": 384.0,
+        "p5": 222.95,
+        "p10": 231.9,
+        "p25": 253.0,
+        "p50": 312.0,
+        "p75": 355.25,
+        "p90": 372.0,
+        "p95": 378.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 74.0,
+          "mean": 79.98,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 3.0,
+          "mean": 9.7,
+          "max": 16.0,
+          "p5": 5.0,
+          "p10": 6.0,
+          "p25": 7.0,
+          "p50": 10.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 45,
+            "pct": 9.0
+          },
+          "6-8": {
+            "count": 139,
+            "pct": 27.8
+          },
+          "9-15": {
+            "count": 300,
+            "pct": 60.0
+          },
+          "16+": {
+            "count": 16,
+            "pct": 3.2
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 2.94,
+          "max": 12.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 4.0,
+          "p90": 6.0,
+          "p95": 8.0
+        },
+        "buckets": {
+          "0": {
+            "count": 78,
+            "pct": 15.6
+          },
+          "1-2": {
+            "count": 176,
+            "pct": 35.2
+          },
+          "3-5": {
+            "count": 171,
+            "pct": 34.2
+          },
+          "6-8": {
+            "count": 65,
+            "pct": 13.0
+          },
+          "9-15": {
+            "count": 10,
+            "pct": 2.0
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 100.0
+    },
+    "fr": {
+      "row_count": 1250,
+      "source_tokens": {
+        "count": 1250,
+        "min": 132.0,
+        "mean": 330.9,
+        "max": 728.0,
+        "p5": 221.0,
+        "p10": 239.0,
+        "p25": 269.0,
+        "p50": 314.5,
+        "p75": 363.0,
+        "p90": 449.3,
+        "p95": 563.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 30.0,
+          "mean": 79.38,
+          "max": 80.0,
+          "p5": 77.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 1250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 9.19,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 4.9,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 27,
+            "pct": 2.16
+          },
+          "1-2": {
+            "count": 14,
+            "pct": 1.12
+          },
+          "3-5": {
+            "count": 152,
+            "pct": 12.16
+          },
+          "6-8": {
+            "count": 351,
+            "pct": 28.08
+          },
+          "9-15": {
+            "count": 638,
+            "pct": 51.04
+          },
+          "16+": {
+            "count": 68,
+            "pct": 5.44
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 1.31,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 2.0,
+          "p90": 4.0,
+          "p95": 5.0
+        },
+        "buckets": {
+          "0": {
+            "count": 687,
+            "pct": 54.96
+          },
+          "1-2": {
+            "count": 328,
+            "pct": 26.24
+          },
+          "3-5": {
+            "count": 178,
+            "pct": 14.24
+          },
+          "6-8": {
+            "count": 32,
+            "pct": 2.56
+          },
+          "9-15": {
+            "count": 18,
+            "pct": 1.44
+          },
+          "16+": {
+            "count": 7,
+            "pct": 0.56
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 97.84
+    },
+    "ru": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 145.0,
+        "mean": 303.51,
+        "max": 547.0,
+        "p5": 174.95,
+        "p10": 183.9,
+        "p25": 203.0,
+        "p50": 264.5,
+        "p75": 384.0,
+        "p90": 447.0,
+        "p95": 472.05
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 4.0,
+          "mean": 10.48,
+          "max": 16.0,
+          "p5": 6.0,
+          "p10": 7.0,
+          "p25": 8.0,
+          "p50": 10.0,
+          "p75": 13.0,
+          "p90": 15.0,
+          "p95": 15.05
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 24,
+            "pct": 4.8
+          },
+          "6-8": {
+            "count": 118,
+            "pct": 23.6
+          },
+          "9-15": {
+            "count": 333,
+            "pct": 66.6
+          },
+          "16+": {
+            "count": 25,
+            "pct": 5.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 3.25,
+          "max": 13.0,
+          "p5": 0.0,
+          "p10": 1.0,
+          "p25": 2.0,
+          "p50": 3.0,
+          "p75": 5.0,
+          "p90": 6.0,
+          "p95": 7.0
+        },
+        "buckets": {
+          "0": {
+            "count": 43,
+            "pct": 8.6
+          },
+          "1-2": {
+            "count": 167,
+            "pct": 33.4
+          },
+          "3-5": {
+            "count": 210,
+            "pct": 42.0
+          },
+          "6-8": {
+            "count": 73,
+            "pct": 14.6
+          },
+          "9-15": {
+            "count": 7,
+            "pct": 1.4
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 100.0
+    },
+    "zh": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 1.0,
+        "mean": 68.27,
+        "max": 347.0,
+        "p5": 1.0,
+        "p10": 1.0,
+        "p25": 1.0,
+        "p50": 17.0,
+        "p75": 142.75,
+        "p90": 191.0,
+        "p95": 218.05
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 64.0,
+          "mean": 79.9,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 8.78,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 4.0,
+          "p25": 6.0,
+          "p50": 8.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 5,
+            "pct": 1.0
+          },
+          "1-2": {
+            "count": 11,
+            "pct": 2.2
+          },
+          "3-5": {
+            "count": 102,
+            "pct": 20.4
+          },
+          "6-8": {
+            "count": 133,
+            "pct": 26.6
+          },
+          "9-15": {
+            "count": 222,
+            "pct": 44.4
+          },
+          "16+": {
+            "count": 27,
+            "pct": 5.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 1.62,
+          "max": 14.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 1.0,
+          "p75": 2.0,
+          "p90": 4.0,
+          "p95": 5.0
+        },
+        "buckets": {
+          "0": {
+            "count": 171,
+            "pct": 34.2
+          },
+          "1-2": {
+            "count": 213,
+            "pct": 42.6
+          },
+          "3-5": {
+            "count": 98,
+            "pct": 19.6
+          },
+          "6-8": {
+            "count": 9,
+            "pct": 1.8
+          },
+          "9-15": {
+            "count": 9,
+            "pct": 1.8
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 99.0
+    }
+  },
+  "by_target_language": {
+    "de": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 169.0,
+        "mean": 334.94,
+        "max": 384.0,
+        "p5": 225.8,
+        "p10": 248.9,
+        "p25": 324.75,
+        "p50": 350.0,
+        "p75": 368.0,
+        "p90": 378.0,
+        "p95": 382.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 64.0,
+          "mean": 79.87,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 8.77,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 4.0,
+          "p25": 6.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 13.0,
+          "p95": 14.05
+        },
+        "buckets": {
+          "0": {
+            "count": 15,
+            "pct": 3.0
+          },
+          "1-2": {
+            "count": 5,
+            "pct": 1.0
+          },
+          "3-5": {
+            "count": 75,
+            "pct": 15.0
+          },
+          "6-8": {
+            "count": 145,
+            "pct": 29.0
+          },
+          "9-15": {
+            "count": 240,
+            "pct": 48.0
+          },
+          "16+": {
+            "count": 20,
+            "pct": 4.0
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 1.41,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 1.0,
+          "p75": 2.0,
+          "p90": 3.0,
+          "p95": 5.0
+        },
+        "buckets": {
+          "0": {
+            "count": 215,
+            "pct": 43.0
+          },
+          "1-2": {
+            "count": 202,
+            "pct": 40.4
+          },
+          "3-5": {
+            "count": 61,
+            "pct": 12.2
+          },
+          "6-8": {
+            "count": 13,
+            "pct": 2.6
+          },
+          "9-15": {
+            "count": 3,
+            "pct": 0.6
+          },
+          "16+": {
+            "count": 6,
+            "pct": 1.2
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 97.0
+    },
+    "en": {
+      "row_count": 1250,
+      "source_tokens": {
+        "count": 1250,
+        "min": 1.0,
+        "mean": 319.83,
+        "max": 728.0,
+        "p5": 19.7,
+        "p10": 139.0,
+        "p25": 253.0,
+        "p50": 335.0,
+        "p75": 382.0,
+        "p90": 489.0,
+        "p95": 563.55
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 64.0,
+          "mean": 79.97,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 1250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 9.77,
+          "max": 16.0,
+          "p5": 3.0,
+          "p10": 4.0,
+          "p25": 7.0,
+          "p50": 10.0,
+          "p75": 13.0,
+          "p90": 15.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 9,
+            "pct": 0.72
+          },
+          "1-2": {
+            "count": 16,
+            "pct": 1.28
+          },
+          "3-5": {
+            "count": 177,
+            "pct": 14.16
+          },
+          "6-8": {
+            "count": 271,
+            "pct": 21.68
+          },
+          "9-15": {
+            "count": 681,
+            "pct": 54.48
+          },
+          "16+": {
+            "count": 96,
+            "pct": 7.68
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 2.67,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 4.0,
+          "p90": 6.0,
+          "p95": 8.0
+        },
+        "buckets": {
+          "0": {
+            "count": 276,
+            "pct": 22.08
+          },
+          "1-2": {
+            "count": 460,
+            "pct": 36.8
+          },
+          "3-5": {
+            "count": 357,
+            "pct": 28.56
+          },
+          "6-8": {
+            "count": 107,
+            "pct": 8.56
+          },
+          "9-15": {
+            "count": 43,
+            "pct": 3.44
+          },
+          "16+": {
+            "count": 7,
+            "pct": 0.56
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 99.28
+    },
+    "es": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 132.0,
+        "mean": 293.61,
+        "max": 382.0,
+        "p5": 220.95,
+        "p10": 232.0,
+        "p25": 255.0,
+        "p50": 298.5,
+        "p75": 331.25,
+        "p90": 353.0,
+        "p95": 363.05
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 9.29,
+          "max": 16.0,
+          "p5": 5.0,
+          "p10": 5.0,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 14.05
+        },
+        "buckets": {
+          "0": {
+            "count": 1,
+            "pct": 0.2
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 52,
+            "pct": 10.4
+          },
+          "6-8": {
+            "count": 167,
+            "pct": 33.4
+          },
+          "9-15": {
+            "count": 267,
+            "pct": 53.4
+          },
+          "16+": {
+            "count": 13,
+            "pct": 2.6
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 2.21,
+          "max": 12.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 3.0,
+          "p90": 5.0,
+          "p95": 6.0
+        },
+        "buckets": {
+          "0": {
+            "count": 97,
+            "pct": 19.4
+          },
+          "1-2": {
+            "count": 223,
+            "pct": 44.6
+          },
+          "3-5": {
+            "count": 141,
+            "pct": 28.2
+          },
+          "6-8": {
+            "count": 36,
+            "pct": 7.2
+          },
+          "9-15": {
+            "count": 3,
+            "pct": 0.6
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 99.8
+    },
+    "fr": {
+      "row_count": 1250,
+      "source_tokens": {
+        "count": 1250,
+        "min": 1.0,
+        "mean": 230.32,
+        "max": 676.0,
+        "p5": 1.0,
+        "p10": 1.0,
+        "p25": 185.0,
+        "p50": 243.0,
+        "p75": 291.0,
+        "p90": 374.3,
+        "p95": 506.1
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 65.0,
+          "mean": 79.98,
+          "max": 81.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 1250,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 9.26,
+          "max": 16.0,
+          "p5": 4.0,
+          "p10": 5.0,
+          "p25": 7.0,
+          "p50": 9.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 20,
+            "pct": 1.6
+          },
+          "1-2": {
+            "count": 14,
+            "pct": 1.12
+          },
+          "3-5": {
+            "count": 130,
+            "pct": 10.4
+          },
+          "6-8": {
+            "count": 359,
+            "pct": 28.72
+          },
+          "9-15": {
+            "count": 679,
+            "pct": 54.32
+          },
+          "16+": {
+            "count": 48,
+            "pct": 3.84
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 1250,
+          "min": 0.0,
+          "mean": 2.36,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 1.0,
+          "p50": 2.0,
+          "p75": 3.0,
+          "p90": 5.0,
+          "p95": 7.0
+        },
+        "buckets": {
+          "0": {
+            "count": 277,
+            "pct": 22.16
+          },
+          "1-2": {
+            "count": 491,
+            "pct": 39.28
+          },
+          "3-5": {
+            "count": 366,
+            "pct": 29.28
+          },
+          "6-8": {
+            "count": 91,
+            "pct": 7.28
+          },
+          "9-15": {
+            "count": 23,
+            "pct": 1.84
+          },
+          "16+": {
+            "count": 2,
+            "pct": 0.16
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 98.4
+    },
+    "ru": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 158.0,
+        "mean": 401.51,
+        "max": 659.0,
+        "p5": 243.0,
+        "p10": 262.0,
+        "p25": 290.0,
+        "p50": 369.0,
+        "p75": 510.25,
+        "p90": 564.1,
+        "p95": 591.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 80.0,
+          "mean": 80.0,
+          "max": 80.0,
+          "p5": 80.0,
+          "p10": 80.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 9.96,
+          "max": 16.0,
+          "p5": 5.0,
+          "p10": 6.0,
+          "p25": 8.0,
+          "p50": 10.0,
+          "p75": 12.0,
+          "p90": 14.0,
+          "p95": 15.0
+        },
+        "buckets": {
+          "0": {
+            "count": 10,
+            "pct": 2.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 28,
+            "pct": 5.6
+          },
+          "6-8": {
+            "count": 125,
+            "pct": 25.0
+          },
+          "9-15": {
+            "count": 314,
+            "pct": 62.8
+          },
+          "16+": {
+            "count": 23,
+            "pct": 4.6
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 0.02,
+          "max": 2.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.0,
+          "p95": 0.0
+        },
+        "buckets": {
+          "0": {
+            "count": 491,
+            "pct": 98.2
+          },
+          "1-2": {
+            "count": 9,
+            "pct": 1.8
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 98.0
+    },
+    "zh": {
+      "row_count": 500,
+      "source_tokens": {
+        "count": 500,
+        "min": 137.0,
+        "mean": 282.26,
+        "max": 384.0,
+        "p5": 172.9,
+        "p10": 197.9,
+        "p25": 241.0,
+        "p50": 289.0,
+        "p75": 330.0,
+        "p90": 359.0,
+        "p95": 372.0
+      },
+      "target_tokens": {
+        "count": 0,
+        "min": null,
+        "mean": null,
+        "max": null,
+        "p5": null,
+        "p10": null,
+        "p25": null,
+        "p50": null,
+        "p75": null,
+        "p90": null,
+        "p95": null
+      },
+      "candidate_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 30.0,
+          "mean": 78.38,
+          "max": 80.0,
+          "p5": 68.95,
+          "p10": 75.0,
+          "p25": 80.0,
+          "p50": 80.0,
+          "p75": 80.0,
+          "p90": 80.0,
+          "p95": 80.0
+        },
+        "buckets": {
+          "0": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "1-2": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "3-5": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "6-8": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "9-15": {
+            "count": 0,
+            "pct": 0.0
+          },
+          "16+": {
+            "count": 500,
+            "pct": 100.0
+          }
+        }
+      },
+      "refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 7.91,
+          "max": 16.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 4.0,
+          "p50": 8.0,
+          "p75": 12.0,
+          "p90": 15.0,
+          "p95": 16.0
+        },
+        "buckets": {
+          "0": {
+            "count": 56,
+            "pct": 11.2
+          },
+          "1-2": {
+            "count": 22,
+            "pct": 4.4
+          },
+          "3-5": {
+            "count": 80,
+            "pct": 16.0
+          },
+          "6-8": {
+            "count": 111,
+            "pct": 22.2
+          },
+          "9-15": {
+            "count": 199,
+            "pct": 39.8
+          },
+          "16+": {
+            "count": 32,
+            "pct": 6.4
+          }
+        }
+      },
+      "verified_refined_terms_per_row": {
+        "stats": {
+          "count": 500,
+          "min": 0.0,
+          "mean": 0.34,
+          "max": 13.0,
+          "p5": 0.0,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 1.0,
+          "p95": 2.0
+        },
+        "buckets": {
+          "0": {
+            "count": 430,
+            "pct": 86.0
+          },
+          "1-2": {
+            "count": 47,
+            "pct": 9.4
+          },
+          "3-5": {
+            "count": 15,
+            "pct": 3.0
+          },
+          "6-8": {
+            "count": 6,
+            "pct": 1.2
+          },
+          "9-15": {
+            "count": 2,
+            "pct": 0.4
+          },
+          "16+": {
+            "count": 0,
+            "pct": 0.0
+          }
+        }
+      },
+      "rows_with_terms_pct": 100.0,
+      "rows_with_refined_terms_pct": 88.8
+    }
+  }
+}
