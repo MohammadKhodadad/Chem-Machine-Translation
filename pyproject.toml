@@ -48,6 +48,9 @@ dev = [
 [project.scripts]
 chem-translate = "chem_machine_translation.cli:app"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/chem_machine_translation"]
 
