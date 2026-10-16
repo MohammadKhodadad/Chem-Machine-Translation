@@ -67,21 +67,53 @@ extraction and curation, and an evaluation protocol separating general quality f
 These preserve the chemistry-aware evaluation objective. The infrastructure is implemented, but
 the full translation comparison remains planned; no model ranking or superiority claim is made.
 
-\section{Related Work and Resources}
+\section{Related Work}
 \label{sec:resources}
 
-JRC-Acquis comprises multilingual, predominantly legal EU texts \cite{steinberger2006}; OPUS provides
-parallel distributions and tools \cite{tiedemann2012}. These aligned articles test transfer beyond
-chemistry. Patent pairs come from a repository-documented Google Patents Chemical derivative
-\cite{basfpatents}. Both supply evaluation text, unlike terminology databases.
+Large language models (LLMs) have been investigated as translation systems through studies of
+translation quality, prompting, and adaptation. Hendy et al.\ compare GPT models with research
+and commercial systems, reporting competitive high-resource performance but limitations for
+low-resource languages in their evaluation \cite{hendy2023}. Vilar et al.\ demonstrate the
+importance of demonstration quality for prompted translation \cite{vilar2023}, while Moslem
+et al.\ investigate adaptation using in-domain examples and terminology \cite{moslem2023}.
+These studies motivate assessing translation capability under explicitly defined conditioning
+rather than assuming uniform performance across languages and domains.
 
-BLEU measures clipped word $n$-gram overlap \cite{papineni2002}; SacreBLEU makes parameterization
-explicit \cite{post2018}; chrF++ incorporates character and word overlap \cite{popovic2017}.
-COMET estimates MT quality from source, hypothesis, and reference \cite{rei2020}, while BERTScore
-aligns contextual hypothesis/reference embeddings \cite{zhang2020}. Explicit term coverage
-complements these measures; semantic similarity is not chemical identity validation. Stanza supplies
-linguistic analyses \cite{qi2020}. The configured XLM-R/NOBI extractor is English-trained
-\cite{nobi}; its multilingual backbone does not establish equal extraction accuracy across languages.
+Translation benchmarks operationalize these comparisons. FLORES-101 provides professionally
+translated, fully aligned multilingual references for many-to-many evaluation \cite{goyal2022}.
+WMT25 compares submitted systems, LLMs, and online providers using challenging test material,
+multiple domains, and document context \cite{kocmi2025}. Its professional evaluation covers
+15 of the 30 offered language pairs using Error Span Annotation or Multidimensional Quality
+Metrics (MQM). This work underscores the importance of test difficulty, language coverage,
+and evaluation context; our segment-level benchmark does not replicate its document-level protocol.
+
+Model comparison requires complementary quality measures. BLEU measures reference $n$-gram
+overlap \cite{papineni2002}, SacreBLEU standardizes its reporting \cite{post2018}, and chrF++
+combines character and word overlap \cite{popovic2017}. COMET learns quality prediction from
+human judgments \cite{rei2020}, whereas BERTScore compares contextual token representations
+\cite{zhang2020}. Expert MQM evaluation demonstrates the importance of annotator expertise
+and document context \cite{freitag2021}. Terminology accuracy supplies an additional dimension,
+as reflected in dedicated WMT evaluation \cite{alam2021}; variation-aware analysis further
+distinguishes legitimate alternatives from undesirable inconsistency \cite{dahan2026}.
+Reference-term retention, however, is narrower than bilingual terminology accuracy: span presence
+does not establish contextual correctness, and reference mismatch need not indicate mistranslation.
+
+Terminology extraction supports the annotations needed for these diagnostics. Chun et al.\ use
+syntactically retrieved demonstrations to improve LLM term-boundary prediction on specialized
+benchmarks \cite{chun2025}. Such work motivates evaluating extraction quality independently:
+verifying occurrence in a reference does not establish annotation completeness or expert validity.
+
+In chemistry, related tasks must be distinguished from prose translation. STOUT studies molecular
+representation-to-name conversion with structure-oriented checks \cite{rajan2021}, while CHEMDNER
+evaluates chemical mention recognition against expert annotations \cite{krallinger2015}; neither
+benchmarks multilingual chemical prose translation. For legal comparison, JRC-Acquis
+\cite{steinberger2006}, distributed through OPUS \cite{tiedemann2012}, provides parallel text.
+LegISTyr distinguishes terminology insertion from contextual choice and fluency \cite{dinatale2025},
+and an EEA terminology suite reports performance that need not follow general MT rankings
+\cite{hauksdottir2025}. Our study centers on multilingual chemical-patent translation capability,
+using legal text as a comparison domain and terminology metrics as complementary diagnostics.
+Reference-derived terminology hints constitute a separate oracle-assisted condition, not evidence
+of source-only capability.
 
 \section{Data and Methodology}
 \label{sec:methods}
@@ -247,33 +279,7 @@ The methodology links bounded parallel segments to auditable reference terminolo
 evaluation measures. Its empirical value, oracle-term effects, and cross-domain generality remain
 to be established by the planned comparisons.
 
-\begin{thebibliography}{10}
-\bibitem{papineni2002} K. Papineni, S. Roukos, T. Ward, and W.-J. Zhu.
-Bleu: a Method for Automatic Evaluation of Machine Translation. ACL, 2002, pp. 311--318.
-doi:10.3115/1073083.1073135.
-\bibitem{post2018} M. Post. A Call for Clarity in Reporting BLEU Scores.
-WMT, 2018, pp. 186--191. doi:10.18653/v1/W18-6319.
-\bibitem{rei2020} R. Rei, C. Stewart, A. C. Farinha, and A. Lavie.
-COMET: A Neural Framework for MT Evaluation. EMNLP, 2020, pp. 2685--2702.
-doi:10.18653/v1/2020.emnlp-main.213.
-\bibitem{zhang2020} T. Zhang, V. Kishore, F. Wu, K. Q. Weinberger, and Y. Artzi.
-BERTScore: Evaluating Text Generation with BERT. 2020. arXiv:1904.09675.
-\bibitem{steinberger2006} R. Steinberger, B. Pouliquen, A. Widiger, C. Ignat,
-T. Erjavec, D. Tufis, and D. Varga. The JRC-Acquis: A multilingual aligned parallel corpus
-with 20+ languages. LREC, 2006, pp. 2142--2147. arXiv:cs/0609058.
-\bibitem{tiedemann2012} J. Tiedemann. Parallel Data, Tools and Interfaces in OPUS.
-LREC, 2012, pp. 2214--2218. \url{https://aclanthology.org/L12-1246/}.
-\bibitem{basfpatents} BASF-AI. AI4Chem CLIR Google Patents within-document abstract pairs.
-Dataset artifact.
-\href{https://huggingface.co/datasets/BASF-AI/ai4chem-clir-google-patents-within-document-abstract-pairs}{Hugging Face dataset record}.
-\bibitem{popovic2017} M. Popovi\'{c}. chrF++: words helping character n-grams.
-WMT, 2017, pp. 612--618. doi:10.18653/v1/W17-4770.
-\bibitem{qi2020} P. Qi, Y. Zhang, Y. Zhang, J. Bolton, and C. D. Manning.
-Stanza: A Python Natural Language Processing Toolkit for Many Human Languages.
-ACL System Demonstrations, 2020, pp. 101--108. doi:10.18653/v1/2020.acl-demos.14.
-\bibitem{nobi} tthhanh. XLMR Token Classifier for Term Extraction.
-Model card, \texttt{xlm-ate-nobi-en-nes}.
-\url{https://huggingface.co/tthhanh/xlm-ate-nobi-en-nes}.
-\end{thebibliography}
+\bibliographystyle{unsrt}
+\bibliography{references}
 
 \end{document}

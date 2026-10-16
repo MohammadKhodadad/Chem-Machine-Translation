@@ -34,6 +34,10 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    bibliography_path = args.paper_dir / "latex" / "references.bib"
+    output_bibliography_path = args.output_dir / "references.bib"
+    if bibliography_path.resolve() != output_bibliography_path.resolve():
+        shutil.copyfile(bibliography_path, output_bibliography_path)
     tex_path = args.output_dir / "paper.tex"
     tex_path.write_text(
         assemble_tex(args.paper_dir, include_appendix=args.include_appendix), encoding="utf-8"
@@ -107,12 +111,18 @@ def compile_pdf(*, tex_path: Path, tex_engine: str) -> None:
             check=True,
         )
     else:
-        for _ in range(2):
+        for pass_index in range(3):
             subprocess.run(
                 [tex_engine, "-interaction=nonstopmode", tex_path.name],
                 cwd=tex_path.parent,
                 check=True,
             )
+            if pass_index == 0:
+                subprocess.run(
+                    ["bibtex", tex_path.stem],
+                    cwd=tex_path.parent,
+                    check=True,
+                )
     print(f"Wrote {tex_path.with_suffix('.pdf')}")
 
 
