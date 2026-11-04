@@ -1,0 +1,78 @@
+{
+  "scope": "Original translation summary aggregates only; no raw translations or scores.",
+  "downloaded_at_utc": "2026-11-03T22:09:16.370939+00:00",
+  "source_folder_url": "https://drive.google.com/drive/folders/1FMj3M8ikv2h0CMmZMkIBUJqxd4gjGwg9",
+  "complete": true,
+  "files": [
+    {
+      "run": "gemma_4_31b_it",
+      "path": "translation_timing/gemma_4_31b_it/summary.json",
+      "bytes": 56016,
+      "sha256": "7ba071ec818ac2bd10da695a6c3982f198bde7f511b0c0b304e72da4c5f49400",
+      "source_url": "https://drive.google.com/file/d/1BOuwhdp7ssN9wAwJA6VZvxX9SVBHVrht/view"
+    },
+    {
+      "run": "gpt_6_luna_azure",
+      "path": "translation_timing/gpt_6_luna_azure/summary.json",
+      "bytes": 299919,
+      "sha256": "60d3bf4842633ea4f2cfe08c5df9e3b29cb1d98002041694cbe533f16078be4b",
+      "source_url": "https://drive.google.com/file/d/1EpIltMaMmzaOUZvVP7JMQ_tf-RI4vNx2/view"
+    },
+    {
+      "run": "granite_4_2_30b",
+      "path": "translation_timing/granite_4_2_30b/summary.json",
+      "bytes": 54223,
+      "sha256": "f2b6c699a6e59cf990d8925fb00047b86be7159d897e76955af8b3313b778a01",
+      "source_url": "https://drive.google.com/file/d/1sUbWECHEYPa-mR2AZVLW3WhksfaAFPDQ/view"
+    },
+    {
+      "run": "muse_glimmer_30b",
+      "path": "translation_timing/muse_glimmer_30b/summary.json",
+      "bytes": 56066,
+      "sha256": "0aae052167fe4deddf53236ec57cb2e767beec586ddfacefb99ab72384a4cd44",
+      "source_url": "https://drive.google.com/file/d/1LON8fPNl5DQplUKL34blknYtYkKoYmZQ/view"
+    },
+    {
+      "run": "nemotron_3_5_lightning_30b_a3b",
+      "path": "translation_timing/nemotron_3_5_lightning_30b_a3b/summary.json",
+      "bytes": 56034,
+      "sha256": "247f28ce8190f345c41dba84bf4b72be4863cca78a28c27c42970f8c480a5f5a",
+      "source_url": "https://drive.google.com/file/d/1d8r4a8QJKN4oSTX6toEYyxhyVuxrnr0g/view"
+    },
+    {
+      "run": "qwen38_27b_local",
+      "path": "translation_timing/qwen38_27b_local/summary.json",
+      "bytes": 56008,
+      "sha256": "61c952013c8d593b7c7f63b239f55c623ea3dc1bb6ee838edc8b557a13f22782",
+      "source_url": "https://drive.google.com/file/d/1RXwxcKa-PALvKS4VHsMgxB2LrAaLsRsb/view"
+    },
+    {
+      "run": "tiny_aya_earth",
+      "path": "translation_timing/tiny_aya_earth/summary.json",
+      "bytes": 53712,
+      "sha256": "bac93717f8511dd83619b70860553117d5714f74e6775470e6c564388b7fd2bf",
+      "source_url": "https://drive.google.com/file/d/1pi8AJuUkl3UrWJJCR-3oSkAa_0-q-Zip/view"
+    },
+    {
+      "run": "tiny_aya_fire",
+      "path": "translation_timing/tiny_aya_fire/summary.json",
+      "bytes": 53710,
+      "sha256": "211b2df339ec936d32f5e773bbf87b4584368db22137874b7da37577791979c9",
+      "source_url": "https://drive.google.com/file/d/1Li005QHVvQ-stH-a-mig1Q2UDqz-fju7/view"
+    },
+    {
+      "run": "tiny_aya_global",
+      "path": "translation_timing/tiny_aya_global/summary.json",
+      "bytes": 53709,
+      "sha256": "5999343321fe0b6d4c46c33b5919a27106eefd7349d8717e4c334f130c2f708d",
+      "source_url": "https://drive.google.com/file/d/18fQOjiVX1lGfWue9Es0b4Kk0LRWCGS69/view"
+    },
+    {
+      "run": "tiny_aya_water",
+      "path": "translation_timing/tiny_aya_water/summary.json",
+      "bytes": 53693,
+      "sha256": "c8fc20d35d39475efa1bbdeabd3a85ab73ff346fa58250c704f4e64d4a9ee977",
+      "source_url": "https://drive.google.com/file/d/19SkfWPZh5r55N-DIyAlg0RQ37LnJ-cpi/view"
+    }
+  ]
+}

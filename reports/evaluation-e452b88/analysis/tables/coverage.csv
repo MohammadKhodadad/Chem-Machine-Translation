@@ -1,0 +1,445 @@
+view,category,run,population,model,dataset,setting,directions,rows_translated,reported_expected_rows,reported_missing_rows,unattributed_missing_rows
+original_glm,all_terms,gemma_4_31b_it,current,Gemma 4 31B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,all_terms,gemma_4_31b_it,current,Gemma 4 31B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,native_sample,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,parallel_manifest,openai,6,60,,,
+original_glm,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,few_shot,24,20637,,,23
+original_glm,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,zero_shot,26,20636,,,26
+original_glm,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,zero_shot,20,4939,,,1
+original_glm,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,few_shot,20,4900,,,40
+original_glm,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,zero_shot,20,4897,,,43
+original_glm,all_terms,granite_4_2_30b,current,Granite 4.2 30B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,all_terms,granite_4_2_30b,current,Granite 4.2 30B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,few_shot,24,20660,20660,0,0
+original_glm,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local,current,Qwen3.8 27B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,all_terms,qwen38_27b_local,current,Qwen3.8 27B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,few_shot,24,20660,20660,0,0
+original_glm,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_earth,current,Tiny Aya Earth,google_patents,few_shot,24,20633,,,27
+original_glm,all_terms,tiny_aya_earth,current,Tiny Aya Earth,google_patents,zero_shot,26,20661,,,1
+original_glm,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_earth__historical_untimed,historical,tiny_aya_earth__historical_untimed,google_patents,zero_shot,26,20454,,,
+original_glm,all_terms,tiny_aya_fire,current,Tiny Aya Fire,google_patents,few_shot,24,20633,,,27
+original_glm,all_terms,tiny_aya_fire,current,Tiny Aya Fire,google_patents,zero_shot,26,20661,,,1
+original_glm,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global,current,Tiny Aya Global,google_patents,few_shot,24,20633,,,27
+original_glm,all_terms,tiny_aya_global,current,Tiny Aya Global,google_patents,zero_shot,26,20661,,,1
+original_glm,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,few_shot,24,20633,,,27
+original_glm,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,zero_shot,26,20661,,,1
+original_glm,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_water,current,Tiny Aya Water,google_patents,few_shot,24,20633,,,27
+original_glm,all_terms,tiny_aya_water,current,Tiny Aya Water,google_patents,zero_shot,26,20661,,,1
+original_glm,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,native_sample,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,parallel_manifest,openai,6,60,,,
+original_glm,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,few_shot,24,20637,,,23
+original_glm,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,zero_shot,26,20636,,,26
+original_glm,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,zero_shot,20,4939,,,1
+original_glm,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,few_shot,20,4900,,,40
+original_glm,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,zero_shot,20,4897,,,43
+original_glm,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,few_shot,24,20660,20660,0,0
+original_glm,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,few_shot,24,20660,20660,0,0
+original_glm,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,google_patents,few_shot,24,20633,,,27
+original_glm,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,google_patents,zero_shot,26,20661,,,1
+original_glm,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_earth__historical_untimed,historical,tiny_aya_earth__historical_untimed,google_patents,zero_shot,26,20454,,,
+original_glm,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,google_patents,few_shot,24,20633,,,27
+original_glm,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,google_patents,zero_shot,26,20661,,,1
+original_glm,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global,current,Tiny Aya Global,google_patents,few_shot,24,20633,,,27
+original_glm,externally_verified,tiny_aya_global,current,Tiny Aya Global,google_patents,zero_shot,26,20661,,,1
+original_glm,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,few_shot,24,20633,,,27
+original_glm,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,zero_shot,26,20661,,,1
+original_glm,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_water,current,Tiny Aya Water,google_patents,few_shot,24,20633,,,27
+original_glm,externally_verified,tiny_aya_water,current,Tiny Aya Water,google_patents,zero_shot,26,20661,,,1
+original_glm,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,native_sample,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,parallel_manifest,openai,6,60,,,
+original_glm,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,few_shot,24,20637,,,23
+original_glm,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,zero_shot,26,20636,,,26
+original_glm,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,zero_shot,20,4939,,,1
+original_glm,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,few_shot,20,4900,,,40
+original_glm,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,zero_shot,20,4897,,,43
+original_glm,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,few_shot,24,20660,20660,0,0
+original_glm,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,google_patents,few_shot,24,20660,20660,0,0
+original_glm,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,few_shot,24,20660,20660,0,0
+original_glm,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,zero_shot,26,20662,20662,0,0
+original_glm,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,google_patents,few_shot,24,20633,,,27
+original_glm,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,google_patents,zero_shot,26,20661,,,1
+original_glm,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_earth__historical_untimed,historical,tiny_aya_earth__historical_untimed,google_patents,zero_shot,26,20454,,,
+original_glm,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,google_patents,few_shot,24,20633,,,27
+original_glm,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,google_patents,zero_shot,26,20661,,,1
+original_glm,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global,current,Tiny Aya Global,google_patents,few_shot,24,20633,,,27
+original_glm,llm_enriched,tiny_aya_global,current,Tiny Aya Global,google_patents,zero_shot,26,20661,,,1
+original_glm,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,few_shot,24,20633,,,27
+original_glm,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,zero_shot,26,20661,,,1
+original_glm,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_water,current,Tiny Aya Water,google_patents,few_shot,24,20633,,,27
+original_glm,llm_enriched,tiny_aya_water,current,Tiny Aya Water,google_patents,zero_shot,26,20661,,,1
+original_glm,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_articles,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_articles,zero_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,few_shot,20,4940,4940,0,0
+original_glm,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,gemma_4_31b_it,current,Gemma 4 31B,google_patents,few_shot,24,20660,20660,0,0
+luna,all_terms,gemma_4_31b_it,current,Gemma 4 31B,google_patents,zero_shot,26,20662,20662,0,0
+luna,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,native_sample,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,parallel_manifest,openai,6,60,,,
+luna,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,few_shot,24,20637,,,23
+luna,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,zero_shot,26,20636,,,26
+luna,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,zero_shot,20,4939,,,1
+luna,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,few_shot,20,4900,,,40
+luna,all_terms,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,zero_shot,20,4897,,,43
+luna,all_terms,granite_4_2_30b,current,Granite 4.2 30B,google_patents,few_shot,24,20660,20660,0,0
+luna,all_terms,granite_4_2_30b,current,Granite 4.2 30B,google_patents,zero_shot,26,20662,20662,0,0
+luna,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,few_shot,24,20660,20660,0,0
+luna,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,zero_shot,26,20662,20662,0,0
+luna,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,few_shot,24,20660,20660,0,0
+luna,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,zero_shot,26,20662,20662,0,0
+luna,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local,current,Qwen3.8 27B,google_patents,few_shot,24,20660,20660,0,0
+luna,all_terms,qwen38_27b_local,current,Qwen3.8 27B,google_patents,zero_shot,26,20662,20662,0,0
+luna,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,few_shot,24,20660,20660,0,0
+luna,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,zero_shot,26,20662,20662,0,0
+luna,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_earth,current,Tiny Aya Earth,google_patents,few_shot,24,20633,,,27
+luna,all_terms,tiny_aya_earth,current,Tiny Aya Earth,google_patents,zero_shot,26,20661,,,1
+luna,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_earth__historical_untimed,historical,tiny_aya_earth__historical_untimed,google_patents,zero_shot,26,20454,,,
+luna,all_terms,tiny_aya_fire,current,Tiny Aya Fire,google_patents,few_shot,24,20633,,,27
+luna,all_terms,tiny_aya_fire,current,Tiny Aya Fire,google_patents,zero_shot,26,20661,,,1
+luna,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global,current,Tiny Aya Global,google_patents,few_shot,24,20633,,,27
+luna,all_terms,tiny_aya_global,current,Tiny Aya Global,google_patents,zero_shot,26,20661,,,1
+luna,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,few_shot,24,20633,,,27
+luna,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,zero_shot,26,20661,,,1
+luna,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_water,current,Tiny Aya Water,google_patents,few_shot,24,20633,,,27
+luna,all_terms,tiny_aya_water,current,Tiny Aya Water,google_patents,zero_shot,26,20661,,,1
+luna,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_articles,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,all_terms,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,google_patents,few_shot,24,20660,20660,0,0
+luna,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,google_patents,zero_shot,26,20662,20662,0,0
+luna,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,native_sample,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,parallel_manifest,openai,6,60,,,
+luna,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,few_shot,24,20637,,,23
+luna,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,zero_shot,26,20636,,,26
+luna,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,zero_shot,20,4939,,,1
+luna,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,few_shot,20,4900,,,40
+luna,externally_verified,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,zero_shot,20,4897,,,43
+luna,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,google_patents,few_shot,24,20660,20660,0,0
+luna,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,google_patents,zero_shot,26,20662,20662,0,0
+luna,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,few_shot,24,20660,20660,0,0
+luna,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,zero_shot,26,20662,20662,0,0
+luna,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,few_shot,24,20660,20660,0,0
+luna,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,zero_shot,26,20662,20662,0,0
+luna,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,google_patents,few_shot,24,20660,20660,0,0
+luna,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,google_patents,zero_shot,26,20662,20662,0,0
+luna,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,few_shot,24,20660,20660,0,0
+luna,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,zero_shot,26,20662,20662,0,0
+luna,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,google_patents,few_shot,24,20633,,,27
+luna,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,google_patents,zero_shot,26,20661,,,1
+luna,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_earth__historical_untimed,historical,tiny_aya_earth__historical_untimed,google_patents,zero_shot,26,20454,,,
+luna,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,google_patents,few_shot,24,20633,,,27
+luna,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,google_patents,zero_shot,26,20661,,,1
+luna,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global,current,Tiny Aya Global,google_patents,few_shot,24,20633,,,27
+luna,externally_verified,tiny_aya_global,current,Tiny Aya Global,google_patents,zero_shot,26,20661,,,1
+luna,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,few_shot,24,20633,,,27
+luna,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,zero_shot,26,20661,,,1
+luna,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_water,current,Tiny Aya Water,google_patents,few_shot,24,20633,,,27
+luna,externally_verified,tiny_aya_water,current,Tiny Aya Water,google_patents,zero_shot,26,20661,,,1
+luna,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_articles,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,externally_verified,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,google_patents,few_shot,24,20660,20660,0,0
+luna,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,google_patents,zero_shot,26,20662,20662,0,0
+luna,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,gemma_4_31b_it,current,Gemma 4 31B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,native_sample,google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample,parallel_manifest,openai,6,60,,,
+luna,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,few_shot,24,20637,,,23
+luna,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,google_patents,zero_shot,26,20636,,,26
+luna,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_articles,zero_shot,20,4939,,,1
+luna,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,few_shot,20,4900,,,40
+luna,llm_enriched,gpt_6_luna_azure,current,GPT-6 Luna,jrc_definitions,zero_shot,20,4897,,,43
+luna,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,google_patents,few_shot,24,20660,20660,0,0
+luna,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,google_patents,zero_shot,26,20662,20662,0,0
+luna,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,granite_4_2_30b,current,Granite 4.2 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,few_shot,24,20660,20660,0,0
+luna,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,google_patents,zero_shot,26,20662,20662,0,0
+luna,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,muse_glimmer_30b,current,Muse Glimmer 30B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,few_shot,24,20660,20660,0,0
+luna,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,google_patents,zero_shot,26,20662,20662,0,0
+luna,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,nemotron_3_5_lightning_30b_a3b,current,Nemotron 3.5 Lightning,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,google_patents,few_shot,24,20660,20660,0,0
+luna,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,google_patents,zero_shot,26,20662,20662,0,0
+luna,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local,current,Qwen3.8 27B,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,few_shot,24,20660,20660,0,0
+luna,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,google_patents,zero_shot,26,20662,20662,0,0
+luna,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,qwen38_27b_local__historical_untimed,historical,qwen38_27b_local__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,google_patents,few_shot,24,20633,,,27
+luna,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,google_patents,zero_shot,26,20661,,,1
+luna,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_earth,current,Tiny Aya Earth,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_earth__historical_untimed,historical,tiny_aya_earth__historical_untimed,google_patents,zero_shot,26,20454,,,
+luna,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,google_patents,few_shot,24,20633,,,27
+luna,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,google_patents,zero_shot,26,20661,,,1
+luna,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_fire,current,Tiny Aya Fire,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global,current,Tiny Aya Global,google_patents,few_shot,24,20633,,,27
+luna,llm_enriched,tiny_aya_global,current,Tiny Aya Global,google_patents,zero_shot,26,20661,,,1
+luna,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global,current,Tiny Aya Global,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,few_shot,24,20633,,,27
+luna,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,google_patents,zero_shot,26,20661,,,1
+luna,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_global__historical_untimed,historical,tiny_aya_global__historical_untimed,jrc_definitions,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_water,current,Tiny Aya Water,google_patents,few_shot,24,20633,,,27
+luna,llm_enriched,tiny_aya_water,current,Tiny Aya Water,google_patents,zero_shot,26,20661,,,1
+luna,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_articles,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_articles,zero_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,few_shot,20,4940,4940,0,0
+luna,llm_enriched,tiny_aya_water,current,Tiny Aya Water,jrc_definitions,zero_shot,20,4940,4940,0,0

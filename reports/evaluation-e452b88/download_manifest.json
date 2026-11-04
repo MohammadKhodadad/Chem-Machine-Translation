@@ -1,0 +1,1246 @@
+{
+  "source_folder_url": "https://drive.google.com/drive/folders/1AdqKt8Qr8riI3J1fzpX1uCrZlpl2EnHZ",
+  "downloaded_at_utc": "2026-11-03T16:55:42.629274+00:00",
+  "scope": "Grouped performance summaries; no per-translation scores, logs, caches, or runtime artifacts.",
+  "expected_summary_files": 84,
+  "downloaded_summary_files": 84,
+  "complete": true,
+  "files": [
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "gemma_4_31b_it",
+      "path": "original_glm/all_terms/gemma_4_31b_it/summary.json",
+      "drive_file_id": "1qBwv78C6auTyVOWCfOVvzWqLGo4NevcR",
+      "source_url": "https://drive.google.com/file/d/1qBwv78C6auTyVOWCfOVvzWqLGo4NevcR/view",
+      "sha256": "cf00bbd537290c2362a53b7d5763e5cf02856c7904c4e5b7fcf3ecd6a6bb3ad9",
+      "bytes": 1444898,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+      "path": "original_glm/all_terms/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/summary.json",
+      "drive_file_id": "1jBhhjIFS1Sh3XU-OzPEYvg4KLYT0-hUM",
+      "source_url": "https://drive.google.com/file/d/1jBhhjIFS1Sh3XU-OzPEYvg4KLYT0-hUM/view",
+      "sha256": "886df7bf94c0f0437c8382a1c89f69a197fbc4490a66dd9b2155769d6228dbb9",
+      "bytes": 131515,
+      "datasets": [
+        "parallel_manifest"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "gpt_6_luna_azure",
+      "path": "original_glm/all_terms/gpt_6_luna_azure/summary.json",
+      "drive_file_id": "1RvQLgus6Tt5T_SEsViAx7vrPZzyU0ggB",
+      "source_url": "https://drive.google.com/file/d/1RvQLgus6Tt5T_SEsViAx7vrPZzyU0ggB/view",
+      "sha256": "5bfbf3f7b26cb519e21d1e081308ec846274af898c1af44295b93575d549787c",
+      "bytes": 1445571,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "granite_4_2_30b",
+      "path": "original_glm/all_terms/granite_4_2_30b/summary.json",
+      "drive_file_id": "1r8pias8-qiCVT7-ikwoxS1mzCkzAGHlK",
+      "source_url": "https://drive.google.com/file/d/1r8pias8-qiCVT7-ikwoxS1mzCkzAGHlK/view",
+      "sha256": "1adbb8b2b607c88028094cbb8aae807e0f180630da12e1994bfc268841699a8d",
+      "bytes": 1445116,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "muse_glimmer_30b",
+      "path": "original_glm/all_terms/muse_glimmer_30b/summary.json",
+      "drive_file_id": "1aFiMYAle4XYO-1kWNbxVCkHcefPE5m5M",
+      "source_url": "https://drive.google.com/file/d/1aFiMYAle4XYO-1kWNbxVCkHcefPE5m5M/view",
+      "sha256": "1773380dda9e7354803c1d91e959cb00888505b3c0315e2c9ad64cffb3bab715",
+      "bytes": 1445380,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "nemotron_3_5_lightning_30b_a3b",
+      "path": "original_glm/all_terms/nemotron_3_5_lightning_30b_a3b/summary.json",
+      "drive_file_id": "1Uy8QNN0sI6Ug_uZOsr0HjKMPYKog0xbB",
+      "source_url": "https://drive.google.com/file/d/1Uy8QNN0sI6Ug_uZOsr0HjKMPYKog0xbB/view",
+      "sha256": "5d52668b91d52fada85b543d3beb701fcd5dd9bd3a8b7ed3c78be7f988dd0592",
+      "bytes": 1445599,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "qwen38_27b_local",
+      "path": "original_glm/all_terms/qwen38_27b_local/summary.json",
+      "drive_file_id": "1DX5WJoeCfC4PzjQTiVNoxCf2ipDtv_wX",
+      "source_url": "https://drive.google.com/file/d/1DX5WJoeCfC4PzjQTiVNoxCf2ipDtv_wX/view",
+      "sha256": "ea5214a848f5f469f24e9b9ec62df2252ca00851a84383d18229d6dce0059064",
+      "bytes": 1445180,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "qwen38_27b_local__historical_untimed",
+      "path": "original_glm/all_terms/qwen38_27b_local__historical_untimed/summary.json",
+      "drive_file_id": "1Wx1XR-j4SoTrdBGYJ_dOnmdV0suX1HRl",
+      "source_url": "https://drive.google.com/file/d/1Wx1XR-j4SoTrdBGYJ_dOnmdV0suX1HRl/view",
+      "sha256": "8dacfc8c7af2682edea209d31b424daecec94ec8239d81aa95d602e4b482f34e",
+      "bytes": 1445335,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "tiny_aya_earth",
+      "path": "original_glm/all_terms/tiny_aya_earth/summary.json",
+      "drive_file_id": "12Mb2RitA713oMTI4HMlfEt6HkBbe1X90",
+      "source_url": "https://drive.google.com/file/d/12Mb2RitA713oMTI4HMlfEt6HkBbe1X90/view",
+      "sha256": "f79a36ce53272e7f177a23afb3a2c72d536bcc7dc31dd1dfe7a98fc1cfb756db",
+      "bytes": 1446561,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "tiny_aya_earth__historical_untimed",
+      "path": "original_glm/all_terms/tiny_aya_earth__historical_untimed/summary.json",
+      "drive_file_id": "1ZHHBwrZ6c7OSsbDI_iSA9RbxGF0C8aNE",
+      "source_url": "https://drive.google.com/file/d/1ZHHBwrZ6c7OSsbDI_iSA9RbxGF0C8aNE/view",
+      "sha256": "03247e9737d87eeaf5a5ebff540930d8de765baf57672f45adbe7e2821ce1f4c",
+      "bytes": 332545,
+      "datasets": [
+        "google_patents"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "tiny_aya_fire",
+      "path": "original_glm/all_terms/tiny_aya_fire/summary.json",
+      "drive_file_id": "1rtL0UJmpMeyCBvTcMXYN8SxSiKk6AvOL",
+      "source_url": "https://drive.google.com/file/d/1rtL0UJmpMeyCBvTcMXYN8SxSiKk6AvOL/view",
+      "sha256": "716baf6cda98bcf92adee69f8f0178418022a2c2dcc9b3687c2a3565e2dcf360",
+      "bytes": 1446361,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "tiny_aya_global",
+      "path": "original_glm/all_terms/tiny_aya_global/summary.json",
+      "drive_file_id": "1Tqj_lnMzLmaSwiv2zqlHpY_H0XCl3oiG",
+      "source_url": "https://drive.google.com/file/d/1Tqj_lnMzLmaSwiv2zqlHpY_H0XCl3oiG/view",
+      "sha256": "78aaf3d3b20b84c761be916059e4364c9865798205a6c9ee6b49c4308c18637b",
+      "bytes": 1446508,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "tiny_aya_global__historical_untimed",
+      "path": "original_glm/all_terms/tiny_aya_global__historical_untimed/summary.json",
+      "drive_file_id": "1pfi6SPCjI2b7p71Ine5y0m1vvM_zaXxL",
+      "source_url": "https://drive.google.com/file/d/1pfi6SPCjI2b7p71Ine5y0m1vvM_zaXxL/view",
+      "sha256": "984bcfa5661308e73229413af76316800889c9295a3cf088015a8259a5106ea0",
+      "bytes": 1446628,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "all_terms",
+      "run": "tiny_aya_water",
+      "path": "original_glm/all_terms/tiny_aya_water/summary.json",
+      "drive_file_id": "13iwmMGKsGT_p11jSOXpOAOGbQM__OvSb",
+      "source_url": "https://drive.google.com/file/d/13iwmMGKsGT_p11jSOXpOAOGbQM__OvSb/view",
+      "sha256": "bd29361e9c687db9a6e08cf8e2398f7f8462a9f73ea7c61088bbe5f9ffa600fc",
+      "bytes": 1446554,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "gemma_4_31b_it",
+      "path": "original_glm/externally_verified/gemma_4_31b_it/summary.json",
+      "drive_file_id": "1AZQI6o2bvtLth6941SpGRfmiKEkHvxi1",
+      "source_url": "https://drive.google.com/file/d/1AZQI6o2bvtLth6941SpGRfmiKEkHvxi1/view",
+      "sha256": "f81c55d2c67b9771cada8adc3ddc2c09dd2bc31f9ee42241fa522b6c75ee8fc0",
+      "bytes": 1432564,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+      "path": "original_glm/externally_verified/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/summary.json",
+      "drive_file_id": "1xMX9FDJa3kAWT2P0rwyBiUqFj2tJlaaf",
+      "source_url": "https://drive.google.com/file/d/1xMX9FDJa3kAWT2P0rwyBiUqFj2tJlaaf/view",
+      "sha256": "231bfc3e752b33f7f23a206afd173922cad71bdf282f17e0d47478cd5e144dbf",
+      "bytes": 131349,
+      "datasets": [
+        "parallel_manifest"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "gpt_6_luna_azure",
+      "path": "original_glm/externally_verified/gpt_6_luna_azure/summary.json",
+      "drive_file_id": "1Zvh5BqnFBvB2WKANnm4c-EixRGjzCqVT",
+      "source_url": "https://drive.google.com/file/d/1Zvh5BqnFBvB2WKANnm4c-EixRGjzCqVT/view",
+      "sha256": "f8b3aa89bc502a2fd4e2e447c56d233e426d9b3e791dc02d938c59dc0d56c5a3",
+      "bytes": 1433269,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "granite_4_2_30b",
+      "path": "original_glm/externally_verified/granite_4_2_30b/summary.json",
+      "drive_file_id": "1zJQY_9t75Xme32xVBN8VNn8Kt-VFoLhK",
+      "source_url": "https://drive.google.com/file/d/1zJQY_9t75Xme32xVBN8VNn8Kt-VFoLhK/view",
+      "sha256": "0730b7c4e86cb1c95bedef2a68345b4be9d91e170061aa50a4c1d895b68e3086",
+      "bytes": 1432816,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "muse_glimmer_30b",
+      "path": "original_glm/externally_verified/muse_glimmer_30b/summary.json",
+      "drive_file_id": "1cV3acLGfLir-OOyA5nbaTipWb2cuSxfL",
+      "source_url": "https://drive.google.com/file/d/1cV3acLGfLir-OOyA5nbaTipWb2cuSxfL/view",
+      "sha256": "eaee747c7499a82b9d960cacf64aeafe28c23453535484f08046d29eaf7d6c21",
+      "bytes": 1433122,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "nemotron_3_5_lightning_30b_a3b",
+      "path": "original_glm/externally_verified/nemotron_3_5_lightning_30b_a3b/summary.json",
+      "drive_file_id": "1C-nh32KfDVAVOz5asjlLTlSeMiya2Bg8",
+      "source_url": "https://drive.google.com/file/d/1C-nh32KfDVAVOz5asjlLTlSeMiya2Bg8/view",
+      "sha256": "8c7e563d4ad7652f464d63da73b5a067296da1f10dae6c42ad3343409b5f44d8",
+      "bytes": 1432993,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "qwen38_27b_local",
+      "path": "original_glm/externally_verified/qwen38_27b_local/summary.json",
+      "drive_file_id": "1gfiPd6LE25GZn4yE0dGMyC83WF1LuAfm",
+      "source_url": "https://drive.google.com/file/d/1gfiPd6LE25GZn4yE0dGMyC83WF1LuAfm/view",
+      "sha256": "98efe49739fd8a20fa639f11132df8372ac44c31a2d23cd3c9b2931aa83cc2d1",
+      "bytes": 1432585,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "qwen38_27b_local__historical_untimed",
+      "path": "original_glm/externally_verified/qwen38_27b_local__historical_untimed/summary.json",
+      "drive_file_id": "1bZwZDliQpE_KI3yNF22sBXNBz4AY3Rvx",
+      "source_url": "https://drive.google.com/file/d/1bZwZDliQpE_KI3yNF22sBXNBz4AY3Rvx/view",
+      "sha256": "66551378cc312d9e005734eb9006ec697f7f22acc802c7497cd8e2518bb9c00a",
+      "bytes": 1432721,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "tiny_aya_earth",
+      "path": "original_glm/externally_verified/tiny_aya_earth/summary.json",
+      "drive_file_id": "1Tu_ua9LX_iq6sjOKVjV7L-zGhHNbiXo9",
+      "source_url": "https://drive.google.com/file/d/1Tu_ua9LX_iq6sjOKVjV7L-zGhHNbiXo9/view",
+      "sha256": "3b42581e7b379855470893a1f367f11993fb9d4a3b6f7eb462a84300428ad6bd",
+      "bytes": 1433945,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "tiny_aya_earth__historical_untimed",
+      "path": "original_glm/externally_verified/tiny_aya_earth__historical_untimed/summary.json",
+      "drive_file_id": "1MSIf78qoIG1WBMNssk-E5IWg4zZHH4ZK",
+      "source_url": "https://drive.google.com/file/d/1MSIf78qoIG1WBMNssk-E5IWg4zZHH4ZK/view",
+      "sha256": "a12a1858e32608b17f8331df02f689d03815da3499dd6a03ef9785c68d704296",
+      "bytes": 331247,
+      "datasets": [
+        "google_patents"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "tiny_aya_fire",
+      "path": "original_glm/externally_verified/tiny_aya_fire/summary.json",
+      "drive_file_id": "1degtUk6woY2eH0quEp4IGa9lWNtuAmHK",
+      "source_url": "https://drive.google.com/file/d/1degtUk6woY2eH0quEp4IGa9lWNtuAmHK/view",
+      "sha256": "b5735c92e757a5f8edbaea76c306034b6fac059fe05b7a529120a5c9cec9dc5d",
+      "bytes": 1433747,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "tiny_aya_global",
+      "path": "original_glm/externally_verified/tiny_aya_global/summary.json",
+      "drive_file_id": "1p_rcs_hqlvW8DL7T9nSRHtiqGMypeXvT",
+      "source_url": "https://drive.google.com/file/d/1p_rcs_hqlvW8DL7T9nSRHtiqGMypeXvT/view",
+      "sha256": "b969f1ccaa5973c4441b885acd5bbe0b9f3ad7aacdd4bd557ae890342d6f91af",
+      "bytes": 1433898,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "tiny_aya_global__historical_untimed",
+      "path": "original_glm/externally_verified/tiny_aya_global__historical_untimed/summary.json",
+      "drive_file_id": "1tF9cvGboPUgmh1_O2lhn-91fdZODYHQU",
+      "source_url": "https://drive.google.com/file/d/1tF9cvGboPUgmh1_O2lhn-91fdZODYHQU/view",
+      "sha256": "67582fe28f72f78a105c1911bcb4bfb936f97d98a6a30a9f5896c0f52b5ee91b",
+      "bytes": 1433990,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "externally_verified",
+      "run": "tiny_aya_water",
+      "path": "original_glm/externally_verified/tiny_aya_water/summary.json",
+      "drive_file_id": "1owNmobNJ4FWegIymfSDYlfWY1KGt56bU",
+      "source_url": "https://drive.google.com/file/d/1owNmobNJ4FWegIymfSDYlfWY1KGt56bU/view",
+      "sha256": "29fb5174a6ff3d4e339461dbaa9ea90583fb63e087c29ed2cebd2fb2f06b2394",
+      "bytes": 1433968,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "gemma_4_31b_it",
+      "path": "original_glm/llm_enriched/gemma_4_31b_it/summary.json",
+      "drive_file_id": "1ghBxt_FKRoM2CreaWcAtDf4kNstPOL9l",
+      "source_url": "https://drive.google.com/file/d/1ghBxt_FKRoM2CreaWcAtDf4kNstPOL9l/view",
+      "sha256": "54edcbeec628b0a32a485a9a76726b6e5cf1b01f084312c8b71ba7f463e8f8ab",
+      "bytes": 1432469,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+      "path": "original_glm/llm_enriched/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/summary.json",
+      "drive_file_id": "1IHyKXjfQzEiDhaYP6DOkZKteb6rdh3-U",
+      "source_url": "https://drive.google.com/file/d/1IHyKXjfQzEiDhaYP6DOkZKteb6rdh3-U/view",
+      "sha256": "3c263119a2f2d252f598cdb5cd00d79c02f6e918376041a7f1ddc29ffbb87fb8",
+      "bytes": 130065,
+      "datasets": [
+        "parallel_manifest"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "gpt_6_luna_azure",
+      "path": "original_glm/llm_enriched/gpt_6_luna_azure/summary.json",
+      "drive_file_id": "1NKRO5EoYW1uL1u3ipOaJ-O092XOVFBAA",
+      "source_url": "https://drive.google.com/file/d/1NKRO5EoYW1uL1u3ipOaJ-O092XOVFBAA/view",
+      "sha256": "b01da3c52a41b9944e6121a91317c126c24c61c00a71629225fe448f41394ee0",
+      "bytes": 1433143,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "granite_4_2_30b",
+      "path": "original_glm/llm_enriched/granite_4_2_30b/summary.json",
+      "drive_file_id": "1CevOImn2RKnUMS8nYqoC4jD98NCVVJpC",
+      "source_url": "https://drive.google.com/file/d/1CevOImn2RKnUMS8nYqoC4jD98NCVVJpC/view",
+      "sha256": "5a64354135d98e84db176eaab8c02eed1b2be891a482434b91b439037d54624b",
+      "bytes": 1432694,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "muse_glimmer_30b",
+      "path": "original_glm/llm_enriched/muse_glimmer_30b/summary.json",
+      "drive_file_id": "1ZU3IAA5nw-UI8cBCPzd4Rr-c5WEGu0tm",
+      "source_url": "https://drive.google.com/file/d/1ZU3IAA5nw-UI8cBCPzd4Rr-c5WEGu0tm/view",
+      "sha256": "14190cbfc0777562484ee35ea4f4df140ded777cfdc5b1a8b25fec1c5cd5cb82",
+      "bytes": 1433002,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "nemotron_3_5_lightning_30b_a3b",
+      "path": "original_glm/llm_enriched/nemotron_3_5_lightning_30b_a3b/summary.json",
+      "drive_file_id": "1istP0spNITZUJEiOHfkVstCCMfPSeh6A",
+      "source_url": "https://drive.google.com/file/d/1istP0spNITZUJEiOHfkVstCCMfPSeh6A/view",
+      "sha256": "597b687bc8de040dc02b4af46f2d0b64a0f934c4cba8922d68969f1fe6424488",
+      "bytes": 1432918,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "qwen38_27b_local",
+      "path": "original_glm/llm_enriched/qwen38_27b_local/summary.json",
+      "drive_file_id": "1o8kficG6yUdGLZO7N0sujJLGp9Kthe-v",
+      "source_url": "https://drive.google.com/file/d/1o8kficG6yUdGLZO7N0sujJLGp9Kthe-v/view",
+      "sha256": "3896d9a78e29076e86fb40cb9468eca367ff8e263729440911a92a5204147b34",
+      "bytes": 1432437,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "qwen38_27b_local__historical_untimed",
+      "path": "original_glm/llm_enriched/qwen38_27b_local__historical_untimed/summary.json",
+      "drive_file_id": "1kicFxyfuFsgEqGu6dF5S41Yvl7wAyfXl",
+      "source_url": "https://drive.google.com/file/d/1kicFxyfuFsgEqGu6dF5S41Yvl7wAyfXl/view",
+      "sha256": "01cc9a0a153ce943ad67b0e68d2a501fbe66c16a800e57088d643e9a859f1643",
+      "bytes": 1432613,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "tiny_aya_earth",
+      "path": "original_glm/llm_enriched/tiny_aya_earth/summary.json",
+      "drive_file_id": "1dpIeDUyKKvYZANFabUEZjnQg52fzlpW3",
+      "source_url": "https://drive.google.com/file/d/1dpIeDUyKKvYZANFabUEZjnQg52fzlpW3/view",
+      "sha256": "818655aa50aeb20ca819f4065551bb2fb589fd7cd1055f8af5feff2530a7a593",
+      "bytes": 1433882,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "tiny_aya_earth__historical_untimed",
+      "path": "original_glm/llm_enriched/tiny_aya_earth__historical_untimed/summary.json",
+      "drive_file_id": "1qrpKtIQT50eXPzOtq_88UyFQ9Vn1Flfh",
+      "source_url": "https://drive.google.com/file/d/1qrpKtIQT50eXPzOtq_88UyFQ9Vn1Flfh/view",
+      "sha256": "8b5ccfd136b1bcf4893c984ab0253f352be736977733f2f9ad7056b3eb723712",
+      "bytes": 331365,
+      "datasets": [
+        "google_patents"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "tiny_aya_fire",
+      "path": "original_glm/llm_enriched/tiny_aya_fire/summary.json",
+      "drive_file_id": "1KW8Onjfx0batwlmnAvhcsDkl-3ZE23u0",
+      "source_url": "https://drive.google.com/file/d/1KW8Onjfx0batwlmnAvhcsDkl-3ZE23u0/view",
+      "sha256": "bbafcd35cd9a2be4900d8359c0e83f29df40175595b9a3b29154fceb7c6e1ced",
+      "bytes": 1433627,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "tiny_aya_global",
+      "path": "original_glm/llm_enriched/tiny_aya_global/summary.json",
+      "drive_file_id": "1uN8xFvJZ80PrVmSjQkSlH0vlb5Eljhqq",
+      "source_url": "https://drive.google.com/file/d/1uN8xFvJZ80PrVmSjQkSlH0vlb5Eljhqq/view",
+      "sha256": "2f8a1d41ceab946a00770d1e162e59627fc3b41efb0b59cbbfe58d2791309e2a",
+      "bytes": 1433803,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "tiny_aya_global__historical_untimed",
+      "path": "original_glm/llm_enriched/tiny_aya_global__historical_untimed/summary.json",
+      "drive_file_id": "1IcELXc4D2qYZ4v39eF3qx6FZHvL3dvfl",
+      "source_url": "https://drive.google.com/file/d/1IcELXc4D2qYZ4v39eF3qx6FZHvL3dvfl/view",
+      "sha256": "c9b9f1d5a6fa67931f2ef8f2763f4f1ffe6e9af6d43bb0659922f4e5e78edb23",
+      "bytes": 1433939,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "original_glm",
+      "category": "llm_enriched",
+      "run": "tiny_aya_water",
+      "path": "original_glm/llm_enriched/tiny_aya_water/summary.json",
+      "drive_file_id": "15EuE_CRTTdtOMzPhSF5siGatIfAkGt8s",
+      "source_url": "https://drive.google.com/file/d/15EuE_CRTTdtOMzPhSF5siGatIfAkGt8s/view",
+      "sha256": "65bb79bccf9bd5e15983e43d53dceb66324d8b279c96a36413bda0a55f3b7b44",
+      "bytes": 1433890,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "gemma_4_31b_it",
+      "path": "luna/all_terms/gemma_4_31b_it/summary.json",
+      "drive_file_id": "17ThpMMB7tXFEIEapgtWAhJB0Ti728yot",
+      "source_url": "https://drive.google.com/file/d/17ThpMMB7tXFEIEapgtWAhJB0Ti728yot/view",
+      "sha256": "f629452319f889d981e1a8e0d8b37f04752902aa87e5b08104a5e682499f213c",
+      "bytes": 1462754,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+      "path": "luna/all_terms/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/summary.json",
+      "drive_file_id": "1pKgJmi8Kedm2Sz4SDzrExdW4OEMalSWn",
+      "source_url": "https://drive.google.com/file/d/1pKgJmi8Kedm2Sz4SDzrExdW4OEMalSWn/view",
+      "sha256": "e9d4a1176c18d856e0df55a05da129785d00a7604f4ac95d9229ee7285f02b70",
+      "bytes": 130976,
+      "datasets": [
+        "parallel_manifest"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "gpt_6_luna_azure",
+      "path": "luna/all_terms/gpt_6_luna_azure/summary.json",
+      "drive_file_id": "1jinJbdAxmjrjfastZ9LNbPlDYS8_q5Ti",
+      "source_url": "https://drive.google.com/file/d/1jinJbdAxmjrjfastZ9LNbPlDYS8_q5Ti/view",
+      "sha256": "43f41a4f22174f2696648d11ffa6022b44b8487c29f6cd7da1d2a97addb77c62",
+      "bytes": 1463214,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "granite_4_2_30b",
+      "path": "luna/all_terms/granite_4_2_30b/summary.json",
+      "drive_file_id": "1Y-CHyKPXouKiRBk4tpTwrCiU2X1PslFT",
+      "source_url": "https://drive.google.com/file/d/1Y-CHyKPXouKiRBk4tpTwrCiU2X1PslFT/view",
+      "sha256": "61008e036926f8fd7a74b88978fef975add77e40d807f178a674df4498fdf366",
+      "bytes": 1462779,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "muse_glimmer_30b",
+      "path": "luna/all_terms/muse_glimmer_30b/summary.json",
+      "drive_file_id": "1h6u7fHI16_Kzx_rhnSzhxMHEmrTo9j99",
+      "source_url": "https://drive.google.com/file/d/1h6u7fHI16_Kzx_rhnSzhxMHEmrTo9j99/view",
+      "sha256": "3e51bb02b56272c623096ba07930589cc45e6b39574af8d1b9fc23b68eaec75a",
+      "bytes": 1463108,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "nemotron_3_5_lightning_30b_a3b",
+      "path": "luna/all_terms/nemotron_3_5_lightning_30b_a3b/summary.json",
+      "drive_file_id": "1HdHENY_kRagbp81sJDBwv_AflJxMFtxw",
+      "source_url": "https://drive.google.com/file/d/1HdHENY_kRagbp81sJDBwv_AflJxMFtxw/view",
+      "sha256": "36bc34fd6040eeb721edd32dc2bb7d377d230a08db387229c2d043d99ef6ede4",
+      "bytes": 1463018,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "qwen38_27b_local",
+      "path": "luna/all_terms/qwen38_27b_local/summary.json",
+      "drive_file_id": "1angd7-hajk8nP2gT7dPegzJVUZVMZ8yj",
+      "source_url": "https://drive.google.com/file/d/1angd7-hajk8nP2gT7dPegzJVUZVMZ8yj/view",
+      "sha256": "0f4c463e943690151964f6a8aec3d79a95a45e97b11c1a314f143ff18035df7b",
+      "bytes": 1462543,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "qwen38_27b_local__historical_untimed",
+      "path": "luna/all_terms/qwen38_27b_local__historical_untimed/summary.json",
+      "drive_file_id": "1_4EVMoNGHzIidG4u7ZApmaHD-5C6TldP",
+      "source_url": "https://drive.google.com/file/d/1_4EVMoNGHzIidG4u7ZApmaHD-5C6TldP/view",
+      "sha256": "bddc786412a1017a562aec54990ec5ee545c653489545f12dcaa50faaf7f5ef6",
+      "bytes": 1462727,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "tiny_aya_earth",
+      "path": "luna/all_terms/tiny_aya_earth/summary.json",
+      "drive_file_id": "1Yg8EowJqQhnIy1pFkHCUqFVtjylwzLsk",
+      "source_url": "https://drive.google.com/file/d/1Yg8EowJqQhnIy1pFkHCUqFVtjylwzLsk/view",
+      "sha256": "9c0b3c64cae9b9b8b7fa2cab845d1ce4d6b028bb3f1e0196d1097afb713834d5",
+      "bytes": 1463946,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "tiny_aya_earth__historical_untimed",
+      "path": "luna/all_terms/tiny_aya_earth__historical_untimed/summary.json",
+      "drive_file_id": "1uRYrBeo-5GIu5L-Qdq_Ensz6_Ojp8YRd",
+      "source_url": "https://drive.google.com/file/d/1uRYrBeo-5GIu5L-Qdq_Ensz6_Ojp8YRd/view",
+      "sha256": "eecf834f21a52ca5da6957f26a80a837b5a8495f07a230955a9f4b2d26528b7b",
+      "bytes": 342688,
+      "datasets": [
+        "google_patents"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "tiny_aya_fire",
+      "path": "luna/all_terms/tiny_aya_fire/summary.json",
+      "drive_file_id": "1ZfhmiGv6pU0Lu4RIx0CiPTUZdvD9Tde3",
+      "source_url": "https://drive.google.com/file/d/1ZfhmiGv6pU0Lu4RIx0CiPTUZdvD9Tde3/view",
+      "sha256": "d702ff51e2b9240d16ecaac24a369e16a9dc174136a1e06919729ada304695ab",
+      "bytes": 1463769,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "tiny_aya_global",
+      "path": "luna/all_terms/tiny_aya_global/summary.json",
+      "drive_file_id": "1L5359k5hp8zFglsou58-ykaeP0GHJiXI",
+      "source_url": "https://drive.google.com/file/d/1L5359k5hp8zFglsou58-ykaeP0GHJiXI/view",
+      "sha256": "757987424d2b2805025422448dce298391f7a4de1c2f9a4ff4482dde1ffcff2a",
+      "bytes": 1464056,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "tiny_aya_global__historical_untimed",
+      "path": "luna/all_terms/tiny_aya_global__historical_untimed/summary.json",
+      "drive_file_id": "1m9PdJyYa9ztrDN9sBSiS_5Vd20bSZXHj",
+      "source_url": "https://drive.google.com/file/d/1m9PdJyYa9ztrDN9sBSiS_5Vd20bSZXHj/view",
+      "sha256": "b8bd1419ad6061c2bddbf8f4a396c222e605bf6b24b90e42d636e236abca9c0e",
+      "bytes": 1464177,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "all_terms",
+      "run": "tiny_aya_water",
+      "path": "luna/all_terms/tiny_aya_water/summary.json",
+      "drive_file_id": "1jJJ-qr-slKWOhdn2Q6YsucZcnXfCFLaT",
+      "source_url": "https://drive.google.com/file/d/1jJJ-qr-slKWOhdn2Q6YsucZcnXfCFLaT/view",
+      "sha256": "93beb377b3c424f0591325dffbcfcc74522caf985ecef4548d89ff3e5107245a",
+      "bytes": 1464136,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "gemma_4_31b_it",
+      "path": "luna/externally_verified/gemma_4_31b_it/summary.json",
+      "drive_file_id": "1uhuFAWl9lBP9nCLEOiBN8KDqbSEZ1p5T",
+      "source_url": "https://drive.google.com/file/d/1uhuFAWl9lBP9nCLEOiBN8KDqbSEZ1p5T/view",
+      "sha256": "8764524ea1e8ecf2613ff1ff68e6d36e59702744fc96730a5bafbc21b08f9d6f",
+      "bytes": 1448807,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+      "path": "luna/externally_verified/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/summary.json",
+      "drive_file_id": "13jtUdgZsQiLzqgDZ7vA-EXgiJXUANJ_H",
+      "source_url": "https://drive.google.com/file/d/13jtUdgZsQiLzqgDZ7vA-EXgiJXUANJ_H/view",
+      "sha256": "b421641d4f46cb9d5b6dbbf5b02c0e804c4b84f41d5ba10677a511f966fa9571",
+      "bytes": 131034,
+      "datasets": [
+        "parallel_manifest"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "gpt_6_luna_azure",
+      "path": "luna/externally_verified/gpt_6_luna_azure/summary.json",
+      "drive_file_id": "1Pwlgt0ElcLerilO2s2K_6CmkinK-ehrV",
+      "source_url": "https://drive.google.com/file/d/1Pwlgt0ElcLerilO2s2K_6CmkinK-ehrV/view",
+      "sha256": "b8bdfa7df53e0d92ef1defb14297377e35fe8cd1a5160ea4474cc263d5fb592a",
+      "bytes": 1449525,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "granite_4_2_30b",
+      "path": "luna/externally_verified/granite_4_2_30b/summary.json",
+      "drive_file_id": "1YUQqZzzRwNoGXx6t9m1lW6ayzOtdiZbH",
+      "source_url": "https://drive.google.com/file/d/1YUQqZzzRwNoGXx6t9m1lW6ayzOtdiZbH/view",
+      "sha256": "4672965f8678a46b90a52e7ba0ef0f7a2ceb441287b409ac111a03a88bf9eea1",
+      "bytes": 1449023,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "muse_glimmer_30b",
+      "path": "luna/externally_verified/muse_glimmer_30b/summary.json",
+      "drive_file_id": "1Ymjj0mmd2vfpqfN6SGhYbJruJF0trBJ3",
+      "source_url": "https://drive.google.com/file/d/1Ymjj0mmd2vfpqfN6SGhYbJruJF0trBJ3/view",
+      "sha256": "fde5cc4628581351f049d1a31469502dd037b67c48792118e6532e400685d6cf",
+      "bytes": 1449346,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "nemotron_3_5_lightning_30b_a3b",
+      "path": "luna/externally_verified/nemotron_3_5_lightning_30b_a3b/summary.json",
+      "drive_file_id": "1TGkfr9gEzNQFjzLqT4_wlfM79CQuMySk",
+      "source_url": "https://drive.google.com/file/d/1TGkfr9gEzNQFjzLqT4_wlfM79CQuMySk/view",
+      "sha256": "0fd14ece770f49d0db76efd873937269eee717d000a139e487c84b0fdc032aac",
+      "bytes": 1449232,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "qwen38_27b_local",
+      "path": "luna/externally_verified/qwen38_27b_local/summary.json",
+      "drive_file_id": "1vdnB9K7Y4zOBxkRnQn6WgigUPmDIQ639",
+      "source_url": "https://drive.google.com/file/d/1vdnB9K7Y4zOBxkRnQn6WgigUPmDIQ639/view",
+      "sha256": "0863af1946e464615b52b860983eff861a066615c2c2096204a3b8831dab4258",
+      "bytes": 1448812,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "qwen38_27b_local__historical_untimed",
+      "path": "luna/externally_verified/qwen38_27b_local__historical_untimed/summary.json",
+      "drive_file_id": "1i5gTAJ9WdvrdBwyTg87z4Nj3wCxPB2w-",
+      "source_url": "https://drive.google.com/file/d/1i5gTAJ9WdvrdBwyTg87z4Nj3wCxPB2w-/view",
+      "sha256": "8e7ddc6cf6c725d81b7e7e7930709d44cf37cabe18acefa1f97661f7878c96b4",
+      "bytes": 1448945,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "tiny_aya_earth",
+      "path": "luna/externally_verified/tiny_aya_earth/summary.json",
+      "drive_file_id": "1zdLN11NXDvxJEeFtCYeG8HefjySA4hbg",
+      "source_url": "https://drive.google.com/file/d/1zdLN11NXDvxJEeFtCYeG8HefjySA4hbg/view",
+      "sha256": "c0c6356cda19cb9eeddcab2ee20e53d2f9777a056fe741668fee41a57bd7069e",
+      "bytes": 1450173,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "tiny_aya_earth__historical_untimed",
+      "path": "luna/externally_verified/tiny_aya_earth__historical_untimed/summary.json",
+      "drive_file_id": "1U2aOxWDAbfqWywjF7TkSdvLnWGObL2r6",
+      "source_url": "https://drive.google.com/file/d/1U2aOxWDAbfqWywjF7TkSdvLnWGObL2r6/view",
+      "sha256": "abf4799f8520d6b82ce48669ba6104e14906daffc06e8d1bf42afc9fcaf48c0a",
+      "bytes": 339855,
+      "datasets": [
+        "google_patents"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "tiny_aya_fire",
+      "path": "luna/externally_verified/tiny_aya_fire/summary.json",
+      "drive_file_id": "1LrQIFRuVaAGYIwsBhwMt0k8sBKJ0mfX3",
+      "source_url": "https://drive.google.com/file/d/1LrQIFRuVaAGYIwsBhwMt0k8sBKJ0mfX3/view",
+      "sha256": "f70a67bdb70c705f0e27616894f3676ce648be34b28fdb0e04c8b62e03f1c91c",
+      "bytes": 1449933,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "tiny_aya_global",
+      "path": "luna/externally_verified/tiny_aya_global/summary.json",
+      "drive_file_id": "1BWzdhDD_QJQ-P5io4K-XRoztieGSAFjY",
+      "source_url": "https://drive.google.com/file/d/1BWzdhDD_QJQ-P5io4K-XRoztieGSAFjY/view",
+      "sha256": "51c63013f8f9265a1f80a9c411505bb8d950901abd0f91a8584e3c1f7794dd05",
+      "bytes": 1450115,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "tiny_aya_global__historical_untimed",
+      "path": "luna/externally_verified/tiny_aya_global__historical_untimed/summary.json",
+      "drive_file_id": "1A3rySiOVF49goarBf-bRQ6kh53Yj2ZfH",
+      "source_url": "https://drive.google.com/file/d/1A3rySiOVF49goarBf-bRQ6kh53Yj2ZfH/view",
+      "sha256": "e21bc9af999626bc086057a6e8e0cb90b70653207085950e6c92cc6b5a1b6851",
+      "bytes": 1450220,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "externally_verified",
+      "run": "tiny_aya_water",
+      "path": "luna/externally_verified/tiny_aya_water/summary.json",
+      "drive_file_id": "12rFkdAqcb_fcf9X2xpk05yKNHq-OK_0s",
+      "source_url": "https://drive.google.com/file/d/12rFkdAqcb_fcf9X2xpk05yKNHq-OK_0s/view",
+      "sha256": "cb116701c367cd233f88c31ee95e5eccb434485c44230ae12827de8cfb69e827",
+      "bytes": 1450188,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "gemma_4_31b_it",
+      "path": "luna/llm_enriched/gemma_4_31b_it/summary.json",
+      "drive_file_id": "1CcJLsjJLTrEK2MXufGiaXFXtEeXBRK5u",
+      "source_url": "https://drive.google.com/file/d/1CcJLsjJLTrEK2MXufGiaXFXtEeXBRK5u/view",
+      "sha256": "3b6fe55e60aae3948785bcce2cf0a5b3ad9a30ed333178e6e437405d0bbe5b68",
+      "bytes": 1448893,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+      "path": "luna/llm_enriched/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/summary.json",
+      "drive_file_id": "19XkMIFjkhlka5QOFvV_Ke49Vhgmd2fmd",
+      "source_url": "https://drive.google.com/file/d/19XkMIFjkhlka5QOFvV_Ke49Vhgmd2fmd/view",
+      "sha256": "2aba0c56f61744f9329e5cecfbb297b4fe5aeceb350b32cee7be0890cd21392f",
+      "bytes": 130963,
+      "datasets": [
+        "parallel_manifest"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "gpt_6_luna_azure",
+      "path": "luna/llm_enriched/gpt_6_luna_azure/summary.json",
+      "drive_file_id": "1U2koDyf3tuXdAeh4_Jpzd46yIa-OkE1o",
+      "source_url": "https://drive.google.com/file/d/1U2koDyf3tuXdAeh4_Jpzd46yIa-OkE1o/view",
+      "sha256": "ab6debc0f939650d585a39b58ecb884c09d701274c9dff275b797107efb35988",
+      "bytes": 1449649,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "granite_4_2_30b",
+      "path": "luna/llm_enriched/granite_4_2_30b/summary.json",
+      "drive_file_id": "1VyutjBK3kKc0SP5PJJ5sXP5FHG2LPzat",
+      "source_url": "https://drive.google.com/file/d/1VyutjBK3kKc0SP5PJJ5sXP5FHG2LPzat/view",
+      "sha256": "2218bd3b22fdac255b4b3b5b030f53f999e6b55f62da655f5abc04071600cf1b",
+      "bytes": 1449182,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "muse_glimmer_30b",
+      "path": "luna/llm_enriched/muse_glimmer_30b/summary.json",
+      "drive_file_id": "1tibmEDKyaqWF5fnsSh96brn2gIDUGGea",
+      "source_url": "https://drive.google.com/file/d/1tibmEDKyaqWF5fnsSh96brn2gIDUGGea/view",
+      "sha256": "1dd87e3a5e7d465b1920053435b9ba89a3537a6687253dca627d6d3ece685991",
+      "bytes": 1449457,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "nemotron_3_5_lightning_30b_a3b",
+      "path": "luna/llm_enriched/nemotron_3_5_lightning_30b_a3b/summary.json",
+      "drive_file_id": "185UemeLsTgU5L-PR-lkwNsM_vDqJQQ9R",
+      "source_url": "https://drive.google.com/file/d/185UemeLsTgU5L-PR-lkwNsM_vDqJQQ9R/view",
+      "sha256": "87e01933f7c841029844ddf0a358e9dd054332d570d75b52dd1e76cbc2fd45c1",
+      "bytes": 1449384,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "qwen38_27b_local",
+      "path": "luna/llm_enriched/qwen38_27b_local/summary.json",
+      "drive_file_id": "1ajWKlBRRISAFwFhgvZW6TNwmXfsA07Dk",
+      "source_url": "https://drive.google.com/file/d/1ajWKlBRRISAFwFhgvZW6TNwmXfsA07Dk/view",
+      "sha256": "7c4f8b9857149de0b95f87b9e6c0b43ced0ba4443d358e28a48c069dc0d2af94",
+      "bytes": 1448931,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "qwen38_27b_local__historical_untimed",
+      "path": "luna/llm_enriched/qwen38_27b_local__historical_untimed/summary.json",
+      "drive_file_id": "1mB1P-q2J1lxEXFS_rT0Ia-bkJELC6Lkx",
+      "source_url": "https://drive.google.com/file/d/1mB1P-q2J1lxEXFS_rT0Ia-bkJELC6Lkx/view",
+      "sha256": "de7c8b3e9adb282a537c8234ad230491167b645220f1b2382467da49e1c73a86",
+      "bytes": 1449070,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "tiny_aya_earth",
+      "path": "luna/llm_enriched/tiny_aya_earth/summary.json",
+      "drive_file_id": "1Y_lk3bRltzBixmCh6KmiPaEHvWMRn6Yx",
+      "source_url": "https://drive.google.com/file/d/1Y_lk3bRltzBixmCh6KmiPaEHvWMRn6Yx/view",
+      "sha256": "7d940a10665fe5a470316a39b9e10e09a36eb21bd9b7e1c03f314ea9e8b2ae31",
+      "bytes": 1450317,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "tiny_aya_earth__historical_untimed",
+      "path": "luna/llm_enriched/tiny_aya_earth__historical_untimed/summary.json",
+      "drive_file_id": "1E_Wq5W8CplQ1vsEp924Sk2TJzNDFoJlu",
+      "source_url": "https://drive.google.com/file/d/1E_Wq5W8CplQ1vsEp924Sk2TJzNDFoJlu/view",
+      "sha256": "0364d1711d13fa937066a3c20b0e1600d3d4a563b6048225c1f1679b29106edb",
+      "bytes": 340023,
+      "datasets": [
+        "google_patents"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "tiny_aya_fire",
+      "path": "luna/llm_enriched/tiny_aya_fire/summary.json",
+      "drive_file_id": "1g2V5ggxTdHcqfz3FSMy3bYruVW40w1Hd",
+      "source_url": "https://drive.google.com/file/d/1g2V5ggxTdHcqfz3FSMy3bYruVW40w1Hd/view",
+      "sha256": "023f7c3432aa9baea2bdf69358c78524f9facc5b9393377718c92db435ce1098",
+      "bytes": 1450112,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "tiny_aya_global",
+      "path": "luna/llm_enriched/tiny_aya_global/summary.json",
+      "drive_file_id": "15u1iSOUma4HYo-h5bL0TIxVRIuBXVm7p",
+      "source_url": "https://drive.google.com/file/d/15u1iSOUma4HYo-h5bL0TIxVRIuBXVm7p/view",
+      "sha256": "4c1129b1ff4163a7ab2939de5211776883710f672bf73f14b53755c86238f619",
+      "bytes": 1450240,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "tiny_aya_global__historical_untimed",
+      "path": "luna/llm_enriched/tiny_aya_global__historical_untimed/summary.json",
+      "drive_file_id": "145Ok8saQ-XV5spDklu0ibRi9mT8BXtEp",
+      "source_url": "https://drive.google.com/file/d/145Ok8saQ-XV5spDklu0ibRi9mT8BXtEp/view",
+      "sha256": "b6729c78e7c06edf87f0542ad93d439a371fdf0494d8b29f3be19a4502a37567",
+      "bytes": 1450367,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    },
+    {
+      "terminology_view": "luna",
+      "category": "llm_enriched",
+      "run": "tiny_aya_water",
+      "path": "luna/llm_enriched/tiny_aya_water/summary.json",
+      "drive_file_id": "1A6HItVkRLhyKZ62MY0HQt014vnJe3Yzn",
+      "source_url": "https://drive.google.com/file/d/1A6HItVkRLhyKZ62MY0HQt014vnJe3Yzn/view",
+      "sha256": "8c412014ccee94ed82ec59d51ce849d192d65e4c6d7f81c61703c18af62caf78",
+      "bytes": 1450309,
+      "datasets": [
+        "google_patents",
+        "jrc_articles",
+        "jrc_definitions"
+      ]
+    }
+  ]
+}

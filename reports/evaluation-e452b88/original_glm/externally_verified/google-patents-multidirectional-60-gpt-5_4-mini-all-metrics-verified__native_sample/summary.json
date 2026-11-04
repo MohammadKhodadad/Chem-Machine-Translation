@@ -1,0 +1,3322 @@
+{
+  "dataset_settings": {
+    "parallel_manifest": {
+      "openai": {
+        "by_direction": {
+          "de-en": {
+            "corpus_metrics": {
+              "bleu": 63.20622606920923,
+              "chrf": 77.39481250823016,
+              "chrf2++": 76.19686464669545
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 10,
+              "rows_with_selected_terminology": 10,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 10
+            },
+            "mean_metrics": {
+              "bertscore": 0.9636911571025848,
+              "bertscore_precision": 0.9649926602840424,
+              "bertscore_recall": 0.9623987972736359,
+              "bleu": 62.89481754589734,
+              "bleurt": 0.7031380355358123,
+              "chrf": 76.50284465870527,
+              "chrf2++": 75.51730972513573,
+              "comet": 0.8319358468055725,
+              "cometkiwi_qe": 0.7938663482666015,
+              "sequence_similarity": 59.68550298116661,
+              "target_term_coverage": 75.41666666666666,
+              "term_bertscore_recall": 0.848235297203064,
+              "term_bertscore_reference_term_count": 3.5,
+              "variant_aware_target_term_coverage": 75.41666666666666,
+              "xcomet_xl": 0.7852435171604156,
+              "xcomet_xl_critical_error_spans": 0.0,
+              "xcomet_xl_major_error_spans": 0.3,
+              "xcomet_xl_minor_error_spans": 3.9
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 10,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 10,
+              "bertscore_precision": 10,
+              "bertscore_recall": 10,
+              "bleu": 10,
+              "bleurt": 10,
+              "chrf": 10,
+              "chrf2++": 10,
+              "comet": 10,
+              "cometkiwi_qe": 10,
+              "sequence_similarity": 10,
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "term_bertscore_reference_term_count": 10,
+              "variant_aware_target_term_coverage": 10,
+              "xcomet_xl": 10,
+              "xcomet_xl_critical_error_spans": 10,
+              "xcomet_xl_major_error_spans": 10,
+              "xcomet_xl_minor_error_spans": 10
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 10,
+                "rows_missing": 10,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 35.0,
+              "xcomet_xl_critical_error_spans": 0.0,
+              "xcomet_xl_major_error_spans": 3.0,
+              "xcomet_xl_minor_error_spans": 39.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 128,
+              "reference_matched_term_count": 35,
+              "selected_term_count": 35,
+              "selected_terms_missing_source_term": 35,
+              "selected_terms_with_targets": 35,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 35
+            }
+          },
+          "de-fr": {
+            "corpus_metrics": {
+              "bleu": 49.89238925002716,
+              "chrf": 69.37276238588329,
+              "chrf2++": 67.36255515250723
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 10,
+              "rows_with_selected_terminology": 10,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 10
+            },
+            "mean_metrics": {
+              "bertscore": 0.9583299815654754,
+              "bertscore_precision": 0.9593794465065002,
+              "bertscore_recall": 0.9572877824306488,
+              "bleu": 52.81344785738609,
+              "bleurt": 0.5710123986005783,
+              "chrf": 72.49008458776848,
+              "chrf2++": 70.52089619274687,
+              "comet": 0.8098602771759034,
+              "cometkiwi_qe": 0.7527050852775574,
+              "sequence_similarity": 56.26265178662635,
+              "target_term_coverage": 88.72619047619048,
+              "term_bertscore_recall": 0.8732750594615937,
+              "term_bertscore_reference_term_count": 4.9,
+              "variant_aware_target_term_coverage": 88.72619047619048,
+              "xcomet_xl": 0.5311255931854248,
+              "xcomet_xl_critical_error_spans": 5.6,
+              "xcomet_xl_major_error_spans": 2.2,
+              "xcomet_xl_minor_error_spans": 2.7
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 10,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 10,
+              "bertscore_precision": 10,
+              "bertscore_recall": 10,
+              "bleu": 10,
+              "bleurt": 10,
+              "chrf": 10,
+              "chrf2++": 10,
+              "comet": 10,
+              "cometkiwi_qe": 10,
+              "sequence_similarity": 10,
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "term_bertscore_reference_term_count": 10,
+              "variant_aware_target_term_coverage": 10,
+              "xcomet_xl": 10,
+              "xcomet_xl_critical_error_spans": 10,
+              "xcomet_xl_major_error_spans": 10,
+              "xcomet_xl_minor_error_spans": 10
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 10,
+                "rows_missing": 10,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 49.0,
+              "xcomet_xl_critical_error_spans": 56.0,
+              "xcomet_xl_major_error_spans": 22.0,
+              "xcomet_xl_minor_error_spans": 27.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 127,
+              "reference_matched_term_count": 49,
+              "selected_term_count": 49,
+              "selected_terms_missing_source_term": 49,
+              "selected_terms_with_targets": 49,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 49
+            }
+          },
+          "en-de": {
+            "corpus_metrics": {
+              "bleu": 50.605234879271215,
+              "chrf": 76.14533892077272,
+              "chrf2++": 72.97353385105095
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 10,
+              "rows_with_selected_terminology": 10,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 10
+            },
+            "mean_metrics": {
+              "bertscore": 0.9543544232845307,
+              "bertscore_precision": 0.9520594894886016,
+              "bertscore_recall": 0.956675773859024,
+              "bleu": 49.98132164955643,
+              "bleurt": 0.7085671603679657,
+              "chrf": 75.88591981754553,
+              "chrf2++": 72.57965198836376,
+              "comet": 0.8470686495304107,
+              "cometkiwi_qe": 0.8271006643772125,
+              "sequence_similarity": 57.07838117909389,
+              "target_term_coverage": 73.97619047619048,
+              "term_bertscore_recall": 0.84818235039711,
+              "term_bertscore_reference_term_count": 4.0,
+              "variant_aware_target_term_coverage": 73.97619047619048,
+              "xcomet_xl": 0.7702254205942154,
+              "xcomet_xl_critical_error_spans": 0.3,
+              "xcomet_xl_major_error_spans": 0.1,
+              "xcomet_xl_minor_error_spans": 4.1
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 10,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 10,
+              "bertscore_precision": 10,
+              "bertscore_recall": 10,
+              "bleu": 10,
+              "bleurt": 10,
+              "chrf": 10,
+              "chrf2++": 10,
+              "comet": 10,
+              "cometkiwi_qe": 10,
+              "sequence_similarity": 10,
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "term_bertscore_reference_term_count": 10,
+              "variant_aware_target_term_coverage": 10,
+              "xcomet_xl": 10,
+              "xcomet_xl_critical_error_spans": 10,
+              "xcomet_xl_major_error_spans": 10,
+              "xcomet_xl_minor_error_spans": 10
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 10,
+                "rows_missing": 10,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 40.0,
+              "xcomet_xl_critical_error_spans": 3.0,
+              "xcomet_xl_major_error_spans": 1.0,
+              "xcomet_xl_minor_error_spans": 41.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 137,
+              "reference_matched_term_count": 40,
+              "selected_term_count": 40,
+              "selected_terms_missing_source_term": 40,
+              "selected_terms_with_targets": 40,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 40
+            }
+          },
+          "en-fr": {
+            "corpus_metrics": {
+              "bleu": 52.91902329743909,
+              "chrf": 72.96969148061764,
+              "chrf2++": 70.76461875423838
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 10,
+              "rows_with_selected_terminology": 10,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 10
+            },
+            "mean_metrics": {
+              "bertscore": 0.9578898012638092,
+              "bertscore_precision": 0.9575268149375915,
+              "bertscore_recall": 0.958256071805954,
+              "bleu": 50.526893466646335,
+              "bleurt": 0.5758132219314576,
+              "chrf": 70.97777417492773,
+              "chrf2++": 68.73474319166164,
+              "comet": 0.8289879500865937,
+              "cometkiwi_qe": 0.8403108835220336,
+              "sequence_similarity": 49.240147777701154,
+              "target_term_coverage": 76.04761904761905,
+              "term_bertscore_recall": 0.8686069428920746,
+              "term_bertscore_reference_term_count": 5.1,
+              "variant_aware_target_term_coverage": 76.04761904761905,
+              "xcomet_xl": 0.6693179100751877,
+              "xcomet_xl_critical_error_spans": 1.2,
+              "xcomet_xl_major_error_spans": 1.7,
+              "xcomet_xl_minor_error_spans": 2.0
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 10,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 10,
+              "bertscore_precision": 10,
+              "bertscore_recall": 10,
+              "bleu": 10,
+              "bleurt": 10,
+              "chrf": 10,
+              "chrf2++": 10,
+              "comet": 10,
+              "cometkiwi_qe": 10,
+              "sequence_similarity": 10,
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "term_bertscore_reference_term_count": 10,
+              "variant_aware_target_term_coverage": 10,
+              "xcomet_xl": 10,
+              "xcomet_xl_critical_error_spans": 10,
+              "xcomet_xl_major_error_spans": 10,
+              "xcomet_xl_minor_error_spans": 10
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 10,
+                "rows_missing": 10,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 51.0,
+              "xcomet_xl_critical_error_spans": 12.0,
+              "xcomet_xl_major_error_spans": 17.0,
+              "xcomet_xl_minor_error_spans": 20.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 127,
+              "reference_matched_term_count": 51,
+              "selected_term_count": 51,
+              "selected_terms_missing_source_term": 51,
+              "selected_terms_with_targets": 51,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 51
+            }
+          },
+          "fr-de": {
+            "corpus_metrics": {
+              "bleu": 48.36231628331509,
+              "chrf": 74.71883837630665,
+              "chrf2++": 71.66328271290847
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 10,
+              "rows_with_selected_terminology": 10,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 10
+            },
+            "mean_metrics": {
+              "bertscore": 0.9519100606441497,
+              "bertscore_precision": 0.9510080754756928,
+              "bertscore_recall": 0.9528417706489563,
+              "bleu": 49.96005727028792,
+              "bleurt": 0.7032120943069458,
+              "chrf": 76.26568387154802,
+              "chrf2++": 73.17027545532028,
+              "comet": 0.8240409016609191,
+              "cometkiwi_qe": 0.7631234765052796,
+              "sequence_similarity": 59.18402136007076,
+              "target_term_coverage": 85.73809523809524,
+              "term_bertscore_recall": 0.851626867055893,
+              "term_bertscore_reference_term_count": 4.2,
+              "variant_aware_target_term_coverage": 85.73809523809524,
+              "xcomet_xl": 0.739557895064354,
+              "xcomet_xl_critical_error_spans": 0.0,
+              "xcomet_xl_major_error_spans": 0.1,
+              "xcomet_xl_minor_error_spans": 5.7
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 10,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 10,
+              "bertscore_precision": 10,
+              "bertscore_recall": 10,
+              "bleu": 10,
+              "bleurt": 10,
+              "chrf": 10,
+              "chrf2++": 10,
+              "comet": 10,
+              "cometkiwi_qe": 10,
+              "sequence_similarity": 10,
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "term_bertscore_reference_term_count": 10,
+              "variant_aware_target_term_coverage": 10,
+              "xcomet_xl": 10,
+              "xcomet_xl_critical_error_spans": 10,
+              "xcomet_xl_major_error_spans": 10,
+              "xcomet_xl_minor_error_spans": 10
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 10,
+                "rows_missing": 10,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 42.0,
+              "xcomet_xl_critical_error_spans": 0.0,
+              "xcomet_xl_major_error_spans": 1.0,
+              "xcomet_xl_minor_error_spans": 57.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 137,
+              "reference_matched_term_count": 42,
+              "selected_term_count": 42,
+              "selected_terms_missing_source_term": 42,
+              "selected_terms_with_targets": 42,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 42
+            }
+          },
+          "fr-en": {
+            "corpus_metrics": {
+              "bleu": 62.59449629787958,
+              "chrf": 78.51947292310389,
+              "chrf2++": 77.07661159818969
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 10,
+              "rows_with_selected_terminology": 10,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 10
+            },
+            "mean_metrics": {
+              "bertscore": 0.9622683882713318,
+              "bertscore_precision": 0.9626977145671844,
+              "bertscore_recall": 0.9618427157402039,
+              "bleu": 59.18962438913538,
+              "bleurt": 0.7120404839515686,
+              "chrf": 76.28894723454562,
+              "chrf2++": 74.93080176021599,
+              "comet": 0.8345837116241455,
+              "cometkiwi_qe": 0.8041400909423828,
+              "sequence_similarity": 65.54330418144525,
+              "target_term_coverage": 73.16666666666666,
+              "term_bertscore_recall": 0.8483608543872834,
+              "term_bertscore_reference_term_count": 3.2,
+              "variant_aware_target_term_coverage": 73.16666666666666,
+              "xcomet_xl": 0.7125295221805572,
+              "xcomet_xl_critical_error_spans": 0.3,
+              "xcomet_xl_major_error_spans": 0.8,
+              "xcomet_xl_minor_error_spans": 1.3
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 10,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 10,
+              "bertscore_precision": 10,
+              "bertscore_recall": 10,
+              "bleu": 10,
+              "bleurt": 10,
+              "chrf": 10,
+              "chrf2++": 10,
+              "comet": 10,
+              "cometkiwi_qe": 10,
+              "sequence_similarity": 10,
+              "target_term_coverage": 10,
+              "term_bertscore_recall": 10,
+              "term_bertscore_reference_term_count": 10,
+              "variant_aware_target_term_coverage": 10,
+              "xcomet_xl": 10,
+              "xcomet_xl_critical_error_spans": 10,
+              "xcomet_xl_major_error_spans": 10,
+              "xcomet_xl_minor_error_spans": 10
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 10,
+                "rows_missing": 10,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 10,
+                "rows_scored": 0,
+                "rows_total": 10,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 10,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 10,
+                "rows_total": 10,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 32.0,
+              "xcomet_xl_critical_error_spans": 3.0,
+              "xcomet_xl_major_error_spans": 8.0,
+              "xcomet_xl_minor_error_spans": 13.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 129,
+              "reference_matched_term_count": 32,
+              "selected_term_count": 32,
+              "selected_terms_missing_source_term": 32,
+              "selected_terms_with_targets": 32,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 32
+            }
+          }
+        },
+        "by_target_language": {
+          "de": {
+            "corpus_metrics": {
+              "bleu": 49.487782810283,
+              "chrf": 75.43238016967693,
+              "chrf2++": 72.3182932497276
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 20,
+              "rows_with_selected_terminology": 20,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 20
+            },
+            "mean_metrics": {
+              "bertscore": 0.9531322419643402,
+              "bertscore_precision": 0.9515337824821473,
+              "bertscore_recall": 0.9547587722539902,
+              "bleu": 49.97068945992217,
+              "bleurt": 0.7058896273374557,
+              "chrf": 76.07580184454677,
+              "chrf2++": 72.87496372184202,
+              "comet": 0.8355547755956649,
+              "cometkiwi_qe": 0.795112070441246,
+              "sequence_similarity": 58.13120126958232,
+              "target_term_coverage": 79.85714285714286,
+              "term_bertscore_recall": 0.8499046087265014,
+              "term_bertscore_reference_term_count": 4.1,
+              "variant_aware_target_term_coverage": 79.85714285714286,
+              "xcomet_xl": 0.7548916578292847,
+              "xcomet_xl_critical_error_spans": 0.15,
+              "xcomet_xl_major_error_spans": 0.1,
+              "xcomet_xl_minor_error_spans": 4.9
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 20,
+              "term_bertscore_recall": 20,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 20,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 20,
+              "bertscore_precision": 20,
+              "bertscore_recall": 20,
+              "bleu": 20,
+              "bleurt": 20,
+              "chrf": 20,
+              "chrf2++": 20,
+              "comet": 20,
+              "cometkiwi_qe": 20,
+              "sequence_similarity": 20,
+              "target_term_coverage": 20,
+              "term_bertscore_recall": 20,
+              "term_bertscore_reference_term_count": 20,
+              "variant_aware_target_term_coverage": 20,
+              "xcomet_xl": 20,
+              "xcomet_xl_critical_error_spans": 20,
+              "xcomet_xl_major_error_spans": 20,
+              "xcomet_xl_minor_error_spans": 20
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 20,
+                "rows_missing": 20,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 20,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 20,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 82.0,
+              "xcomet_xl_critical_error_spans": 3.0,
+              "xcomet_xl_major_error_spans": 2.0,
+              "xcomet_xl_minor_error_spans": 98.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 274,
+              "reference_matched_term_count": 82,
+              "selected_term_count": 82,
+              "selected_terms_missing_source_term": 82,
+              "selected_terms_with_targets": 82,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 82
+            }
+          },
+          "en": {
+            "corpus_metrics": {
+              "bleu": 62.90604078069635,
+              "chrf": 77.9593583980301,
+              "chrf2++": 76.63843141219597
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 20,
+              "rows_with_selected_terminology": 20,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 20
+            },
+            "mean_metrics": {
+              "bertscore": 0.9629797726869583,
+              "bertscore_precision": 0.9638451874256134,
+              "bertscore_recall": 0.9621207565069199,
+              "bleu": 61.04222096751636,
+              "bleurt": 0.7075892597436905,
+              "chrf": 76.39589594662544,
+              "chrf2++": 75.22405574267586,
+              "comet": 0.833259779214859,
+              "cometkiwi_qe": 0.7990032196044922,
+              "sequence_similarity": 62.61440358130593,
+              "target_term_coverage": 74.29166666666666,
+              "term_bertscore_recall": 0.8482980757951737,
+              "term_bertscore_reference_term_count": 3.35,
+              "variant_aware_target_term_coverage": 74.29166666666666,
+              "xcomet_xl": 0.7488865196704865,
+              "xcomet_xl_critical_error_spans": 0.15,
+              "xcomet_xl_major_error_spans": 0.55,
+              "xcomet_xl_minor_error_spans": 2.6
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 20,
+              "term_bertscore_recall": 20,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 20,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 20,
+              "bertscore_precision": 20,
+              "bertscore_recall": 20,
+              "bleu": 20,
+              "bleurt": 20,
+              "chrf": 20,
+              "chrf2++": 20,
+              "comet": 20,
+              "cometkiwi_qe": 20,
+              "sequence_similarity": 20,
+              "target_term_coverage": 20,
+              "term_bertscore_recall": 20,
+              "term_bertscore_reference_term_count": 20,
+              "variant_aware_target_term_coverage": 20,
+              "xcomet_xl": 20,
+              "xcomet_xl_critical_error_spans": 20,
+              "xcomet_xl_major_error_spans": 20,
+              "xcomet_xl_minor_error_spans": 20
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 20,
+                "rows_missing": 20,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 20,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 20,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 67.0,
+              "xcomet_xl_critical_error_spans": 3.0,
+              "xcomet_xl_major_error_spans": 11.0,
+              "xcomet_xl_minor_error_spans": 52.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 257,
+              "reference_matched_term_count": 67,
+              "selected_term_count": 67,
+              "selected_terms_missing_source_term": 67,
+              "selected_terms_with_targets": 67,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 67
+            }
+          },
+          "fr": {
+            "corpus_metrics": {
+              "bleu": 51.40760284846737,
+              "chrf": 71.17490374364675,
+              "chrf2++": 69.06614486516865
+            },
+            "counts": {
+              "rows_expected": null,
+              "rows_missing": null,
+              "rows_translated": 20,
+              "rows_with_selected_terminology": 20,
+              "rows_with_source_conditioned_terminology": 0,
+              "rows_with_terminology": 20
+            },
+            "mean_metrics": {
+              "bertscore": 0.9581098914146423,
+              "bertscore_precision": 0.9584531307220459,
+              "bertscore_recall": 0.9577719271183014,
+              "bleu": 51.67017066201621,
+              "bleurt": 0.5734128102660179,
+              "chrf": 71.7339293813481,
+              "chrf2++": 69.62781969220427,
+              "comet": 0.8194241136312485,
+              "cometkiwi_qe": 0.7965079843997955,
+              "sequence_similarity": 52.75139978216375,
+              "target_term_coverage": 82.38690476190476,
+              "term_bertscore_recall": 0.8709410011768342,
+              "term_bertscore_reference_term_count": 5.0,
+              "variant_aware_target_term_coverage": 82.38690476190476,
+              "xcomet_xl": 0.6002217516303062,
+              "xcomet_xl_critical_error_spans": 3.4,
+              "xcomet_xl_major_error_spans": 1.95,
+              "xcomet_xl_minor_error_spans": 2.35
+            },
+            "metric_applicable_counts": {
+              "target_term_coverage": 20,
+              "term_bertscore_recall": 20,
+              "terminology_success_rate": 0,
+              "variant_aware_target_term_coverage": 20,
+              "variant_aware_terminology_success_rate": 0
+            },
+            "metric_counts": {
+              "bertscore": 20,
+              "bertscore_precision": 20,
+              "bertscore_recall": 20,
+              "bleu": 20,
+              "bleurt": 20,
+              "chrf": 20,
+              "chrf2++": 20,
+              "comet": 20,
+              "cometkiwi_qe": 20,
+              "sequence_similarity": 20,
+              "target_term_coverage": 20,
+              "term_bertscore_recall": 20,
+              "term_bertscore_reference_term_count": 20,
+              "variant_aware_target_term_coverage": 20,
+              "xcomet_xl": 20,
+              "xcomet_xl_critical_error_spans": 20,
+              "xcomet_xl_major_error_spans": 20,
+              "xcomet_xl_minor_error_spans": 20
+            },
+            "metric_status": {
+              "bertscore": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "bleu": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "bleurt": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "chrf": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "chrf2++": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "comet": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "cometkiwi_qe": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "fsp_mqm": {
+                "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+                "rows_applicable": 20,
+                "rows_missing": 20,
+                "rows_not_applicable": 0,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_run"
+              },
+              "sequence_similarity": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "target_term_coverage": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "term_bertscore_recall": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 20,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_applicable"
+              },
+              "variant_aware_target_term_coverage": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              },
+              "variant_aware_terminology_success_rate": {
+                "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+                "rows_applicable": 0,
+                "rows_missing": 0,
+                "rows_not_applicable": 20,
+                "rows_scored": 0,
+                "rows_total": 20,
+                "state": "not_applicable"
+              },
+              "xcomet_xl": {
+                "rows_applicable": 20,
+                "rows_missing": 0,
+                "rows_not_applicable": 0,
+                "rows_scored": 20,
+                "rows_total": 20,
+                "state": "completed"
+              }
+            },
+            "metric_totals": {
+              "term_bertscore_reference_term_count": 100.0,
+              "xcomet_xl_critical_error_spans": 68.0,
+              "xcomet_xl_major_error_spans": 39.0,
+              "xcomet_xl_minor_error_spans": 47.0
+            },
+            "terminology_counts": {
+              "raw_term_count": 254,
+              "reference_matched_term_count": 100,
+              "selected_term_count": 100,
+              "selected_terms_missing_source_term": 100,
+              "selected_terms_with_targets": 100,
+              "source_and_reference_matched_term_count": 0
+            },
+            "terminology_group_counts": {
+              "verified": 100
+            }
+          }
+        },
+        "input_available": true,
+        "overall": {
+          "corpus_metrics": {
+            "bleu": 55.47771344048897,
+            "chrf": 74.74297897118018,
+            "chrf2++": 72.60076311003813
+          },
+          "counts": {
+            "rows_expected": null,
+            "rows_missing": null,
+            "rows_recorded": 60,
+            "rows_translated": 60,
+            "rows_unrecorded": null,
+            "rows_unusable": 0,
+            "rows_with_selected_terminology": 60,
+            "rows_with_source_conditioned_terminology": 0,
+            "rows_with_terminology": 60
+          },
+          "mean_metrics": {
+            "bertscore": 0.9580739686886469,
+            "bertscore_precision": 0.9579440335432688,
+            "bertscore_recall": 0.9582171519597371,
+            "bleu": 54.22769369648492,
+            "bleurt": 0.6622972324490547,
+            "chrf": 74.73520905750678,
+            "chrf2++": 72.57561305224071,
+            "comet": 0.8294128894805908,
+            "cometkiwi_qe": 0.7968744248151779,
+            "sequence_similarity": 57.832334877684005,
+            "target_term_coverage": 78.84523809523809,
+            "term_bertscore_recall": 0.8563812285661697,
+            "term_bertscore_reference_term_count": 4.15,
+            "variant_aware_target_term_coverage": 78.84523809523809,
+            "xcomet_xl": 0.7013333097100258,
+            "xcomet_xl_critical_error_spans": 1.2333333333333334,
+            "xcomet_xl_major_error_spans": 0.8666666666666667,
+            "xcomet_xl_minor_error_spans": 3.283333333333333
+          },
+          "metric_applicable_counts": {
+            "target_term_coverage": 60,
+            "term_bertscore_recall": 60,
+            "terminology_success_rate": 0,
+            "variant_aware_target_term_coverage": 60,
+            "variant_aware_terminology_success_rate": 0
+          },
+          "metric_counts": {
+            "bertscore": 60,
+            "bertscore_precision": 60,
+            "bertscore_recall": 60,
+            "bleu": 60,
+            "bleurt": 60,
+            "chrf": 60,
+            "chrf2++": 60,
+            "comet": 60,
+            "cometkiwi_qe": 60,
+            "sequence_similarity": 60,
+            "target_term_coverage": 60,
+            "term_bertscore_recall": 60,
+            "term_bertscore_reference_term_count": 60,
+            "variant_aware_target_term_coverage": 60,
+            "xcomet_xl": 60,
+            "xcomet_xl_critical_error_spans": 60,
+            "xcomet_xl_major_error_spans": 60,
+            "xcomet_xl_minor_error_spans": 60
+          },
+          "metric_status": {
+            "bertscore": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "bleu": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "bleurt": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "chrf": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "chrf2++": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "comet": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "cometkiwi_qe": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "fsp_mqm": {
+              "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+              "rows_applicable": 60,
+              "rows_missing": 60,
+              "rows_not_applicable": 0,
+              "rows_scored": 0,
+              "rows_total": 60,
+              "state": "not_run"
+            },
+            "sequence_similarity": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "target_term_coverage": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "term_bertscore_recall": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "terminology_success_rate": {
+              "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+              "rows_applicable": 0,
+              "rows_missing": 0,
+              "rows_not_applicable": 60,
+              "rows_scored": 0,
+              "rows_total": 60,
+              "state": "not_applicable"
+            },
+            "variant_aware_target_term_coverage": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            },
+            "variant_aware_terminology_success_rate": {
+              "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+              "rows_applicable": 0,
+              "rows_missing": 0,
+              "rows_not_applicable": 60,
+              "rows_scored": 0,
+              "rows_total": 60,
+              "state": "not_applicable"
+            },
+            "xcomet_xl": {
+              "rows_applicable": 60,
+              "rows_missing": 0,
+              "rows_not_applicable": 0,
+              "rows_scored": 60,
+              "rows_total": 60,
+              "state": "completed"
+            }
+          },
+          "metric_totals": {
+            "term_bertscore_reference_term_count": 249.0,
+            "xcomet_xl_critical_error_spans": 74.0,
+            "xcomet_xl_major_error_spans": 52.0,
+            "xcomet_xl_minor_error_spans": 197.0
+          },
+          "terminology_counts": {
+            "raw_term_count": 785,
+            "reference_matched_term_count": 249,
+            "selected_term_count": 249,
+            "selected_terms_missing_source_term": 249,
+            "selected_terms_with_targets": 249,
+            "source_and_reference_matched_term_count": 0
+          },
+          "terminology_group_counts": {
+            "verified": 249
+          }
+        },
+        "state": "available",
+        "unattributed_missing_rows": null
+      }
+    }
+  },
+  "evaluation_signature": "e4385858c54e93b3c0f0b41fe061274151087cce093a2bbfc9a8dda519024feb",
+  "evaluator_version": 2,
+  "metadata": {
+    "bert_batch_size": 16,
+    "bleurt_batch_size": 16,
+    "bleurt_checkpoint": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20",
+    "cache_files": {
+      "bertscore": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/bertscore/b0ce5f931ace76f2456784106ad87dae77aa524c05bd15e2490d87b45f6e51f0/scores.jsonl",
+      "bleu": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/bleu/add4ae29e08067e3ca0ab771cd4507484767dfc4ee6711738c6cb9f2f0ef088c/scores.jsonl",
+      "bleurt": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/bleurt/6662871cabc898aba1c0dfd414f0bd9b91aec30060fb9953842519d43ce88bf0/scores.jsonl",
+      "chrf": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/chrf/561bc2bb0a5eceeaa08f8b4d8e244777b36a4f3ce27c0ff76ba628f009e29684/scores.jsonl",
+      "chrf2++": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/chrf2++/a0aac8fda44c8b6a1e142ee52dcf32535124c0e9c93c340645fed5e3a4683d04/scores.jsonl",
+      "comet": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/cache/comet/79040e7e4ffee610089bad3c0ea810abedbb99f72cf17a419ed5302ef1605895/scores.jsonl",
+      "cometkiwi_qe": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/cache/cometkiwi_qe/47e8a2b8941d17c4d0ba5c6f5f1f679cbd210d1903b7e0f2991069bab9cd5fbc/scores.jsonl",
+      "sequence_similarity": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/sequence_similarity/7aad122f1ab79aa2abeacb730ff007c6c3eaf12e592aa8ee349032ff6c6ba6ec/scores.jsonl",
+      "target_term_coverage": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/target_term_coverage/be414bf336211c58f0d4fcee9909daf33d5064ed8097bfbff52f7d55db36fb44/scores.jsonl",
+      "term_bertscore_recall": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/term_bertscore_recall/758275da4f5c99a8e0f7121aa79c2059701bf5311db0918e85fa329dac761968/scores.jsonl",
+      "terminology_success_rate": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/terminology_success_rate/3018f19d041ee1dbb41b7887da732d69ca6a22a8f2ef069fec08d89ecfa80836/scores.jsonl",
+      "variant_aware_target_term_coverage": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/variant_aware_target_term_coverage/70b11f993ac344ed091d104fee677aabd2b449a128a16238c40d58141af843e2/scores.jsonl",
+      "variant_aware_terminology_success_rate": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/variant_aware_terminology_success_rate/195cef44f5401f7c5cc964c3772cfbf1fb42d3cb8d5fd9454962c6f482aba442/scores.jsonl",
+      "xcomet_xl": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/cache/xcomet_xl/38ad7ebca3e9f6f156a872fe4edfa4827353d036ffc18fc818a7dfb136f3e566/scores.jsonl"
+    },
+    "category": "externally_verified",
+    "category_definition": "Explicit verified stage only; externally supported refined terms remain refined",
+    "comet_batch_size": 16,
+    "corpus_cache_files": {
+      "bleu": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/corpus/bleu/add4ae29e08067e3ca0ab771cd4507484767dfc4ee6711738c6cb9f2f0ef088c/scores.jsonl",
+      "chrf": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/corpus/chrf/561bc2bb0a5eceeaa08f8b4d8e244777b36a4f3ce27c0ff76ba628f009e29684/scores.jsonl",
+      "chrf2++": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/corpus/chrf2++/a0aac8fda44c8b6a1e142ee52dcf32535124c0e9c93c340645fed5e3a4683d04/scores.jsonl"
+    },
+    "coverage_warnings": [],
+    "cpu_stages": {},
+    "device": "cpu",
+    "devices": {
+      "bertscore": "cpu",
+      "bleurt": "tensorflow visible devices",
+      "comet": "cpu"
+    },
+    "evaluation_identity": {
+      "category": "externally_verified",
+      "evaluator_version": 2,
+      "input_scope": "native_sample",
+      "manifest_identity": {
+        "content": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "files": {}
+      },
+      "native_module": {
+        "bytes": 34058,
+        "path": "/home/rezanamazi/.cache/cmt-eval-e452b88/src/chem_machine_translation/evaluation/metrics.py",
+        "sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526"
+      },
+      "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46",
+      "source_signature": "f527364deac0835da55e205c68e36fff70694e7f277e89b766522361e52bf962",
+      "terminology_groups": [
+        "verified"
+      ]
+    },
+    "include_available_only": true,
+    "input_inventory": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/input_inventory.json",
+    "input_provenance": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/inputs/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/input_provenance.json",
+    "input_scope": "native_sample",
+    "jrc_articles_manifest_comparison": {
+      "files_compared": 20,
+      "identical_files": 20,
+      "lfs_oid_verified_files": 20,
+      "local_files": 20,
+      "local_root": "/home/rezanamazi/projects/google-patents-eda/Chem-Machine-Translation/benchmark_datasets/jrc_acquis_anchored_articles_250_anchors_glm_flash",
+      "missing_pinned_files": 0,
+      "path_used": "/home/rezanamazi/projects/google-patents-eda/Chem-Machine-Translation/benchmark_datasets/jrc_acquis_anchored_articles_250_anchors_glm_flash",
+      "pinned_lfs_pointers": 20,
+      "pinned_root": "/home/rezanamazi/.cache/cmt-eval-e452b88/benchmark_datasets/jrc_acquis_anchored_articles_250_anchors_glm_flash",
+      "status": "identical"
+    },
+    "judge_inputs": {
+      "detail": "paid_judging_on_hold_by_user",
+      "inputs_path": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/fsp_mqm/55662ab7b2fe8b7ad2ff8856a96a30fb31f62ab88d70d687824ffce83191f55f/inputs.jsonl",
+      "plan_path": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/fsp_mqm/55662ab7b2fe8b7ad2ff8856a96a30fb31f62ab88d70d687824ffce83191f55f/plan.json",
+      "plan_signature": "55662ab7b2fe8b7ad2ff8856a96a30fb31f62ab88d70d687824ffce83191f55f",
+      "selected_inputs_signature": "982662e268d2373c207644ff3691d4612945753a042e4ced6e4578525fd9da31",
+      "selected_unique_inputs": 54,
+      "state": "not_run"
+    },
+    "manifest_identity": {
+      "content": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "files": {}
+    },
+    "manifest_paths": {},
+    "metric_environments": {
+      "bertscore": {
+        "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {
+          "torch_cuda_matmul_tf32": false,
+          "torch_cudnn_tf32": true,
+          "torch_float32_matmul_precision": "highest"
+        },
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "bleu": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "bleurt": {
+        "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": null,
+          "bleurt": "0.0.2",
+          "pytorch-lightning": null,
+          "sacrebleu": null,
+          "tensorflow": "2.19.1",
+          "torch": null,
+          "transformers": null,
+          "unbabel-comet": null
+        },
+        "precision": {
+          "tensorflow_tf32": true
+        },
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bleurt-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "chrf": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "chrf2++": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "comet": {
+        "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {
+          "torch_cuda_matmul_tf32": false,
+          "torch_cudnn_tf32": true,
+          "torch_float32_matmul_precision": "highest"
+        },
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "cometkiwi_qe": {
+        "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {
+          "torch_cuda_matmul_tf32": false,
+          "torch_cudnn_tf32": true,
+          "torch_float32_matmul_precision": "highest"
+        },
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "sequence_similarity": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "target_term_coverage": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "term_bertscore_recall": {
+        "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {
+          "torch_cuda_matmul_tf32": false,
+          "torch_cudnn_tf32": true,
+          "torch_float32_matmul_precision": "highest"
+        },
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "terminology_success_rate": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "variant_aware_target_term_coverage": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "variant_aware_terminology_success_rate": {
+        "cuda_visible_devices": "",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {},
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      },
+      "xcomet_xl": {
+        "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+        "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+        "offline": {
+          "HF_HUB_OFFLINE": "1",
+          "TRANSFORMERS_OFFLINE": "1"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "bleurt": null,
+          "pytorch-lightning": "2.6.5",
+          "sacrebleu": "2.6.0",
+          "tensorflow": null,
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "precision": {
+          "torch_cuda_matmul_tf32": false,
+          "torch_cudnn_tf32": true,
+          "torch_float32_matmul_precision": "highest"
+        },
+        "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bertscore-venv/bin/python",
+        "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+      }
+    },
+    "metric_errors": {},
+    "metric_names_requested": [
+      "sequence_similarity",
+      "bleu",
+      "chrf",
+      "chrf2++",
+      "bertscore",
+      "bleurt",
+      "term_bertscore_recall",
+      "comet",
+      "cometkiwi_qe",
+      "xcomet_xl",
+      "terminology_success_rate",
+      "variant_aware_terminology_success_rate",
+      "target_term_coverage",
+      "variant_aware_target_term_coverage"
+    ],
+    "metric_names_this_invocation": [
+      "bleurt"
+    ],
+    "metric_specs": {
+      "bertscore": {
+        "family": "bertscore",
+        "implementation": {
+          "batch_module_sha256": "f724ffb086701723499fcb88a726c71a4ab48867369bf4ec04cb9ee4b52ce445",
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": {
+          "files": [
+            {
+              "bytes": 616,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/8e5fb14e1352fd8fc678a7b293b63cfb5cf091f6",
+              "sha256": "ec7c3a99c58a38ebb702a2297f1c4586944e841b5eb29d201ff87e0f9c9abe0e"
+            },
+            {
+              "bytes": 2244817354,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/2dfa19f172412917cab174da04b46e2134811b723666965fd0aabd97caa6e23b",
+              "sha256": "2dfa19f172412917cab174da04b46e2134811b723666965fd0aabd97caa6e23b"
+            },
+            {
+              "bytes": 5069051,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/db9af13bf09fd3028ca32be90d3fb66d5e470399",
+              "sha256": "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865"
+            },
+            {
+              "bytes": 9096718,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/463f3414782c1c9405828c9b31bfa36dda1f45c5",
+              "sha256": "a898ea75433890f6610f4e470b8ebeb0c21dce5c8dd61f892eb09eb5919d2e2c"
+            },
+            {
+              "bytes": 25,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/34ddbd64a4cd3f2d9d8a9120d3662d0bf91baead",
+              "sha256": "994f46754c5bf4014f1aa92d34b1374319c3a6b3f702105cd5b742beaecd18ce"
+            }
+          ],
+          "model": "xlm-roberta-large",
+          "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/snapshots/c23d21b0620b635a76227c604d44e43a9f0ee389",
+          "revision": "c23d21b0620b635a76227c604d44e43a9f0ee389",
+          "signature": "7e3fb548e6da03b56bde7e645f4c05e6f6bef5d94eb53a26979db80551d570ec"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "numpy": "1.26.4",
+          "tokenizers": "0.22.2",
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6"
+        },
+        "settings": {
+          "batch_size": 16,
+          "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+          "device": "cuda:0",
+          "idf": false,
+          "model": "xlm-roberta-large",
+          "num_layers": "bert_score_library_default",
+          "rescale_with_baseline": false,
+          "term_reference": null,
+          "tf32": "torch_library_default",
+          "torch_threads": 16
+        },
+        "signature": "b0ce5f931ace76f2456784106ad87dae77aa524c05bd15e2490d87b45f6e51f0"
+      },
+      "bleu": {
+        "family": "bleu",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {
+          "sacrebleu": "2.6.0"
+        },
+        "settings": {
+          "segment_and_corpus": "native_defaults"
+        },
+        "signature": "add4ae29e08067e3ca0ab771cd4507484767dfc4ee6711738c6cb9f2f0ef088c"
+      },
+      "bleurt": {
+        "family": "bleurt",
+        "implementation": {
+          "batch_module_sha256": "f724ffb086701723499fcb88a726c71a4ab48867369bf4ec04cb9ee4b52ce445",
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": {
+          "files": [
+            {
+              "bytes": 399,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20/bert_config.json",
+              "sha256": "d31741c029dc41981e999b5e1b3f785ff818c39d5b93937431efcf76a7663d74"
+            },
+            {
+              "bytes": 181,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20/bleurt_config.json",
+              "sha256": "7702b42a2f10c8fc7217e6f830e5724317d530723d9f6b95850cc976880f90c2"
+            },
+            {
+              "bytes": 2577405,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20/saved_model.pb",
+              "sha256": "6ae9b0e2773b962130f9747d5b00ab70d0000c02c9160eaec333478788fc2ac1"
+            },
+            {
+              "bytes": 4697711,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20/sent_piece.model",
+              "sha256": "67ce12ea4550e57af39217a75686a61695e34edbb1c9892f82f0b861d73a4482"
+            },
+            {
+              "bytes": 4672563,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20/sent_piece.vocab",
+              "sha256": "2f25095edbfd3ce420c6d309e05233dcf76c1a5c3bde9240508c04521a73a6e6"
+            },
+            {
+              "bytes": 2303686156,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20/variables/variables.data-00000-of-00001",
+              "sha256": "0adf2e9cf54031e48c347b1962820167fbf5fd104818ccfb2bacf1a15b6a75c4"
+            },
+            {
+              "bytes": 8176,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20/variables/variables.index",
+              "sha256": "661fe4b378a6de068d00b480a8482b565120ec7aad65c492b4d84bbef3bf327f"
+            }
+          ],
+          "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20",
+          "signature": "e63a39e083e1638d6409b685cf45efa74ab2e1c40d40a6f9ecdf12ec9d31e1d7"
+        },
+        "packages": {
+          "bleurt": "0.0.2",
+          "numpy": "1.26.4",
+          "sentencepiece": "0.2.1",
+          "tensorflow": "2.19.1",
+          "tf-slim": "1.1.0"
+        },
+        "settings": {
+          "batch_size": 16,
+          "checkpoint": "/home/rezanamazi/.cache/cmt-metrics-e452b88/checkpoints/BLEURT-20",
+          "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+          "engine": "official_bleurt.score.BleurtScorer",
+          "tf32": "tensorflow_library_default"
+        },
+        "signature": "6662871cabc898aba1c0dfd414f0bd9b91aec30060fb9953842519d43ce88bf0"
+      },
+      "chrf": {
+        "family": "chrf",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {
+          "sacrebleu": "2.6.0"
+        },
+        "settings": {
+          "segment_and_corpus": "native_defaults"
+        },
+        "signature": "561bc2bb0a5eceeaa08f8b4d8e244777b36a4f3ce27c0ff76ba628f009e29684"
+      },
+      "chrf2++": {
+        "family": "chrf2++",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {
+          "sacrebleu": "2.6.0"
+        },
+        "settings": {
+          "segment_and_corpus": "native_defaults"
+        },
+        "signature": "a0aac8fda44c8b6a1e142ee52dcf32535124c0e9c93c340645fed5e3a4683d04"
+      },
+      "comet": {
+        "family": "comet",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": {
+          "files": [
+            {
+              "bytes": 1477,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-comet-da/blobs/c7d9f3332a950355d5a77d85000f05e6f45435ea",
+              "sha256": "db7c0371f46f0840b8f25794c1e3321c9b5820a8cb6ba9694a46fc64b8fae5a6"
+            },
+            {
+              "bytes": 9693,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-comet-da/blobs/6630c3b224567e45191c26f2d42e0bc09f15a577",
+              "sha256": "33022594d5a8c22ae79dde9cd4e7ce7cb56a89e72da2bab386bb10dfa2621a41"
+            },
+            {
+              "bytes": 3401,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-comet-da/blobs/5dde8688b980afa18879f2794265bf102c6ef615",
+              "sha256": "3a9b6fcaf83209e4b63a80e0586dead77c8789d8c26f0cef28f959ca459998cf"
+            },
+            {
+              "bytes": 2323649073,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-comet-da/blobs/e213091cde220f97b89f8bdfa750c458cfea741ad62affb455b59900210ff2af",
+              "sha256": "e213091cde220f97b89f8bdfa750c458cfea741ad62affb455b59900210ff2af"
+            },
+            {
+              "bytes": 567,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-comet-da/blobs/29f8f0f8a58c195796a438b728a66765a967a4b9",
+              "sha256": "265ef22345ea5b9ffa020a7fe5be613a95ff931c44bf8d09a26d96c6c6048f60"
+            }
+          ],
+          "model": "Unbabel/wmt22-comet-da",
+          "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-comet-da/snapshots/2760a223ac957f30acfb18c8aa649b01cf1d75f2",
+          "revision": "2760a223ac957f30acfb18c8aa649b01cf1d75f2",
+          "signature": "b905752614e8b2cbef29fc6c093f2d69ab291edf2b5d9a9c02234c27f2318237"
+        },
+        "packages": {
+          "numpy": "1.26.4",
+          "pytorch-lightning": "2.6.5",
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "settings": {
+          "batch_size": 32,
+          "chunk_batches": 64,
+          "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+          "float32_matmul_precision": "high",
+          "gpus": 1,
+          "model": "Unbabel/wmt22-comet-da",
+          "tf32": true,
+          "torch_threads": 16
+        },
+        "signature": "79040e7e4ffee610089bad3c0ea810abedbb99f72cf17a419ed5302ef1605895"
+      },
+      "cometkiwi_qe": {
+        "family": "cometkiwi_qe",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": {
+          "files": [
+            {
+              "bytes": 1477,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-cometkiwi-da/blobs/c7d9f3332a950355d5a77d85000f05e6f45435ea",
+              "sha256": "db7c0371f46f0840b8f25794c1e3321c9b5820a8cb6ba9694a46fc64b8fae5a6"
+            },
+            {
+              "bytes": 20816,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-cometkiwi-da/blobs/840ccbbce72dc3ba41a252b76ac36c0f177961e2",
+              "sha256": "dc8cae48482c80b1dee06dd140fa005f91e8657040921d4e58fa8732e739d330"
+            },
+            {
+              "bytes": 4102,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-cometkiwi-da/blobs/2e9476b0dbe4f40b7de29caac6517a7dc804182f",
+              "sha256": "a33c5cf1e9c07deb54fe4b177c021ebfdedd6a0839cf82b34f98f4511203603d"
+            },
+            {
+              "bytes": 2260734705,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-cometkiwi-da/blobs/4f357aa38b0737dcd502f166238c99711ff3419d7b5c8cdf9cde08525a8e7858",
+              "sha256": "4f357aa38b0737dcd502f166238c99711ff3419d7b5c8cdf9cde08525a8e7858"
+            },
+            {
+              "bytes": 716,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-cometkiwi-da/blobs/d5c5c994d2b0ae6d95d32bb44a4fef6b8258b5f2",
+              "sha256": "eee0f391b4e2baee489117e59d967a9be0b1ad027556152c6cefcd41039c778c"
+            }
+          ],
+          "model": "Unbabel/wmt22-cometkiwi-da",
+          "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--wmt22-cometkiwi-da/snapshots/1ad785194e391eebc6c53e2d0776cada8f83179a",
+          "revision": "1ad785194e391eebc6c53e2d0776cada8f83179a",
+          "signature": "1b085eb33ddc932c6d5e2df19d05560bbf45b6fdfd8f357e81b68e2cc20ef09a"
+        },
+        "packages": {
+          "numpy": "1.26.4",
+          "pytorch-lightning": "2.6.5",
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "settings": {
+          "batch_size": 32,
+          "chunk_batches": 64,
+          "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+          "float32_matmul_precision": "high",
+          "gpus": 1,
+          "model": "Unbabel/wmt22-cometkiwi-da",
+          "tf32": true,
+          "torch_threads": 16
+        },
+        "signature": "47e8a2b8941d17c4d0ba5c6f5f1f679cbd210d1903b7e0f2991069bab9cd5fbc"
+      },
+      "sequence_similarity": {
+        "family": "sequence_similarity",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {},
+        "settings": {},
+        "signature": "7aad122f1ab79aa2abeacb730ff007c6c3eaf12e592aa8ee349032ff6c6ba6ec"
+      },
+      "target_term_coverage": {
+        "family": "target_term_coverage",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {},
+        "settings": {
+          "terminology_groups": [
+            "verified"
+          ]
+        },
+        "signature": "be414bf336211c58f0d4fcee9909daf33d5064ed8097bfbff52f7d55db36fb44"
+      },
+      "term_bertscore_recall": {
+        "family": "term_bertscore_recall",
+        "implementation": {
+          "batch_module_sha256": "f724ffb086701723499fcb88a726c71a4ab48867369bf4ec04cb9ee4b52ce445",
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": {
+          "files": [
+            {
+              "bytes": 616,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/8e5fb14e1352fd8fc678a7b293b63cfb5cf091f6",
+              "sha256": "ec7c3a99c58a38ebb702a2297f1c4586944e841b5eb29d201ff87e0f9c9abe0e"
+            },
+            {
+              "bytes": 2244817354,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/2dfa19f172412917cab174da04b46e2134811b723666965fd0aabd97caa6e23b",
+              "sha256": "2dfa19f172412917cab174da04b46e2134811b723666965fd0aabd97caa6e23b"
+            },
+            {
+              "bytes": 5069051,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/db9af13bf09fd3028ca32be90d3fb66d5e470399",
+              "sha256": "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865"
+            },
+            {
+              "bytes": 9096718,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/463f3414782c1c9405828c9b31bfa36dda1f45c5",
+              "sha256": "a898ea75433890f6610f4e470b8ebeb0c21dce5c8dd61f892eb09eb5919d2e2c"
+            },
+            {
+              "bytes": 25,
+              "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/blobs/34ddbd64a4cd3f2d9d8a9120d3662d0bf91baead",
+              "sha256": "994f46754c5bf4014f1aa92d34b1374319c3a6b3f702105cd5b742beaecd18ce"
+            }
+          ],
+          "model": "xlm-roberta-large",
+          "path": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home/hub/models--FacebookAI--xlm-roberta-large/snapshots/c23d21b0620b635a76227c604d44e43a9f0ee389",
+          "revision": "c23d21b0620b635a76227c604d44e43a9f0ee389",
+          "signature": "7e3fb548e6da03b56bde7e645f4c05e6f6bef5d94eb53a26979db80551d570ec"
+        },
+        "packages": {
+          "bert-score": "0.3.13",
+          "numpy": "1.26.4",
+          "tokenizers": "0.22.2",
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6"
+        },
+        "settings": {
+          "batch_size": 16,
+          "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+          "device": "cuda:0",
+          "idf": false,
+          "model": "xlm-roberta-large",
+          "num_layers": "bert_score_library_default",
+          "rescale_with_baseline": false,
+          "term_reference": "native_reference_target_terms joined with '; '",
+          "terminology_groups": [
+            "verified"
+          ],
+          "tf32": "torch_library_default",
+          "torch_threads": 16
+        },
+        "signature": "758275da4f5c99a8e0f7121aa79c2059701bf5311db0918e85fa329dac761968"
+      },
+      "terminology_success_rate": {
+        "family": "terminology_success_rate",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {},
+        "settings": {
+          "terminology_groups": [
+            "verified"
+          ]
+        },
+        "signature": "3018f19d041ee1dbb41b7887da732d69ca6a22a8f2ef069fec08d89ecfa80836"
+      },
+      "variant_aware_target_term_coverage": {
+        "family": "variant_aware_target_term_coverage",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {},
+        "settings": {
+          "terminology_groups": [
+            "verified"
+          ]
+        },
+        "signature": "70b11f993ac344ed091d104fee677aabd2b449a128a16238c40d58141af843e2"
+      },
+      "variant_aware_terminology_success_rate": {
+        "family": "variant_aware_terminology_success_rate",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": null,
+        "packages": {},
+        "settings": {
+          "terminology_groups": [
+            "verified"
+          ]
+        },
+        "signature": "195cef44f5401f7c5cc964c3772cfbf1fb42d3cb8d5fd9454962c6f482aba442"
+      },
+      "xcomet_xl": {
+        "family": "xcomet_xl",
+        "implementation": {
+          "core_sha256": "bbb8670f14400335d1ca14a4921202ef6bee2f52a641d1de7fd47fd91ab90316",
+          "native_metrics_sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526",
+          "python": [
+            3,
+            12
+          ],
+          "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46"
+        },
+        "model_provenance": {
+          "files": [
+            {
+              "bytes": 1519,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--XCOMET-XL/blobs/a6344aac8c09253b3b630fb776ae94478aa0275b",
+              "sha256": "11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361"
+            },
+            {
+              "bytes": 20816,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--XCOMET-XL/blobs/840ccbbce72dc3ba41a252b76ac36c0f177961e2",
+              "sha256": "dc8cae48482c80b1dee06dd140fa005f91e8657040921d4e58fa8732e739d330"
+            },
+            {
+              "bytes": 4546,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--XCOMET-XL/blobs/03527c847835027880ed9ef0cad9f9bb88bb2541",
+              "sha256": "7233b807448b65c654e62d36b73221b0fa8cd1527659322277905b7ea7f8a431"
+            },
+            {
+              "bytes": 13943384935,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--XCOMET-XL/blobs/b644a48a1163ca7f8d3bcf237816eea7ecf368ecdbd6eb16ea27fef218fcd716",
+              "sha256": "b644a48a1163ca7f8d3bcf237816eea7ecf368ecdbd6eb16ea27fef218fcd716"
+            },
+            {
+              "bytes": 988,
+              "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--XCOMET-XL/blobs/03366d7ccfbda7ae9782836b1f8dccaf16554dba",
+              "sha256": "c9cef192508a3d314778c6ec596b691b08bb286850c674cb8f38b47b90cb67c6"
+            }
+          ],
+          "model": "Unbabel/XCOMET-XL",
+          "path": "/data/shared/hf-cache/rezanamazi/chem-bench-huggingface/hub/models--Unbabel--XCOMET-XL/snapshots/6a123c5e8e6dccab25e5fcffa3c8b417abadb462",
+          "revision": "6a123c5e8e6dccab25e5fcffa3c8b417abadb462",
+          "signature": "ed16d88f70dd09ba5b3295e49d48f10d966032af56a90fc9fdda21bca222d303"
+        },
+        "packages": {
+          "numpy": "1.26.4",
+          "pytorch-lightning": "2.6.5",
+          "torch": "2.5.1+cu121",
+          "transformers": "4.57.6",
+          "unbabel-comet": "2.2.7"
+        },
+        "settings": {
+          "batch_size": 8,
+          "chunk_batches": 64,
+          "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+          "float32_matmul_precision": "high",
+          "gpus": 1,
+          "model": "Unbabel/XCOMET-XL",
+          "tf32": true,
+          "torch_threads": 16
+        },
+        "signature": "38ad7ebca3e9f6f156a872fe4edfa4827353d036ffc18fc818a7dfb136f3e566"
+      }
+    },
+    "metric_status": {
+      "bertscore": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "bleu": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "bleurt": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "chrf": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "chrf2++": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "comet": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "cometkiwi_qe": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "fsp_mqm": {
+        "detail": "paid_judging_on_hold_by_user; explicit approval is required before any judge/API call",
+        "rows_applicable": 60,
+        "rows_missing": 60,
+        "rows_not_applicable": 0,
+        "rows_scored": 0,
+        "rows_total": 60,
+        "state": "not_run"
+      },
+      "sequence_similarity": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "target_term_coverage": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "term_bertscore_recall": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "terminology_success_rate": {
+        "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+        "rows_applicable": 0,
+        "rows_missing": 0,
+        "rows_not_applicable": 60,
+        "rows_scored": 0,
+        "rows_total": 60,
+        "state": "not_applicable"
+      },
+      "variant_aware_target_term_coverage": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      },
+      "variant_aware_terminology_success_rate": {
+        "detail": "Native applicability rules select no source/reference terminology; no numeric zero was substituted",
+        "rows_applicable": 0,
+        "rows_missing": 0,
+        "rows_not_applicable": 60,
+        "rows_scored": 0,
+        "rows_total": 60,
+        "state": "not_applicable"
+      },
+      "xcomet_xl": {
+        "rows_applicable": 60,
+        "rows_missing": 0,
+        "rows_not_applicable": 0,
+        "rows_scored": 60,
+        "rows_total": 60,
+        "state": "completed"
+      }
+    },
+    "metric_wall_seconds": {
+      "bertscore": {
+        "last_invocation_wall_seconds": 0.0,
+        "wall_seconds": 0.0,
+        "worker_seconds": 0.0
+      },
+      "bleu": {
+        "corpus_shared_wall_seconds": 0.0,
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.0
+      },
+      "bleurt": {
+        "last_invocation_wall_seconds": 0.0,
+        "wall_seconds": 0.0,
+        "worker_seconds": 0.0
+      },
+      "chrf": {
+        "corpus_shared_wall_seconds": 0.0,
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.0
+      },
+      "chrf2++": {
+        "corpus_shared_wall_seconds": 0.0,
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.0
+      },
+      "comet": {
+        "last_invocation_wall_seconds": 0.0,
+        "wall_seconds": 0.0,
+        "worker_seconds": 0.0
+      },
+      "cometkiwi_qe": {
+        "last_invocation_wall_seconds": 0.0,
+        "wall_seconds": 0.0,
+        "worker_seconds": 0.0
+      },
+      "sequence_similarity": {
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.0
+      },
+      "target_term_coverage": {
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.031017710454761982
+      },
+      "term_bertscore_recall": {
+        "last_invocation_wall_seconds": 0.0,
+        "wall_seconds": 0.6980902291834354,
+        "worker_seconds": 0.0
+      },
+      "terminology_success_rate": {
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.0
+      },
+      "variant_aware_target_term_coverage": {
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.031017710454761982
+      },
+      "variant_aware_terminology_success_rate": {
+        "last_invocation_wall_seconds": 0.000704573467373848,
+        "wall_seconds": 0.06264688447117805,
+        "worker_seconds": 0.0
+      },
+      "xcomet_xl": {
+        "last_invocation_wall_seconds": 0.0,
+        "wall_seconds": 0.0,
+        "worker_seconds": 0.0
+      }
+    },
+    "model": {
+      "config_path": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/inputs/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/config.json",
+      "max_output_tokens": null,
+      "model_id": "gpt-5.4-mini",
+      "model_repository": null,
+      "original_config": null,
+      "original_name": null,
+      "original_run_dir": "/home/rezanamazi/.cache/cmt-eval-e452b88/reports/google-patents-multidirectional-60-gpt-5.4-mini-all-metrics-verified.jsonl",
+      "run_dir": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/inputs/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+      "server_path": null,
+      "temperature": null,
+      "thinking_setting": null,
+      "vllm_version": null
+    },
+    "native_module": {
+      "bytes": 34058,
+      "path": "/home/rezanamazi/.cache/cmt-eval-e452b88/src/chem_machine_translation/evaluation/metrics.py",
+      "sha256": "9cd98e249f6410ec3b154cf67bd63278f9e958179f2aa9681901496edef43526"
+    },
+    "neural_errors": {},
+    "raw_paths": {
+      "input_results": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/inputs/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/{dataset}/{setting}/results.jsonl",
+      "judge_inputs": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/fsp_mqm/55662ab7b2fe8b7ad2ff8856a96a30fb31f62ab88d70d687824ffce83191f55f/inputs.jsonl",
+      "judge_plan": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache/fsp_mqm/55662ab7b2fe8b7ad2ff8856a96a30fb31f62ab88d70d687824ffce83191f55f/plan.json",
+      "scores": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/externally_verified/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/{dataset}/{setting}/scores.jsonl",
+      "unscored_inputs": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/externally_verified/google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample/{dataset}/{setting}/unscored_inputs.jsonl"
+    },
+    "reference_commit": "e452b8821ea80ce896ae512a5728f0c2268e4e46",
+    "reference_config": "/home/rezanamazi/.cache/cmt-eval-e452b88/config/evaluation/default.toml",
+    "reference_config_metrics": [
+      "sequence_similarity",
+      "bleu",
+      "chrf",
+      "chrf2++",
+      "bertscore",
+      "term_bertscore_recall",
+      "comet",
+      "cometkiwi_qe",
+      "xcomet_xl",
+      "terminology_success_rate",
+      "variant_aware_terminology_success_rate",
+      "target_term_coverage",
+      "variant_aware_target_term_coverage",
+      "fsp_mqm"
+    ],
+    "reference_config_terminology_groups": [
+      "refined"
+    ],
+    "reference_root": "/home/rezanamazi/.cache/cmt-eval-e452b88",
+    "runtime_contract": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/runtime_provenance.json",
+    "runtime_provenance": {
+      "bytes": 9169,
+      "path": "/home/rezanamazi/projects/google-patents-eda/chem-mt-benchmark/artifacts/evaluation/e452b88/runtime_provenance.json",
+      "sha256": "25722059b622cf97f69ecbb9fcdbad499b30e407657bbb96a46e219c681eb131"
+    },
+    "scoring_environment": {
+      "cuda_visible_devices": "GPU-c15cda25-4a7f-37ef-6488-82a39d20477b",
+      "hf_home": "/home/rezanamazi/.cache/cmt-metrics-e452b88/hf-home",
+      "offline": {
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1"
+      },
+      "packages": {
+        "bert-score": null,
+        "bleurt": "0.0.2",
+        "pytorch-lightning": null,
+        "sacrebleu": null,
+        "tensorflow": "2.19.1",
+        "torch": null,
+        "transformers": null,
+        "unbabel-comet": null
+      },
+      "precision": {
+        "tensorflow_tf32": true
+      },
+      "python": "/home/rezanamazi/.cache/cmt-metrics-e452b88/bleurt-venv/bin/python",
+      "python_version": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]"
+    },
+    "shared_cache_root": "/data/shared/hf-cache/rezanamazi/cmt-evaluation-e452b88/cache",
+    "terminology_groups": [
+      "verified"
+    ],
+    "torch_threads": 16,
+    "wall_seconds": 0.051804691553115845,
+    "workers": 32
+  },
+  "run": "google-patents-multidirectional-60-gpt-5_4-mini-all-metrics-verified__native_sample",
+  "source_signature": "f527364deac0835da55e205c68e36fff70694e7f277e89b766522361e52bf962"
+}
