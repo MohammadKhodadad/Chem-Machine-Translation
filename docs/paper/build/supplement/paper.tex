@@ -1,0 +1,509 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single
+}
+
+\title{Chemistry-Aware Machine Translation Evaluation with Domain Terminology Verification}
+\author{BASF AI}
+\date{\today}
+
+\graphicspath{{../../figures/}{../../../../reports/evaluation-e452b88/analysis/figures/}}
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Chemical translation evaluation must distinguish general quality from retention of technical
+terminology. We describe a segment-level methodology combining Google Patents Chemical abstract
+pairs with an article-focused JRC-Acquis legal comparison corpus. The pipeline constructs source
+snapshots, extracts reference-side terminology using complementary linguistic and learned approaches,
+attaches external evidence, and selects exact reference spans through domain-specific large language
+model curation. The proposed generation protocol distinguishes a source-only baseline from an
+explicitly reference-derived, oracle terminology condition. Evaluation combines corpus lexical overlap,
+segment-level learned similarity, and strict and variant-aware term coverage. Intermediate artifacts
+and provenance support auditable comparisons. We report descriptive results from ten current model
+runs across chemical patents, legal articles, and legal definitions. Mixed rankings conceal
+family-level differences, and few-shot effects vary by model and dataset. These aggregate results
+do not establish a causal benefit of oracle terminology or chemically validated annotations.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:introduction}
+
+Chemical translation requires preserving distinctions in names, materials, processes, formulas,
+and quantities. General MT metrics assess overlap or learned similarity
+\cite{papineni2002,post2018,rei2020,zhang2020}; these differ from checking whether a specific technical
+term is retained correctly. We investigate how reference-side terminology annotations complement
+conventional evaluation, and how providing such terminology affects a controlled translation comparison.
+
+The primary domain is chemistry patent abstracts. JRC-Acquis legal articles offer a distinct,
+terminology-sensitive comparison domain, not additional chemical training data. The evaluation unit
+is a bounded segment, potentially containing several sentences, rather than a complete patent or
+long legal document. The intended scale is a few hundred tokens; actual corpus lengths are reported
+instead of assuming a shared 256-token mean.
+
+The contributions are multilingual benchmark construction, provenance-preserving terminology
+extraction and curation, and an evaluation protocol separating general quality from term retention.
+These preserve the chemistry-aware evaluation objective. The infrastructure is implemented, but
+the full translation comparison remains planned; no model ranking or superiority claim is made.
+
+\section{Related Work}
+\label{sec:resources}
+
+Large language models (LLMs) have been investigated as translation systems through studies of
+translation quality, prompting, and adaptation. Hendy et al.\ compare GPT models with research
+and commercial systems, reporting competitive high-resource performance but limitations for
+low-resource languages in their evaluation \cite{hendy2023}. Vilar et al.\ demonstrate the
+importance of demonstration quality for prompted translation \cite{vilar2023}, while Moslem
+et al.\ investigate adaptation using in-domain examples and terminology \cite{moslem2023}.
+These studies motivate assessing translation capability under explicitly defined conditioning
+rather than assuming uniform performance across languages and domains.
+
+Translation benchmarks operationalize these comparisons. FLORES-101 provides professionally
+translated, fully aligned multilingual references for many-to-many evaluation \cite{goyal2022}.
+WMT25 compares submitted systems, LLMs, and online providers using challenging test material,
+multiple domains, and document context \cite{kocmi2025}. Its professional evaluation covers
+15 of the 30 offered language pairs using Error Span Annotation or Multidimensional Quality
+Metrics (MQM). This work underscores the importance of test difficulty, language coverage,
+and evaluation context; our segment-level benchmark does not replicate its document-level protocol.
+
+Model comparison requires complementary quality measures. BLEU measures reference $n$-gram
+overlap \cite{papineni2002}, SacreBLEU standardizes its reporting \cite{post2018}, and chrF++
+combines character and word overlap \cite{popovic2017}. COMET learns quality prediction from
+human judgments \cite{rei2020}, whereas BERTScore compares contextual token representations
+\cite{zhang2020}. Expert MQM evaluation demonstrates the importance of annotator expertise
+and document context \cite{freitag2021}. Terminology accuracy supplies an additional dimension,
+as reflected in dedicated WMT evaluation \cite{alam2021}; variation-aware analysis further
+distinguishes legitimate alternatives from undesirable inconsistency \cite{dahan2026}.
+Reference-term retention, however, is narrower than bilingual terminology accuracy: span presence
+does not establish contextual correctness, and reference mismatch need not indicate mistranslation.
+
+Terminology extraction supports the annotations needed for these diagnostics. Chun et al.\ use
+syntactically retrieved demonstrations to improve LLM term-boundary prediction on specialized
+benchmarks \cite{chun2025}. Such work motivates evaluating extraction quality independently:
+verifying occurrence in a reference does not establish annotation completeness or expert validity.
+
+In chemistry, related tasks must be distinguished from prose translation. STOUT studies molecular
+representation-to-name conversion with structure-oriented checks \cite{rajan2021}, while CHEMDNER
+evaluates chemical mention recognition against expert annotations \cite{krallinger2015}; neither
+benchmarks multilingual chemical prose translation. For legal comparison, JRC-Acquis
+\cite{steinberger2006}, distributed through OPUS \cite{tiedemann2012}, provides parallel text.
+LegISTyr distinguishes terminology insertion from contextual choice and fluency \cite{dinatale2025},
+and an EEA terminology suite reports performance that need not follow general MT rankings
+\cite{hauksdottir2025}. Our study centers on multilingual chemical-patent translation capability,
+using legal text as a comparison domain and terminology metrics as complementary diagnostics.
+Reference-derived terminology hints constitute a separate oracle-assisted condition, not evidence
+of source-only capability.
+
+\section{Data and Methodology}
+\label{sec:methods}
+
+\subsection{Evaluation Data and Preparation}
+\label{sec:data}
+
+\paragraph{Google Patents Chemical.}
+The source is the BASF-AI within-document abstract-pairs dataset, documented
+locally as within-publication abstract pairs from the CLIR Google Patents Chemical corpus
+\cite{basfpatents}. The exporter normalizes whitespace, rejects empty text, retains accepted upstream
+judge verdicts labelled \emph{exact} or \emph{high}, and selects in deterministic dataset order.
+These are alignment-screening labels, not human chemical validation. The snapshot contains 2,750
+pairs in 11 stored directions, capped at 250 per direction. Both-side approximate lengths of
+128--384 tokens are preferred, followed by source-only, target-only, and out-of-range backfill;
+the respective counts are 1,521, 626, 366, and 237. Length is a preference, not a hard criterion.
+
+The active chemistry build retains German, English, Spanish, French, Russian, and Chinese,
+omitting Japanese. Nine stored directions plus their source/target swaps yield 18 evaluation
+directions and 4,500 planned segments. Reversal does not create independent publications.
+The upstream split name \texttt{train} denotes the input partition, not training of our translation
+systems. The export has no pinned upstream revision, so the local snapshot is needed for exact reuse.
+
+\paragraph{JRC-Acquis articles.}
+The article snapshot uses OPUS JRC-Acquis v3.0 aligned Moses files
+\cite{steinberger2006,tiedemann2012}. It selects 250 document anchors shared across English,
+Spanish, German, French, and Portuguese, generating all 20 ordered directions: 5,000 pairs,
+250 per direction. Reverse rows are exact swaps; shared anchors do not imply identical passage
+boundaries across every unordered pair. The separate definition snapshot is not included here.
+
+After legacy markup cleanup and whitespace normalization, usable aligned units contain words,
+3--180 approximate tokens on each side, and a maximum length ratio of 3. Units are concatenated
+within document boundaries, targeting 450 source tokens with nominal bounds of 250--700 and at most
+one chunk per document per pair. Strict filtering rejects residual markup, controls, all-capital
+noise, and incomplete boundaries; it does not identify languages automatically. Recorded article
+source lengths are 251--679, mean 418.6 approximate tokens, not 256. Counts use the repository
+whitespace counter, not a provider tokenizer. This approximation is especially limited for Chinese;
+the task remains segment-level despite this larger snapshot.
+
+\paragraph{Partitioning and overlap.}
+Both resources are evaluation inputs; no fine-tuning or finalized train/development/test partition
+is specified. Small anchor pilots are pipeline checks, not independent held-out evidence. Before
+final scoring, prompt-development and evaluation examples must be separated by JRC anchor and patent
+publication, preferably family. Identifier and normalized-text duplicate audits, including reverse
+directions and pilot overlap, remain pending. Public-corpus inclusion in proprietary pretraining
+cannot be excluded; preserved identifiers facilitate audits but do not establish contamination-free data.
+
+\subsection{Reference Terminology Annotation}
+\label{sec:terminology}
+
+Four automatic approaches operate on target references: domain-prompted LLM span proposals,
+Stanza/Universal Dependencies syntactic spans, XLM-R/NOBI token-classified terms, and spaCy entities,
+noun chunks, and filtered $n$-grams. Normalized duplicate keys merge provenance while retaining
+surface forms; LLM proposals absent from the reference are rejected. The article configuration also
+imports candidates from an earlier GLM-labelled manifest. This is reused automatic evidence, not
+human annotation, and must be controlled in extractor ablations.
+
+Chemistry attaches evidence from local IATE, Wikidata, and AGROVOC; articles use local IATE,
+Wikidata, and UNTERM. These respectively supply EU terminology, multilingual labels/aliases,
+FAO controlled vocabulary, and official UN terminology.
+\footnote{\url{https://iate.europa.eu/};
+\url{https://www.wikidata.org/wiki/Wikidata:Introduction};
+\url{https://www.fao.org/agrovoc/about}; \url{https://unterm.un.org/unterm2/}.}
+Scope and coverage differ: UNTERM's official languages exclude German and Portuguese. Local IATE
+uses a CSV-derived SQLite index. Matches, variants, identifiers, and categories are stored as
+evidence. Lookup misses or timeouts do not establish invalidity; chemistry network lookups have
+a configured one-second timeout.
+
+Domain-specific LLM curation selects numbered, enriched candidate IDs given the reference;
+accepted terms remain exact reference spans. Both active configurations cap candidates at 80 and
+refined terms at 16 per segment. They record \texttt{gpt-6-luna}, Responses API, temperature 0,
+1,024 output tokens, disabled thinking, and reasoning effort \texttt{none}; this endpoint identifier
+is not an independently verified immutable release. Chemistry uses four workers and a 180-second
+LLM timeout; articles use two workers and 120 seconds. Manifests retain extractor provenance,
+external support (\texttt{verified\_by}), and curation separately. Externally supported, LLM-selected,
+and human-validated are distinct statuses; no expert gold terminology set or chemical-structure
+validation is implemented. Chemical notation is preserved as text, not validated as molecular identity.
+
+\subsection{Translation Generation}
+\label{sec:generation}
+
+The one-shot translator sends one segment, language labels, and a chemistry or legal prompt to
+the selected provider, requesting only a translation and preservation of terms, formulas,
+identifiers, quantities, units, and legal effect as appropriate. There is no fine-tuning,
+retrieval augmentation, or constrained decoding. The planned paired comparison holds model and
+decoding settings fixed while toggling manifest-term injection. A source-only baseline sees no
+reference information. The other condition adds up to eight refined target terms with instructions
+to use them only when the concept is present: soft hints, not enforced lexical constraints.
+
+Since these hints derive from the evaluation reference, this is explicitly an \emph{oracle
+terminology} condition, not deployable source-only glossary induction. Pilot configurations name
+\texttt{gpt-4.1-nano} and \texttt{gpt-4.1-mini}; a legal run also names \texttt{gpt-6-luna}.
+The final cross-domain roster and provider versions remain unspecified. Temperature 0 does not
+guarantee deterministic hosted inference. Predictions, supplied terms, model metadata, and failures
+are saved as JSONL. Dry-run source copying is a pipeline check, not an MT baseline.
+
+\subsection{Quality and Terminology Evaluation}
+\label{sec:evaluation}
+
+The primary reporting set will combine corpus SacreBLEU and chrF++, segment COMET and BERTScore,
+and strict/variant-aware target coverage. BLEU uses four word $n$-gram orders, case-sensitive
+\texttt{13a} tokenization, and corpus scoring \cite{papineni2002,post2018}; chrF++ uses character
+order 6, word order 2, and $\beta=2$ \cite{popovic2017}. They require hypotheses and references,
+reward surface agreement, and can miss consequential chemical substitutions. Effective-order
+sentence BLEU is diagnostic, not a substitute for corpus BLEU. This is not an official WMT25
+scoring-protocol reproduction.
+
+COMET uses source/hypothesis/reference with \texttt{Unbabel/wmt22-comet-da} \cite{rei2020};
+BERTScore uses hypothesis/reference contextual token alignment with \texttt{xlm-roberta-large},
+recording precision, recall, and F1 \cite{zhang2020}. These are computed per segment and averaged.
+BERTScore precision/F1 concern embedding alignment, not chemical-term precision/F1; neither
+metric certifies chemical identity, formula correctness, or legal effect.
+
+For segment $i$, let $T_i$ contain applicable annotated target terms and $c_z(t)$ count occurrences
+of $t$ in text $z$. Implemented strict coverage is
+\begin{equation}
+ C_i=\frac{100}{|T_i|}\sum_{t\in T_i}
+ \min\left(\frac{c_{h_i}(t)}{c_{r_i}(t)},1\right),\quad c_{r_i}(t)>0,
+\end{equation}
+with hypothesis $h_i$ and reference $r_i$. Variant-aware coverage accepts explicit stored variants
+in the numerator. Counting uses Unicode NFKC, case folding, whitespace normalization, and substring
+matching, not word-boundary or chemical-entity matching. Case folding can erase meaningful chemical
+case distinctions; extra hallucinated terms are not penalized. Report refined-term coverage and
+its externally supported subset separately. Segments with no applicable terms are excluded, with
+counts reported. Source-conditioned terminology success requires source-term alignment; target-only
+annotations do not establish bilingual term accuracy.
+
+Term-only BERTScore recall aligns the hypothesis against concatenated reference terms as a soft
+diagnostic. The registry additionally supports reference-free COMETKiwi, XCOMET error spans, and a
+domain-specific LLM MQM-style judge. The judge returns a 0--100 score and minor/major/critical
+counts with weights 1/2/5; it is automatic, not expert annotation or an exact WMT FSP reproduction.
+These remain supplementary pending access and calibration. BLEURT is optional and checkpoint-dependent;
+NIST and terminology precision/F1 are not selected measures.
+
+\subsection{Experimental Protocol and Reproducibility}
+\label{sec:protocol}
+
+Report domains and directions separately, macro-averaging direction means and recomputing corpus
+overlap rather than averaging sentence BLEU. Paired comparisons use the same segments under baseline
+and oracle prompts. Proposed ablations isolate extractor families, external evidence, and curation,
+retaining exact-span validation. Annotation yield is not extraction accuracy without human labels;
+cross-segment consistency and expert error analysis are not yet measured. Proposed paired resampling
+groups by document/anchor and retains reversals together; statistical testing remains unimplemented.
+
+Final scoring requires freezing the partition, model roster, metric subset, aggregation, and
+uncertainty procedure. Reproduction artifacts include source checksums, Git revision, locked software,
+extractor checkpoints/language models, exact prompts, provider identifiers and decoding settings,
+dated IATE exports, and lookup caches. Selection, extraction, enrichment, curation, and manifest
+checkpoints support stage-scoped hash reuse. Authentication/network failures are not completed
+examples; successful-row denominators and failure counts must remain visible.
+
+\section{Results and Analysis}
+\label{sec:results}
+
+We analyze ten current model runs on Chemical Patents, JRC Articles, and JRC Definitions under
+zero-shot and few-shot prompting, using 84 checksum-verified aggregate summaries. Historical runs
+and the small native sample are excluded. Each metric averages directions shared across all
+models and both prompts within a dataset; shared directions do not establish identical scored
+segments. The findings below are descriptive, without confidence intervals or significance tests.
+
+\paragraph{Model comparison.}
+Figure~\ref{fig:results-ranks} summarizes Chosen~01 using the Luna terminology view. The mixed
+ranking weights semantic, lexical, and terminology family mean ranks equally, then averages the
+six dataset/prompt strata equally. Terminology gives equal weight to all, externally verified,
+and LLM-enriched groups. GPT-6 Luna ranks first, followed by Muse Glimmer and Gemma. Muse has a
+better lexical family rank than Gemma, whereas Gemma has a better semantic family rank,
+illustrating the information lost in a single aggregate ordering. These ranks depend on the
+model roster and weighting rule; they are not estimates of an absolute quality difference.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.9\linewidth]{results-rank-summary.pdf}
+	\caption{Condensed Chosen~01: overall ranks for ten current runs. Lower family mean ranks are
+	better. Model IDs are reused in Figure~\ref{fig:results-prompting}.}
+	\label{fig:results-ranks}
+\end{figure}
+
+\paragraph{Prompting and terminology.}
+Figure~\ref{fig:results-prompting} condenses Chosen~04 to COMET and variant-aware coverage of
+externally verified terms. Few-shot COMET increases for 7/10 patent models, 8/10 article models,
+and 6/10 definition models. Corresponding coverage increases occur for 6/10, 10/10, and 6/10
+models. Muse's COMET changes are $+0.012$, $+0.014$, and $+0.015$, respectively; Tiny Aya Fire's
+definition COMET decreases by $0.023$, alongside a $6.16$ percentage-point coverage decrease.
+Thus few-shot prompting does not uniformly improve either dimension. External verification
+denotes upstream evidence, not expert-validated terminology correctness.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{results-prompting-summary.pdf}
+	\caption{Condensed Chosen~04: zero-shot and few-shot scores by model ID and dataset. Coverage
+	uses the Luna externally verified subset. Axes include zero; metric-specific support may differ.}
+	\label{fig:results-prompting}
+\end{figure}
+
+\paragraph{Scope and supplementary results.}
+The supplement retains full scorecards, all-metric prompting bars, and latency and API-cost plots
+(Chosen~02--03). Latency reflects different deployments; cost reprices recorded tokens rather than
+measuring expenditure. These diagnostics establish neither controlled efficiency nor a causal
+benefit of oracle terms. Matched baseline/oracle comparisons and independent error review remain
+future work.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+The methodology links bounded parallel segments to auditable reference terminology and complementary
+evaluation measures. The current descriptive comparison shows that overall model rankings conceal
+family-level differences and that few-shot effects vary across models and domains. General quality
+and terminology coverage should therefore be reported separately. Oracle-term effects, matched-row
+uncertainty, and independently reviewed terminology correctness remain to be established.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\appendix
+\section{Terminology prompts}
+
+This appendix records the prompt families implemented in
+\texttt{src/chem\_machine\_translation/data/terminology.py}. The wording should be kept synchronized
+with the implementation when prompt changes are made.
+
+\subsection{Chemistry candidate extractor}
+
+\begin{lstlisting}
+You extract terminology candidates from target reference translations for chemistry and patent
+machine-translation benchmarks.
+
+The text may be in any language. Return only exact spans that appear in the provided target text.
+Do not translate, normalize, rewrite, lemmatize, abbreviate, explain, or invent terms.
+
+Extract only terms that a domain translator should preserve consistently:
+- chemical names, compounds, materials, formulas, reagents, solvents, polymers, proteins;
+- technical processes, methods, assay/analytical terms, properties, hazards, identifiers;
+- compact numeric/unit expressions only when the quantity itself is technically meaningful.
+
+Reject common prose, boilerplate patent wording, whole clauses, sentence fragments, headings, dates,
+citations, names, and generic single words unless they are unambiguous domain terms.
+
+Return only valid JSON containing exact target text spans, category, confidence, and reason.
+\end{lstlisting}
+
+\subsection{Legal candidate extractor}
+
+\begin{lstlisting}
+You extract legal terminology candidates from target/reference translations for legal
+machine-translation benchmarks.
+
+The text may be in any language. Return only exact spans that appear in the provided target text.
+Do not translate, normalize, rewrite, lemmatize, abbreviate, explain, or invent terms.
+
+Extract legal instruments, institutions, committees, agencies, programmes, funds, named bodies,
+procedures, rights, obligations, restrictions, sanctions, remedies, legal effects, regulatory
+domains, named legal acts, and defined terms.
+
+Reject dates, article numbers alone, paragraph references alone, people names, signatures, whole
+clauses, sentence fragments, generic single words, ordinary administrative prose, and repeated
+treaty boilerplate unless the phrase is a recognized legal or institutional term.
+
+Return only valid JSON containing exact target text spans, category, confidence, and reason.
+\end{lstlisting}
+
+\subsection{Chemistry refiner}
+
+\begin{lstlisting}
+You are a terminology selector for chemistry and patent machine-translation evaluation.
+
+You receive target/reference text and a numbered list of candidate terms that were already extracted
+by other systems. Your job is to select only candidates that are useful benchmark terminology.
+
+Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
+candidate IDs. A selected term must be an exact span in the target/reference text.
+
+Keep complete, domain-specific, and translation-sensitive chemistry and patent terms. Reject or
+down-rank generic patent words, whole clauses, sentence fragments, broad prose, headings, citations,
+partial spans, and generic verified terms unless they are part of a stronger technical phrase.
+
+Return only valid JSON with candidate_id, target_term, category, quality_score, and reason.
+\end{lstlisting}
+
+\subsection{Legal refiner}
+
+\begin{lstlisting}
+You are a terminology selector for legal and regulatory machine-translation evaluation.
+
+You receive target/reference text and a numbered list of candidate terms that were already extracted
+by other systems. Your job is to select only candidates that are useful benchmark terminology.
+
+Do not invent, translate, normalize, rewrite, lemmatize, or add terms. Select only from the provided
+candidate IDs. A selected term must be an exact span in the target/reference text.
+
+Keep legal instruments, named legal acts, institutions, committees, agencies, programmes, funds,
+defined terms, procedures, obligations, rights, restrictions, legal effects, remedies, and regulatory
+or institutional multiword expressions whose mistranslation would matter. Reject generic legal words
+unless they are part of a complete official term, headings, article numbers, dates, table-of-contents
+text, boilerplate, partial spans, and verified single words that are not useful terminology.
+
+Return only valid JSON with candidate_id, target_term, category, quality_score, and reason.
+\end{lstlisting}
+
+\section{Examples and visualization figures}
+
+\subsection{Full quantitative comparisons}
+The main paper condenses Chosen~01 and Chosen~04. The following supplementary figures retain both
+terminology annotation views, all three datasets, and both prompting settings. Family ranks and
+metric-specific direction supports follow the main reporting protocol. The two entirely unavailable
+terminology-success-rate metrics are omitted. All/external/refined groups are alternative scored
+populations, not a matched-row annotation ablation. Chosen~02 reports observed deployment latency;
+Chosen~03 reprices recorded tokens using published API quotes. Hardware, workloads, and billing
+conditions are not controlled, so these are supporting diagnostics rather than efficiency estimates.
+
+\newcommand{\benchmarkplot}[2]{%
+  \begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{#1.pdf}
+    \caption{#2}
+  \end{figure}%
+  \clearpage
+}
+\newcommand{\benchmarkstrata}[2]{%
+  \benchmarkplot{#1_overall}{#2: equal-weight overview of the six dataset/prompt strata.}
+  \benchmarkplot{#1_google_patents_zero_shot}{#2: Chemical Patents, zero-shot.}
+  \benchmarkplot{#1_google_patents_few_shot}{#2: Chemical Patents, few-shot.}
+  \benchmarkplot{#1_jrc_articles_zero_shot}{#2: JRC Articles, zero-shot.}
+  \benchmarkplot{#1_jrc_articles_few_shot}{#2: JRC Articles, few-shot.}
+  \benchmarkplot{#1_jrc_definitions_zero_shot}{#2: JRC Definitions, zero-shot.}
+  \benchmarkplot{#1_jrc_definitions_few_shot}{#2: JRC Definitions, few-shot.}
+}
+\benchmarkstrata{chosen/01_balanced_mixed_rank/luna/chosen_01_balanced_mixed_rank}{Chosen 01, Luna annotations}
+\benchmarkstrata{chosen/01_balanced_mixed_rank/original_glm/chosen_01_balanced_mixed_rank}{Chosen 01, original GLM annotations}
+\benchmarkstrata{chosen/02_latency_vs_mixed_rank/luna/chosen_02_latency_vs_mixed_rank}{Chosen 02, Luna ranking; observed request latency, not hardware-normalized speed}
+\benchmarkstrata{chosen/02_latency_vs_mixed_rank/original_glm/chosen_02_latency_vs_mixed_rank}{Chosen 02, original GLM ranking; observed request latency, not hardware-normalized speed}
+\benchmarkstrata{chosen/03_api_cost_vs_rank_latency/luna/chosen_03_api_cost_vs_rank_latency}{Chosen 03, Luna ranking; estimated API repricing, not actual bills}
+\benchmarkstrata{chosen/03_api_cost_vs_rank_latency/original_glm/chosen_03_api_cost_vs_rank_latency}{Chosen 03, original GLM ranking; estimated API repricing, not actual bills}
+\benchmarkplot{chosen/04_zero_vs_few_shot/shared_general/chosen_04_prompting_bars_general_google_patents}{Chosen 04: all general metrics, Chemical Patents.}
+\benchmarkplot{chosen/04_zero_vs_few_shot/shared_general/chosen_04_prompting_bars_general_jrc_articles}{Chosen 04: all general metrics, JRC Articles.}
+\benchmarkplot{chosen/04_zero_vs_few_shot/shared_general/chosen_04_prompting_bars_general_jrc_definitions}{Chosen 04: all general metrics, JRC Definitions.}
+\newcommand{\terminologybars}[2]{%
+  \benchmarkplot{chosen/04_zero_vs_few_shot/#1/chosen_04_prompting_bars_terminology_google_patents}{Chosen 04: #2 terminology, Chemical Patents.}
+  \benchmarkplot{chosen/04_zero_vs_few_shot/#1/chosen_04_prompting_bars_terminology_jrc_articles}{Chosen 04: #2 terminology, JRC Articles.}
+  \benchmarkplot{chosen/04_zero_vs_few_shot/#1/chosen_04_prompting_bars_terminology_jrc_definitions}{Chosen 04: #2 terminology, JRC Definitions.}
+}
+\terminologybars{luna}{Luna}
+\terminologybars{original_glm}{original GLM}
+\clearpage
+
+\subsection{Qualitative terminology visualizations}
+
+This appendix collects qualitative terminology visualizations copied into
+\texttt{docs/paper/figures/}. They are included as debugging and explanation artifacts, not as final
+quantitative results.
+
+The refiner-highlight figures use three underline lanes: gray for all extracted candidate terms,
+blue for terms selected by the domain-specific LLM refiner, and green for refined terms that also
+have external verifier evidence.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/final-four-item-1-refiner-highlights.png}
+  \caption{Chemistry patent example on carbon gasification.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/final-four-item-2-refiner-highlights.png}
+  \caption{Chemistry patent example on pharmaceutical salts and formulation terminology.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/final-four-item-3-refiner-highlights.png}
+  \caption{JRC legal example on blood-grouping reagents.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/final-four-item-4-refiner-highlights.png}
+  \caption{JRC legal example on the racism and xenophobia observatory.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/google-patents-english-extractor-highlights.png}
+  \caption{Google Patents English extractor diagnostic visualization.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{../figures/jrc-english-extractor-highlights.png}
+  \caption{JRC English extractor diagnostic visualization.}
+\end{figure}
+
+\end{document}

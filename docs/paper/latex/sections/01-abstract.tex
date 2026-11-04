@@ -4,10 +4,11 @@ terminology. We describe a segment-level methodology combining Google Patents Ch
 pairs with an article-focused JRC-Acquis legal comparison corpus. The pipeline constructs source
 snapshots, extracts reference-side terminology using complementary linguistic and learned approaches,
 attaches external evidence, and selects exact reference spans through domain-specific large language
-model curation. Translation generation separates a source-only baseline from an explicitly
-reference-derived, oracle terminology condition. Evaluation combines corpus lexical overlap,
+model curation. The proposed generation protocol distinguishes a source-only baseline from an
+explicitly reference-derived, oracle terminology condition. Evaluation combines corpus lexical overlap,
 segment-level learned similarity, and strict and variant-aware term coverage. Intermediate artifacts
-and provenance support controlled comparisons. Benchmark preparation is ongoing; comparative
-translation results are not yet available. The protocol therefore makes no claim of improved MT
-quality or chemically validated annotations.
+and provenance support auditable comparisons. We report descriptive results from ten current model
+runs across chemical patents, legal articles, and legal definitions. Mixed rankings conceal
+family-level differences, and few-shot effects vary by model and dataset. These aggregate results
+do not establish a causal benefit of oracle terminology or chemically validated annotations.
 \end{abstract}

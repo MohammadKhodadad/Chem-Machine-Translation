@@ -1,5 +1,51 @@
 \section{Examples and visualization figures}
 
+\subsection{Full quantitative comparisons}
+The main paper condenses Chosen~01 and Chosen~04. The following supplementary figures retain both
+terminology annotation views, all three datasets, and both prompting settings. Family ranks and
+metric-specific direction supports follow the main reporting protocol. The two entirely unavailable
+terminology-success-rate metrics are omitted. All/external/refined groups are alternative scored
+populations, not a matched-row annotation ablation. Chosen~02 reports observed deployment latency;
+Chosen~03 reprices recorded tokens using published API quotes. Hardware, workloads, and billing
+conditions are not controlled, so these are supporting diagnostics rather than efficiency estimates.
+
+\newcommand{\benchmarkplot}[2]{%
+  \begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{#1.pdf}
+    \caption{#2}
+  \end{figure}%
+  \clearpage
+}
+\newcommand{\benchmarkstrata}[2]{%
+  \benchmarkplot{#1_overall}{#2: equal-weight overview of the six dataset/prompt strata.}
+  \benchmarkplot{#1_google_patents_zero_shot}{#2: Chemical Patents, zero-shot.}
+  \benchmarkplot{#1_google_patents_few_shot}{#2: Chemical Patents, few-shot.}
+  \benchmarkplot{#1_jrc_articles_zero_shot}{#2: JRC Articles, zero-shot.}
+  \benchmarkplot{#1_jrc_articles_few_shot}{#2: JRC Articles, few-shot.}
+  \benchmarkplot{#1_jrc_definitions_zero_shot}{#2: JRC Definitions, zero-shot.}
+  \benchmarkplot{#1_jrc_definitions_few_shot}{#2: JRC Definitions, few-shot.}
+}
+\benchmarkstrata{chosen/01_balanced_mixed_rank/luna/chosen_01_balanced_mixed_rank}{Chosen 01, Luna annotations}
+\benchmarkstrata{chosen/01_balanced_mixed_rank/original_glm/chosen_01_balanced_mixed_rank}{Chosen 01, original GLM annotations}
+\benchmarkstrata{chosen/02_latency_vs_mixed_rank/luna/chosen_02_latency_vs_mixed_rank}{Chosen 02, Luna ranking; observed request latency, not hardware-normalized speed}
+\benchmarkstrata{chosen/02_latency_vs_mixed_rank/original_glm/chosen_02_latency_vs_mixed_rank}{Chosen 02, original GLM ranking; observed request latency, not hardware-normalized speed}
+\benchmarkstrata{chosen/03_api_cost_vs_rank_latency/luna/chosen_03_api_cost_vs_rank_latency}{Chosen 03, Luna ranking; estimated API repricing, not actual bills}
+\benchmarkstrata{chosen/03_api_cost_vs_rank_latency/original_glm/chosen_03_api_cost_vs_rank_latency}{Chosen 03, original GLM ranking; estimated API repricing, not actual bills}
+\benchmarkplot{chosen/04_zero_vs_few_shot/shared_general/chosen_04_prompting_bars_general_google_patents}{Chosen 04: all general metrics, Chemical Patents.}
+\benchmarkplot{chosen/04_zero_vs_few_shot/shared_general/chosen_04_prompting_bars_general_jrc_articles}{Chosen 04: all general metrics, JRC Articles.}
+\benchmarkplot{chosen/04_zero_vs_few_shot/shared_general/chosen_04_prompting_bars_general_jrc_definitions}{Chosen 04: all general metrics, JRC Definitions.}
+\newcommand{\terminologybars}[2]{%
+  \benchmarkplot{chosen/04_zero_vs_few_shot/#1/chosen_04_prompting_bars_terminology_google_patents}{Chosen 04: #2 terminology, Chemical Patents.}
+  \benchmarkplot{chosen/04_zero_vs_few_shot/#1/chosen_04_prompting_bars_terminology_jrc_articles}{Chosen 04: #2 terminology, JRC Articles.}
+  \benchmarkplot{chosen/04_zero_vs_few_shot/#1/chosen_04_prompting_bars_terminology_jrc_definitions}{Chosen 04: #2 terminology, JRC Definitions.}
+}
+\terminologybars{luna}{Luna}
+\terminologybars{original_glm}{original GLM}
+\clearpage
+
+\subsection{Qualitative terminology visualizations}
+
 This appendix collects qualitative terminology visualizations copied into
 \texttt{docs/paper/figures/}. They are included as debugging and explanation artifacts, not as final
 quantitative results.

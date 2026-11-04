@@ -29,6 +29,7 @@
 \author{BASF AI}
 \date{\today}
 
+\graphicspath{{../figures/}{../../../reports/evaluation-e452b88/analysis/figures/}}
 \begin{document}
 
 \maketitle
@@ -39,12 +40,13 @@ terminology. We describe a segment-level methodology combining Google Patents Ch
 pairs with an article-focused JRC-Acquis legal comparison corpus. The pipeline constructs source
 snapshots, extracts reference-side terminology using complementary linguistic and learned approaches,
 attaches external evidence, and selects exact reference spans through domain-specific large language
-model curation. Translation generation separates a source-only baseline from an explicitly
-reference-derived, oracle terminology condition. Evaluation combines corpus lexical overlap,
+model curation. The proposed generation protocol distinguishes a source-only baseline from an
+explicitly reference-derived, oracle terminology condition. Evaluation combines corpus lexical overlap,
 segment-level learned similarity, and strict and variant-aware term coverage. Intermediate artifacts
-and provenance support controlled comparisons. Benchmark preparation is ongoing; comparative
-translation results are not yet available. The protocol therefore makes no claim of improved MT
-quality or chemically validated annotations.
+and provenance support auditable comparisons. We report descriptive results from ten current model
+runs across chemical patents, legal articles, and legal definitions. Mixed rankings conceal
+family-level differences, and few-shot effects vary by model and dataset. These aggregate results
+do not establish a causal benefit of oracle terminology or chemically validated annotations.
 \end{abstract}
 
 \section{Introduction}
@@ -268,16 +270,61 @@ examples; successful-row denominators and failure counts must remain visible.
 \section{Results and Analysis}
 \label{sec:results}
 
-Comparative translation results are not yet available. Planned analysis contrasts baseline and
-oracle conditions by domain and direction, general quality with term coverage, and chemical-name,
-formula, quantity, omission, and legal-effect errors. No empirical findings are claimed.
+We analyze ten current model runs on Chemical Patents, JRC Articles, and JRC Definitions under
+zero-shot and few-shot prompting, using 84 checksum-verified aggregate summaries. Historical runs
+and the small native sample are excluded. Each metric averages directions shared across all
+models and both prompts within a dataset; shared directions do not establish identical scored
+segments. The findings below are descriptive, without confidence intervals or significance tests.
+
+\paragraph{Model comparison.}
+Figure~\ref{fig:results-ranks} summarizes Chosen~01 using the Luna terminology view. The mixed
+ranking weights semantic, lexical, and terminology family mean ranks equally, then averages the
+six dataset/prompt strata equally. Terminology gives equal weight to all, externally verified,
+and LLM-enriched groups. GPT-6 Luna ranks first, followed by Muse Glimmer and Gemma. Muse has a
+better lexical family rank than Gemma, whereas Gemma has a better semantic family rank,
+illustrating the information lost in a single aggregate ordering. These ranks depend on the
+model roster and weighting rule; they are not estimates of an absolute quality difference.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.9\linewidth]{results-rank-summary.pdf}
+	\caption{Condensed Chosen~01: overall ranks for ten current runs. Lower family mean ranks are
+	better. Model IDs are reused in Figure~\ref{fig:results-prompting}.}
+	\label{fig:results-ranks}
+\end{figure}
+
+\paragraph{Prompting and terminology.}
+Figure~\ref{fig:results-prompting} condenses Chosen~04 to COMET and variant-aware coverage of
+externally verified terms. Few-shot COMET increases for 7/10 patent models, 8/10 article models,
+and 6/10 definition models. Corresponding coverage increases occur for 6/10, 10/10, and 6/10
+models. Muse's COMET changes are $+0.012$, $+0.014$, and $+0.015$, respectively; Tiny Aya Fire's
+definition COMET decreases by $0.023$, alongside a $6.16$ percentage-point coverage decrease.
+Thus few-shot prompting does not uniformly improve either dimension. External verification
+denotes upstream evidence, not expert-validated terminology correctness.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{results-prompting-summary.pdf}
+	\caption{Condensed Chosen~04: zero-shot and few-shot scores by model ID and dataset. Coverage
+	uses the Luna externally verified subset. Axes include zero; metric-specific support may differ.}
+	\label{fig:results-prompting}
+\end{figure}
+
+\paragraph{Scope and supplementary results.}
+The supplement retains full scorecards, all-metric prompting bars, and latency and API-cost plots
+(Chosen~02--03). Latency reflects different deployments; cost reprices recorded tokens rather than
+measuring expenditure. These diagnostics establish neither controlled efficiency nor a causal
+benefit of oracle terms. Matched baseline/oracle comparisons and independent error review remain
+future work.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
 The methodology links bounded parallel segments to auditable reference terminology and complementary
-evaluation measures. Its empirical value, oracle-term effects, and cross-domain generality remain
-to be established by the planned comparisons.
+evaluation measures. The current descriptive comparison shows that overall model rankings conceal
+family-level differences and that few-shot effects vary across models and domains. General quality
+and terminology coverage should therefore be reported separately. Oracle-term effects, matched-row
+uncertainty, and independently reviewed terminology correctness remain to be established.
 
 \bibliographystyle{unsrt}
 \bibliography{references}
