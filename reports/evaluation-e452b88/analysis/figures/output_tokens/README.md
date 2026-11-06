@@ -1,6 +1,6 @@
 # Output Tokens vs Mixed Rank (Latency Bubbles)
 
-X = recorded output tokens (millions); Y = existing ten-model mixed rank; bubble area = observed latency. Select models documented as thinking by default, not runs proven to use thinking. Gemma's template defaults to thinking off; Tiny Aya has no verified default-thinking evidence. The local GPT config disables thinking but is not verified as the downloaded run's original config. Output counts are not verified as thinking-inclusive; reasoning tokens are not added again. Overall tokens sum six strata; latency weights stratum means equally. Model tokenizers and recorded workloads differ. Rankings and Chosen 03 are unchanged.
+X = recorded output tokens (millions); Y = selected-cohort mixed rank; bubble area = observed latency. Select models documented as thinking by default, not runs proven to use thinking. Gemma's template defaults to thinking off; Tiny Aya has no verified default-thinking evidence. The local GPT config disables thinking but is not verified as the downloaded run's original config. Output counts are not verified as thinking-inclusive; reasoning tokens are not added again. Overall tokens sum six strata; latency weights stratum means equally. Model tokenizers and recorded workloads differ. Rankings and Chosen 03 are unchanged.
 
 [Token counts, ranks, latencies and default-thinking provenance](../../tables/output_tokens_rank_latency.csv)
 
