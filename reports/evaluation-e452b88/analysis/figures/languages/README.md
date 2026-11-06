@@ -25,6 +25,14 @@ Partner-language sets differ, especially in the sparse patent grid. Rankings are
 - [language_direction_support](../../tables/language_direction_support.csv)
 - [language_pair_scores](../../tables/language_pair_scores.csv)
 
+## Best Achieved Performance
+
+[Best-model, best/median and hardest-pair plots](best_performance.md)
+
+## Language Violins
+
+[Pair, source-language and target-language violins](violins.md)
+
 ## Figures
 
 - native_heatmaps/shared_general/native_google_patents_zero_shot: [PNG](native_heatmaps/shared_general/native_google_patents_zero_shot.png) | [PDF](native_heatmaps/shared_general/native_google_patents_zero_shot.pdf)
@@ -77,7 +85,3 @@ Partner-language sets differ, especially in the sparse patent grid. Rankings are
 - model_pairs/luna/model_pairs_jrc_articles: [PNG](model_pairs/luna/model_pairs_jrc_articles.png) | [PDF](model_pairs/luna/model_pairs_jrc_articles.pdf)
 - model_pairs/luna/model_pairs_jrc_definitions: [PNG](model_pairs/luna/model_pairs_jrc_definitions.png) | [PDF](model_pairs/luna/model_pairs_jrc_definitions.pdf)
 - model_pairs/luna/model_pairs_all_datasets: [PNG](model_pairs/luna/model_pairs_all_datasets.png) | [PDF](model_pairs/luna/model_pairs_all_datasets.pdf)
-
-## Best Achieved Performance
-
-[Best-model, best/median and hardest-pair plots](best_performance.md)
