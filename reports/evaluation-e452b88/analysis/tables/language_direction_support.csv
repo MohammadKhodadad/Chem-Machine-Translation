@@ -1,7 +1,7 @@
 view,dataset,n_models,n_common_directions,directions,n_metric_components,state
-original_glm,google_patents,10,12,de-es;de-fr;en-de;en-es;en-fr;en-ja;en-ru;en-zh;fr-es;fr-ja;fr-ru;zh-fr,18,completed
-original_glm,jrc_articles,10,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
-original_glm,jrc_definitions,10,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
-luna,google_patents,10,17,de-en;de-fr;en-de;en-es;en-fr;en-ru;en-zh;es-en;es-fr;fr-de;fr-en;fr-es;fr-zh;ru-en;ru-fr;zh-en;zh-fr,18,completed
-luna,jrc_articles,10,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
-luna,jrc_definitions,10,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
+original_glm,google_patents,7,11,de-fr;en-de;en-es;en-fr;en-ja;en-ru;en-zh;fr-es;fr-ja;fr-ru;zh-fr,18,completed
+original_glm,jrc_articles,7,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
+original_glm,jrc_definitions,7,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
+luna,google_patents,7,17,de-en;de-fr;en-de;en-es;en-fr;en-ru;en-zh;es-en;es-fr;fr-de;fr-en;fr-es;fr-zh;ru-en;ru-fr;zh-en;zh-fr,18,completed
+luna,jrc_articles,7,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
+luna,jrc_definitions,7,20,de-en;de-es;de-fr;de-pt;en-de;en-es;en-fr;en-pt;es-de;es-en;es-fr;es-pt;fr-de;fr-en;fr-es;fr-pt;pt-de;pt-en;pt-es;pt-fr,18,completed
