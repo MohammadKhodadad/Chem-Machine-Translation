@@ -50,11 +50,10 @@ LABELS = {
     "muse_glimmer_30b": "Muse Glimmer 30B",
     "nemotron_3_5_lightning_30b_a3b": "Nemotron 3.5 Lightning",
     "qwen38_27b_local": "Qwen3.8 27B",
-    "tiny_aya_earth": "Tiny Aya Earth",
-    "tiny_aya_fire": "Tiny Aya Fire",
     "tiny_aya_global": "Tiny Aya Global",
-    "tiny_aya_water": "Tiny Aya Water",
 }
+EXCLUDED_RUNS = frozenset(("tiny_aya_earth", "tiny_aya_fire", "tiny_aya_water"))
+EXCLUDED_DIRECTIONS = {"google_patents": frozenset(("es-de", "de-es"))}
 DEFAULT_THINKING_MODELS = {
     "gpt_6_luna_azure": {
         "source_url": "https://developers.openai.com/api/docs/models/gpt-6-luna",
@@ -98,11 +97,44 @@ METRIC_LABELS = {
 
 
 def population(run):
+    if run.split("__", 1)[0] in EXCLUDED_RUNS:
+        return "excluded"
     if "__historical_untimed" in run:
         return "historical"
     if "__native_sample" in run:
         return "native_sample"
     return "current"
+
+
+def select_analysis_summary(summary):
+    if population(summary["run"]) == "excluded":
+        return None
+    return {
+        **summary,
+        "dataset_settings": {
+            dataset: {
+                setting: {
+                    **group,
+                    "by_direction": {
+                        direction: result
+                        for direction, result in group["by_direction"].items()
+                        if direction not in EXCLUDED_DIRECTIONS.get(dataset, ())
+                    },
+                }
+                for setting, group in settings.items()
+            }
+            for dataset, settings in summary["dataset_settings"].items()
+        },
+    }
+
+
+def select_analysis_points(points):
+    return [
+        row
+        for row in points
+        if population(row["run"]) != "excluded"
+        and row.get("direction") not in EXCLUDED_DIRECTIONS.get(row["dataset"], ())
+    ]
 
 
 def write_csv(path, rows):
@@ -151,6 +183,9 @@ def load_summaries(root):
         run = summary["run"]
         if run != entry["run"]:
             raise ValueError(f"Run mismatch: {entry['path']}")
+        summary = select_analysis_summary(summary)
+        if summary is None:
+            continue
         identity = {
             "view": entry["terminology_view"],
             "category": entry["category"],
@@ -238,6 +273,11 @@ def load_summaries(root):
 
 
 def build_aggregates(summaries):
+    summaries = {
+        key: selected
+        for key, summary in summaries.items()
+        if (selected := select_analysis_summary({**summary, "run": key[2]})) is not None
+    }
     runs = sorted(
         run
         for view, category, run in summaries
@@ -620,7 +660,7 @@ def write_tables(output, aggregates):
     markdown = [
         "# Benchmark Performance Tables",
         "",
-        "Descriptive direction-macro scores on directions shared by all ten current runs "
+        "Descriptive direction-macro scores on directions shared by all selected current runs "
         "and both prompt settings within each metric/dataset/view/subset. "
         "NA means no common scored support, never zero. Counts are in the CSV files. "
         "Different rows may still contain different translation examples. No significance claims.",
@@ -700,6 +740,8 @@ def bubble_area(bleu):
 def build_language_direction_rows(points, runs):
     from scipy.stats import rankdata
 
+    points = select_analysis_points(points)
+    runs = [run for run in runs if population(run) != "excluded"]
     lookup = {}
     for row in points:
         value = float(row["value"])
@@ -976,6 +1018,8 @@ BEST_LANGUAGE_METRICS = ("comet", "chrf2++", "variant_aware_target_term_coverage
 
 
 def build_best_language_rows(points, runs):
+    points = select_analysis_points(points)
+    runs = [run for run in runs if population(run) != "excluded"]
     groups = defaultdict(dict)
     model_rows = []
     for row in points:
@@ -1315,6 +1359,243 @@ def write_best_language_figures(output, points, runs):
         index.write_text(
             index.read_text(encoding="utf-8").rstrip()
             + "\n\n## Best Achieved Performance\n\n"
+            + link
+            + "\n",
+            encoding="utf-8",
+        )
+    return saved
+
+
+def build_language_violin_rows(points, runs):
+    _, models = build_best_language_rows(points, runs)
+    rows = []
+    for row in models:
+        source, target = row["direction"].split("-", 1)
+        for role, language in (("pair", row["direction"]), ("from", source), ("to", target)):
+            rows.append({**row, "role": role, "language_group": language})
+    groups = defaultdict(list)
+    for row in rows:
+        groups[
+            tuple(
+                row[field]
+                for field in (
+                    "view",
+                    "dataset",
+                    "setting",
+                    "category",
+                    "metric",
+                    "role",
+                    "language_group",
+                )
+            )
+        ].append(row)
+    support = []
+    for key, selected in groups.items():
+        values = [row["value"] for row in selected]
+        directions = sorted({row["direction"] for row in selected})
+        counts = [int(row["rows_scored"]) for row in selected]
+        support.append(
+            {
+                **dict(
+                    zip(
+                        (
+                            "view",
+                            "dataset",
+                            "setting",
+                            "category",
+                            "metric",
+                            "role",
+                            "language_group",
+                        ),
+                        key,
+                        strict=True,
+                    )
+                ),
+                "n_points": len(selected),
+                "n_models": len(runs),
+                "n_directions": len(directions),
+                "directions": ";".join(directions),
+                "mean_score": mean(values),
+                "median_score": median(values),
+                "minimum_score": min(values),
+                "maximum_score": max(values),
+                "min_rows_scored": min(counts),
+                "max_rows_scored": max(counts),
+            }
+        )
+    return rows, support
+
+
+def write_language_violin_figures(output, points, runs):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.lines import Line2D
+
+    rows, support = build_language_violin_rows(points, runs)
+    (output / "tables").mkdir(parents=True, exist_ok=True)
+    write_csv(output / "tables/language_violin_points.csv", rows)
+    write_csv(output / "tables/language_violin_support.csv", support)
+    contexts = defaultdict(list)
+    for row in rows:
+        contexts[(row["view"], row["dataset"], row["setting"], row["role"])].append(row)
+    colors = plt.get_cmap("tab10")
+    model_colors = {run: colors(index) for index, run in enumerate(runs)}
+    titles = {"pair": "Language Pair", "from": "Source Language", "to": "Target Language"}
+    saved = []
+    for (view, dataset, setting, role), selected in contexts.items():
+        panels = sorted({(row["category"], row["metric"]) for row in selected})
+        figure, axes = plt.subplots(1, len(panels), figsize=(12 * len(panels), 9), squeeze=False)
+        for axis, (category, metric) in zip(axes.flat, panels, strict=True):
+            groups = defaultdict(list)
+            for row in selected:
+                if (row["category"], row["metric"]) == (category, metric):
+                    groups[row["language_group"]].append(row)
+            labels = sorted(groups)
+            for position, language in enumerate(labels):
+                source = sorted(groups[language], key=lambda row: (row["direction"], row["run"]))
+                values = np.asarray([row["value"] for row in source], dtype=float)
+                if len(values) >= 3 and np.ptp(values) > 0:
+                    violin = axis.violinplot(
+                        [values],
+                        positions=[position],
+                        widths=0.72,
+                        showmedians=True,
+                        showextrema=False,
+                        bw_method="scott",
+                    )
+                    for body in violin["bodies"]:
+                        body.set_facecolor("#a1acb3")
+                        body.set_edgecolor("#697680")
+                        body.set_alpha(0.35)
+                    violin["cmedians"].set_color("#222222")
+                else:
+                    axis.hlines(
+                        float(np.median(values)),
+                        position - 0.25,
+                        position + 0.25,
+                        color="#222222",
+                        linewidth=1.5,
+                        zorder=4,
+                    )
+                jitter = ((np.arange(len(values)) * 0.61803398875) % 1 - 0.5) * 0.36
+                axis.scatter(
+                    position + jitter,
+                    values,
+                    s=12,
+                    color=[model_colors[row["run"]] for row in source],
+                    marker="o",
+                    alpha=0.8,
+                    edgecolors="none",
+                    zorder=3,
+                )
+            axis.set_xticks(
+                range(len(labels)),
+                [
+                    language.replace("-", " -> ")
+                    if role == "pair"
+                    else LANGUAGE_LABELS.get(language, language)
+                    for language in labels
+                ],
+                rotation=60 if role == "pair" else 35,
+                ha="right",
+                fontsize=9,
+            )
+            axis.set_ylabel(f"{METRIC_LABELS[metric]} (native score)")
+            axis.set_xlabel(titles[role])
+            axis.set_title(
+                METRIC_LABELS[metric]
+                + (
+                    ""
+                    if category == "not_applicable"
+                    else "\n" + category.replace("_", " ").title()
+                ),
+                fontsize=13,
+            )
+            axis.margins(y=0.05)
+            axis.grid(axis="y", color="#e0e0e0", linewidth=0.6)
+            axis.set_axisbelow(True)
+            axis.spines[["top", "right"]].set_visible(False)
+        figure.suptitle(
+            f"Performance Distributions by {titles[role]} | {DATASETS[dataset]} | "
+            f"{view} | {setting.replace('_', ' ').title()}",
+            fontsize=22,
+            y=0.98,
+        )
+        figure.legend(
+            handles=[
+                Line2D([], [], color=colors(index), marker="o", linestyle="none", label=LABELS[run])
+                for index, run in enumerate(runs)
+            ],
+            loc="lower center",
+            bbox_to_anchor=(0.5, 0.065),
+            ncol=min(5, len(runs)),
+            frameon=False,
+            fontsize=10,
+        )
+        figure.subplots_adjust(top=0.86, bottom=0.29, wspace=0.28)
+        figure.text(
+            0.5,
+            0.013,
+            "One point = one model-direction score, NOT one translation. "
+            "Equal model/direction contributions; native axes fit all observations.\n"
+            "Scott-bandwidth violin KDE; black line = median. Constant/sparse groups "
+            "use points/median only. Partner sets and metric/term-group support may "
+            "differ; no statistical inference.",
+            ha="center",
+            fontsize=10,
+            linespacing=1.5,
+        )
+        relative = f"languages/violins/{role}/{view}/violin_{role}_{dataset}_{setting}"
+        for extension in ("png", "pdf"):
+            path = output / "figures" / f"{relative}.{extension}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            figure.savefig(path, dpi=160, bbox_inches="tight")
+        plt.close(figure)
+        saved.append(relative)
+    lines = [
+        "# Language Performance Violins",
+        "",
+        "Three collections: pair violins contain all models for each directed pair; "
+        "source-language violins pool outgoing model-direction scores; target-language "
+        "violins pool incoming scores. Native COMET, chrF++ and variant-aware terminology "
+        "coverage are kept in separate metric/term-group panels. Datasets, annotation "
+        "views and zero-/few-shot are kept separate.",
+        "",
+        "Every direction has every model and both prompts available. One point is one "
+        f"model-direction aggregate, NOT one translation. Pair groups have {len(runs)} points; "
+        f"source/target groups have {len(runs)} points per supported partner direction. "
+        "Thus models "
+        "and directions contribute equally; translation counts do not weight the density. "
+        "chrF++ uses the direction corpus score, not a mean of segment chrF++ scores.",
+        "",
+        "Native axes fit observed values with 5% padding; no normalization, zero-baseline "
+        "requirement or outlier clipping. Model colors and circular dots are consistent "
+        "across panels. Violin shape uses Scott-bandwidth KDE; black center line is the "
+        "median. Constant/sparse groups show points and median only. These are descriptive "
+        "distributions, not confidence intervals or evidence of statistical significance.",
+        "",
+        "Partner-language and applicable-row sets can differ between languages, metrics "
+        "and term groups. Missing groups are omitted, not zero-filled. Inspect the support "
+        "CSV before comparing groups. Shared documents and models are not independent; "
+        "small underlying translation samples and test/reference exposure can affect scores.",
+        "",
+        "- [Plotted native points](../../tables/language_violin_points.csv)",
+        "- [Group counts, means, medians and direction/row support]"
+        "(../../tables/language_violin_support.csv)",
+        "",
+        "## Figures",
+        "",
+    ]
+    for relative in saved:
+        target = Path(relative).relative_to("languages").as_posix()
+        lines.append(f"- {target}: [PNG]({target}.png) | [PDF]({target}.pdf)")
+    (output / "figures/languages/violins.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    index = output / "figures/languages/README.md"
+    link = "[Pair, source-language and target-language violins](violins.md)"
+    if index.exists() and link not in index.read_text(encoding="utf-8"):
+        index.write_text(
+            index.read_text(encoding="utf-8").rstrip()
+            + "\n\n## Language Violins\n\n"
             + link
             + "\n",
             encoding="utf-8",
@@ -1688,6 +1969,13 @@ def write_language_analysis(output, points, runs):
             "## Best Achieved Performance",
             "",
             "[Best-model, best/median and hardest-pair plots](best_performance.md)",
+        ]
+    if (output / "figures/languages/violins.md").exists():
+        methodology += [
+            "",
+            "## Language Violins",
+            "",
+            "[Pair, source-language and target-language violins](violins.md)",
         ]
     methodology += ["", "## Figures", ""]
     for relative in saved:
@@ -2347,7 +2635,7 @@ def write_distribution_figures(output, rows):
             figure.text(
                 0.06,
                 0.9,
-                "Each point is one language direction, averaged equally across ten models. "
+                "Each point is one language direction, averaged equally across selected models. "
                 "All three term types use the same directions.",
                 fontsize=11,
             )
@@ -2657,7 +2945,7 @@ def write_prompting_bar_figures(
                 wspace=0.25,
             )
             normalization_notes = (
-                "Panel min-max normalization shared across all ten models and both prompts: "
+                "Panel min-max normalization shared across all selected models and both prompts: "
                 "0 = observed minimum, 1 = observed maximum, NOT absolute quality.\n"
                 "Constant panels map to 0.5. Dataset/view/term-group panels have separate bounds; "
                 "normalized magnitudes are not comparable across panels.\n"
@@ -2737,7 +3025,7 @@ def write_chosen_prompting_figures(output, bar_figures, *, zoomed=False):
         "",
         (
             "Paired zero-shot (blue) and few-shot (orange) direction-level distributions for "
-            "all ten models. Three general-metric figures and six terminology figures cover "
+            "all selected models. Three general-metric figures and six terminology figures cover "
             "all three datasets and both annotation views, with separate term-group panels. "
             "These are identical copies of the zoomed native-score violins, not new scores."
             if zoomed
@@ -3065,7 +3353,7 @@ def write_correlation_figures(output, runs, correlations, selected_columns=None)
         )
         aggregation_text = (
             "All datasets: one point per model, equally averaging three dataset direction-macros; "
-            "10 models, NOT 30 pooled model/dataset points.\n"
+            "One observation per selected model, NOT pooled model/dataset points.\n"
             if dataset == "all_datasets"
             else ""
         )
@@ -3111,6 +3399,8 @@ def load_translation_timings(root):
         document = json.loads(payload)
         if document.get("name") != entry["run"]:
             raise ValueError(f"Translation timing identity mismatch: {entry['run']}")
+        if population(entry["run"]) == "excluded":
+            continue
         document["_source_url"] = entry["source_url"]
         document["_sha256"] = entry["sha256"]
         summaries[entry["run"]] = document
@@ -3586,7 +3876,7 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
             if output_tokens
             else "Estimated hosted-API token cost for recorded workload (USD; lower is better)"
         )
-        axis.set_ylabel("Balanced mixed rank among all ten models (1 = best)")
+        axis.set_ylabel("Balanced mixed rank among selected models (1 = best)")
         axis.grid(color="#e4e8e5", linewidth=0.7)
         axis.set_axisbelow(True)
         legend_sizes = (20, 60, 120)
@@ -3598,8 +3888,8 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
             handles,
             [f"{seconds} s" for seconds in legend_sizes],
             title="Bubble area: observed latency\nSmaller = faster",
-            loc="lower right",
-            bbox_to_anchor=(0.98, 0.0 if output_tokens else 0.04),
+            loc="upper left",
+            bbox_to_anchor=(1.02, 1.0),
             frameon=False,
             labelspacing=1.2,
             handlelength=4,
@@ -3631,7 +3921,7 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
             ha="center",
             fontsize=12,
         )
-        figure.subplots_adjust(left=0.085, right=0.97, top=0.85, bottom=0.30)
+        figure.subplots_adjust(left=0.085, right=0.76, top=0.85, bottom=0.30)
         figure.canvas.draw()
         for text, row in zip(texts, plotted, strict=True):
             position_x, position_y = axis.transData.transform(
@@ -3657,6 +3947,7 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
         )
         omitted = [row["model"] for row in members if row["plot_state"] != "plotted"]
         token_notes = (
+            "Original generation workload before analysis exclusions; not remeasured.\n"
             "Area = 8 square points per latency second; identical token-axis and area scales "
             "across figures. Smaller bubbles mean lower observed latency.\n"
             "Recorded output totals, NOT verified thinking-inclusive counts. "
@@ -3664,12 +3955,13 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
             "Cohort: thinking enabled by default in official cards/templates; "
             "benchmark-run overrides are unverified.\n"
             "Overall tokens sum six dataset/prompt strata; latency averages their means equally. "
-            "Ranks remain among all ten models, not the subset.\n"
+            "Ranks remain among all selected models, not the subset.\n"
             "Tokenizers, hardware, concurrency and workloads differ; "
             "not a row-matched or equal-budget comparison.\n"
             f"Excluded/missing: {', '.join(omitted) if omitted else 'none'}."
         )
         cost_notes = (
+            "Original generation workload before analysis exclusions; not remeasured.\n"
             "Upper-left with a smaller bubble is preferable. Area = 8 square points per "
             "latency second; identical area and axis scales across figures.\n"
             "Cost: published hosted-API reference repricing of recorded input + output tokens, "
@@ -3678,7 +3970,7 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
             "Hardware, concurrency and workloads differ; cost, timing and quality are not "
             "proven row-matched.\n"
             "Overall cost sums six dataset/prompt strata; overall latency averages their means "
-            "equally. Ranks are retained from all ten models, "
+            "equally. Ranks are retained from all selected models, "
             "not recomputed for the priced subset.\n"
             f"Unpriced/missing (not zero): {', '.join(omitted) if omitted else 'none'}."
         )
@@ -3704,7 +3996,7 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
         saved.append(relative)
     index = output / "figures" / ("output_tokens" if output_tokens else "chosen") / "README.md"
     token_description = (
-        "X = recorded output tokens (millions); Y = existing ten-model mixed rank; "
+        "X = recorded output tokens (millions); Y = selected-cohort mixed rank; "
         "bubble area = observed latency. Select models documented as thinking by default, "
         "not runs proven to use thinking. Gemma's template defaults to thinking off; "
         "Tiny Aya has no verified default-thinking evidence. The local GPT config disables "
@@ -3716,7 +4008,7 @@ def write_rank_latency_bubble_figures(output, rows, *, output_tokens):
     description = (
         token_description
         if output_tokens
-        else "X = reference hosted-API token-cost estimate; Y = mixed rank among all ten models; "
+        else "X = reference hosted-API token-cost estimate; Y = selected-cohort mixed rank; "
         "bubble area = observed latency (larger means slower). Only models with a verified "
         "reference quote and latency are plotted. Cost is hypothetical hosted repricing; "
         "latency is from the original deployment, not that hosted quote. No absent price is zero."
@@ -4016,7 +4308,8 @@ def write_chosen_rank_figures(output, rows):
             "all / external / LLM-enriched groups equally. "
             "Tied metric scores receive average ranks.\n"
             f"{aggregation}\n"
-            "Ten current models; metric-specific shared directions, not proven identical rows. "
+            "Selected current models; metric-specific shared directions, "
+            "not proven identical rows. "
             "All-NA metrics omitted. Descriptive chosen weights, "
             "not a significance or human-validity claim.",
             ha="center",
@@ -4058,6 +4351,16 @@ def write_readme(output, figures):
         "Generated locally from all 84 checksum-verified grouped summaries. "
         "No models or metrics were rerun.",
         "",
+        "Analysis cohort: Gemma, GPT-6 Luna, Granite, Muse, Nemotron, Qwen and Tiny Aya Global. "
+        "Tiny Aya Earth/Fire/Water are excluded. Both es-de and de-es are excluded only from "
+        "Google Patents before recomputing support, scores, ranks, correlations and plots. "
+        "Original checksum-pinned summaries remain unchanged.",
+        "",
+        "Observed latency, token totals and estimated token costs describe the original "
+        "generation workloads, which may include the excluded patent directions. They were "
+        "not remeasured or reduced by an unsupported per-direction subtraction. Quality "
+        "ranks use the filtered seven-model/direction cohort.",
+        "",
         "Tables and CSVs retain all 14 metric slots: nine general and five terminology metrics. "
         "Twelve have numeric results. Both terminology-success-rate metrics are marked "
         "`not_applicable` in every current-run direction group because their native "
@@ -4067,6 +4370,11 @@ def write_readme(output, figures):
         "",
         "## Tables",
         "",
+        *(
+            ["- [Pair, source-language and target-language violins](figures/languages/violins.md)"]
+            if (output / "figures/languages/violins.md").exists()
+            else []
+        ),
         *(
             [
                 "- [Best-model, best/median and hardest-pair analysis]"
@@ -4213,8 +4521,8 @@ def write_readme(output, figures):
                 f"Searched {selected[0]['n_candidate_sets']} supported sets across "
                 f"{selected[0]['n_contexts']} view/prompt/method contexts. These metrics remain "
                 "correlated; this descriptive shortlist does not establish independence, "
-                "metric validity, or coverage of every quality aspect. Existing rankings "
-                "are unchanged.",
+                "metric validity, or coverage of every quality aspect. This shortlist does not "
+                "determine the model rankings.",
                 "",
             ]
     lines += [
@@ -4222,7 +4530,7 @@ def write_readme(output, figures):
         "## Interpretation",
         "",
         "- Output-token bubble plots (outside the chosen collection) use recorded output "
-        "tokens on x (millions), original ten-model mixed "
+        "tokens on x (millions), selected-cohort mixed "
         "rank on y, and latency-proportional bubble area. Only models documented as thinking "
         "by default are plotted: GPT-6 Luna, Granite 4.2, Muse Glimmer, Nemotron 3.5 Lightning "
         "and Qwen3.8. This does not verify the benchmark run's thinking mode: in particular, "
@@ -4235,8 +4543,8 @@ def write_readme(output, figures):
         "or hardware-controlled interpretation. All token plots share axis and area scales.",
         "- All-dataset correlations first compute pair-specific shared-direction means inside "
         "each dataset, then average the three dataset means equally per model before "
-        "correlating the ten model scores. They are NOT averages of correlation coefficients "
-        "or pooled 30-observation correlations. Both prompts/views remain separate. Every "
+        "correlating the selected model scores. They are NOT averages of correlation coefficients "
+        "or pooled model/dataset correlations. Both prompts/views remain separate. Every "
         "dataset must have common scored support; otherwise the pair is NA. CSV fields retain "
         "per-dataset direction lists and total dataset-direction support counts. Single-dataset "
         "coefficients use the original method. Four-metric plots show the same global shortlist "
@@ -4247,7 +4555,7 @@ def write_readme(output, figures):
         "are clipped, and original zero-inclusive and normalized figures remain available.",
         "- New normalized violin figures are separate from the native-score violins. "
         "Within each dataset/view/term-group/metric panel, min-max bounds are shared across "
-        "all ten models, both prompts and all observed directions. The transformation is "
+        "all selected models, both prompts and all observed directions. The transformation is "
         "(score - panel minimum) / (panel maximum - panel minimum); constant panels map to "
         "0.5. Zero and one denote observed panel endpoints, not absolute quality. Bounds "
         "differ between panels, so normalized magnitudes must not be compared across "
@@ -4263,7 +4571,7 @@ def write_readme(output, figures):
         "observed range; lines show medians. Groups with fewer than three points or constant "
         "scores show points/median only. These are distributions across language directions, "
         "NOT per-translation distributions, confidence intervals or independent samples. "
-        "Bar means can differ from violin medians. Original bars and paper figures are unchanged.",
+        "Bar means can differ from violin medians. All report plots use the selected cohort.",
         "- Prompting bar figures show one panel per available metric with models on x and "
         "native scores on y: zero-shot on the left, few-shot on the right. All panels use "
         "zero-inclusive axes, without normalization or pooling across datasets. General "
@@ -4272,7 +4580,7 @@ def write_readme(output, figures):
         "Scores reuse the tables' metric-specific common direction support across all models "
         "and both prompts. NA bars are labeled, not assigned zero; universally unavailable "
         "success-rate metrics are omitted. No row-paired or significance claims are implied.",
-        "- Chosen 03 uses reference estimated API cost on x, the existing ten-model mixed "
+        "- Chosen 03 uses reference estimated API cost on x, the selected-cohort mixed "
         "rank on y (rank 1 at the top), and bubble area proportional to observed latency "
         "(8 square points per second; larger means slower). Only verified priced models "
         "with measured latency are plotted; others remain in the bubble CSV as unpriced "
@@ -4309,11 +4617,13 @@ def write_readme(output, figures):
         "roster and chosen weights; they are descriptive, not evidence of significance. "
         "Exact metric values, metric ranks, direction supports and denominators are exported. "
         "Overall metric availability must be consistent across strata.",
-        "- Main tables/figures include ten current run identifiers. Three historical snapshots "
+        "- Main tables/figures include seven current run identifiers. "
+        "Retained historical snapshots "
         "and the 60-row native sample remain in direction/coverage/provenance exports, "
         "not the main comparisons.",
         "- For each metric/dataset/annotation-view/subset, intersect scored directions across "
-        "all ten runs AND both prompting settings. Average those directions with equal weight. "
+        "all selected runs AND both prompting settings. "
+        "Average those directions with equal weight. "
         "Actual direction lists and scored/applicable row counts are retained in the CSV files.",
         "- BLEU/chrF/chrF++ cells average direction-level corpus scores; they are NOT pooled "
         "corpus scores. Learned/terminology cells average direction-level segment means. "
@@ -4337,15 +4647,15 @@ def write_readme(output, figures):
         "measures model-rank association with average ranks for ties. Each observation is one "
         "current model's direction-macro score, not a translation or language direction. "
         "Datasets, prompts and annotation views are kept separate. For each metric pair, "
-        "directions are intersected across all ten models, both prompts, both metrics, and "
+        "directions are intersected across all selected models, both prompts, both metrics, and "
         "all three terminology groups for any terminology metric involved. Thus cross-group "
         "coefficients use shared direction support. Different metric pairs can use different "
         "supports; these pairwise matrices need not be positive semidefinite. Exact supports "
-        "are exported. Cells show unchanged coefficients to three decimals; colors use the "
+        "are exported. Cells show recomputed coefficients to three decimals; colors use the "
         "same signed fourth-root distance-to-endpoint scale on [-1, 1] across all figures "
         "to expand differences near +/-1. Colorbar ticks remain actual coefficients; "
-        "color distances are nonlinear and do not imply effect sizes or significance. Supports "
-        "and coefficients are unchanged. Constant/unavailable scores give NA. "
+        "color distances are nonlinear and do not imply effect sizes or significance. The color "
+        "transform does not change computed coefficients. Constant/unavailable scores give NA. "
         "No p-values or significance claims; "
         "the models are not independent random samples and identical rows are not established.",
         "- Score scales are unchanged. Coverage percentages use 0-100; learned scores use "
@@ -4364,7 +4674,7 @@ def write_readme(output, figures):
         "Source-conditioned terminology success rates remain available in the tables.",
         "- Bubble charts use COMET on x, the selected term subset's target coverage on y, and area "
         "proportional to BLEU (36 square points per BLEU point; no min/max size remapping). "
-        "All three metrics use the same direction intersection across ten models and both "
+        "All three metrics use the same direction intersection across selected models and both "
         "prompt settings within each view/subset. Supports may differ between view/subsets; "
         "metric-specific row denominators can still differ. All bubble charts share axis limits "
         "and size scaling; neither cost nor model size is implied.",
@@ -4411,7 +4721,35 @@ def main():
         action="store_true",
         help="Render best-model, best/median and hardest-pair plots from native direction CSV.",
     )
+    parser.add_argument(
+        "--language-violins-only",
+        action="store_true",
+        help="Render pair/source/target language violins from native direction CSV only.",
+    )
     args = parser.parse_args()
+    if args.language_violins_only:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        path = args.output / "tables/prompting_violin_points.csv"
+        if not path.exists():
+            parser.error("Generate native direction scores before rendering language violins")
+        with path.open(encoding="utf-8", newline="") as handle:
+            points = select_analysis_points(list(csv.DictReader(handle)))
+        runs = sorted({row["run"] for row in points})
+        figures = write_language_violin_figures(args.output, points, runs)
+        write_readme(
+            args.output,
+            sorted(
+                path.relative_to(args.output / "figures").with_suffix("").as_posix()
+                for path in (args.output / "figures").rglob("*.png")
+            ),
+        )
+        print(
+            f"Wrote {len(figures)} language violin sets; "
+            f"see {args.output / 'figures/languages/violins.md'}"
+        )
+        return
     if args.best_languages_only:
         import matplotlib
 
@@ -4420,7 +4758,7 @@ def main():
         if not path.exists():
             parser.error("Generate native direction scores before rendering best-language views")
         with path.open(encoding="utf-8", newline="") as handle:
-            points = list(csv.DictReader(handle))
+            points = select_analysis_points(list(csv.DictReader(handle)))
         runs = sorted({row["run"] for row in points})
         figures = write_best_language_figures(args.output, points, runs)
         write_readme(
@@ -4443,7 +4781,7 @@ def main():
         if not path.exists():
             parser.error("Generate native direction scores before rendering language analysis")
         with path.open(encoding="utf-8", newline="") as handle:
-            points = list(csv.DictReader(handle))
+            points = select_analysis_points(list(csv.DictReader(handle)))
         runs = sorted({row["run"] for row in points})
         figures = write_language_analysis(args.output, points, runs)
         write_readme(
@@ -4540,6 +4878,7 @@ def main():
     figures += write_chosen_prompting_figures(args.output, zoomed_violin_figures, zoomed=True)
     figures += write_language_analysis(args.output, violin_rows, runs)
     figures += write_best_language_figures(args.output, violin_rows, runs)
+    figures += write_language_violin_figures(args.output, violin_rows, runs)
     write_readme(args.output, figures)
     print(
         f"Validated {len(summaries)} summaries; exported {len(details)} direction groups "

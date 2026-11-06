@@ -78,9 +78,45 @@ def test_common_support_intersects_models_and_prompt_settings():
         for row in aggregates
         if row["view"] == "shared_general" and row["dataset"] == "google_patents"
     ]
-    assert len(runs) == 10
-    assert len(selected) == 10 * 2 * len(renderer.GENERAL)
+    assert len(runs) == len(renderer.LABELS)
+    assert len(selected) == len(renderer.LABELS) * 2 * len(renderer.GENERAL)
     assert all(row["directions"] == "en-de" and row["value"] == 80 for row in selected)
+
+
+def test_analysis_exclusions_keep_global_and_only_remove_patent_spanish_german():
+    assert len(renderer.LABELS) == 7
+    assert "tiny_aya_global" in renderer.LABELS
+    assert renderer.EXCLUDED_RUNS.isdisjoint(renderer.LABELS)
+    original = {
+        "run": "tiny_aya_global",
+        "dataset_settings": {
+            dataset: {
+                "zero_shot": {
+                    "by_direction": {"de-es": result(99), "es-de": result(100), "en-de": result(40)}
+                }
+            }
+            for dataset in renderer.DATASETS
+        },
+    }
+    selected = renderer.select_analysis_summary(original)
+    assert set(selected["dataset_settings"]["google_patents"]["zero_shot"]["by_direction"]) == {
+        "en-de"
+    }
+    for dataset in ("jrc_articles", "jrc_definitions"):
+        assert len(selected["dataset_settings"][dataset]["zero_shot"]["by_direction"]) == 3
+    assert len(original["dataset_settings"]["google_patents"]["zero_shot"]["by_direction"]) == 3
+    for run in renderer.EXCLUDED_RUNS:
+        assert renderer.select_analysis_summary({**original, "run": run}) is None
+        assert renderer.population(run + "__historical_untimed") == "excluded"
+    points = [
+        {"run": run, "dataset": dataset, "direction": direction}
+        for run in (*renderer.LABELS, *renderer.EXCLUDED_RUNS)
+        for dataset in renderer.DATASETS
+        for direction in ("de-es", "es-de", "en-de")
+    ]
+    filtered = renderer.select_analysis_points(points)
+    assert len(filtered) == 7 * 7
+    assert all(row["run"] not in renderer.EXCLUDED_RUNS for row in filtered)
 
 
 def language_points(monkeypatch):
@@ -296,6 +332,71 @@ def test_best_language_figures_share_color_ranges_and_sort_by_best(tmp_path, mon
     assert len(saved) == len(checked) == 6
     assert (tmp_path / "tables/best_language_pairs.csv").exists()
     assert (tmp_path / "figures/languages/best_performance.md").exists()
+
+
+def test_language_violin_roles_preserve_points_and_equal_direction_weights(monkeypatch):
+    points, runs = language_points(monkeypatch)
+    points = [row for row in points if row["metric"] == "comet"]
+    points += [
+        {**row, "direction": "en-fr", "value": row["value"] + 20}
+        for row in points
+        if row["direction"] == "en-de"
+    ]
+    rows, support = renderer.build_language_violin_rows(points, runs)
+    assert len(rows) == len(points) * 3
+    selected = [
+        row
+        for row in support
+        if row["role"] == "from" and row["language_group"] == "en" and row["setting"] == "zero_shot"
+    ]
+    assert len(selected) == 1
+    assert selected[0]["n_points"] == 4 and selected[0]["n_directions"] == 2
+    assert selected[0]["mean_score"] == 520
+    pair = [row for row in support if row["role"] == "pair"]
+    assert all(row["n_points"] == len(runs) for row in pair)
+    assert {row["value"] for row in rows if row["role"] == "pair"} == {
+        float(row["value"]) for row in points
+    }
+
+
+def test_language_violin_plots_use_native_values_and_all_three_roles(tmp_path, monkeypatch):
+    import matplotlib.figure
+    import numpy as np
+    from matplotlib.collections import PathCollection
+
+    points, runs = language_points(monkeypatch)
+    points = [row for row in points if row["metric"] == "comet"]
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axis = figure.axes[0]
+        dots = [item for item in axis.collections if isinstance(item, PathCollection)]
+        values = np.concatenate([item.get_offsets()[:, 1] for item in dots])
+        np.testing.assert_array_equal(np.sort(values), [0, 10, 1000, 1010])
+        assert "native score" in axis.get_ylabel()
+        assert axis.get_ylim() == pytest.approx((-50.5, 1060.5))
+        assert all(handle.get_marker() == "o" for handle in figure.legends[0].legend_handles)
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_language_violin_figures(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 6
+    assert {name.split("/")[2] for name in saved} == {"pair", "from", "to"}
+    assert (tmp_path / "tables/language_violin_support.csv").exists()
+
+
+def test_language_violin_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    import sys
+
+    monkeypatch.setattr(
+        sys, "argv", ["renderer", "--language-violins-only", "--output", str(tmp_path)]
+    )
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores" in capsys.readouterr().err
 
 
 def test_population_is_kept_separate():
@@ -1040,7 +1141,7 @@ def test_bubble_axes_and_area_use_identical_direction_support(view, category):
     groups = summaries[(view, category, runs[0])]["dataset_settings"]["google_patents"]
     groups["few_shot"]["by_direction"]["de-en"]["metric_status"]["comet"] = {"state": "not_run"}
     rows = renderer.build_bubble_rows(summaries, runs, view=view, category=category)
-    assert len(rows) == 20
+    assert len(rows) == len(runs) * len(renderer.SETTINGS)
     assert all(row["view"] == view and row["category"] == category for row in rows)
     assert all(row["directions"] == "en-de" for row in rows)
     assert all(row["comet"] == row["target_term_coverage"] == row["bleu"] == 80 for row in rows)
@@ -1069,7 +1170,7 @@ def test_distribution_points_average_models_and_share_term_subset_support():
     rows = renderer.build_distribution_rows(summaries, runs)
     selected = [row for row in rows if row["view"] == "luna" and row["dataset"] == "google_patents"]
     assert len(selected) == 6
-    assert all(row["direction"] == "en-de" and row["n_models"] == 10 for row in selected)
+    assert all(row["direction"] == "en-de" and row["n_models"] == len(runs) for row in selected)
     assert all(row["target_term_coverage"] == 80 for row in selected)
 
 
