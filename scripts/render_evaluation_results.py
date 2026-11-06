@@ -503,10 +503,56 @@ def select_distinct_metric_columns(correlations, count=4):
     ]
 
 
-def build_mixed_rank_rows(aggregates, runs):
+def build_statistic_aggregates(aggregates, points, statistic):
+    if statistic not in ("median", "top"):
+        raise ValueError(f"Unknown ranking statistic: {statistic}")
+    fields = ("view", "category", "dataset", "setting", "run", "metric")
+    groups = defaultdict(dict)
+    for row in select_analysis_points(points):
+        key = tuple(row[field] for field in fields)
+        if row["direction"] in groups[key]:
+            raise ValueError("Duplicate ranking direction score")
+        value = float(row["value"])
+        if not math.isfinite(value):
+            raise ValueError("Ranking statistics require finite direction scores")
+        groups[key][row["direction"]] = value
+    result = []
+    for row in aggregates:
+        if population(row["run"]) == "excluded":
+            continue
+        key = tuple(row[field] for field in fields)
+        selected = groups[key]
+        directions = set(filter(None, row["directions"].split(";")))
+        if set(selected) != directions or len(directions) != int(row["n_directions"]):
+            raise ValueError(
+                f"Ranking statistics require identical common direction support: {key}"
+            )
+        values = list(selected.values())
+        value = (median(values) if statistic == "median" else max(values)) if values else None
+        result.append(
+            {
+                **row,
+                "value": value,
+                "statistic": f"direction_{statistic}",
+                "top_directions": ";".join(
+                    sorted(
+                        direction
+                        for direction, score in selected.items()
+                        if statistic == "top" and score == value
+                    )
+                ),
+            }
+        )
+    return result
+
+
+def build_mixed_rank_rows(aggregates, runs, *, labels=None, datasets=None, views=None):
     import numpy as np
     from scipy.stats import rankdata
 
+    labels = LABELS if labels is None else labels
+    datasets = DATASETS if datasets is None else datasets
+    views = VIEWS if views is None else views
     lookup = {
         (
             row["view"],
@@ -520,9 +566,9 @@ def build_mixed_rank_rows(aggregates, runs):
     }
     ranked = []
     components = []
-    for view in VIEWS:
+    for view in views:
         strata = []
-        for dataset in DATASETS:
+        for dataset in datasets:
             for setting in SETTINGS:
                 records = {
                     run: {
@@ -531,7 +577,7 @@ def build_mixed_rank_rows(aggregates, runs):
                         "dataset": dataset,
                         "setting": setting,
                         "run": run,
-                        "model": LABELS[run],
+                        "model": labels[run],
                         "n_strata": 1,
                     }
                     for run in runs
@@ -599,7 +645,7 @@ def build_mixed_rank_rows(aggregates, runs):
                     "dataset": "all_datasets",
                     "setting": "both_prompts",
                     "run": run,
-                    "model": LABELS[run],
+                    "model": labels[run],
                     "n_strata": len(selected),
                     **{key: mean(row[key] for row in selected) for key in numeric_keys},
                 }
@@ -645,8 +691,10 @@ def table_text(rows, metrics):
     return "\n".join(markdown), "\n".join(latex)
 
 
-def write_tables(output, aggregates):
+def write_tables(output, aggregates, *, statistic=None):
     tables = output / "tables"
+    if statistic is not None:
+        tables = tables / "rankings" / statistic
     tables.mkdir(parents=True, exist_ok=True)
     write_csv(
         tables / "translation_quality.csv", [row for row in aggregates if row["metric"] in GENERAL]
@@ -666,6 +714,16 @@ def write_tables(output, aggregates):
         "Different rows may still contain different translation examples. No significance claims.",
         "",
     ]
+    if statistic is not None:
+        markdown[:4] = [
+            f"# {statistic.title()} Direction-Score Tables",
+            "",
+            f"Native metric values use the {'median' if statistic == 'median' else 'maximum'} "
+            "over the same directions shared across models and both prompts. Each direction "
+            "has equal weight; this is not a per-translation statistic. NA is unavailable, "
+            "not zero. See [model rankings](rankings.md) for balanced family ranks.",
+            "",
+        ]
     latex = ["% Descriptive direction-macro scores; NA is unavailable, not zero."]
     for (view, category, dataset, setting), rows in groups.items():
         metrics = GENERAL if view == "shared_general" else TERMINOLOGY
@@ -735,6 +793,186 @@ def bubble_area(bleu):
     if not math.isfinite(bleu) or bleu < 0:
         raise ValueError("Bubble area requires a finite nonnegative BLEU score")
     return 36 * bleu
+
+
+def build_language_mixed_rank_rows(points, runs):
+    runs = [run for run in runs if population(run) != "excluded"]
+    groups = defaultdict(lambda: defaultdict(dict))
+    for row in select_analysis_points(points):
+        key = tuple(row[field] for field in ("view", "category", "dataset", "metric"))
+        model_key = (row["run"], row["setting"])
+        if row["direction"] in groups[key][model_key]:
+            raise ValueError("Duplicate language ranking direction score")
+        value = float(row["value"])
+        if not math.isfinite(value):
+            raise ValueError("Language ranking requires finite native scores")
+        groups[key][model_key][row["direction"]] = value
+    native = []
+    for (view, category, dataset, metric), models in sorted(groups.items()):
+        common = set.intersection(
+            *(set(models[(run, setting)]) for run in runs for setting in SETTINGS)
+        )
+        for role, position in (("from", 0), ("to", 1)):
+            partners = defaultdict(list)
+            for direction in sorted(common):
+                partners[direction.split("-")[position]].append(direction)
+            for language, directions in sorted(partners.items()):
+                for setting in SETTINGS:
+                    values = [
+                        mean(models[(run, setting)][direction] for direction in directions)
+                        for run in runs
+                    ]
+                    for statistic in ("median", "top"):
+                        value = median(values) if statistic == "median" else max(values)
+                        native.append(
+                            {
+                                "view": view,
+                                "category": category,
+                                "dataset": dataset,
+                                "setting": setting,
+                                "metric": metric,
+                                "role": role,
+                                "statistic": statistic,
+                                "run": language,
+                                "model": LANGUAGE_LABELS.get(language, language),
+                                "value": value,
+                                "n_models": len(runs),
+                                "n_directions": len(directions),
+                                "directions": ";".join(directions),
+                                "runs": ";".join(runs),
+                                "model_values": json.dumps(values),
+                                "top_models": ";".join(
+                                    run
+                                    for run, score in zip(runs, values, strict=True)
+                                    if statistic == "top" and score == value
+                                ),
+                            }
+                        )
+    ranked, components, support = [], [], []
+    fields = ("view", "category", "dataset", "setting", "metric")
+    for statistic in ("median", "top"):
+        for role in ("from", "to"):
+            selected = [
+                row for row in native if row["statistic"] == statistic and row["role"] == role
+            ]
+            for view in VIEWS:
+                for scope, datasets in [
+                    *(("dataset_prompt", (dataset,)) for dataset in DATASETS),
+                    ("overall", tuple(DATASETS)),
+                ]:
+                    overall = scope == "overall"
+                    expected = set()
+                    for dataset in datasets:
+                        for family, metrics in RANK_FAMILIES.items():
+                            source_view = view if family == "terminology" else "shared_general"
+                            categories = (
+                                CATEGORIES if family == "terminology" else ("not_applicable",)
+                            )
+                            for category in categories:
+                                active = [
+                                    metric
+                                    for metric in metrics
+                                    if (source_view, category, dataset, metric) in groups
+                                ]
+                                if not active:
+                                    raise ValueError(
+                                        "Missing language rank family: "
+                                        f"{view}/{dataset}/{family}/{category}"
+                                    )
+                                expected.update(
+                                    (source_view, category, dataset, setting, metric)
+                                    for setting in SETTINGS
+                                    for metric in active
+                                )
+                    candidates = [
+                        row for row in selected if tuple(row[field] for field in fields) in expected
+                    ]
+                    availability = defaultdict(set)
+                    for row in candidates:
+                        availability[row["run"]].add(tuple(row[field] for field in fields))
+                    eligible = sorted(
+                        language for language, keys in availability.items() if keys == expected
+                    )
+                    scope = "overall" if overall else "dataset_prompt"
+                    for language, keys in sorted(availability.items()):
+                        support.append(
+                            {
+                                "view": view,
+                                "statistic": statistic,
+                                "role": role,
+                                "scope": scope,
+                                "dataset": "all_datasets" if overall else datasets[0],
+                                "language": language,
+                                "state": "completed"
+                                if language in eligible
+                                else "incomplete_metric_strata",
+                                "n_components": len(keys),
+                                "required_components": len(expected),
+                                "missing_components": json.dumps(sorted(expected - keys)),
+                                "n_ranked_languages": len(eligible),
+                                "n_models": len(runs),
+                            }
+                        )
+                    if not eligible:
+                        continue
+                    rank_source = [row for row in candidates if row["run"] in eligible]
+                    for dataset in datasets:
+                        for family, metrics in RANK_FAMILIES.items():
+                            source_view = view if family == "terminology" else "shared_general"
+                            categories = (
+                                CATEGORIES if family == "terminology" else ("not_applicable",)
+                            )
+                            for category in categories:
+                                for metric in metrics:
+                                    if (source_view, category, dataset, metric) in groups:
+                                        continue
+                                    rank_source.extend(
+                                        {
+                                            "view": source_view,
+                                            "category": category,
+                                            "dataset": dataset,
+                                            "setting": setting,
+                                            "run": language,
+                                            "metric": metric,
+                                            "value": None,
+                                        }
+                                        for setting in SETTINGS
+                                        for language in eligible
+                                    )
+                    rows, details = build_mixed_rank_rows(
+                        rank_source,
+                        eligible,
+                        labels={
+                            language: LANGUAGE_LABELS.get(language, language)
+                            for language in eligible
+                        },
+                        datasets=datasets,
+                        views=(view,),
+                    )
+                    ranked.extend(
+                        {
+                            **row,
+                            "statistic": statistic,
+                            "role": role,
+                            "language": row["run"],
+                            "language_name": row["model"],
+                            "n_models": len(runs),
+                            "n_ranked_languages": len(eligible),
+                        }
+                        for row in rows
+                        if row["scope"] == scope
+                    )
+                    components.extend(
+                        {
+                            **row,
+                            "ranking_scope": scope,
+                            "ranking_view": view,
+                            "language": row["run"],
+                            "language_name": row["model"],
+                        }
+                        for row in details
+                    )
+    return ranked, components, native, support
 
 
 def build_language_direction_rows(points, runs):
@@ -1603,13 +1841,769 @@ def write_language_violin_figures(output, points, runs):
     return saved
 
 
-def write_language_analysis(output, points, runs):
+def model_vector_correlations(values_x, values_y):
+    from scipy.stats import pearsonr, spearmanr
+
+    state = (
+        "insufficient_models"
+        if len(values_x) < 3
+        else "constant_scores"
+        if len(set(values_x)) < 2 or len(set(values_y)) < 2
+        else "completed"
+    )
+    return {
+        "pearson": float(pearsonr(values_x, values_y)[0]) if state == "completed" else None,
+        "spearman": float(spearmanr(values_x, values_y)[0]) if state == "completed" else None,
+        "state": state,
+    }
+
+
+def build_language_correlations(points, runs):
+    from itertools import combinations_with_replacement, product
+
+    runs = [run for run in runs if population(run) != "excluded"]
+    _, models = build_best_language_rows(points, runs)
+    groups = defaultdict(lambda: defaultdict(list))
+    for row in models:
+        context = tuple(
+            row[field] for field in ("view", "dataset", "setting", "category", "metric")
+        )
+        source, target = row["direction"].split("-")
+        for role, language in (("from", source), ("to", target)):
+            groups[context][(role, language, row["run"])].append(row)
+    scores = []
+    correlations = []
+    for context, members in sorted(groups.items()):
+        metadata = dict(
+            zip(("view", "dataset", "setting", "category", "metric"), context, strict=True)
+        )
+        vectors = {}
+        directions = {}
+        for role, language in sorted({(role, language) for role, language, _ in members}):
+            vectors[(role, language)] = []
+            for run in runs:
+                selected = members[(role, language, run)]
+                support = sorted(row["direction"] for row in selected)
+                key = (role, language)
+                if key in directions and support != directions[key]:
+                    raise ValueError(
+                        "Language correlations require identical partner support across models"
+                    )
+                directions[key] = support
+                value = mean(row["value"] for row in selected)
+                vectors[key].append(value)
+                scores.append(
+                    {
+                        **metadata,
+                        "role": role,
+                        "language": language,
+                        "run": run,
+                        "value": value,
+                        "n_directions": len(support),
+                        "directions": ";".join(support),
+                    }
+                )
+        for role_x, role_y in (("to", "to"), ("from", "from"), ("from", "to")):
+            keys_x = sorted(key for key in vectors if key[0] == role_x)
+            keys_y = sorted(key for key in vectors if key[0] == role_y)
+            pairs = (
+                combinations_with_replacement(keys_x, 2)
+                if role_x == role_y
+                else product(keys_x, keys_y)
+            )
+            for key_x, key_y in pairs:
+                values_x, values_y = vectors[key_x], vectors[key_y]
+                correlations.append(
+                    {
+                        **metadata,
+                        "role_x": role_x,
+                        "language_x": key_x[1],
+                        "role_y": role_y,
+                        "language_y": key_y[1],
+                        **model_vector_correlations(values_x, values_y),
+                        "n_models": len(runs),
+                        "runs": ";".join(runs),
+                        "values_x": json.dumps(values_x),
+                        "values_y": json.dumps(values_y),
+                        "directions_x": ";".join(directions[key_x]),
+                        "directions_y": ";".join(directions[key_y]),
+                    }
+                )
+    return correlations, scores
+
+
+def build_combined_language_correlations(scores, runs):
+    from itertools import combinations_with_replacement, product
+
+    runs = [run for run in runs if population(run) != "excluded"]
+    required = {(dataset, setting) for dataset in DATASETS for setting in SETTINGS}
+    groups = defaultdict(lambda: defaultdict(dict))
+    for row in scores:
+        context = (row["view"], row["category"], row["metric"])
+        key = (row["role"], row["language"], row["run"])
+        stratum = (row["dataset"], row["setting"])
+        if stratum in groups[context][key]:
+            raise ValueError("Duplicate combined language stratum")
+        groups[context][key][stratum] = row
+    combined, correlations = [], []
+    for (view, category, metric), members in sorted(groups.items()):
+        metadata = {
+            "view": view,
+            "category": category,
+            "metric": metric,
+            "dataset": "all_datasets",
+            "setting": "both_prompts",
+        }
+        vectors, supports = {}, {}
+        for role, language in sorted({(role, language) for role, language, _ in members}):
+            selected = []
+            for run in runs:
+                strata = members[(role, language, run)]
+                complete = set(strata) == required
+                support = {
+                    f"{dataset}/{setting}": row["directions"].split(";")
+                    for (dataset, setting), row in sorted(strata.items())
+                }
+                row = {
+                    **metadata,
+                    "role": role,
+                    "language": language,
+                    "run": run,
+                    "value": mean(float(row["value"]) for row in strata.values())
+                    if complete
+                    else None,
+                    "state": "completed" if complete else "incomplete_strata",
+                    "n_strata": len(strata),
+                    "required_strata": len(required),
+                    "support_by_stratum": json.dumps(support, sort_keys=True),
+                }
+                combined.append(row)
+                selected.append(row)
+            if all(row["state"] == "completed" for row in selected):
+                key = (role, language)
+                vectors[key] = [row["value"] for row in selected]
+                supports[key] = selected[0]["support_by_stratum"]
+        for role_x, role_y in (("to", "to"), ("from", "from"), ("from", "to")):
+            keys_x = sorted(key for key in vectors if key[0] == role_x)
+            keys_y = sorted(key for key in vectors if key[0] == role_y)
+            pairs = (
+                combinations_with_replacement(keys_x, 2)
+                if role_x == role_y
+                else product(keys_x, keys_y)
+            )
+            for key_x, key_y in pairs:
+                values_x, values_y = vectors[key_x], vectors[key_y]
+                correlations.append(
+                    {
+                        **metadata,
+                        "role_x": role_x,
+                        "language_x": key_x[1],
+                        "role_y": role_y,
+                        "language_y": key_y[1],
+                        **model_vector_correlations(values_x, values_y),
+                        "n_models": len(runs),
+                        "runs": ";".join(runs),
+                        "values_x": json.dumps(values_x),
+                        "values_y": json.dumps(values_y),
+                        "support_x_by_stratum": supports[key_x],
+                        "support_y_by_stratum": supports[key_y],
+                    }
+                )
+    return correlations, combined
+
+
+def build_language_pair_correlations(points, runs):
+    from itertools import combinations_with_replacement
+
+    runs = [run for run in runs if population(run) != "excluded"]
+    _, models = build_best_language_rows(points, runs)
+    groups = defaultdict(lambda: defaultdict(dict))
+    for row in models:
+        context = tuple(
+            row[field] for field in ("view", "dataset", "setting", "category", "metric")
+        )
+        groups[context][row["direction"]][row["run"]] = row["value"]
+    correlations = []
+    for context, directions in sorted(groups.items()):
+        for direction_x, direction_y in combinations_with_replacement(sorted(directions), 2):
+            values_x = [directions[direction_x][run] for run in runs]
+            values_y = [directions[direction_y][run] for run in runs]
+            correlations.append(
+                {
+                    **dict(
+                        zip(
+                            ("view", "dataset", "setting", "category", "metric"),
+                            context,
+                            strict=True,
+                        )
+                    ),
+                    "direction_x": direction_x,
+                    "direction_y": direction_y,
+                    **model_vector_correlations(values_x, values_y),
+                    "n_models": len(runs),
+                    "runs": ";".join(runs),
+                    "values_x": json.dumps(values_x),
+                    "values_y": json.dumps(values_y),
+                }
+            )
+    return correlations
+
+
+def write_language_correlations(output, points, runs, *, combined=False):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    runs = [run for run in runs if population(run) != "excluded"]
+    rows, scores = build_language_correlations(points, runs)
+    if combined:
+        rows, scores = build_combined_language_correlations(scores, runs)
+    prefix = "combined_" if combined else ""
+    folder = "correlations_combined" if combined else "correlations"
+    (output / "tables").mkdir(parents=True, exist_ok=True)
+    write_csv(output / "tables" / f"{prefix}language_correlations.csv", rows)
+    write_csv(output / "tables" / f"{prefix}language_correlation_model_scores.csv", scores)
+    groups = defaultdict(list)
+    for row in rows:
+        groups[(row["view"], row["dataset"], row["setting"])].append(row)
+    saved = []
+    for (view, dataset, setting), members in sorted(groups.items()):
+        panels = sorted({(row["category"], row["metric"]) for row in members})
+        for method in ("pearson", "spearman"):
+            figure, axes = plt.subplots(
+                len(panels), 3, figsize=(24, 7 * len(panels) + 2.5), squeeze=False
+            )
+            for panel_index, (category, metric) in enumerate(panels):
+                for column, (role_x, role_y) in enumerate(
+                    (("to", "to"), ("from", "from"), ("from", "to"))
+                ):
+                    selected = [
+                        row
+                        for row in members
+                        if (row["category"], row["metric"], row["role_x"], row["role_y"])
+                        == (category, metric, role_x, role_y)
+                    ]
+                    languages_x = sorted({row["language_x"] for row in selected})
+                    languages_y = sorted({row["language_y"] for row in selected})
+                    if role_x == role_y:
+                        languages_x = languages_y = sorted(set(languages_x) | set(languages_y))
+                    matrix = np.full((len(languages_x), len(languages_y)), np.nan)
+                    for row in selected:
+                        if row[method] is not None:
+                            first = languages_x.index(row["language_x"])
+                            second = languages_y.index(row["language_y"])
+                            matrix[first, second] = row[method]
+                            if role_x == role_y:
+                                matrix[second, first] = row[method]
+                    axis = axes[panel_index, column]
+                    image = axis.imshow(
+                        np.ma.masked_invalid(matrix),
+                        vmin=-1,
+                        vmax=1,
+                        cmap=plt.get_cmap("RdBu_r").with_extremes(bad="#eeeeee"),
+                    )
+                    axis.set_xticks(
+                        range(len(languages_y)),
+                        [LANGUAGE_LABELS.get(language, language) for language in languages_y],
+                        rotation=45,
+                        ha="right",
+                        fontsize=9,
+                    )
+                    axis.set_yticks(
+                        range(len(languages_x)),
+                        [LANGUAGE_LABELS.get(language, language) for language in languages_x],
+                        fontsize=9,
+                    )
+                    axis.set_xlabel(
+                        "To (target language)" if role_y == "to" else "From (source language)"
+                    )
+                    axis.set_ylabel(
+                        "To (target language)" if role_x == "to" else "From (source language)"
+                    )
+                    title = f"{METRIC_LABELS[metric]} | {role_x.title()} vs {role_y.title()}"
+                    if category != "not_applicable":
+                        title += "\n" + category.replace("_", " ").title()
+                    axis.set_title(title, fontsize=12, pad=12)
+                    for first in range(len(languages_x)):
+                        for second in range(len(languages_y)):
+                            value = matrix[first, second]
+                            axis.text(
+                                second,
+                                first,
+                                f"{value:.2f}" if np.isfinite(value) else "NA",
+                                ha="center",
+                                va="center",
+                                fontsize=9,
+                                color="white"
+                                if np.isfinite(value) and abs(value) > 0.65
+                                else "#222222",
+                            )
+                    figure.colorbar(
+                        image, ax=axis, shrink=0.7, label=f"{method.title()} correlation"
+                    )
+            figure.suptitle(
+                f"Language Correlations | {DATASETS.get(dataset, 'All Three Datasets')} | {view} | "
+                f"{setting.replace('_', ' ').title()} | {method.title()}",
+                fontsize=20,
+                y=0.98,
+            )
+            figure.subplots_adjust(
+                top=0.9, bottom=0.22 if len(panels) == 1 else 0.17, hspace=0.65, wspace=0.5
+            )
+            figure.text(
+                0.5,
+                0.035,
+                (
+                    f"One observation = one of {len(runs)} models. Partner directions have equal "
+                    "weight within strata; all dataset/prompt strata then have equal weight.\n"
+                    if combined
+                    else f"One observation = one of {len(runs)} models. "
+                    "Each language score averages "
+                    "its supported partner directions equally within that model.\n"
+                )
+                + "To = translate into a language; From = translate out of a language. "
+                "Cross-role panel: rows = From; columns = To.\n"
+                "Partner sets may differ between languages. Native metrics remain separate; "
+                "NA = constant or fewer than three models.\n"
+                "Correlations may reflect overall model strength, not isolated language ability. "
+                "No significance or causal claims.",
+                ha="center",
+                fontsize=10,
+            )
+            relative = (
+                f"languages/{folder}/{view}/language_correlations_{dataset}_{setting}_{method}"
+            )
+            for extension in ("png", "pdf"):
+                path = output / "figures" / f"{relative}.{extension}"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                figure.savefig(path, dpi=160, bbox_inches="tight")
+            plt.close(figure)
+            saved.append(relative)
+    if combined:
+        saved.extend(write_combined_language_scatter(output, rows, runs))
+    lines = [
+        "# Language Correlations: To and From",
+        "",
+        "Three panels per native metric compare To vs To, From vs From, and From vs To. "
+        "Cross-role panels have source languages on rows and target languages on columns. "
+        "Pearson and Spearman are shown separately, with datasets, prompts, metrics and "
+        "terminology groups kept separate.",
+        "",
+        "Each observation is one model. For that model, To-language scores average all "
+        "supported incoming directions equally; From-language scores average outgoing "
+        "directions equally. Models are never pooled as translation-level samples. "
+        "Scores are native means, not within-model rank percentiles. All retained models "
+        "and both prompts must have scored direction support; missing data is not zero.",
+        "",
+        "Each language has identical partner support across models, but different languages "
+        "can have different partner sets. Partners are NOT matched across languages; "
+        "correlations may reflect partner composition and overall model strength. "
+        "Cross-role means can share directions: English -> French contributes to both "
+        "From English and To French. These are not independent ability measurements. "
+        "No statistical significance, independence or causal claims are made. "
+        "Constant vectors or fewer than three models give NA.",
+        "",
+        "[Correlations and exact model vectors](../../tables/language_correlations.csv) | "
+        "[Per-model language means and direction supports]"
+        "(../../tables/language_correlation_model_scores.csv)",
+        "",
+        "## Figures",
+        "",
+    ]
+    if combined:
+        lines = [
+            "# Combined Language Correlations",
+            "",
+            "Each model has one combined native score for From-language performance and one "
+            "for To-language performance. From German, for example, averages German -> all "
+            "supported targets; From French averages French -> all supported targets. "
+            "Scatter plots compare those combined model means, with German/French first.",
+            "",
+            "First average supported partner directions equally within each model/dataset/prompt. "
+            "Then average the dataset/prompt means equally. Every dataset and both prompts are "
+            "required; incomplete languages are marked in the model-score CSV and omitted from "
+            "correlations, never filled with zero. Native metrics and terminology groups remain "
+            "separate. Heatmaps show to-to, from-from and from-to correlations.",
+            "",
+            "Partner sets can differ between languages and datasets. These are averages over "
+            "supported partners, not every possible language or matched partner populations. "
+            "Cross-role means can share directions. Overall model strength and partner composition "
+            "may drive correlations; no independence, significance or causal claims are made.",
+            "",
+            "[Combined correlations and model vectors]"
+            "(../../tables/combined_language_correlations.csv) | "
+            "[Combined model means and per-stratum supports]"
+            "(../../tables/combined_language_correlation_model_scores.csv)",
+            "",
+            "## Figures",
+            "",
+        ]
+    for relative in saved:
+        target = Path(relative).relative_to("languages").as_posix()
+        lines.append(f"- {target}: [PNG]({target}.png) | [PDF]({target}.pdf)")
+    index_name = "correlations_combined.md" if combined else "correlations.md"
+    index = output / "figures/languages" / index_name
+    index.parent.mkdir(parents=True, exist_ok=True)
+    index.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    main_index = output / "figures/languages/README.md"
+    link = (
+        "[Combined language correlations and model scatter plots](correlations_combined.md)"
+        if combined
+        else "[Language correlations: to-to, from-from and from-to](correlations.md)"
+    )
+    if main_index.exists() and link not in main_index.read_text(encoding="utf-8"):
+        main_index.write_text(
+            main_index.read_text(encoding="utf-8").rstrip()
+            + "\n\n## Language Correlations\n\n"
+            + link
+            + "\n",
+            encoding="utf-8",
+        )
+    return saved
+
+
+def write_combined_language_scatter(output, rows, runs):
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    groups = defaultdict(list)
+    for row in rows:
+        if row["role_x"] == row["role_y"] and row["language_x"] != row["language_y"]:
+            groups[(row["view"], row["category"], row["metric"], row["role_x"])].append(row)
+    saved = []
+    for (view, category, metric, role), members in sorted(groups.items()):
+        comparisons = sorted(
+            members,
+            key=lambda row: (
+                (row["language_x"], row["language_y"]) != ("de", "fr"),
+                row["language_x"],
+                row["language_y"],
+            ),
+        )
+        columns = min(3, len(comparisons))
+        height = math.ceil(len(comparisons) / columns)
+        figure, axes = plt.subplots(
+            height, columns, figsize=(6.3 * columns, 5 * height + 3), squeeze=False
+        )
+        colors = plt.get_cmap("tab10")
+        for axis, row in zip(axes.flat, comparisons, strict=False):
+            values_x, values_y = json.loads(row["values_x"]), json.loads(row["values_y"])
+            for index in range(len(runs)):
+                axis.scatter(
+                    values_x[index],
+                    values_y[index],
+                    s=65,
+                    color=colors(index),
+                    marker="o",
+                    edgecolors="white",
+                    linewidths=0.5,
+                    zorder=3,
+                )
+            language_x = LANGUAGE_LABELS.get(row["language_x"], row["language_x"])
+            language_y = LANGUAGE_LABELS.get(row["language_y"], row["language_y"])
+            axis.set_xlabel(
+                f"{language_x} -> all supported languages"
+                if role == "from"
+                else f"All supported languages -> {language_x}"
+            )
+            axis.set_ylabel(
+                f"{language_y} -> all supported languages"
+                if role == "from"
+                else f"All supported languages -> {language_y}"
+            )
+            coefficients = (
+                f"r = {row['pearson']:.2f} | rho = {row['spearman']:.2f}"
+                if row["state"] == "completed"
+                else "Correlation = NA"
+            )
+            axis.set_title(
+                f"{language_x} vs {language_y}\n{coefficients} | n = {len(runs)}", fontsize=11
+            )
+            low, high = min(values_x + values_y), max(values_x + values_y)
+            padding = 0.08 * (high - low) if high > low else max(abs(low) * 0.05, 0.01)
+            limits = (low - padding, high + padding)
+            axis.plot(limits, limits, linestyle="--", linewidth=0.8, color="#a1a1a1")
+            axis.set(xlim=limits, ylim=limits)
+            axis.grid(color="#e5e5e5", linewidth=0.6)
+            axis.set_axisbelow(True)
+        for axis in list(axes.flat)[len(comparisons) :]:
+            axis.set_visible(False)
+        figure.suptitle(
+            f"Combined {'From' if role == 'from' else 'To'} Language Performance"
+            f" | {METRIC_LABELS[metric]}\nAll datasets + both prompts | {view} | {category}",
+            fontsize=18,
+            y=0.98,
+        )
+        figure.legend(
+            handles=[
+                Line2D([], [], color=colors(index), linestyle="none", marker="o", label=LABELS[run])
+                for index, run in enumerate(runs)
+            ],
+            loc="lower center",
+            bbox_to_anchor=(0.5, 0.075),
+            ncol=min(4, len(runs)),
+            frameon=False,
+            fontsize=9,
+        )
+        figure.subplots_adjust(
+            top=0.8 if height == 1 else 0.85,
+            bottom=0.32 if height == 1 else 0.24,
+            hspace=0.55,
+            wspace=0.4,
+        )
+        figure.text(
+            0.5,
+            0.015,
+            "One dot = one model's combined native-score mean. Equal partner-direction "
+            "weights within each dataset/prompt stratum; then equal stratum weights.\n"
+            "Every language requires all datasets and both prompts. Partner sets may differ. "
+            "Dashed line = equal scores, not a correlation fit.\n"
+            "Correlations may reflect overall model strength or partner composition; "
+            "no significance or causal claims.",
+            ha="center",
+            fontsize=10,
+        )
+        relative = f"languages/correlations_combined/{view}/combined_{role}_{category}_{metric}"
+        for extension in ("png", "pdf"):
+            path = output / "figures" / f"{relative}.{extension}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            figure.savefig(path, dpi=160, bbox_inches="tight")
+        plt.close(figure)
+        saved.append(relative)
+    return saved
+
+
+def write_language_pair_correlations(output, points, runs):
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib.lines import Line2D
 
+    runs = [run for run in runs if population(run) != "excluded"]
+    rows = build_language_pair_correlations(points, runs)
+    (output / "tables").mkdir(parents=True, exist_ok=True)
+    write_csv(output / "tables/language_pair_correlations.csv", rows)
+    groups = defaultdict(list)
+    for row in rows:
+        groups[(row["view"], row["dataset"], row["setting"])].append(row)
+    saved = []
+
+    def save(figure, relative):
+        for extension in ("png", "pdf"):
+            path = output / "figures" / f"{relative}.{extension}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            figure.savefig(path, dpi=160, bbox_inches="tight")
+        plt.close(figure)
+        saved.append(relative)
+
+    for (view, dataset, setting), members in sorted(groups.items()):
+        panels = sorted({(row["category"], row["metric"]) for row in members})
+        figure, axes = plt.subplots(
+            len(panels), 2, figsize=(21, 9 * len(panels) + 2), squeeze=False
+        )
+        for panel_index, (category, metric) in enumerate(panels):
+            selected = [
+                row for row in members if (row["category"], row["metric"]) == (category, metric)
+            ]
+            directions = sorted(
+                {row["direction_x"] for row in selected} | {row["direction_y"] for row in selected}
+            )
+            for method_index, method in enumerate(("pearson", "spearman")):
+                axis = axes[panel_index, method_index]
+                matrix = np.full((len(directions), len(directions)), np.nan)
+                for row in selected:
+                    if row[method] is not None:
+                        first = directions.index(row["direction_x"])
+                        second = directions.index(row["direction_y"])
+                        matrix[first, second] = matrix[second, first] = row[method]
+                image = axis.imshow(
+                    np.ma.masked_invalid(matrix),
+                    vmin=-1,
+                    vmax=1,
+                    cmap=plt.get_cmap("RdBu_r").with_extremes(bad="#eeeeee"),
+                )
+                labels = [direction.replace("-", " -> ") for direction in directions]
+                axis.set_xticks(range(len(labels)), labels, rotation=90, fontsize=8)
+                axis.set_yticks(range(len(labels)), labels, fontsize=8)
+                axis.set_xlabel("Translation direction")
+                axis.set_ylabel("Translation direction")
+                axis.set_title(
+                    f"{METRIC_LABELS[metric]} | {method.title()}"
+                    + (f" | {category}" if category != "not_applicable" else ""),
+                    fontsize=12,
+                )
+                for first in range(len(directions)):
+                    for second in range(len(directions)):
+                        value = matrix[first, second]
+                        axis.text(
+                            second,
+                            first,
+                            f"{value:.2f}" if np.isfinite(value) else "NA",
+                            ha="center",
+                            va="center",
+                            fontsize=6,
+                            color="white"
+                            if np.isfinite(value) and abs(value) > 0.65
+                            else "#222222",
+                        )
+                figure.colorbar(image, ax=axis, shrink=0.75, label="Correlation across models")
+        figure.suptitle(
+            f"Language-Pair Correlations | {DATASETS[dataset]} | {view} | "
+            f"{setting.replace('_', ' ').title()}",
+            fontsize=20,
+            y=0.985,
+        )
+        figure.subplots_adjust(top=0.94, bottom=0.12, hspace=0.4, wspace=0.35)
+        figure.text(
+            0.5,
+            0.025,
+            f"Each cell correlates native scores for two directions across {len(runs)} models. "
+            "Prompts, datasets and metrics are separate.\n"
+            "Positive = models stronger on one direction tend to be stronger on the other. "
+            "NA = constant scores or fewer than three models.\n"
+            "Descriptive associations can reflect overall model quality; not significance, "
+            "causality or isolated language ability.",
+            ha="center",
+            fontsize=10,
+        )
+        save(figure, f"languages/model_pairs/{view}/pair_correlations_{dataset}_{setting}")
+
+        comparisons = [
+            row
+            for row in members
+            if row["metric"] == "comet"
+            and row["category"] == "not_applicable"
+            and row["direction_x"].split("-")[0] == row["direction_y"].split("-")[0]
+            and row["direction_x"].endswith("-en")
+            and row["direction_y"].endswith("-fr")
+        ]
+        if not comparisons:
+            continue
+        columns = min(3, len(comparisons))
+        height = math.ceil(len(comparisons) / columns)
+        figure, axes = plt.subplots(
+            height, columns, figsize=(6 * columns, 5 * height + 2.5), squeeze=False
+        )
+        colors = plt.get_cmap("tab10")
+        for axis, row in zip(axes.flat, comparisons, strict=False):
+            values_x, values_y = json.loads(row["values_x"]), json.loads(row["values_y"])
+            for index in range(len(runs)):
+                axis.scatter(
+                    values_x[index],
+                    values_y[index],
+                    s=65,
+                    color=colors(index),
+                    marker="o",
+                    edgecolors="white",
+                    linewidths=0.5,
+                    zorder=3,
+                )
+            source = LANGUAGE_LABELS.get(row["direction_x"].split("-")[0], row["direction_x"])
+            coefficients = (
+                f"Pearson r = {row['pearson']:.2f} | Spearman rho = {row['spearman']:.2f}"
+                if row["state"] == "completed"
+                else "Correlation = NA"
+            )
+            axis.set_title(f"{source} source\n{coefficients} | n = {len(runs)}", fontsize=11)
+            axis.set_xlabel(f"{source} -> English | COMET")
+            axis.set_ylabel(f"{source} -> French | COMET")
+            axis.margins(0.12)
+            axis.grid(color="#e5e5e5", linewidth=0.6)
+            axis.set_axisbelow(True)
+        for axis in list(axes.flat)[len(comparisons) :]:
+            axis.set_visible(False)
+        figure.suptitle(
+            f"To English vs To French | {DATASETS[dataset]} | {setting.replace('_', ' ').title()}",
+            fontsize=20,
+            y=0.97,
+        )
+        figure.legend(
+            handles=[
+                Line2D([], [], color=colors(index), linestyle="none", marker="o", label=LABELS[run])
+                for index, run in enumerate(runs)
+            ],
+            loc="lower center",
+            bbox_to_anchor=(0.5, 0.07),
+            ncol=min(4, len(runs)),
+            frameon=False,
+            fontsize=9,
+        )
+        figure.subplots_adjust(top=0.82, bottom=0.25, hspace=0.55, wspace=0.4)
+        figure.text(
+            0.5,
+            0.015,
+            "One dot = one model; source language fixed within each panel. "
+            "Both axes are native COMET scores, not zero-shot vs few-shot.\n"
+            "These small-cohort correlations may reflect overall model strength; "
+            "no significance or causal claims.",
+            ha="center",
+            fontsize=10,
+        )
+        save(figure, f"languages/model_pairs/{view}/english_vs_french_{dataset}_{setting}")
+    for view in VIEWS:
+        for dataset in (*DATASETS, "all_datasets"):
+            for extension in ("png", "pdf"):
+                (
+                    output
+                    / "figures"
+                    / f"languages/model_pairs/{view}/model_pairs_{dataset}.{extension}"
+                ).unlink(missing_ok=True)
+    lines = [
+        "# Language-Pair Correlations",
+        "",
+        "Each observation is one retained model. Native scores for two directed language "
+        "pairs are correlated across the same models using Pearson and Spearman. "
+        "Zero-shot and few-shot are separate, as are datasets, metrics and terminology groups. "
+        "General metrics share the annotation-independent translation scores.",
+        "",
+        "Heatmaps cover every supported pair of directions for COMET, chrF++ and "
+        "variant-aware coverage. English-versus-French COMET scatter panels hold the source "
+        "language fixed: for example German -> English versus German -> French.",
+        "",
+        "Scores are native model-direction aggregates, not within-model language percentiles. "
+        "All models and both prompts must have complete direction scores. Every model has "
+        "equal weight; translation counts do not weight correlations. Constant vectors or "
+        "fewer than three models produce NA, not zero. Exact model vectors are exported in "
+        "[language_pair_correlations.csv](../../tables/language_pair_correlations.csv).",
+        "",
+        "A positive correlation can reflect overall model strength rather than a specific "
+        "language relationship. Models are not independent random samples, direction rows "
+        "are not matched translations, and no p-values, significance or causal claims are made.",
+        "",
+        "## Figures",
+        "",
+    ]
+    for relative in saved:
+        target = Path(relative).relative_to("languages").as_posix()
+        lines.append(f"- {target}: [PNG]({target}.png) | [PDF]({target}.pdf)")
+    path = output / "figures/languages/pair_correlations.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    index = output / "figures/languages/README.md"
+    if index.exists():
+        text = index.read_text(encoding="utf-8")
+        text = text.replace(
+            "Model-dot panels compare each model's relative language handling under zero/few-shot "
+            "using that model's own shared ranking pool. They do not rank absolute model quality; "
+            "consult the native-metric figures and original model scorecards for that purpose.",
+            "Language-pair correlations compare native scores for different directions across "
+            "models, with prompts separate. English-versus-French panels hold the source fixed.",
+        )
+        text = "\n".join(line for line in text.splitlines() if "model_pairs_" not in line)
+        link = (
+            "[Language-pair correlations and English-versus-French scatter plots]"
+            "(pair_correlations.md)"
+        )
+        if link not in text:
+            text += "\n\n## Pair Correlations\n\n" + link
+        index.write_text(text.rstrip() + "\n", encoding="utf-8")
+    return saved
+
+
+def write_language_analysis(output, points, runs):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
     balanced, components, support = build_language_direction_rows(points, runs)
-    pairs, overall_models = aggregate_language_pairs(balanced, runs)
+    pairs, _ = aggregate_language_pairs(balanced, runs)
     source_ranks, target_ranks = build_language_rankings(balanced, runs)
     (output / "tables").mkdir(parents=True, exist_ok=True)
     for name, rows in (
@@ -1775,94 +2769,16 @@ def write_language_analysis(output, points, runs):
         )
         save(figure, f"languages/balanced_heatmaps/{view}/balanced_{dataset}_{setting}")
 
-    model_groups = defaultdict(list)
-    for row in [*balanced, *overall_models]:
-        if row["setting"] in SETTINGS:
-            model_groups[(row["view"], row["dataset"], row["direction"])].append(row)
-    colors = plt.get_cmap("tab10")
-    for view in VIEWS:
-        for dataset in (*DATASETS, "all_datasets"):
-            directions = sorted(
-                direction
-                for source, data, direction in model_groups
-                if (source, data) == (view, dataset)
-            )
-            if not directions:
-                continue
-            columns = min(4, len(directions))
-            height = math.ceil(len(directions) / columns)
-            figure, axes = plt.subplots(
-                height, columns, figsize=(4.3 * columns, 3.9 * height + 2), squeeze=False
-            )
-            for axis, direction in zip(axes.flat, directions, strict=False):
-                rows = model_groups[(view, dataset, direction)]
-                lookup = {(row["run"], row["setting"]): row for row in rows}
-                axis.plot([0, 100], [0, 100], color="#a1a1a1", linestyle="--", linewidth=0.8)
-                for index, run in enumerate(runs):
-                    axis.scatter(
-                        lookup[(run, "zero_shot")]["balanced_score"],
-                        lookup[(run, "few_shot")]["balanced_score"],
-                        s=45,
-                        color=colors(index),
-                        marker="o",
-                        edgecolors="white",
-                        linewidths=0.4,
-                        zorder=3,
-                    )
-                source_language, target_language = direction.split("-", 1)
-                axis.set_title(
-                    f"{LANGUAGE_LABELS.get(source_language, source_language)} -> "
-                    f"{LANGUAGE_LABELS.get(target_language, target_language)}",
-                    fontsize=11,
-                )
-                axis.set(
-                    xlim=(-3, 103),
-                    ylim=(-3, 103),
-                    xlabel="Zero-shot balanced score",
-                    ylabel="Few-shot balanced score",
-                )
-                axis.set_aspect("equal", adjustable="box")
-                axis.grid(color="#e5e5e5", linewidth=0.6)
-                axis.set_axisbelow(True)
-            for axis in list(axes.flat)[len(directions) :]:
-                axis.set_visible(False)
-            figure.suptitle(
-                f"Language Pair Model Comparison | "
-                f"{DATASETS.get(dataset, 'All Three Datasets')} | {view}",
-                fontsize=20,
-            )
-            figure.legend(
-                handles=[
-                    Line2D(
-                        [],
-                        [],
-                        color=colors(index),
-                        linestyle="none",
-                        marker="o",
-                        label=LABELS[run],
-                    )
-                    for index, run in enumerate(runs)
-                ],
-                loc="lower center",
-                bbox_to_anchor=(0.5, 0.04),
-                ncol=min(5, len(runs)),
-                frameon=False,
-                fontsize=9,
-            )
-            figure.subplots_adjust(top=0.92, bottom=0.17, hspace=0.65, wspace=0.4)
-            figure.text(
-                0.5,
-                0.012,
-                "One dot = one model. Above diagonal = higher few-shot "
-                "rank-percentile score. Scores are relative to each model's own language "
-                "pool, not absolute model quality.",
-                ha="center",
-                fontsize=10,
-            )
-            save(figure, f"languages/model_pairs/{view}/model_pairs_{dataset}")
+    saved.extend(write_language_pair_correlations(output, points, runs))
+    saved.extend(write_language_correlations(output, points, runs))
+    saved.extend(write_language_correlations(output, points, runs, combined=True))
+    saved.extend(write_language_rank_reports(output, points, runs))
 
     methodology = [
         "# Language Performance Analysis",
+        "",
+        "[Chosen-style balanced language median/best-model scorecards]"
+        "(../../tables/language_rankings/README.md)",
         "",
         "## Method",
         "",
@@ -1879,9 +2795,9 @@ def write_language_analysis(output, points, runs):
         "Score = 100 * (pool size - rank) / (pool size - 1). These are relative rank "
         "percentiles, not accuracy percentages or native-score normalization.",
         "",
-        "Model-dot panels compare each model's relative language handling under zero/few-shot "
-        "using that model's own shared ranking pool. They do not rank absolute model quality; "
-        "consult the native-metric figures and original model scorecards for that purpose.",
+        "[Language-pair correlations](pair_correlations.md) compare native scores for different "
+        "directions across models, with prompts separate. English-versus-French scatter panels "
+        "hold the source language fixed. These replace the former zero/few-shot model-dot panels.",
         "",
         "Metrics are averaged equally within semantic and lexical families. Terminology "
         "metrics are averaged within each of the three annotation groups, then groups are "
@@ -4170,7 +5086,232 @@ def write_efficiency_figures(output, rows):
     return saved
 
 
-def write_chosen_rank_figures(output, rows):
+def write_rank_statistic_reports(output, aggregates, points, runs):
+    saved = []
+    for statistic in ("median", "top"):
+        selected = build_statistic_aggregates(aggregates, points, statistic)
+        ranked, components = build_mixed_rank_rows(selected, runs)
+        for row in ranked:
+            row["statistic"] = f"direction_{statistic}"
+        write_tables(output, selected, statistic=statistic)
+        folder = output / "tables/rankings" / statistic
+        write_csv(folder / "metric_scores.csv", selected)
+        write_csv(folder / "model_ranks.csv", ranked)
+        write_csv(folder / "rank_components.csv", components)
+        groups = defaultdict(list)
+        for row in ranked:
+            groups[(row["view"], row["scope"], row["dataset"], row["setting"])].append(row)
+        overall_note = (
+            "medians, not a pooled median"
+            if statistic == "median"
+            else "maxima, not a global maximum"
+        )
+        lines = [
+            f"# {'Median' if statistic == 'median' else 'Highest-Score'} Model Rankings",
+            "",
+            "For each metric, dataset, prompt and annotation group, summarize each model's "
+            "shared direction scores using the "
+            f"{'median' if statistic == 'median' else 'maximum'}. "
+            "Rank models descending on those native metric values. Metric ties receive average "
+            "ranks. Balance metrics within families, terminology groups equally, and semantic / "
+            "lexical / terminology families equally. Lower mixed mean rank is better; final ties "
+            "share the minimum rank (1, 1, 3).",
+            "",
+            "Overall rankings average the dataset/prompt family ranks equally; they do not "
+            "rerank a pooled statistic. Overall displayed metric cells average the stratum "
+            f"{overall_note}. "
+            "NA metrics are omitted for every model, never scored zero. Partial model support "
+            "is rejected. Original mean-based rankings and plots are unchanged.",
+            "",
+            "Top means the best observed direction aggregate, not the best single translation, "
+            "best model, upper confidence bound or typical performance. Different metric maxima "
+            "can come from different directions. CSVs preserve supports and winning directions. "
+            "These are descriptive rankings, not significance claims.",
+            "",
+            "[Native metric tables](performance.md) | [Metric scores](metric_scores.csv) | "
+            "[Model ranks](model_ranks.csv) | [Rank components](rank_components.csv)",
+            "",
+        ]
+        for (view, scope, dataset, setting), members in sorted(
+            groups.items(), key=lambda item: (item[0][1] != "overall", item[0])
+        ):
+            title = (
+                "Overall: all datasets and both prompts"
+                if scope == "overall"
+                else (f"{DATASETS[dataset]} | {setting.replace('_', ' ').title()}")
+            )
+            lines += [
+                f"## {title} | {view}",
+                "",
+                "| Rank | Model | Mixed Mean Rank | Semantic | Lexical | Terminology |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ]
+            for row in sorted(members, key=lambda row: (row["mixed_rank"], row["run"])):
+                lines.append(
+                    f"| {row['mixed_rank']} | {row['model']} | {row['mixed_mean_rank']:.3f} | "
+                    f"{row['semantic_mean_rank']:.3f} | {row['lexical_mean_rank']:.3f} | "
+                    f"{row['terminology_mean_rank']:.3f} |"
+                )
+            stem = "overall" if scope == "overall" else f"{dataset}_{setting}"
+            figure = f"../../../figures/rankings/{statistic}/{view}/rankings_{statistic}_{stem}"
+            lines += ["", f"Scorecard: [PNG]({figure}.png) | [PDF]({figure}.pdf)", ""]
+        (folder / "rankings.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        saved.extend(write_chosen_rank_figures(output, ranked, statistic=statistic))
+    lines = [
+        "# Median and Highest-Score Model Rankings",
+        "",
+        "Alternative direction-level summaries with the original balanced metric-family weights. "
+        "They supplement, rather than replace, the mean-based Chosen 01 scorecards.",
+        "",
+        "- [Median-based rankings](rankings/median/rankings.md)",
+        "- [Highest-score rankings](rankings/top/rankings.md)",
+        "",
+    ]
+    (output / "tables/ranking_statistics.md").write_text("\n".join(lines), encoding="utf-8")
+    return saved
+
+
+def write_language_rank_reports(output, points, runs):
+    ranked, components, native, support = build_language_mixed_rank_rows(points, runs)
+    folder = output / "tables/language_rankings"
+    folder.mkdir(parents=True, exist_ok=True)
+
+    def language_record(row):
+        language = row.get("language", row.get("run"))
+        return {
+            **{key: value for key, value in row.items() if key not in ("run", "model")},
+            "language": language,
+            "language_name": LANGUAGE_LABELS.get(language, language),
+        }
+
+    for name, rows in (
+        ("language_ranks", ranked),
+        ("metric_rank_components", components),
+        ("native_metric_scores", native),
+        ("coverage", support),
+    ):
+        write_csv(folder / f"{name}.csv", [language_record(row) for row in rows])
+    saved = []
+    for statistic in ("median", "top"):
+        for role in ("from", "to"):
+            selected = [
+                row for row in ranked if row["statistic"] == statistic and row["role"] == role
+            ]
+            lines = [
+                f"# Balanced {role.title()}-Language Rankings: "
+                f"{'Median Across Models' if statistic == 'median' else 'Best Model'}",
+                "",
+                "Rows rank languages, NOT models. From means translating out of a language; "
+                "To means translating into it. For each metric/dataset/prompt, average supported "
+                "partner-direction scores equally within each model. Then use the "
+                f"{'median across models' if statistic == 'median' else 'highest model mean'} "
+                "as that language's native metric value. Top does not choose a different model "
+                "for each direction. The best model may differ between metrics and strata.",
+                "",
+                "Rank languages descending within each metric with average ties. Balance metrics "
+                "within semantic and lexical families; balance terminology metrics within each "
+                "term group and the three groups equally. The three family ranks have equal "
+                "one-third weights. Final ties share the minimum rank (1, 1, 3).",
+                "",
+                "Overall rankings require every dataset, both prompts and every active metric "
+                "for each language. Within that overall eligible language cohort, rerank each "
+                "stratum's metric values, then average dataset/prompt family ranks equally. "
+                "Displayed overall native cells are equal-stratum means, not pooled medians or "
+                "global maxima. Dataset-specific cohorts may differ. All-NA metrics are omitted, "
+                "never scored zero. Coverage CSV records excluded languages "
+                "and missing components.",
+                "",
+                "Partner populations can differ between languages. These are descriptive "
+                "supported benchmark rankings, not matched-partner comparisons, "
+                "intrinsic language difficulty "
+                "or statistical significance. Original model scorecards are unchanged.",
+                "",
+                "[Language ranks](language_ranks.csv) | "
+                "[Metric ranks](metric_rank_components.csv) | "
+                "[Native scores and model values](native_metric_scores.csv) | "
+                "[Coverage](coverage.csv)",
+                "",
+            ]
+            groups = defaultdict(list)
+            for row in selected:
+                groups[(row["view"], row["scope"], row["dataset"], row["setting"])].append(row)
+            for (view, scope, dataset, setting), members in sorted(
+                groups.items(), key=lambda item: (item[0][1] != "overall", item[0])
+            ):
+                title = (
+                    "Overall: all datasets and both prompts"
+                    if scope == "overall"
+                    else (f"{DATASETS[dataset]} | {setting.replace('_', ' ').title()}")
+                )
+                lines += [
+                    f"## {title} | {view}",
+                    "",
+                    "| Rank | Language | Mixed Mean Rank | Semantic | Lexical | Terminology |",
+                    "| --- | --- | --- | --- | --- | --- |",
+                ]
+                for row in sorted(members, key=lambda row: (row["mixed_rank"], row["language"])):
+                    lines.append(
+                        f"| {row['mixed_rank']} | {row['language_name']} | "
+                        f"{row['mixed_mean_rank']:.3f} | "
+                        f"{row['semantic_mean_rank']:.3f} | {row['lexical_mean_rank']:.3f} | "
+                        f"{row['terminology_mean_rank']:.3f} |"
+                    )
+                stem = "overall" if scope == "overall" else f"{dataset}_{setting}"
+                figure = (f"../../figures/languages/rankings/{statistic}/{role}/{view}/"
+                          f"language_rankings_{stem}")
+                lines += ["", f"Scorecard: [PNG]({figure}.png) | [PDF]({figure}.pdf)", ""]
+                missing = [
+                    row["language"]
+                    for row in support
+                    if row["view"] == view
+                    and row["statistic"] == statistic
+                    and row["role"] == role
+                    and row["scope"] == scope
+                    and row["dataset"] == dataset
+                    and row["state"] != "completed"
+                ]
+                if missing:
+                    lines += [
+                        "Unranked due to incomplete metric/dataset coverage: "
+                        + ", ".join(LANGUAGE_LABELS.get(code, code) for code in sorted(missing))
+                        + ".",
+                        "",
+                    ]
+            (folder / f"{statistic}_{role}.md").write_text(
+                "\n".join(lines) + "\n", encoding="utf-8"
+            )
+            saved.extend(
+                write_chosen_rank_figures(output, selected, statistic=statistic, language_role=role)
+            )
+    lines = [
+        "# Balanced Language Ranking Scorecards",
+        "",
+        "Chosen-style semantic / lexical / terminology ranking of languages, with equal "
+        "family weights. Median and best-model summaries are separate, as are From and To roles.",
+        "",
+        "- [Median: from languages](median_from.md)",
+        "- [Median: to languages](median_to.md)",
+        "- [Best model: from languages](top_from.md)",
+        "- [Best model: to languages](top_to.md)",
+        "",
+    ]
+    (folder / "README.md").write_text("\n".join(lines), encoding="utf-8")
+    index = output / "figures/languages/README.md"
+    link = (
+        "[Balanced language median/best-model scorecards](../../tables/language_rankings/README.md)"
+    )
+    if index.exists() and link not in index.read_text(encoding="utf-8"):
+        index.write_text(
+            index.read_text(encoding="utf-8").rstrip()
+            + "\n\n## Balanced Language Rankings\n\n"
+            + link
+            + "\n",
+            encoding="utf-8",
+        )
+    return saved
+
+
+def write_chosen_rank_figures(output, rows, *, statistic=None, language_role=None):
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib.colors import LinearSegmentedColormap
@@ -4288,7 +5429,21 @@ def write_chosen_rank_figures(output, rows):
             if scope == "overall"
             else (f"{DATASETS[dataset]} | {setting.replace('_', ' ').title()}")
         )
-        figure.suptitle("Chosen 01 | Balanced Mixed-Rank Scorecard", fontsize=24, y=0.97)
+        figure.suptitle(
+            "Chosen 01 | Balanced Mixed-Rank Scorecard"
+            if statistic is None
+            else f"{'Median' if statistic == 'median' else 'Highest-Score'} | "
+            "Balanced Model Rankings",
+            fontsize=24,
+            y=0.97,
+        )
+        if language_role is not None:
+            figure.suptitle(
+                f"Balanced {language_role.title()}-Language Rankings | "
+                f"{'Median Across Models' if statistic == 'median' else 'Best Model'}",
+                fontsize=24,
+                y=0.97,
+            )
         figure.text(0.55, 0.905, f"{title} | Annotation view: {view}", ha="center", fontsize=15)
         figure.subplots_adjust(left=0.10, right=0.99, top=0.79, bottom=0.34)
         aggregation = (
@@ -4297,6 +5452,30 @@ def write_chosen_rank_figures(output, rows):
             if scope == "overall"
             else "Metric cells: native-scale direction-macro scores. "
             "Colors use within-metric model ranks."
+        )
+        if statistic is not None:
+            description = "median" if statistic == "median" else "maximum"
+            aggregation = (
+                f"Overall: equal dataset/prompt weights. Cells average stratum {description} "
+                f"scores, NOT a pooled {description}; colors use mean per-stratum metric ranks."
+                if scope == "overall"
+                else f"Metric cells: {description} native score across shared language directions, "
+                "NOT individual translations. Colors use within-metric model ranks."
+            )
+        if language_role is not None:
+            description = "median across models" if statistic == "median" else "best model mean"
+            aggregation = f"Cells: {description} of per-model partner-direction means. " + (
+                "Overall averages stratum values and family ranks equally, using the "
+                "complete-coverage language cohort."
+                if scope == "overall"
+                else "Colors encode metric ranks across eligible languages, not models."
+            )
+        cohort_note = (
+            "Languages ranked; partner sets may differ. Incomplete coverage is excluded, "
+            "never scored zero. "
+            if language_role is not None
+            else "Selected current models; metric-specific shared directions, "
+            "not proven identical rows. "
         )
         figure.text(
             0.55,
@@ -4308,8 +5487,7 @@ def write_chosen_rank_figures(output, rows):
             "all / external / LLM-enriched groups equally. "
             "Tied metric scores receive average ranks.\n"
             f"{aggregation}\n"
-            "Selected current models; metric-specific shared directions, "
-            "not proven identical rows. "
+            f"{cohort_note}"
             "All-NA metrics omitted. Descriptive chosen weights, "
             "not a significance or human-validity claim.",
             ha="center",
@@ -4318,12 +5496,20 @@ def write_chosen_rank_figures(output, rows):
         )
         stem = "overall" if scope == "overall" else f"{dataset}_{setting}"
         relative = f"chosen/01_balanced_mixed_rank/{view}/chosen_01_balanced_mixed_rank_{stem}"
+        if statistic is not None:
+            relative = f"rankings/{statistic}/{view}/rankings_{statistic}_{stem}"
+        if language_role is not None:
+            relative = (
+                f"languages/rankings/{statistic}/{language_role}/{view}/language_rankings_{stem}"
+            )
         for extension in ("png", "pdf"):
             path = output / "figures" / f"{relative}.{extension}"
             path.parent.mkdir(parents=True, exist_ok=True)
             figure.savefig(path, dpi=180, bbox_inches="tight")
         plt.close(figure)
         saved.append(relative)
+    if statistic is not None:
+        return saved
     chosen = output / "figures" / "chosen"
     lines = [
         "# Chosen Figures",
@@ -4411,6 +5597,16 @@ def write_readme(output, figures):
             else []
         ),
         "- [Readable performance tables](tables/performance.md)",
+        *(
+            ["- [Balanced language median/best-model rankings](tables/language_rankings/README.md)"]
+            if (output / "tables/language_rankings/README.md").exists()
+            else []
+        ),
+        *(
+            ["- [Median and highest-score model rankings](tables/ranking_statistics.md)"]
+            if (output / "tables/ranking_statistics.md").exists()
+            else []
+        ),
         "- [LaTeX table fragments](tables/performance.tex) (requires `graphicx`)",
         "- [Translation-quality data](tables/translation_quality.csv)",
         "- [Terminology data](tables/terminology.csv)",
@@ -4456,7 +5652,7 @@ def write_readme(output, figures):
         "",
     ]
     figure_types = {
-        "languages": "Language Performance: Native Metrics, Balanced Scores and Model Pairs",
+        "languages": "Language Performance: Native Metrics, Balanced Scores and Pair Correlations",
         "chosen": "Chosen Figures",
         "output_tokens": "Output Tokens vs Rank and Latency",
         "all_metrics": "All Model Scores on Every Metric",
@@ -4726,7 +5922,135 @@ def main():
         action="store_true",
         help="Render pair/source/target language violins from native direction CSV only.",
     )
+    parser.add_argument(
+        "--pair-correlations-only",
+        action="store_true",
+        help="Replace model-pair plots with native direction correlations from existing scores.",
+    )
+    parser.add_argument(
+        "--language-correlations-only",
+        action="store_true",
+        help="Render to-to, from-from and from-to language correlations from existing scores.",
+    )
+    parser.add_argument(
+        "--combined-language-correlations-only",
+        action="store_true",
+        help="Render combined dataset/prompt language means, correlations and model scatter plots.",
+    )
+    parser.add_argument(
+        "--ranking-statistics-only",
+        action="store_true",
+        help="Render median/top model ranking tables and scorecards from existing native scores.",
+    )
+    parser.add_argument(
+        "--language-ranking-statistics-only",
+        action="store_true",
+        help="Render Chosen-style median/best-model language rankings for from/to roles.",
+    )
     args = parser.parse_args()
+    if args.language_ranking_statistics_only:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        path = args.output / "tables/prompting_violin_points.csv"
+        if not path.exists():
+            parser.error("Generate native direction scores before ranking languages")
+        with path.open(encoding="utf-8", newline="") as handle:
+            points = select_analysis_points(list(csv.DictReader(handle)))
+        runs = sorted({row["run"] for row in points})
+        if set(runs) != set(LABELS):
+            parser.error("Language rankings require the selected model cohort")
+        figures = write_language_rank_reports(args.output, points, runs)
+        write_readme(
+            args.output,
+            sorted(
+                path.relative_to(args.output / "figures").with_suffix("").as_posix()
+                for path in (args.output / "figures").rglob("*.png")
+            ),
+        )
+        print(
+            f"Wrote {len(figures)} balanced language scorecards; "
+            f"see {args.output / 'tables/language_rankings/README.md'}"
+        )
+        return
+    if args.ranking_statistics_only:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        paths = [
+            args.output / "tables" / name
+            for name in (
+                "translation_quality.csv",
+                "terminology.csv",
+                "prompting_violin_points.csv",
+            )
+        ]
+        if not all(path.exists() for path in paths):
+            parser.error("Generate native metric and direction scores before ranking statistics")
+        data = []
+        for path in paths:
+            with path.open(encoding="utf-8", newline="") as handle:
+                data.append(list(csv.DictReader(handle)))
+        aggregates = data[0] + data[1]
+        runs = sorted({row["run"] for row in aggregates})
+        if set(runs) != set(LABELS):
+            parser.error("Ranking statistics require the selected model cohort")
+        figures = write_rank_statistic_reports(args.output, aggregates, data[2], runs)
+        write_readme(
+            args.output,
+            sorted(
+                path.relative_to(args.output / "figures").with_suffix("").as_posix()
+                for path in (args.output / "figures").rglob("*.png")
+            ),
+        )
+        print(
+            f"Wrote {len(figures)} median/top ranking scorecards; "
+            f"see {args.output / 'tables/ranking_statistics.md'}"
+        )
+        return
+    if (
+        args.pair_correlations_only
+        or args.language_correlations_only
+        or args.combined_language_correlations_only
+    ):
+        import matplotlib
+
+        matplotlib.use("Agg")
+        path = args.output / "tables/prompting_violin_points.csv"
+        if not path.exists():
+            parser.error("Generate native direction scores before rendering correlations")
+        with path.open(encoding="utf-8", newline="") as handle:
+            points = select_analysis_points(list(csv.DictReader(handle)))
+        runs = sorted({row["run"] for row in points})
+        writer = (
+            write_language_correlations
+            if args.language_correlations_only or args.combined_language_correlations_only
+            else write_language_pair_correlations
+        )
+        figures = (
+            writer(args.output, points, runs, combined=True)
+            if args.combined_language_correlations_only
+            else writer(args.output, points, runs)
+        )
+        write_readme(
+            args.output,
+            sorted(
+                path.relative_to(args.output / "figures").with_suffix("").as_posix()
+                for path in (args.output / "figures").rglob("*.png")
+            ),
+        )
+        index_name = (
+            "correlations_combined.md"
+            if args.combined_language_correlations_only
+            else "correlations.md"
+            if args.language_correlations_only
+            else "pair_correlations.md"
+        )
+        print(
+            f"Wrote {len(figures)} correlation sets; "
+            f"see {args.output / 'figures/languages' / index_name}"
+        )
+        return
     if args.language_violins_only:
         import matplotlib
 
@@ -4854,6 +6178,7 @@ def main():
     write_csv(args.output / "tables" / "chosen_01_mixed_ranks.csv", mixed_ranks)
     write_csv(args.output / "tables" / "chosen_01_rank_components.csv", rank_components)
     figures += write_chosen_rank_figures(args.output, mixed_ranks)
+    figures += write_rank_statistic_reports(args.output, aggregates, violin_rows, runs)
     translation_timings = load_translation_timings(args.input)
     if translation_timings:
         efficiency = build_efficiency_rows(mixed_ranks, translation_timings)

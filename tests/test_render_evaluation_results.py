@@ -155,6 +155,80 @@ def language_points(monkeypatch):
     return points, runs
 
 
+def test_language_mixed_ranks_use_median_or_best_model_after_partner_means(tmp_path, monkeypatch):
+    import csv
+
+    import matplotlib.figure
+
+    points, runs = language_points(monkeypatch)
+    renderer.RANK_FAMILIES["terminology"] += ("terminology_success_rate",)
+    points = [
+        {**row, "value": 10 if row["direction"] == "en-de" else 100 if row["run"] == runs[1] else 0}
+        for row in points
+    ]
+    third = list(renderer.LABELS)[2]
+    points += [{**row, "run": third} for row in points if row["run"] == runs[0]]
+    runs = [*runs, third]
+    rows, components, native, support = renderer.build_language_mixed_rank_rows(points, runs)
+    assert len(rows) == 24
+    for role, median_winner, top_winner in (("from", "en", "de"), ("to", "de", "en")):
+        for statistic, winner in (("median", median_winner), ("top", top_winner)):
+            selected = [
+                row for row in rows if row["role"] == role and row["statistic"] == statistic
+            ]
+            assert selected and all(
+                row["language"] == winner for row in selected if row["mixed_rank"] == 1
+            )
+            assert {row["language_name"] for row in selected} == {"English", "German"}
+    assert components and all(row["n_models"] == 3 for row in native)
+    assert all(row["state"] == "completed" for row in support)
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        position = path.parts.index("rankings")
+        statistic, role = path.parts[position + 1 : position + 3]
+        expected = (
+            "English" if (statistic, role) in (("median", "from"), ("top", "to")) else "German"
+        )
+        axis = figure.axes[0]
+        assert axis.get_yticklabels()[0].get_text() == expected
+        assert {label.get_text() for label in axis.get_yticklabels()} == {"English", "German"}
+        assert "Language Rankings" in figure._suptitle.get_text()
+        column = [label.get_text() for label in axis.get_xticklabels()].index("COMET")
+        value = next(text.get_text() for text in axis.texts if text.get_position() == (column, 0))
+        assert float(value) == (10 if statistic == "median" else 100)
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_language_rank_reports(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 12
+    with (tmp_path / "tables/language_rankings/language_ranks.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        exported = list(csv.DictReader(handle))
+    assert {row["language_name"] for row in exported} == {"English", "German"}
+    assert all("model" not in row and "run" not in row for row in exported)
+    monkeypatch.setattr(
+        renderer, "DATASETS", {"google_patents": "Patents", "jrc_articles": "Articles"}
+    )
+    partial = [{**row, "dataset": "jrc_articles"} for row in points if row["direction"] == "en-de"]
+    overall, _, _, coverage = renderer.build_language_mixed_rank_rows([*points, *partial], runs)
+    assert all(
+        row["language"] == "en"
+        for row in overall
+        if row["scope"] == "overall" and row["role"] == "from"
+    )
+    assert any(
+        row["language"] == "de"
+        and row["scope"] == "overall"
+        and row["role"] == "from"
+        and row["state"] == "incomplete_metric_strata"
+        for row in coverage
+    )
+
+
 def test_language_scores_rank_directions_not_models_and_do_not_weight_rows(monkeypatch):
     points, runs = language_points(monkeypatch)
     balanced, components, support = renderer.build_language_direction_rows(points, runs)
@@ -231,13 +305,244 @@ def test_language_rankings_do_not_rank_incomplete_overall_languages(monkeypatch)
     )
 
 
+def test_language_correlations_average_directions_per_model_and_separate_roles(
+    tmp_path, monkeypatch
+):
+    import json
+
+    import matplotlib.figure
+
+    runs = list(renderer.LABELS)[:3]
+    points = [
+        {
+            "view": "shared_general",
+            "dataset": "jrc_articles",
+            "category": "not_applicable",
+            "metric": "comet",
+            "run": run,
+            "setting": setting,
+            "direction": direction,
+            "value": values[index],
+            "rows_scored": 1000 if direction == "de-fr" else 1,
+        }
+        for setting in renderer.SETTINGS
+        for direction, values in (
+            ("de-en", (1, 2, 3)),
+            ("de-fr", (3, 6, 9)),
+            ("es-en", (3, 6, 9)),
+            ("es-fr", (1, 2, 3)),
+            ("en-de", (9, 6, 3)),
+            ("fr-de", (9, 6, 3)),
+        )
+        for index, run in enumerate(runs)
+    ]
+    rows, scores = renderer.build_language_correlations(points, runs)
+    selected = [
+        row
+        for row in rows
+        if row["role_x"] == row["role_y"] == "to"
+        and (row["language_x"], row["language_y"]) == ("en", "fr")
+    ]
+    assert len(selected) == 2
+    assert all(
+        json.loads(row["values_x"]) == json.loads(row["values_y"]) == [2, 4, 6]
+        and row["pearson"] == pytest.approx(1)
+        for row in selected
+    )
+    cross = [
+        row
+        for row in rows
+        if (row["role_x"], row["language_x"], row["role_y"], row["language_y"])
+        == ("from", "de", "to", "de")
+    ]
+    assert len(cross) == 2 and all(row["pearson"] == pytest.approx(-1) for row in cross)
+    assert all(
+        row["n_directions"] == 2 and row["value"] == 2
+        for row in scores
+        if row["role"] == "from" and row["language"] == "de" and row["run"] == runs[0]
+    )
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axes = [axis for axis in figure.axes if axis.images]
+        assert len(axes) == 3
+        assert all("target" in axis.get_xlabel() for axis in (axes[0], axes[2]))
+        assert all("source" in axis.get_ylabel() for axis in (axes[1], axes[2]))
+        assert axes[0].images[0].get_array().shape == (3, 3)
+        assert axes[1].images[0].get_array().shape == (4, 4)
+        assert axes[2].images[0].get_array().shape == (4, 3)
+        assert axes[2].images[0].get_array()[0, 0] == pytest.approx(-1)
+        assert all(axis.images[0].get_clim() == (-1, 1) for axis in axes)
+        figure.canvas.draw()
+        canvas = figure.canvas.get_renderer()
+        footer = figure.texts[-1].get_window_extent(canvas)
+        assert all(not axis.get_tightbbox(canvas).overlaps(footer) for axis in axes)
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_language_correlations(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 4
+
+
+def test_combined_language_correlations_balance_strata_and_reject_missing_support(
+    tmp_path, monkeypatch
+):
+    import json
+
+    import matplotlib.figure
+    import numpy as np
+    from matplotlib.collections import PathCollection
+
+    monkeypatch.setattr(renderer, "DATASETS", {"first": "First", "second": "Second"})
+    runs = list(renderer.LABELS)[:3]
+    scores = [
+        {
+            "view": "shared_general",
+            "category": "not_applicable",
+            "metric": "comet",
+            "dataset": dataset,
+            "setting": setting,
+            "role": role,
+            "language": language,
+            "run": run,
+            "value": value * (3 - index if language == "fr" else index + 1),
+            "n_directions": 1000 if dataset == "first" else 1,
+            "directions": "de-en;fr-en",
+        }
+        for dataset, setting, value in (
+            ("first", "zero_shot", 1),
+            ("first", "few_shot", 3),
+            ("second", "zero_shot", 9),
+            ("second", "few_shot", 11),
+        )
+        for role, language in (
+            ("from", "de"),
+            ("from", "fr"),
+            ("to", "de"),
+            ("to", "fr"),
+            ("from", "pt"),
+        )
+        for index, run in enumerate(runs)
+        if language != "pt" or dataset == "first"
+    ]
+    rows, combined = renderer.build_combined_language_correlations(scores, runs)
+    selected = [
+        row
+        for row in rows
+        if row["role_x"] == row["role_y"] == "from"
+        and (row["language_x"], row["language_y"]) == ("de", "fr")
+    ]
+    assert len(selected) == 1
+    assert json.loads(selected[0]["values_x"]) == [6, 12, 18]
+    assert json.loads(selected[0]["values_y"]) == [18, 12, 6]
+    assert selected[0]["pearson"] == pytest.approx(-1)
+    missing = [row for row in combined if row["language"] == "pt"]
+    assert len(missing) == 3 and all(
+        row["value"] is None
+        and row["state"] == "incomplete_strata"
+        and row["n_strata"] == 2
+        and row["required_strata"] == 4
+        for row in missing
+    )
+    assert not any("pt" in (row["language_x"], row["language_y"]) for row in rows)
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axis = figure.axes[0]
+        assert "German" in axis.get_xlabel() and "French" in axis.get_ylabel()
+        assert "all supported languages" in axis.get_xlabel().lower()
+        dots = [item for item in axis.collections if isinstance(item, PathCollection)]
+        np.testing.assert_array_equal(
+            [dot.get_offsets()[0] for dot in dots], [[6, 18], [12, 12], [18, 6]]
+        )
+        figure.canvas.draw()
+        canvas = figure.canvas.get_renderer()
+        assert not axis.get_tightbbox(canvas).overlaps(figure.texts[-1].get_window_extent(canvas))
+        assert not axis.get_tightbbox(canvas).overlaps(figure.legends[0].get_window_extent(canvas))
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_combined_language_scatter(tmp_path, rows, runs)
+    assert len(saved) == len(checked) == 2
+
+
+def test_language_pair_correlations_compare_models_not_prompts(tmp_path, monkeypatch):
+    import matplotlib.figure
+    import numpy as np
+    from matplotlib.collections import PathCollection
+
+    runs = list(renderer.LABELS)[:3]
+    points = [
+        {
+            "view": "shared_general",
+            "dataset": "jrc_articles",
+            "category": "not_applicable",
+            "metric": "comet",
+            "run": run,
+            "setting": setting,
+            "direction": direction,
+            "value": values[index],
+            "rows_scored": 1,
+        }
+        for setting in renderer.SETTINGS
+        for direction, values in (
+            ("de-en", (1, 2, 3)),
+            ("de-fr", (2, 4, 6) if setting == "zero_shot" else (6, 4, 2)),
+            ("en-fr", (4, 4, 4)),
+        )
+        for index, run in enumerate(runs)
+    ]
+    rows = renderer.build_language_pair_correlations(points, runs)
+    selected = [
+        row for row in rows if (row["direction_x"], row["direction_y"]) == ("de-en", "de-fr")
+    ]
+    assert len(selected) == 2
+    for row in selected:
+        expected = 1 if row["setting"] == "zero_shot" else -1
+        assert row["pearson"] == pytest.approx(expected)
+        assert row["spearman"] == pytest.approx(expected)
+        assert row["n_models"] == 3
+        assert row["values_x"] == "[1.0, 2.0, 3.0]"
+    constants = [row for row in rows if row["direction_y"] == "en-fr"]
+    assert constants and all(
+        row["state"] == "constant_scores" and row["pearson"] is None for row in constants
+    )
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        if "english_vs_french" in path.name:
+            axis = figure.axes[0]
+            assert "English" in axis.get_xlabel() and "French" in axis.get_ylabel()
+            dots = [item for item in axis.collections if isinstance(item, PathCollection)]
+            expected_y = (2, 4, 6) if "zero_shot" in path.name else (6, 4, 2)
+            np.testing.assert_array_equal(
+                [dot.get_offsets()[0] for dot in dots],
+                list(zip((1, 2, 3), expected_y, strict=True)),
+            )
+            assert all(handle.get_marker() == "o" for handle in figure.legends[0].legend_handles)
+        else:
+            for axis in (axis for axis in figure.axes if axis.images):
+                matrix = axis.images[0].get_array()
+                assert matrix[0, 1] == pytest.approx(1 if "zero_shot" in path.name else -1)
+                assert np.ma.getmaskarray(matrix)[2, :].all()
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_language_pair_correlations(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 4
+
+
 def test_language_figures_preserve_native_heatmaps_and_pair_model_coordinates(
     tmp_path, monkeypatch
 ):
     import matplotlib.figure
     import numpy as np
-    from matplotlib.collections import PathCollection
-    from matplotlib.markers import MarkerStyle
 
     points, runs = language_points(monkeypatch)
     checked = []
@@ -250,26 +555,16 @@ def test_language_figures_preserve_native_heatmaps_and_pair_model_coordinates(
             assert images
             assert max(float(image.get_array().max()) for image in images) == 510
         elif "model_pairs" in path.parts:
-            axes = [axis for axis in figure.axes if axis.get_visible()]
+            axes = [axis for axis in figure.axes if axis.images]
             assert len(axes) == 2
-            circle = MarkerStyle("o")
-            circle_path = circle.get_path().transformed(circle.get_transform())
-            assert all(handle.get_marker() == "o" for handle in figure.legends[0].legend_handles)
             for axis in axes:
-                dots = [item for item in axis.collections if isinstance(item, PathCollection)]
-                assert len(dots) == len(runs)
-                for dot in dots:
-                    np.testing.assert_array_equal(dot.get_paths()[0].vertices, circle_path.vertices)
-                assert len({tuple(dot.get_facecolors()[0]) for dot in dots}) == len(runs)
-                assert all(
-                    item.get_offsets()[0][0] == pytest.approx(item.get_offsets()[0][1])
-                    for item in dots
-                )
+                assert axis.get_xlabel() == axis.get_ylabel() == "Translation direction"
+                assert np.ma.getmaskarray(axis.images[0].get_array()).all()
         checked.append(path)
 
     monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
     saved = renderer.write_language_analysis(tmp_path, points, runs)
-    assert len(saved) == len(checked) == 12
+    assert len(saved) == len(checked) == 32
     assert (tmp_path / "language_rankings_from.md").exists()
     assert (tmp_path / "language_rankings_to.md").exists()
     assert "NOT partner-matched" in (tmp_path / "figures/languages/README.md").read_text()
@@ -919,6 +1214,113 @@ def test_efficiency_means_weight_strata_not_request_counts(monkeypatch):
     assert row["mean_latency_s"] is None and row["timed_latency_requests"] == 0
 
 
+def test_language_ranking_statistics_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    import sys
+
+    monkeypatch.setattr(
+        sys, "argv", ["renderer", "--language-ranking-statistics-only", "--output", str(tmp_path)]
+    )
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores before ranking languages" in capsys.readouterr().err
+
+
+def test_ranking_statistics_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    import sys
+
+    monkeypatch.setattr(
+        sys, "argv", ["renderer", "--ranking-statistics-only", "--output", str(tmp_path)]
+    )
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native metric and direction scores" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("statistic,winner", [("median", 0), ("top", 1)])
+def test_statistic_rankings_use_direction_median_or_maximum(
+    tmp_path, monkeypatch, statistic, winner
+):
+    from statistics import mean
+
+    import matplotlib.figure
+
+    runs = list(renderer.LABELS)[:2]
+    monkeypatch.setattr(renderer, "VIEWS", ("luna",))
+    monkeypatch.setattr(renderer, "DATASETS", {"google_patents": "Chemical Patents"})
+    monkeypatch.setattr(renderer, "SETTINGS", ("zero_shot",))
+    aggregates, points = [], []
+    for family, metrics in renderer.RANK_FAMILIES.items():
+        for category in renderer.CATEGORIES if family == "terminology" else ("not_applicable",):
+            for metric in metrics:
+                for index, run in enumerate(runs):
+                    values = (1, 3, 100) if index == 0 else (0, 2, 200)
+                    available = metric not in renderer.TERMINOLOGY[3:]
+                    row = {
+                        "view": "luna" if family == "terminology" else "shared_general",
+                        "category": category,
+                        "dataset": "google_patents",
+                        "setting": "zero_shot",
+                        "run": run,
+                        "model": renderer.LABELS[run],
+                        "metric": metric,
+                        "value": mean(values) if available else None,
+                        "directions": "de-en;en-de;fr-en" if available else "",
+                        "n_directions": 3 if available else 0,
+                    }
+                    aggregates.append(row)
+                    if available:
+                        points.extend(
+                            {
+                                **row,
+                                "direction": direction,
+                                "value": value,
+                                "rows_scored": 10000 if direction == "fr-en" else 1,
+                            }
+                            for direction, value in zip(
+                                ("de-en", "en-de", "fr-en"), values, strict=True
+                            )
+                        )
+    selected = renderer.build_statistic_aggregates(aggregates, points, statistic)
+    rows, _ = renderer.build_mixed_rank_rows(selected, runs)
+    assert all(row["run"] == runs[winner] for row in rows if row["mixed_rank"] == 1)
+    assert selected[0]["value"] == (3 if statistic == "median" else 100)
+    assert all(
+        row["value"] is None for row in selected if row["metric"] in renderer.TERMINOLOGY[3:]
+    )
+    assert aggregates[0]["value"] == mean((1, 3, 100))
+    if statistic == "top":
+        assert selected[0]["top_directions"] == "fr-en"
+    with pytest.raises(ValueError, match="identical common direction support"):
+        renderer.build_statistic_aggregates(aggregates, points[1:], statistic)
+    chosen = tmp_path / "figures/chosen/README.md"
+    chosen.parent.mkdir(parents=True)
+    chosen.write_text("Original mean scorecards", encoding="utf-8")
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        mode = "median" if "median" in path.parts else "top"
+        expected_run = runs[0 if mode == "median" else 1]
+        axis = figure.axes[0]
+        assert axis.get_yticklabels()[0].get_text() == renderer.LABELS[expected_run]
+        column = [label.get_text() for label in axis.get_xticklabels()].index("COMET")
+        value = next(text.get_text() for text in axis.texts if text.get_position() == (column, 0))
+        assert float(value) == (3 if mode == "median" else 200)
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_rank_statistic_reports(tmp_path, aggregates, points, runs)
+    assert len(saved) == len(checked) == 4
+    assert chosen.read_text(encoding="utf-8") == "Original mean scorecards"
+    for mode in ("median", "top"):
+        folder = tmp_path / "tables/rankings" / mode
+        assert (folder / "rankings.md").is_file() and (folder / "model_ranks.csv").is_file()
+        assert "stratum" in (folder / "rankings.md").read_text(encoding="utf-8")
+
+
 def test_mixed_rank_balances_families_groups_and_preserves_ties(monkeypatch):
     runs = list(renderer.LABELS)[:2]
     monkeypatch.setattr(renderer, "VIEWS", ("luna",))
@@ -951,6 +1353,19 @@ def test_mixed_rank_balances_families_groups_and_preserves_ties(monkeypatch):
     assert len(components) == 2 * (len(renderer.GENERAL) + 3 * 3)
     assert not any("success_rate" in key for row in rows for key in row)
     assert next(row for row in rows if row["run"] == runs[0])["semantic_mean_rank"] == 1
+    language_codes = ("de", "fr")
+    language_aggregates = [
+        {**row, "run": language_codes[runs.index(row["run"])]} for row in aggregates
+    ]
+    languages, _ = renderer.build_mixed_rank_rows(
+        language_aggregates,
+        language_codes,
+        labels=renderer.LANGUAGE_LABELS,
+        datasets=("google_patents",),
+        views=("luna",),
+    )
+    assert {row["model"] for row in languages} == {"German", "French"}
+    assert all(row["mixed_rank"] == 1 for row in languages)
     for row in aggregates:
         if row["metric"] not in renderer.TERMINOLOGY[:3]:
             continue

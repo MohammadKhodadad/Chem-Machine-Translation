@@ -8,7 +8,7 @@ Heatmaps omit languages with no supported cell in either role for that panel. Mi
 
 Balanced scores rank directions AND both prompts jointly within each model, dataset, view and metric. Higher native scores rank better; ties receive average ranks. Score = 100 * (pool size - rank) / (pool size - 1). These are relative rank percentiles, not accuracy percentages or native-score normalization.
 
-Model-dot panels compare each model's relative language handling under zero/few-shot using that model's own shared ranking pool. They do not rank absolute model quality; consult the native-metric figures and original model scorecards for that purpose.
+Language-pair correlations compare native scores for different directions across models, with prompts separate. English-versus-French panels hold the source fixed.
 
 Metrics are averaged equally within semantic and lexical families. Terminology metrics are averaged within each of the three annotation groups, then groups are averaged equally. The three families receive equal one-third weights, mirroring the balanced mixed-rank model scorecard. Universally unavailable metrics are omitted. Balanced panels use the intersection across every active component, model and both prompts; missing support is never replaced by zero.
 
@@ -77,11 +77,19 @@ Partner-language sets differ, especially in the sparse patent grid. Rankings are
 - balanced_heatmaps/luna/balanced_all_datasets_few_shot: [PNG](balanced_heatmaps/luna/balanced_all_datasets_few_shot.png) | [PDF](balanced_heatmaps/luna/balanced_all_datasets_few_shot.pdf)
 - balanced_heatmaps/original_glm/balanced_all_datasets_both_prompts: [PNG](balanced_heatmaps/original_glm/balanced_all_datasets_both_prompts.png) | [PDF](balanced_heatmaps/original_glm/balanced_all_datasets_both_prompts.pdf)
 - balanced_heatmaps/luna/balanced_all_datasets_both_prompts: [PNG](balanced_heatmaps/luna/balanced_all_datasets_both_prompts.png) | [PDF](balanced_heatmaps/luna/balanced_all_datasets_both_prompts.pdf)
-- model_pairs/original_glm/model_pairs_google_patents: [PNG](model_pairs/original_glm/model_pairs_google_patents.png) | [PDF](model_pairs/original_glm/model_pairs_google_patents.pdf)
-- model_pairs/original_glm/model_pairs_jrc_articles: [PNG](model_pairs/original_glm/model_pairs_jrc_articles.png) | [PDF](model_pairs/original_glm/model_pairs_jrc_articles.pdf)
-- model_pairs/original_glm/model_pairs_jrc_definitions: [PNG](model_pairs/original_glm/model_pairs_jrc_definitions.png) | [PDF](model_pairs/original_glm/model_pairs_jrc_definitions.pdf)
-- model_pairs/original_glm/model_pairs_all_datasets: [PNG](model_pairs/original_glm/model_pairs_all_datasets.png) | [PDF](model_pairs/original_glm/model_pairs_all_datasets.pdf)
-- model_pairs/luna/model_pairs_google_patents: [PNG](model_pairs/luna/model_pairs_google_patents.png) | [PDF](model_pairs/luna/model_pairs_google_patents.pdf)
-- model_pairs/luna/model_pairs_jrc_articles: [PNG](model_pairs/luna/model_pairs_jrc_articles.png) | [PDF](model_pairs/luna/model_pairs_jrc_articles.pdf)
-- model_pairs/luna/model_pairs_jrc_definitions: [PNG](model_pairs/luna/model_pairs_jrc_definitions.png) | [PDF](model_pairs/luna/model_pairs_jrc_definitions.pdf)
-- model_pairs/luna/model_pairs_all_datasets: [PNG](model_pairs/luna/model_pairs_all_datasets.png) | [PDF](model_pairs/luna/model_pairs_all_datasets.pdf)
+
+## Pair Correlations
+
+[Language-pair correlations and English-versus-French scatter plots](pair_correlations.md)
+
+## Language Correlations
+
+[Language correlations: to-to, from-from and from-to](correlations.md)
+
+## Language Correlations
+
+[Combined language correlations and model scatter plots](correlations_combined.md)
+
+## Balanced Language Rankings
+
+[Balanced language median/best-model scorecards](../../tables/language_rankings/README.md)
