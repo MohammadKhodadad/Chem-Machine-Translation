@@ -1,0 +1,193 @@
+view,dataset,setting,role,language,language_rank,balanced_score,semantic_score,lexical_score,terminology_score,state,n_models,n_strata,required_strata,n_datasets,partners_by_dataset
+original_glm,google_patents,zero_shot,to,de,1,60.15942028985508,60.26086956521739,71.95652173913044,48.26086956521739,completed,10,1,1,1,"{""google_patents"": [""en""]}"
+original_glm,google_patents,zero_shot,to,ru,2,53.76368760064412,64.52173913043478,47.44565217391305,49.32367149758454,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,google_patents,zero_shot,to,es,3,51.07514761137949,48.72463768115942,51.81159420289855,52.689210950080515,completed,10,1,1,1,"{""google_patents"": [""de"", ""en"", ""fr""]}"
+original_glm,google_patents,zero_shot,to,fr,4,48.06360708534621,36.666666666666664,59.891304347826086,47.632850241545896,completed,10,1,1,1,"{""google_patents"": [""de"", ""en"", ""zh""]}"
+original_glm,google_patents,zero_shot,to,ja,5,42.9573268921095,55.26086956521739,17.065217391304348,56.54589371980676,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,google_patents,zero_shot,to,zh,6,36.33977455716586,33.826086956521735,32.391304347826086,42.80193236714976,completed,10,1,1,1,"{""google_patents"": [""en""]}"
+original_glm,google_patents,zero_shot,to,en,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,google_patents,zero_shot,to,pt,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,google_patents,few_shot,to,de,1,60.25925925925926,61.47826086956522,71.52173913043478,47.77777777777778,completed,10,1,1,1,"{""google_patents"": [""en""]}"
+original_glm,google_patents,few_shot,to,es,2,58.745034889962426,53.88405797101449,63.6231884057971,58.727858293075684,completed,10,1,1,1,"{""google_patents"": [""de"", ""en"", ""fr""]}"
+original_glm,google_patents,few_shot,to,ru,3,55.07286634460547,67.8695652173913,51.576086956521735,45.772946859903385,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,google_patents,few_shot,to,fr,4,48.08749329039184,38.3768115942029,59.78260869565217,46.10305958132045,completed,10,1,1,1,"{""google_patents"": [""de"", ""en"", ""zh""]}"
+original_glm,google_patents,few_shot,to,ja,5,41.32206119162641,50.82608695652174,23.695652173913043,49.44444444444444,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,google_patents,few_shot,to,zh,6,39.09581320450886,34.52173913043478,39.23913043478261,43.52657004830918,completed,10,1,1,1,"{""google_patents"": [""en""]}"
+original_glm,google_patents,few_shot,to,en,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,google_patents,few_shot,to,pt,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,google_patents,both_prompts,to,de,1,60.209339774557165,60.869565217391305,71.73913043478261,48.01932367149759,completed,10,2,2,1,"{""google_patents"": [""en""]}"
+original_glm,google_patents,both_prompts,to,es,2,54.91009125067096,51.30434782608695,57.71739130434783,55.708534621578096,completed,10,2,2,1,"{""google_patents"": [""de"", ""en"", ""fr""]}"
+original_glm,google_patents,both_prompts,to,ru,3,54.418276972624795,66.19565217391303,49.51086956521739,47.54830917874396,completed,10,2,2,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,google_patents,both_prompts,to,fr,4,48.07555018786903,37.52173913043478,59.836956521739125,46.86795491143317,completed,10,2,2,1,"{""google_patents"": [""de"", ""en"", ""zh""]}"
+original_glm,google_patents,both_prompts,to,ja,5,42.139694041867955,53.04347826086956,20.380434782608695,52.9951690821256,completed,10,2,2,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,google_patents,both_prompts,to,zh,6,37.71779388083736,34.17391304347826,35.815217391304344,43.16425120772947,completed,10,2,2,1,"{""google_patents"": [""en""]}"
+original_glm,google_patents,both_prompts,to,en,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,google_patents,both_prompts,to,pt,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,jrc_articles,zero_shot,to,en,1,54.43031813865147,40.07692307692308,64.11858974358975,59.0954415954416,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,zero_shot,to,es,2,40.77908357075024,44.46153846153846,38.89423076923077,38.98148148148148,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,zero_shot,to,fr,3,35.488841405508076,46.38461538461539,30.80128205128205,29.280626780626783,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,jrc_articles,zero_shot,to,pt,4,29.905508072174737,40.371794871794876,23.58974358974359,25.754985754985753,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,jrc_articles,zero_shot,to,de,5,24.589387464387464,46.23076923076923,11.490384615384617,16.04700854700855,completed,10,1,1,1,"{""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,zero_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_articles,zero_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_articles,zero_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_articles,few_shot,to,en,1,75.55745489078822,51.294871794871796,90.96153846153845,84.41595441595442,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,few_shot,to,es,2,67.42782526115859,61.17948717948718,70.1923076923077,70.91168091168092,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,few_shot,to,fr,3,62.19468186134853,53.62820512820513,66.47435897435898,66.48148148148148,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,jrc_articles,few_shot,to,pt,4,57.01377018043685,50.17948717948718,56.73076923076923,64.13105413105413,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,jrc_articles,few_shot,to,de,5,52.61312915479582,66.1923076923077,46.746794871794876,44.9002849002849,completed,10,1,1,1,"{""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,few_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_articles,few_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_articles,few_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_articles,both_prompts,to,en,1,64.99388651471985,45.68589743589744,77.5400641025641,71.75569800569801,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,both_prompts,to,es,2,54.10345441595442,52.82051282051282,54.543269230769226,54.9465811965812,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,both_prompts,to,fr,3,48.841761633428305,50.00641025641026,48.63782051282051,47.88105413105413,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,jrc_articles,both_prompts,to,pt,4,43.459639126305795,45.27564102564103,40.16025641025641,44.94301994301994,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,jrc_articles,both_prompts,to,de,5,38.60125830959164,56.21153846153847,29.118589743589745,30.473646723646723,completed,10,2,2,1,"{""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_articles,both_prompts,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,jrc_articles,both_prompts,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,jrc_articles,both_prompts,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,jrc_definitions,zero_shot,to,fr,1,64.62701804368471,63.30769230769231,66.0576923076923,64.51566951566952,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,jrc_definitions,zero_shot,to,en,2,55.83736942070276,44.92307692307693,58.493589743589745,64.0954415954416,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,zero_shot,to,es,3,52.6798433048433,48.65384615384615,54.66346153846154,54.72222222222222,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,zero_shot,to,pt,4,45.42936847103514,43.61538461538461,46.49038461538461,46.182336182336186,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,jrc_definitions,zero_shot,to,de,5,25.01151471984805,48.16666666666667,13.605769230769232,13.262108262108262,completed,10,1,1,1,"{""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,zero_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_definitions,zero_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_definitions,zero_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_definitions,few_shot,to,fr,1,68.88995726495726,63.32051282051282,72.96474358974359,70.38461538461539,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,jrc_definitions,few_shot,to,en,2,56.702516619183285,45.666666666666664,61.955128205128204,62.48575498575499,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,few_shot,to,es,3,55.89565527065527,50.44871794871795,59.69551282051282,57.542735042735046,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,few_shot,to,pt,4,49.84567901234568,44.55128205128205,51.794871794871796,53.19088319088319,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,jrc_definitions,few_shot,to,de,5,25.08107787274454,47.34615384615385,14.278846153846155,13.618233618233619,completed,10,1,1,1,"{""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,few_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_definitions,few_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_definitions,few_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+original_glm,jrc_definitions,both_prompts,to,fr,1,66.75848765432099,63.31410256410256,69.51121794871796,67.45014245014245,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,jrc_definitions,both_prompts,to,en,2,56.26994301994302,45.294871794871796,60.22435897435898,63.2905982905983,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,both_prompts,to,es,3,54.287749287749286,49.55128205128205,57.17948717948718,56.13247863247864,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,both_prompts,to,pt,4,47.63752374169041,44.08333333333333,49.142628205128204,49.686609686609685,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,jrc_definitions,both_prompts,to,de,5,25.046296296296298,47.75641025641026,13.942307692307693,13.44017094017094,completed,10,2,2,1,"{""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,jrc_definitions,both_prompts,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,jrc_definitions,both_prompts,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,jrc_definitions,both_prompts,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+original_glm,all_datasets,zero_shot,to,fr,1,49.393155511513,48.78632478632478,52.250092902266815,47.1430488459474,completed,10,3,3,3,"{""google_patents"": [""de"", ""en"", ""zh""], ""jrc_articles"": [""de"", ""en"", ""es"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,all_datasets,zero_shot,to,es,2,48.17802482899101,47.28000743218134,48.456428836863616,48.797638217928075,completed,10,3,3,3,"{""google_patents"": [""de"", ""en"", ""fr""], ""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,all_datasets,zero_shot,to,de,3,36.586774158030195,51.5527684875511,32.350891861761426,25.85666212477807,completed,10,3,3,3,"{""google_patents"": [""en""], ""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,all_datasets,zero_shot,to,en,,,,,,incomplete_dataset_prompt_support,10,2,3,2,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,all_datasets,zero_shot,to,ja,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,all_datasets,zero_shot,to,pt,,,,,,incomplete_dataset_prompt_support,10,2,3,2,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,all_datasets,zero_shot,to,ru,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,all_datasets,zero_shot,to,zh,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en""]}"
+original_glm,all_datasets,few_shot,to,es,1,60.6895051405921,55.17075436640654,64.5036696395392,62.39409141583055,completed,10,3,3,3,"{""google_patents"": [""de"", ""en"", ""fr""], ""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,all_datasets,few_shot,to,fr,2,59.72404413889921,51.77517651430695,66.40723708658491,60.98971881580577,completed,10,3,3,3,"{""google_patents"": [""de"", ""en"", ""zh""], ""jrc_articles"": [""de"", ""en"", ""es"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,all_datasets,few_shot,to,de,3,45.98448876226654,58.33890746934225,44.18246005202527,35.4320987654321,completed,10,3,3,3,"{""google_patents"": [""en""], ""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,all_datasets,few_shot,to,en,,,,,,incomplete_dataset_prompt_support,10,2,3,2,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,all_datasets,few_shot,to,ja,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,all_datasets,few_shot,to,pt,,,,,,incomplete_dataset_prompt_support,10,2,3,2,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,all_datasets,few_shot,to,ru,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,all_datasets,few_shot,to,zh,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en""]}"
+original_glm,all_datasets,both_prompts,to,fr,1,54.5585998252061,50.280750650315866,59.328664994425864,54.06638383087659,completed,10,6,6,3,"{""google_patents"": [""de"", ""en"", ""zh""], ""jrc_articles"": [""de"", ""en"", ""es"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+original_glm,all_datasets,both_prompts,to,es,2,54.43376498479155,51.225380899293945,56.48004923820141,55.59586481687931,completed,10,6,6,3,"{""google_patents"": [""de"", ""en"", ""fr""], ""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+original_glm,all_datasets,both_prompts,to,de,3,41.285631460148366,54.945837978446676,38.26667595689335,30.644380445105085,completed,10,6,6,3,"{""google_patents"": [""en""], ""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+original_glm,all_datasets,both_prompts,to,en,,,,,,incomplete_dataset_prompt_support,10,4,6,2,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+original_glm,all_datasets,both_prompts,to,ja,,,,,,incomplete_dataset_prompt_support,10,2,6,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,all_datasets,both_prompts,to,pt,,,,,,incomplete_dataset_prompt_support,10,4,6,2,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+original_glm,all_datasets,both_prompts,to,ru,,,,,,incomplete_dataset_prompt_support,10,2,6,1,"{""google_patents"": [""en"", ""fr""]}"
+original_glm,all_datasets,both_prompts,to,zh,,,,,,incomplete_dataset_prompt_support,10,2,6,1,"{""google_patents"": [""en""]}"
+luna,google_patents,zero_shot,to,es,1,62.81425364758698,53.33333333333333,64.16666666666667,70.94276094276094,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,zero_shot,to,en,2,55.350280583613916,44.4969696969697,60.348484848484844,61.205387205387204,completed,10,1,1,1,"{""google_patents"": [""de"", ""es"", ""fr"", ""ru"", ""zh""]}"
+luna,google_patents,zero_shot,to,de,3,45.9287317620651,57.121212121212125,47.196969696969695,33.46801346801347,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,zero_shot,to,fr,4,44.565432098765434,46.27878787878788,44.75757575757576,42.65993265993266,completed,10,1,1,1,"{""google_patents"": [""de"", ""en"", ""es"", ""ru"", ""zh""]}"
+luna,google_patents,zero_shot,to,ru,5,41.778900112233444,55.45454545454545,42.878787878787875,27.003367003367003,completed,10,1,1,1,"{""google_patents"": [""en""]}"
+luna,google_patents,zero_shot,to,zh,6,40.75533108866442,58.848484848484844,21.060606060606062,42.35690235690235,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,zero_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,google_patents,zero_shot,to,pt,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,google_patents,few_shot,to,es,1,63.83978675645343,54.39393939393939,66.25,70.87542087542087,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,few_shot,to,en,2,55.26127946127946,43.18787878787879,61.12121212121212,61.474747474747474,completed,10,1,1,1,"{""google_patents"": [""de"", ""es"", ""fr"", ""ru"", ""zh""]}"
+luna,google_patents,few_shot,to,ru,3,48.02693602693603,60.54545454545455,51.515151515151516,32.02020202020202,completed,10,1,1,1,"{""google_patents"": [""en""]}"
+luna,google_patents,few_shot,to,fr,4,46.62446689113356,47.2,47.33333333333333,45.34006734006734,completed,10,1,1,1,"{""google_patents"": [""de"", ""en"", ""es"", ""ru"", ""zh""]}"
+luna,google_patents,few_shot,to,de,5,44.11868686868687,56.333333333333336,45.11363636363636,30.90909090909091,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,few_shot,to,zh,6,43.136644219977555,59.06060606060606,25.113636363636363,45.235690235690235,completed,10,1,1,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,few_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,google_patents,few_shot,to,pt,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,google_patents,both_prompts,to,es,1,63.32702020202021,53.86363636363636,65.20833333333334,70.9090909090909,completed,10,2,2,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,both_prompts,to,en,2,55.30578002244668,43.842424242424244,60.734848484848484,61.340067340067336,completed,10,2,2,1,"{""google_patents"": [""de"", ""es"", ""fr"", ""ru"", ""zh""]}"
+luna,google_patents,both_prompts,to,fr,3,45.594949494949496,46.73939393939394,46.04545454545455,44.0,completed,10,2,2,1,"{""google_patents"": [""de"", ""en"", ""es"", ""ru"", ""zh""]}"
+luna,google_patents,both_prompts,to,de,4,45.02370931537598,56.727272727272734,46.15530303030303,32.18855218855219,completed,10,2,2,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,both_prompts,to,ru,5,44.902918069584736,58.0,47.196969696969695,29.511784511784512,completed,10,2,2,1,"{""google_patents"": [""en""]}"
+luna,google_patents,both_prompts,to,zh,6,41.94598765432099,58.95454545454545,23.08712121212121,43.79629629629629,completed,10,2,2,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,google_patents,both_prompts,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,google_patents,both_prompts,to,pt,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,jrc_articles,zero_shot,to,en,1,54.74370845204179,40.07692307692308,64.11858974358975,60.035612535612536,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_articles,zero_shot,to,es,2,40.97139126305793,44.46153846153846,38.89423076923077,39.55840455840456,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,jrc_articles,zero_shot,to,fr,3,35.20156695156695,46.38461538461539,30.80128205128205,28.41880341880342,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,jrc_articles,zero_shot,to,pt,4,29.933998100664766,40.371794871794876,23.58974358974359,25.840455840455842,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,jrc_articles,zero_shot,to,de,5,25.27314814814815,46.23076923076923,11.490384615384617,18.0982905982906,completed,10,1,1,1,"{""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_articles,zero_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_articles,zero_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_articles,zero_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_articles,few_shot,to,en,1,75.23931623931624,51.294871794871796,90.96153846153845,83.46153846153847,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_articles,few_shot,to,es,2,67.63912630579297,61.17948717948718,70.1923076923077,71.54558404558405,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,jrc_articles,few_shot,to,fr,3,61.13817663817664,53.62820512820513,66.47435897435898,63.31196581196581,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,jrc_articles,few_shot,to,pt,4,56.306267806267805,50.17948717948718,56.73076923076923,62.00854700854701,completed,10,1,1,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,jrc_articles,few_shot,to,de,5,53.55330009496676,66.1923076923077,46.746794871794876,47.72079772079772,completed,10,1,1,1,"{""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_articles,few_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_articles,few_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_articles,few_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_articles,both_prompts,to,en,1,64.99151234567901,45.68589743589744,77.5400641025641,71.7485754985755,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_articles,both_prompts,to,es,2,54.30525878442545,52.82051282051282,54.543269230769226,55.551994301994306,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,jrc_articles,both_prompts,to,fr,3,48.169871794871796,50.00641025641026,48.63782051282051,45.86538461538461,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,jrc_articles,both_prompts,to,pt,4,43.12013295346628,45.27564102564103,40.16025641025641,43.92450142450143,completed,10,2,2,1,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,jrc_articles,both_prompts,to,de,5,39.413224121557455,56.21153846153847,29.118589743589745,32.90954415954416,completed,10,2,2,1,"{""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_articles,both_prompts,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,jrc_articles,both_prompts,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,jrc_articles,both_prompts,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,jrc_definitions,zero_shot,to,fr,1,63.10280151946819,63.30769230769231,66.0576923076923,59.94301994301994,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,jrc_definitions,zero_shot,to,en,2,55.93945868945869,44.92307692307693,58.493589743589745,64.4017094017094,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_definitions,zero_shot,to,es,3,53.491809116809115,48.65384615384615,54.66346153846154,57.15811965811966,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,jrc_definitions,zero_shot,to,pt,4,45.38900759734093,43.61538461538461,46.49038461538461,46.06125356125356,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,jrc_definitions,zero_shot,to,de,5,26.27932098765432,48.16666666666667,13.605769230769232,17.065527065527064,completed,10,1,1,1,"{""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_definitions,zero_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_definitions,zero_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_definitions,zero_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_definitions,few_shot,to,fr,1,67.33250237416904,63.32051282051282,72.96474358974359,65.71225071225071,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,jrc_definitions,few_shot,to,en,2,56.92094017094017,45.666666666666664,61.955128205128204,63.14102564102564,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_definitions,few_shot,to,es,3,56.13069800569801,50.44871794871795,59.69551282051282,58.24786324786325,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,jrc_definitions,few_shot,to,pt,4,49.339981006647676,44.55128205128205,51.794871794871796,51.673789173789174,completed,10,1,1,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,jrc_definitions,few_shot,to,de,5,26.073480531813868,47.34615384615385,14.278846153846155,16.595441595441596,completed,10,1,1,1,"{""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_definitions,few_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_definitions,few_shot,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_definitions,few_shot,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,1,0,{}
+luna,jrc_definitions,both_prompts,to,fr,1,65.21765194681862,63.31410256410256,69.51121794871796,62.82763532763532,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,jrc_definitions,both_prompts,to,en,2,56.43019943019943,45.294871794871796,60.22435897435898,63.77136752136752,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_definitions,both_prompts,to,es,3,54.811253561253565,49.55128205128205,57.17948717948718,57.702991452991455,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,jrc_definitions,both_prompts,to,pt,4,47.3644943019943,44.08333333333333,49.142628205128204,48.86752136752136,completed,10,2,2,1,"{""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,jrc_definitions,both_prompts,to,de,5,26.176400759734094,47.75641025641026,13.942307692307693,16.83048433048433,completed,10,2,2,1,"{""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,jrc_definitions,both_prompts,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,jrc_definitions,both_prompts,to,ru,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,jrc_definitions,both_prompts,to,zh,,,,,,incomplete_dataset_prompt_support,0,0,2,0,{}
+luna,all_datasets,zero_shot,to,en,1,55.34448257503813,43.16565656565657,60.98688811188811,61.88090304756971,completed,10,3,3,3,"{""google_patents"": [""de"", ""es"", ""fr"", ""ru"", ""zh""], ""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,all_datasets,zero_shot,to,es,2,52.42581800915134,48.81623931623931,52.574786324786324,55.886428386428385,completed,10,3,3,3,"{""google_patents"": [""en"", ""fr""], ""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,all_datasets,zero_shot,to,fr,3,47.62326685660019,51.99036519036519,47.20551670551671,43.67391867391867,completed,10,3,3,3,"{""google_patents"": [""de"", ""en"", ""es"", ""ru"", ""zh""], ""jrc_articles"": [""de"", ""en"", ""es"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,all_datasets,zero_shot,to,de,4,32.49373363262252,50.50621600621601,24.09770784770785,22.87727704394371,completed,10,3,3,3,"{""google_patents"": [""en"", ""fr""], ""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,all_datasets,zero_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,3,0,{}
+luna,all_datasets,zero_shot,to,pt,,,,,,incomplete_dataset_prompt_support,10,2,3,2,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,all_datasets,zero_shot,to,ru,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en""]}"
+luna,all_datasets,zero_shot,to,zh,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,all_datasets,few_shot,to,es,1,62.53653702264813,55.34071484071484,65.3792735042735,66.88962272295606,completed,10,3,3,3,"{""google_patents"": [""en"", ""fr""], ""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,all_datasets,few_shot,to,en,2,62.47384529051195,46.71647241647241,71.34595959595958,69.35910385910387,completed,10,3,3,3,"{""google_patents"": [""de"", ""es"", ""fr"", ""ru"", ""zh""], ""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,all_datasets,few_shot,to,fr,3,58.36504863449308,54.71623931623932,62.25747863247863,58.12142795476129,completed,10,3,3,3,"{""google_patents"": [""de"", ""en"", ""es"", ""ru"", ""zh""], ""jrc_articles"": [""de"", ""en"", ""es"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,all_datasets,few_shot,to,de,4,41.24848916515583,56.623931623931625,35.37975912975913,31.741776741776743,completed,10,3,3,3,"{""google_patents"": [""en"", ""fr""], ""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,all_datasets,few_shot,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,3,0,{}
+luna,all_datasets,few_shot,to,pt,,,,,,incomplete_dataset_prompt_support,10,2,3,2,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,all_datasets,few_shot,to,ru,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en""]}"
+luna,all_datasets,few_shot,to,zh,,,,,,incomplete_dataset_prompt_support,10,1,3,1,"{""google_patents"": [""en"", ""fr""]}"
+luna,all_datasets,both_prompts,to,en,1,58.909163932775044,44.941064491064495,66.16642385392385,65.62000345333679,completed,10,6,6,3,"{""google_patents"": [""de"", ""es"", ""fr"", ""ru"", ""zh""], ""jrc_articles"": [""de"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""es"", ""fr"", ""pt""]}"
+luna,all_datasets,both_prompts,to,es,2,57.48117751589974,52.07847707847708,58.977029914529915,61.38802555469222,completed,10,6,6,3,"{""google_patents"": [""en"", ""fr""], ""jrc_articles"": [""de"", ""en"", ""fr"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""fr"", ""pt""]}"
+luna,all_datasets,both_prompts,to,fr,3,52.99415774554664,53.35330225330225,54.73149766899767,50.89767331433998,completed,10,6,6,3,"{""google_patents"": [""de"", ""en"", ""es"", ""ru"", ""zh""], ""jrc_articles"": [""de"", ""en"", ""es"", ""pt""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""pt""]}"
+luna,all_datasets,both_prompts,to,de,4,36.87111139888918,53.565073815073816,29.738733488733487,27.309526892860227,completed,10,6,6,3,"{""google_patents"": [""en"", ""fr""], ""jrc_articles"": [""en"", ""es"", ""fr"", ""pt""], ""jrc_definitions"": [""en"", ""es"", ""fr"", ""pt""]}"
+luna,all_datasets,both_prompts,to,ja,,,,,,incomplete_dataset_prompt_support,0,0,6,0,{}
+luna,all_datasets,both_prompts,to,pt,,,,,,incomplete_dataset_prompt_support,10,4,6,2,"{""jrc_articles"": [""de"", ""en"", ""es"", ""fr""], ""jrc_definitions"": [""de"", ""en"", ""es"", ""fr""]}"
+luna,all_datasets,both_prompts,to,ru,,,,,,incomplete_dataset_prompt_support,10,2,6,1,"{""google_patents"": [""en""]}"
+luna,all_datasets,both_prompts,to,zh,,,,,,incomplete_dataset_prompt_support,10,2,6,1,"{""google_patents"": [""en"", ""fr""]}"
