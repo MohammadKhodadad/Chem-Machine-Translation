@@ -18,10 +18,7 @@ Token totals are summed across the three datasets and both prompts, once only. T
 | Muse Glimmer 30B | 145.46 | 40.56 | 0.30 | 1.20 | 43.64 | 48.68 | 92.31 |
 | Nemotron 3.5 Lightning | 160.80 | 38.07 | 0.07 | 0.20 | 11.26 | 7.61 | 18.87 |
 | Qwen3.8 27B | 155.38 | 37.09 | 0.15 | 1.88 | 23.31 | 69.54 | 92.85 |
-| Tiny Aya Earth | 168.90 | 39.99 | NA | NA | NA | NA | NA |
-| Tiny Aya Fire | 168.90 | 38.84 | NA | NA | NA | NA | NA |
 | Tiny Aya Global | 168.90 | 39.30 | NA | NA | NA | NA | NA |
-| Tiny Aya Water | 168.90 | 39.11 | NA | NA | NA | NA | NA |
 
 Rates in the CSV retain full precision; displayed monetary amounts are rounded. The reference GPT-6 Luna price assumes Azure Standard Global short context. Other priced models use the OpenRouter catalog quote, not the original deployment or necessarily the cheapest routed provider.
 
