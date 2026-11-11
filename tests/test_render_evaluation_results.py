@@ -629,6 +629,78 @@ def test_best_language_figures_share_color_ranges_and_sort_by_best(tmp_path, mon
     assert (tmp_path / "figures/languages/best_performance.md").exists()
 
 
+def test_direction_terminology_compares_both_metrics_without_changing_originals(
+    tmp_path, monkeypatch
+):
+    import matplotlib.figure
+
+    base, runs = language_points(monkeypatch)
+    base = [row for row in base if row["metric"] == "comet"]
+    points = [{**row, "view": "luna", "category": "all_terms", "metric": metric,
+               "value": float(row["value"]) / divisor}
+              for metric, divisor in (("variant_aware_target_term_coverage", 20),
+                                       ("term_bertscore_recall", 5000)) for row in base]
+    original = tmp_path / "tables/best_language_pairs.csv"
+    original.parent.mkdir()
+    original.write_bytes(b"Keep original best-language summaries")
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axes = [axis for axis in figure.axes if axis.images]
+        assert len(axes) == 4
+        for index in (0, 2):
+            assert axes[index].images[0].get_clim() == axes[index + 1].images[0].get_clim()
+        assert renderer.METRIC_LABELS["term_bertscore_recall"] in axes[2].get_title()
+        assert float(axes[2].images[0].get_array().max()) == pytest.approx(0.202)
+        assert float(axes[3].images[0].get_array().max()) == pytest.approx(0.102)
+        assert any(text.get_text() == "0.202" for text in axes[2].texts)
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_best_language_figures(
+        tmp_path, points, runs, terminology_comparison=True
+    )
+    assert len(saved) == len(checked) == 2
+    assert all("languages/direction_terminology/luna/" in relative for relative in saved)
+    assert original.read_bytes() == b"Keep original best-language summaries"
+    assert (tmp_path / "tables/direction_terminology_pairs.csv").exists()
+    assert (tmp_path / "figures/languages/direction_terminology/README.md").exists()
+
+
+@pytest.mark.parametrize("role,expected", [("from", 1000), ("to", 1010)])
+def test_direction_performance_orients_source_and_target_rows(
+    tmp_path, monkeypatch, role, expected
+):
+    import matplotlib.figure
+
+    points, runs = language_points(monkeypatch)
+    points = [row for row in points if row["metric"] == "comet"]
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix == ".png":
+            axis = next(axis for axis in figure.axes if axis.images)
+            assert axis.get_ylabel().startswith(role.title())
+            assert float(axis.images[0].get_array()[0, 1]) == expected
+            checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_best_language_figures(tmp_path, points, runs, direction_role=role)
+    assert len(saved) == len(checked) == 2
+    assert all(f"/shared_general/{role}/" in relative for relative in saved)
+
+
+def test_direction_terminology_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["renderer", "--direction-terminology-only",
+                                     "--output", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores" in capsys.readouterr().err
+
+
 def test_language_violin_roles_preserve_points_and_equal_direction_weights(monkeypatch):
     points, runs = language_points(monkeypatch)
     points = [row for row in points if row["metric"] == "comet"]
@@ -875,6 +947,699 @@ def test_prompting_bars_pair_native_scores_and_keep_missing_distinct_from_zero(
     assert checked == [1, 9]
 
 
+def test_language_prompting_balances_models_partners_and_flags_row_counts(monkeypatch):
+    points, runs = language_points(monkeypatch)
+    points = [row for row in points if row["metric"] == "comet"]
+    points += [{**row, "direction": "en-fr", "rows_scored": 1000}
+               for row in points if row["direction"] == "en-de"]
+    for row in points:
+        row["value"] = 0.2 if row["run"] == runs[0] else 0.8
+        if row["setting"] == "few_shot":
+            change = 0.1 if row["run"] == runs[0] else 0.3
+            row["value"] += change * {"en-de": 1, "de-en": -1, "en-fr": 0}[row["direction"]]
+            if row["direction"] == "en-fr" and row["run"] == runs[0]:
+                row["rows_scored"] = 999
+    rows, models = renderer.build_language_prompting_rows(points, runs)
+    english = next(row for row in rows if row["role"] == "from" and row["language"] == "en")
+    german = next(row for row in rows if row["role"] == "from" and row["language"] == "de")
+    assert english["zero_shot"] == pytest.approx(0.5)
+    assert english["few_shot"] == pytest.approx(0.6)
+    assert english["delta"] == pytest.approx(0.1)
+    assert english["n_directions"] == english["n_models"] == 2
+    assert english["n_row_count_mismatches"] == 1
+    assert english["row_support_status"] == "different_row_counts"
+    assert german["delta"] == pytest.approx(-0.2)
+    assert german["row_support_status"] == "equal_counts_unverified_row_identity"
+    assert len(models) == 2 * len(rows)
+    with pytest.raises(ValueError, match="every model and both prompts"):
+        renderer.build_language_prompting_rows(points[:-1], runs)
+
+
+def test_language_prompting_heatmaps_show_only_relative_percentage(tmp_path, monkeypatch):
+    import matplotlib.figure
+    import numpy as np
+
+    monkeypatch.setattr(renderer, "CATEGORIES", ("all_terms",))
+    points, runs = language_points(monkeypatch)
+    points = [row for row in points if row["metric"] == "comet"]
+    for row in points:
+        row["value"] = 0.5
+        if row["setting"] == "few_shot":
+            row["value"] += 0.1 if row["direction"] == "en-de" else -0.2
+            row["rows_scored"] += 1
+    points += [{**row, "view": "luna", "category": "all_terms", "metric": metric,
+                "value": row["value"] * scale}
+               for metric, scale in (("variant_aware_target_term_coverage", 100),
+                                      ("term_bertscore_recall", 1)) for row in list(points)]
+    points += [{**row, "direction": "fr-de"} for row in list(points)
+               if row["metric"] == "comet" and row["direction"] == "en-de"]
+    points += [{**row, "direction": f"{language}-de"}
+               for language in ("es", "ja", "ru", "zh") for row in list(points)
+               if row["direction"] == "en-de"]
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axes = [axis for axis in figure.axes if axis.images]
+        assert len(axes) == 1
+        axis = axes[0]
+        image = axis.images[0]
+        assert image.get_clim() == (-1, 1)
+        assert image.get_array().shape[0] == 3
+        assert float(np.ma.min(image.get_array())) == pytest.approx(-1)
+        assert float(np.ma.max(image.get_array())) == pytest.approx(0.5)
+        assert image.cmap(image.norm(-1))[0] > image.cmap(image.norm(-1))[1]
+        assert image.cmap(image.norm(1))[1] > image.cmap(image.norm(1))[0]
+        assert any("-40.00%*" == text.get_text() for text in axis.texts)
+        assert any("+20.00%*" == text.get_text() for text in axis.texts)
+        assert all("->" not in text.get_text() and " pp" not in text.get_text()
+               for text in axis.texts)
+        assert all(text.get_text() == "NA" or "%" in text.get_text() for text in axis.texts)
+        assert len(axis.texts) == image.get_array().size
+        assert any(text.get_text().endswith("*") for text in axis.texts)
+        assert figure.get_size_inches()[1] < 5
+        if path.stem.startswith("from"):
+            assert sum(text.get_text() == "NA" for text in axis.texts) == 2
+            mask = np.ma.getmaskarray(image.get_array())
+            assert int(mask.sum()) == 2
+            for text in axis.texts:
+                if text.get_text() == "NA":
+                    column, metric_index = text.get_position()
+                    assert mask[int(metric_index), int(column)]
+            figure.canvas.draw()
+            canvas_renderer = figure.canvas.get_renderer()
+            labels = [text.get_window_extent(canvas_renderer) for text in axis.texts]
+            assert all(not first.overlaps(second) for index, first in enumerate(labels)
+                       for second in labels[index + 1:])
+            footer = figure.texts[-1].get_window_extent(canvas_renderer)
+            color_axis = next(axis for axis in figure.axes if not axis.images)
+            assert not footer.overlaps(
+                color_axis.xaxis.label.get_window_extent(canvas_renderer)
+            )
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_language_prompting_figures(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 2
+    assert (tmp_path / "tables/language_prompting_scores.csv").exists()
+
+
+@pytest.mark.parametrize("baseline", [0, -0.5])
+def test_language_prompting_percentage_masks_nonpositive_baselines(tmp_path, monkeypatch, baseline):
+    import matplotlib.figure
+    import numpy as np
+
+    points, runs = language_points(monkeypatch)
+    monkeypatch.setattr(renderer, "CATEGORIES", ("all_terms",))
+    points = [{**row, "value": baseline + (0.1 if row["setting"] == "few_shot" else 0)}
+              for row in points if row["metric"] == "comet"]
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix == ".png":
+            axis = next(axis for axis in figure.axes if axis.images)
+            assert np.ma.getmaskarray(axis.images[0].get_array()).all()
+            assert all(text.get_text() == "NA" for text in axis.texts)
+            checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    renderer.write_language_prompting_figures(tmp_path, points, runs)
+    assert len(checked) == 2
+
+
+def test_language_prompting_bars_preserve_percentages_and_symlog(tmp_path, monkeypatch):
+    import matplotlib.figure
+    import numpy as np
+
+    monkeypatch.setattr(renderer, "CATEGORIES", ("all_terms",))
+    points, runs = language_points(monkeypatch)
+    points = [row for row in points if row["metric"] == "comet"]
+    for row in points:
+        row["value"] = 0.5
+        if row["setting"] == "few_shot":
+            row["value"] += 0.1 if row["direction"] == "en-de" else -0.2
+            row["rows_scored"] += 1
+    points += [{**row, "view": "luna", "category": "all_terms", "metric": metric}
+               for metric in renderer.DIRECTION_TERMINOLOGY_METRICS for row in list(points)]
+    points += [{**row, "direction": "fr-de"} for row in list(points)
+               if row["metric"] == "comet" and row["direction"] == "en-de"]
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axis = figure.axes[0]
+        assert not axis.images
+        assert axis.get_yscale() == "symlog"
+        assert len(axis.containers) == 3
+        finite = [bar.get_height() for bars in axis.containers for bar in bars
+                  if np.isfinite(bar.get_height())]
+        assert min(finite) == pytest.approx(-40)
+        assert max(finite) == pytest.approx(20)
+        for bars in axis.containers:
+            for bar in bars:
+                red, green, _, _ = bar.get_facecolor()
+                if bar.get_height() > 0:
+                    assert green > red
+                elif bar.get_height() < 0:
+                    assert red > green
+        assert len({bars[0].get_hatch() for bars in axis.containers}) == 3
+        left, right = axis.get_ylim()
+        assert left < -40 and right > 40 and left == -right
+        texts = [text.get_text() for text in axis.texts]
+        assert "+20%*" in texts and "-40%*" in texts
+        if path.stem.startswith("from"):
+            assert texts.count("NA") == 2
+        else:
+            assert "NA" not in texts
+        assert len(figure.legends[0].get_texts()) == 6
+        assert "Symmetric log axis" in figure.texts[-1].get_text()
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    renderer.write_language_prompting_figures(tmp_path, points, runs, grouped_bars=True)
+    assert len(checked) == 2
+
+
+@pytest.mark.parametrize("baseline", [0, -0.5])
+def test_language_prompting_bars_mask_nonpositive_baselines(tmp_path, monkeypatch, baseline):
+    import matplotlib.figure
+    import numpy as np
+
+    points, runs = language_points(monkeypatch)
+    monkeypatch.setattr(renderer, "CATEGORIES", ("all_terms",))
+    points = [{**row, "value": baseline} for row in points if row["metric"] == "comet"]
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix == ".png":
+            assert all(np.isnan(bar.get_height()) for bars in figure.axes[0].containers
+                       for bar in bars)
+            assert all(text.get_text() == "NA" for text in figure.axes[0].texts)
+            checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    renderer.write_language_prompting_figures(tmp_path, points, runs, grouped_bars=True)
+    assert len(checked) == 2
+
+
+@pytest.mark.parametrize("change", [0, 1e-7])
+def test_language_prompting_bars_preserve_zero_and_tiny_changes(tmp_path, monkeypatch, change):
+    import matplotlib.figure
+    import numpy as np
+
+    points, runs = language_points(monkeypatch)
+    monkeypatch.setattr(renderer, "CATEGORIES", ("all_terms",))
+    points = [{**row, "value": 1 + (change if row["setting"] == "few_shot" else 0)}
+              for row in points if row["metric"] == "comet"]
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axis = figure.axes[0]
+        finite = [bar.get_height() for bars in axis.containers for bar in bars
+                  if np.isfinite(bar.get_height())]
+        assert finite == pytest.approx([100 * change] * len(finite))
+        assert axis.get_yscale() == "symlog"
+        if change:
+            assert min(finite) > 0
+            assert "0%" not in [text.get_text() for text in axis.texts]
+        else:
+            assert sum(text.get_text() == "0%" for text in axis.texts) == len(finite)
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    renderer.write_language_prompting_figures(tmp_path, points, runs, grouped_bars=True)
+    assert len(checked) == 2
+
+
+def test_language_prompting_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["renderer", "--language-prompting-only",
+                                     "--output", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores" in capsys.readouterr().err
+
+
+def test_language_mixed_ranks_can_use_only_luna_llm_enriched(tmp_path, monkeypatch):
+    import matplotlib.figure
+
+    points, runs = language_points(monkeypatch)
+    for row in points:
+        if row["view"] == "luna":
+            row["value"] = (100 if row["direction"] == "en-de" else 0)
+            if row["category"] != "llm_enriched":
+                row["value"] = 100 - row["value"]
+    selected = [row for row in points if row["view"] == "shared_general"
+                or (row["view"] == "luna" and row["category"] == "llm_enriched")]
+    ranked, components, native, support = renderer.build_language_mixed_rank_rows(
+        selected, runs, views=("luna",), terminology_categories=("llm_enriched",)
+    )
+    assert ranked and components and native and support
+    assert {row["view"] for row in ranked} == {"luna"}
+    assert {row["category"] for row in components if row["family"] == "terminology"} == {
+        "llm_enriched"
+    }
+    for role, expected in (("from", "en"), ("to", "de")):
+        winner = next(row for row in ranked if row["role"] == role
+                      and row["statistic"] == "median" and row["scope"] == "overall"
+                      and row["language"] == expected)
+        assert winner["terminology_mean_rank"] == 1
+        assert not any(key.startswith(("all_terms.", "externally_verified.")) for key in winner)
+    captions = []
+
+    def check_caption(figure, path, **kwargs):
+        text = " ".join(label.get_text() for label in figure.texts)
+        assert "groups equally (LLM-enriched)" in text
+        assert "all / external" not in text
+        captions.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check_caption)
+    renderer.write_chosen_rank_figures(
+        tmp_path, [row for row in ranked if row["role"] == "from"
+                   and row["statistic"] == "median"], statistic="median", language_role="from"
+    )
+    assert captions
+
+
+def metric_analysis_points(monkeypatch):
+    monkeypatch.setattr(renderer, "DATASETS", {"sample": "Sample"})
+    monkeypatch.setattr(renderer, "METRIC_ANALYSIS_METRICS", (
+        "chrf2++", "comet", "variant_aware_target_term_coverage"
+    ))
+    runs = list(renderer.LABELS)[:3]
+    points = []
+    for direction in ("en-de", "fr-de"):
+        for index, run in enumerate(runs, 1):
+            for setting, factor in (("zero_shot", 1), ("few_shot", 2)):
+                for metric in renderer.METRIC_ANALYSIS_METRICS:
+                    term = metric in renderer.TERMINOLOGY
+                    points.append({"dataset": "sample", "run": run, "setting": setting,
+                                   "metric": metric, "direction": direction,
+                                   "view": "luna" if term else "shared_general",
+                                   "category": "llm_enriched" if term else "not_applicable",
+                                   "value": (8 - index * factor) / 10 if term
+                                   else index * factor,
+                                   "rows_scored": 5 if term else 10})
+    return points, runs
+
+
+def test_story_metric_analysis_pairs_support_and_detects_opposite_changes(monkeypatch):
+    points, runs = metric_analysis_points(monkeypatch)
+    points = [row for row in points if not (
+        row["run"] == runs[-1] and row["direction"] == "fr-de"
+        and row["setting"] == "few_shot" and row["metric"] in renderer.TERMINOLOGY
+    )]
+    models, relations, cases, languages = renderer.build_story_metric_analysis(points, runs)
+    selected = [row for row in relations if row["metric_x"] == "comet"]
+    assert {row["directions"] for row in selected} == {"en-de"}
+    for row in selected:
+        assert row["pearson"] == pytest.approx(-1)
+        assert row["spearman"] == pytest.approx(-1)
+        assert row["kendall_tau"] == pytest.approx(-1)
+        assert row["top_model_overlap"] == 0
+        assert row["n_row_count_mismatches"] == 3
+        assert row["row_support_status"] == "row_identity_unverified"
+    assert next(row for row in selected if row["setting"] == "change")["sign_agreement"] == 0
+    assert all(row["opposite_changes"] for row in cases if row["metric_x"] == "comet")
+    assert {row["role"] for row in languages} == {"from", "to"}
+    assert models and all(row["n_models"] == 3 for row in models)
+
+
+def test_story_metric_analysis_ignores_other_groups_and_masks_constants(monkeypatch):
+    points, runs = metric_analysis_points(monkeypatch)
+    points += [{**row, "category": "all_terms", "value": 1000}
+               for row in points if row["view"] == "luna"]
+    for row in points:
+        if row["metric"] == "chrf2++":
+            row["value"] = 0
+    models, relations, cases, languages = renderer.build_story_metric_analysis(points, runs)
+    assert models and cases and languages
+    constant = [row for row in relations if row["metric_x"] == "chrf2++"]
+    assert all(row["state"] == "constant_scores" and row["pearson"] is None
+               and row["top_model_overlap"] is None for row in constant)
+    assert all(abs(row["value_y"]) < 1 for row in models
+               if row["metric_y"] in renderer.TERMINOLOGY)
+
+
+def test_story_metric_analysis_unavailable_pairs_are_na(monkeypatch):
+    points, runs = metric_analysis_points(monkeypatch)
+    points = [row for row in points if row["view"] == "shared_general"]
+    models, relations, cases, languages = renderer.build_story_metric_analysis(points, runs)
+    unavailable = [row for row in relations if row["metric_y"] in renderer.TERMINOLOGY]
+    assert unavailable
+    assert all(row["state"] == "insufficient_support" and row["pearson"] is None
+               and row["n_models"] == 0 for row in unavailable)
+    assert all(row["metric_y"] not in renderer.TERMINOLOGY
+               for row in [*models, *cases, *languages])
+
+
+def test_story_metric_analysis_exports_native_values_and_figures(tmp_path, monkeypatch):
+    import csv
+
+    import matplotlib.figure
+
+    points, runs = metric_analysis_points(monkeypatch)
+    monkeypatch.setattr(renderer, "METRIC_ANALYSIS_PAIRS", (
+        ("chrf2++", "comet"), ("comet", "variant_aware_target_term_coverage")
+    ))
+    saved = []
+
+    def capture(figure, path, **kwargs):
+        assert figure.axes and any(axis.images or axis.collections or axis.patches
+                                   for axis in figure.axes)
+        if path.stem.startswith("ranking_agreement_"):
+            images = [axis.images[0] for axis in figure.axes if axis.images]
+            assert images[0].get_clim() == (-1, 1)
+            assert images[-1].get_clim() == (0, 1)
+            assert figure.get_size_inches()[1] == 12
+        text = " ".join(label.get_text() for label in figure.texts)
+        assert "Luna LLM-enriched" in text
+        assert "Row counts do not prove row identity" in text
+        saved.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", capture)
+    figures = renderer.write_story_metric_analysis(tmp_path, points, runs)
+    assert len(figures) == 10
+    assert len(saved) == 20
+    assert {Path(figure).name for figure in figures} == {
+        name for name, _ in renderer.METRIC_ANALYSIS_FIGURES
+    }
+    with (tmp_path / "tables/metric_analysis/disagreement_cases.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows and all(float(row["delta_x"]) * float(row["delta_y"]) < 0 for row in rows)
+    assert all(row["row_support_status"] == "row_identity_unverified" for row in rows)
+    assert (tmp_path / "figures/metric_analysis/README.md").exists()
+
+
+def entity_correlation_points(monkeypatch):
+    points, runs = metric_analysis_points(monkeypatch)
+    monkeypatch.setattr(renderer, "ENTITY_CORRELATION_METRICS", (
+        "comet", "variant_aware_target_term_coverage"
+    ))
+    points += [{**row, "direction": "de-en"} for row in list(points)
+               if row["direction"] == "en-de"]
+    for row in points:
+        position = ("en-de", "fr-de", "de-en").index(row["direction"])
+        model = runs.index(row["run"])
+        row["value"] = (position + 1) * (model + 1) if model < 2 else 3 - position
+        if row["setting"] == "few_shot":
+            row["value"] += 0.1
+    return points, runs
+
+
+def test_story_entity_correlations_keep_model_and_language_observations_distinct(monkeypatch):
+    points, runs = entity_correlation_points(monkeypatch)
+    correlations, scores = renderer.build_story_entity_correlations(points, runs)
+    selected = [row for row in correlations if row["matrix"] == "models"
+                and row["metric"] == "comet" and row["role"] == "from"]
+    reversed_pair = next(row for row in selected if row["entity_x"] == runs[0]
+                         and row["entity_y"] == runs[2])
+    assert reversed_pair["pearson"] == pytest.approx(-1)
+    assert reversed_pair["spearman"] == pytest.approx(-1)
+    assert reversed_pair["n_observations"] == 3
+    assert reversed_pair["observation_unit"] == "language"
+    assert {row["observation_unit"] for row in correlations if row["matrix"] == "languages"} == {
+        "model"
+    }
+    assert all(row["n_observations"] == 3 for row in correlations if row["matrix"] == "languages")
+    assert all(row["pearson"] is None and row["state"] == "insufficient_observations"
+               for row in correlations if row["matrix"] == "models" and row["role"] == "to")
+    assert next(row for row in scores if row["language"] == "en" and row["run"] == runs[0]
+                and row["metric"] == "comet" and row["role"] == "from")["value"] == 1.05
+    assert all(row["row_support_status"] == "row_identity_unverified" for row in scores)
+
+
+def test_story_entity_correlations_drop_incomplete_directions_and_other_term_groups(monkeypatch):
+    points, runs = entity_correlation_points(monkeypatch)
+    points = [row for row in points if not (
+        row["run"] == runs[-1] and row["direction"] == "fr-de" and row["setting"] == "few_shot"
+    )]
+    points += [{**row, "category": "all_terms", "value": 1000}
+               for row in points if row["view"] == "luna"]
+    correlations, scores = renderer.build_story_entity_correlations(points, runs)
+    assert scores and correlations
+    assert all("fr-de" not in row["directions"] for row in scores)
+    assert all(row["category"] != "all_terms" for row in scores)
+    assert all(row["n_observations"] == 2 and row["pearson"] is None for row in correlations
+               if row["matrix"] == "models" and row["role"] == "from")
+
+
+def test_story_entity_correlations_mask_constant_model_diagonals(monkeypatch):
+    points, runs = entity_correlation_points(monkeypatch)
+    for row in points:
+        if row["run"] == runs[-1]:
+            row["value"] = 1
+    correlations, _ = renderer.build_story_entity_correlations(points, runs)
+    selected = [row for row in correlations if row["matrix"] == "models"
+                and row["role"] == "from" and runs[-1] in (row["entity_x"], row["entity_y"])]
+    assert selected
+    assert all(row["state"] == "constant_scores" and row["pearson"] is None
+               and row["spearman"] is None for row in selected)
+
+
+def test_story_entity_correlations_render_matrices_for_both_roles_and_entity_types(
+    tmp_path, monkeypatch,
+):
+    import matplotlib.figure
+
+    points, runs = entity_correlation_points(monkeypatch)
+    checked = []
+
+    def capture(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        panels = [axis for axis in figure.axes if axis.images]
+        assert len(panels) == 2
+        assert all(axis.images[0].get_clim() == (-1, 1) for axis in panels)
+        assert "Pearson" in panels[0].get_title() and "Spearman" in panels[1].get_title()
+        if "models" in path.parts and path.stem.startswith("to_"):
+            assert all(text.get_text() == "NA" for axis in panels for text in axis.texts)
+        assert "row identities unverified" in figure.texts[-1].get_text()
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", capture)
+    saved = renderer.write_story_entity_correlations(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 8
+    assert (tmp_path / "tables/entity_correlations/correlations.csv").exists()
+    assert (tmp_path / "tables/entity_correlations/language_model_scores.csv").exists()
+
+
+def test_story_sources_filter_luna_llm_enriched_and_keep_both_roles(tmp_path, monkeypatch):
+    points, runs = language_points(monkeypatch)
+    checked = []
+
+    def capture(output, selected, selected_runs, **kwargs):
+        assert output == tmp_path / renderer.STORY_SOURCE_FOLDER
+        assert selected_runs == runs
+        assert all(row["view"] == "shared_general" or
+                   (row["view"] == "luna" and row["category"] == "llm_enriched")
+                   for row in selected)
+        checked.append(kwargs)
+        return []
+
+    for name in ("write_language_rank_reports", "write_best_language_figures",
+                 "write_language_prompting_figures", "write_story_metric_analysis",
+                 "write_story_entity_correlations"):
+        monkeypatch.setattr(renderer, name, capture)
+    model_calls = []
+    monkeypatch.setattr(renderer, "write_story_model_sources",
+                        lambda output: model_calls.append(output) or [])
+    renderer.write_story_sources(tmp_path, points, runs)
+    assert model_calls == [tmp_path]
+    assert len(checked) == 8
+    assert {kwargs["direction_role"] for kwargs in checked if "direction_role" in kwargs} == {
+        "from", "to"
+    }
+    assert checked[0]["terminology_categories"] == ("llm_enriched",)
+    assert checked[5]["categories"] == ("llm_enriched",)
+    assert checked[5]["grouped_bars"] is True
+
+
+@pytest.mark.parametrize("flag", ["--metric-analysis-only", "--story-correlations-only"])
+def test_story_metric_analysis_cli_requires_native_input(tmp_path, monkeypatch, capsys, flag):
+    monkeypatch.setattr("sys.argv", ["renderer", flag,
+                                     "--output", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores before metric analysis" in capsys.readouterr().err
+
+
+def test_story_model_comparison_cli_requires_cost_data(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["renderer", "--model-comparison-only",
+                                     "--output", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate API cost/rank/latency data" in capsys.readouterr().err
+
+
+def test_story_model_sources_read_native_values_and_preserve_missing_costs(tmp_path, monkeypatch):
+    import csv
+
+    tables = tmp_path / "tables"
+    tables.mkdir()
+    rows = [{"view": view, "mixed_rank": "4", "estimated_api_cost_usd": cost,
+             "mean_latency_s": "20", "bubble_area_pt2": "160"}
+            for view, cost in (("luna", "12.5"), ("luna", ""), ("original_glm", "9"))]
+    renderer.write_csv(tables / "chosen_03_cost_rank_latency.csv", rows)
+    calls = []
+
+    def capture(output, selected, *, zoomed):
+        assert output == tmp_path / renderer.STORY_SOURCE_FOLDER
+        assert zoomed and len(selected) == 2
+        assert selected[0]["mixed_rank"] == 4
+        assert selected[0]["estimated_api_cost_usd"] == 12.5
+        assert selected[1]["estimated_api_cost_usd"] is None
+        assert selected[0]["bubble_area_pt2"] == 160
+        calls.append(selected)
+        return []
+
+    monkeypatch.setattr(renderer, "write_cost_rank_bubble_figures", capture)
+    renderer.write_story_model_sources(tmp_path)
+    path = tmp_path / renderer.STORY_SOURCE_FOLDER / "tables/model_comparison/cost_rank_latency.csv"
+    with path.open(encoding="utf-8", newline="") as handle:
+        exported = list(csv.DictReader(handle))
+    assert len(calls) == 1 and len(exported) == 2
+    assert exported[1]["estimated_api_cost_usd"] == ""
+
+
+def test_story_chosen_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["renderer", "--story-chosen-only", "--output", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores" in capsys.readouterr().err
+
+
+def test_story_chosen_copies_are_exact_idempotent_and_preserve_original_chosen(tmp_path):
+    import hashlib
+
+    selected = renderer.story_figure_selection()
+    assert len(selected) == 86
+    assert sum(item["tier"] == "optional" for item in selected) == 2
+    metric_correlations = [item for item in selected if item["name"].startswith("metrics_luna_")]
+    assert {item["source"] for item in metric_correlations} == {
+        f"correlations/luna/metric_correlations_all_datasets_{setting}"
+        for setting in renderer.SETTINGS
+    }
+    assert all(item["section"] == "05_metric_analysis"
+               and "Pearson and Spearman" in item["purpose"] for item in metric_correlations)
+    new_metrics = [item for item in selected if item["section"] == "05_metric_analysis"
+                   and "/metric_analysis/" in item["source"]]
+    assert {item["name"] for item in new_metrics} == {
+        name for name, _ in renderer.METRIC_ANALYSIS_FIGURES
+        if name in renderer.STORY_CORRELATION_FIGURES
+    }
+    entity_items = [item for item in selected if "/entity_correlations/" in item["source"]]
+    assert len(entity_items) == 16
+    assert {item["target"].split("/")[2] for item in entity_items} == {"languages", "models"}
+    assert not any(item["name"] in ("from_sensitivity", "to_sensitivity", "combined_from_comet",
+                                   "combined_to_comet") for item in selected)
+    model_figures = [item for item in selected if item["section"] == "04_model_behavior"]
+    assert len(model_figures) == 23
+    assert sum("zoomed_native_violins" in item["source"] for item in model_figures) == 9
+    assert sum("cost_rank_latency_zoomed" in item["source"] for item in model_figures) == 7
+    assert sum("01_balanced_mixed_rank" in item["source"] for item in model_figures) == 7
+    assert not any("hardest_pairs" in item["source"] for item in model_figures)
+    figure_three = [item for item in selected if "prompting/language_changes/" in item["source"]]
+    assert len(figure_three) == 2
+    assert all("/luna/" in item["source"] and "llm_enriched" in item["source"]
+               for item in figure_three)
+    ranking_items = [item for item in selected if item["section"] == "01_language_tables"]
+    assert len(ranking_items) == 28
+    contexts = {"overall"} | {
+        f"{dataset}_{setting}" for dataset in renderer.DATASETS for setting in renderer.SETTINGS
+    }
+    expected = {
+        f"{statistic}/{role}/{view}/language_rankings_{context}"
+        for statistic in ("median", "top") for role in ("from", "to")
+        for view in ("luna",) for context in contexts
+    }
+    assert {item["source"].removeprefix(
+        f"../{renderer.STORY_SOURCE_FOLDER}/figures/languages/rankings/")
+            for item in ranking_items} == expected
+    assert {item["target"].removeprefix("chosen_story/01_language_tables/")
+            for item in ranking_items} == expected
+    for item in selected:
+        for extension in ("png", "pdf"):
+            source = tmp_path / "figures" / f"{item['source']}.{extension}"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_bytes(f"{item['source']} {extension}".encode())
+    index = tmp_path / "figures/chosen/README.md"
+    index.parent.mkdir(parents=True, exist_ok=True)
+    index.write_text("Keep original Chosen", encoding="utf-8")
+    legacy = tmp_path / "figures/chosen_story/01_language_tables/from_median_overall.png"
+    legacy.parent.mkdir(parents=True)
+    source = tmp_path / (
+        "figures/languages/rankings/median/from/luna/language_rankings_overall.png"
+    )
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_bytes(b"Previous original ranking source")
+    legacy.write_bytes(source.read_bytes())
+    modified = legacy.with_suffix(".pdf")
+    modified.write_bytes(b"Keep user-modified legacy figure")
+    obsolete = tmp_path / "figures/chosen_story/03_prompting/unwanted"
+    obsolete.parent.mkdir(parents=True)
+    obsolete.with_suffix(".png").write_bytes(b"Previous managed image")
+    obsolete.with_suffix(".pdf").write_bytes(b"User-modified old PDF")
+    old_correlations = tmp_path / "figures/chosen_story/05_optional_correlations/previous.png"
+    old_correlations.parent.mkdir(parents=True)
+    old_correlations.write_bytes(b"Previous managed correlation")
+    moved = tmp_path / "figures/chosen_story/05_metric_analysis/ranking_agreement_zero_shot.png"
+    moved.parent.mkdir(parents=True)
+    moved.write_bytes(b"Supplementary analysis")
+    outside = tmp_path / renderer.STORY_SOURCE_FOLDER / "figures/metric_analysis" / moved.name
+    outside.parent.mkdir(parents=True, exist_ok=True)
+    outside.write_bytes(moved.read_bytes())
+    old_model = tmp_path / "figures/chosen_story/04_model_behavior/old_hardest.png"
+    old_model.parent.mkdir(parents=True)
+    old_model.write_bytes(b"Previous hardest-direction plot")
+    renderer.write_csv(tmp_path / "figures/chosen_story/selection.csv", [{
+        "target": "chosen_story/03_prompting/unwanted",
+        "png_sha256": hashlib.sha256(b"Previous managed image").hexdigest(),
+        "pdf_sha256": hashlib.sha256(b"Previous managed PDF").hexdigest(),
+    }, {"target": "chosen_story/05_optional_correlations/previous",
+        "png_sha256": hashlib.sha256(b"Previous managed correlation").hexdigest()},
+        {"target": "chosen_story/05_metric_analysis/ranking_agreement_zero_shot",
+         "png_sha256": hashlib.sha256(b"Supplementary analysis").hexdigest()},
+        {"target": "chosen_story/04_model_behavior/old_hardest",
+         "png_sha256": hashlib.sha256(b"Previous hardest-direction plot").hexdigest()}])
+    snapshots = []
+    for _ in range(2):
+        saved = renderer.write_story_chosen_figures(tmp_path)
+        assert len(saved) == 86
+        assert not moved.exists() and outside.read_bytes() == b"Supplementary analysis"
+        assert not old_model.exists()
+        assert not old_correlations.parent.exists()
+        assert not obsolete.with_suffix(".png").exists()
+        assert obsolete.with_suffix(".pdf").read_bytes() == b"User-modified old PDF"
+        assert not legacy.exists()
+        assert modified.read_bytes() == b"Keep user-modified legacy figure"
+        for item in selected:
+            for extension in ("png", "pdf"):
+                source = tmp_path / "figures" / f"{item['source']}.{extension}"
+                target = tmp_path / "figures" / f"{item['target']}.{extension}"
+                assert target.read_bytes() == source.read_bytes()
+        assert index.read_text(encoding="utf-8") == "Keep original Chosen"
+        folder = tmp_path / "figures/chosen_story"
+        snapshots.append({path.relative_to(folder): hashlib.sha256(path.read_bytes()).hexdigest()
+                          for path in folder.rglob("*") if path.is_file()})
+    assert snapshots[0] == snapshots[1]
+
+
+def test_story_chosen_checks_all_sources_before_writing(tmp_path):
+    with pytest.raises(FileNotFoundError, match="Generate story source figures first"):
+        renderer.write_story_chosen_figures(tmp_path)
+    assert not (tmp_path / "figures/chosen_story").exists()
+
+
 @pytest.mark.parametrize("zoomed", [False, True])
 def test_chosen_prompting_copies_preserve_originals_and_append_index_once(tmp_path, zoomed):
     kind = "violins_zoomed" if zoomed else "bars"
@@ -1051,6 +1816,48 @@ def test_rank_latency_bubble_figures_keep_numeric_coordinates_and_other_chosen_s
             assert text.count("## Chosen 03:") == 1
         assert "## Chosen 04: Bars\nKeep bars." in text
     assert len(checked) == 2
+
+
+def test_zoomed_cost_rank_bubbles_keep_values_sizes_and_use_per_panel_limits(tmp_path, monkeypatch):
+    import matplotlib.figure
+
+    runs = list(renderer.LABELS)[:2]
+    rows = [{"run": run, "model": renderer.LABELS[run], "view": "luna",
+             "scope": "dataset_prompt", "dataset": dataset, "setting": "zero_shot",
+             "mixed_rank": index + 2, "mean_latency_s": 20,
+             "bubble_area_pt2": 160, "plot_state": "plotted",
+             "estimated_api_cost_usd": value * factor}
+            for dataset, factor in (("google_patents", 1), ("jrc_articles", 100))
+            for index, (run, value) in enumerate(zip(runs, (10, 12), strict=True))]
+    index = tmp_path / "figures/chosen/README.md"
+    index.parent.mkdir(parents=True)
+    index.write_text("Keep original Chosen", encoding="utf-8")
+    checked = []
+
+    def check(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axis = figure.axes[0]
+        assert "cost_rank_latency_zoomed" in path.parts
+        expected = [10, 12] if "google_patents" in path.stem else [1000, 1200]
+        assert axis.collections[0].get_offsets().tolist() == [
+            [cost, rank] for cost, rank in zip(expected, (2, 3), strict=True)
+        ]
+        assert axis.collections[0].get_sizes().tolist() == [160, 160]
+        left, right = axis.get_xlim()
+        bottom, top = axis.get_ylim()
+        assert left < min(expected) < max(expected) < right
+        assert top < 2 < 3 < bottom
+        assert top > 1 and bottom < 4
+        assert right - left < max(expected)
+        text = " ".join(label.get_text() for label in figure.texts)
+        assert "axis ranges zoom to each panel without clipping" in text
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", check)
+    saved = renderer.write_cost_rank_bubble_figures(tmp_path, rows, zoomed=True)
+    assert len(saved) == len(checked) == 2
+    assert index.read_text(encoding="utf-8") == "Keep original Chosen"
 
 
 def test_cost_rank_bubbles_join_reference_prices_and_preserve_full_population_ranks():

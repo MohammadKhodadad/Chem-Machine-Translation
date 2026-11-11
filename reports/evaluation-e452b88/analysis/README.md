@@ -1,5 +1,7 @@
 # Benchmark Tables and Figures
 
+[Preferred language-first story collection](figures/chosen_story/README.md)
+
 Generated locally from all 84 checksum-verified grouped summaries. No models or metrics were rerun.
 
 Analysis cohort: Gemma, GPT-6 Luna, Granite, Muse, Nemotron, Qwen and Tiny Aya Global. Tiny Aya Earth/Fire/Water are excluded. Both es-de and de-es are excluded only from Google Patents before recomputing support, scores, ranks, correlations and plots. Original checksum-pinned summaries remain unchanged.
@@ -160,6 +162,18 @@ Tables and CSVs retain all 14 metric slots: nine general and five terminology me
 - Combined To Not Applicable Comet: [PNG](figures/languages/correlations_combined/shared_general/combined_to_not_applicable_comet.png) | [PDF](figures/languages/correlations_combined/shared_general/combined_to_not_applicable_comet.pdf)
 - Language Correlations All Datasets Both Prompts Pearson: [PNG](figures/languages/correlations_combined/shared_general/language_correlations_all_datasets_both_prompts_pearson.png) | [PDF](figures/languages/correlations_combined/shared_general/language_correlations_all_datasets_both_prompts_pearson.pdf)
 - Language Correlations All Datasets Both Prompts Spearman: [PNG](figures/languages/correlations_combined/shared_general/language_correlations_all_datasets_both_prompts_spearman.png) | [PDF](figures/languages/correlations_combined/shared_general/language_correlations_all_datasets_both_prompts_spearman.pdf)
+- Comparison Google Patents Few Shot: [PNG](figures/languages/direction_terminology/luna/comparison_google_patents_few_shot.png) | [PDF](figures/languages/direction_terminology/luna/comparison_google_patents_few_shot.pdf)
+- Comparison Google Patents Zero Shot: [PNG](figures/languages/direction_terminology/luna/comparison_google_patents_zero_shot.png) | [PDF](figures/languages/direction_terminology/luna/comparison_google_patents_zero_shot.pdf)
+- Comparison Jrc Articles Few Shot: [PNG](figures/languages/direction_terminology/luna/comparison_jrc_articles_few_shot.png) | [PDF](figures/languages/direction_terminology/luna/comparison_jrc_articles_few_shot.pdf)
+- Comparison Jrc Articles Zero Shot: [PNG](figures/languages/direction_terminology/luna/comparison_jrc_articles_zero_shot.png) | [PDF](figures/languages/direction_terminology/luna/comparison_jrc_articles_zero_shot.pdf)
+- Comparison Jrc Definitions Few Shot: [PNG](figures/languages/direction_terminology/luna/comparison_jrc_definitions_few_shot.png) | [PDF](figures/languages/direction_terminology/luna/comparison_jrc_definitions_few_shot.pdf)
+- Comparison Jrc Definitions Zero Shot: [PNG](figures/languages/direction_terminology/luna/comparison_jrc_definitions_zero_shot.png) | [PDF](figures/languages/direction_terminology/luna/comparison_jrc_definitions_zero_shot.pdf)
+- Comparison Google Patents Few Shot: [PNG](figures/languages/direction_terminology/original_glm/comparison_google_patents_few_shot.png) | [PDF](figures/languages/direction_terminology/original_glm/comparison_google_patents_few_shot.pdf)
+- Comparison Google Patents Zero Shot: [PNG](figures/languages/direction_terminology/original_glm/comparison_google_patents_zero_shot.png) | [PDF](figures/languages/direction_terminology/original_glm/comparison_google_patents_zero_shot.pdf)
+- Comparison Jrc Articles Few Shot: [PNG](figures/languages/direction_terminology/original_glm/comparison_jrc_articles_few_shot.png) | [PDF](figures/languages/direction_terminology/original_glm/comparison_jrc_articles_few_shot.pdf)
+- Comparison Jrc Articles Zero Shot: [PNG](figures/languages/direction_terminology/original_glm/comparison_jrc_articles_zero_shot.png) | [PDF](figures/languages/direction_terminology/original_glm/comparison_jrc_articles_zero_shot.pdf)
+- Comparison Jrc Definitions Few Shot: [PNG](figures/languages/direction_terminology/original_glm/comparison_jrc_definitions_few_shot.png) | [PDF](figures/languages/direction_terminology/original_glm/comparison_jrc_definitions_few_shot.pdf)
+- Comparison Jrc Definitions Zero Shot: [PNG](figures/languages/direction_terminology/original_glm/comparison_jrc_definitions_zero_shot.png) | [PDF](figures/languages/direction_terminology/original_glm/comparison_jrc_definitions_zero_shot.pdf)
 - Hardest Google Patents Few Shot: [PNG](figures/languages/hardest_pairs/luna/hardest_google_patents_few_shot.png) | [PDF](figures/languages/hardest_pairs/luna/hardest_google_patents_few_shot.pdf)
 - Hardest Google Patents Zero Shot: [PNG](figures/languages/hardest_pairs/luna/hardest_google_patents_zero_shot.png) | [PDF](figures/languages/hardest_pairs/luna/hardest_google_patents_zero_shot.pdf)
 - Hardest Jrc Articles Few Shot: [PNG](figures/languages/hardest_pairs/luna/hardest_jrc_articles_few_shot.png) | [PDF](figures/languages/hardest_pairs/luna/hardest_jrc_articles_few_shot.pdf)
@@ -516,6 +530,18 @@ Tables and CSVs retain all 14 metric slots: nine general and five terminology me
 - shared_general: Prompting Bars General Google Patents: [PNG](figures/prompting/bars/shared_general/prompting_bars_general_google_patents.png) | [PDF](figures/prompting/bars/shared_general/prompting_bars_general_google_patents.pdf)
 - shared_general: Prompting Bars General Jrc Articles: [PNG](figures/prompting/bars/shared_general/prompting_bars_general_jrc_articles.png) | [PDF](figures/prompting/bars/shared_general/prompting_bars_general_jrc_articles.pdf)
 - shared_general: Prompting Bars General Jrc Definitions: [PNG](figures/prompting/bars/shared_general/prompting_bars_general_jrc_definitions.png) | [PDF](figures/prompting/bars/shared_general/prompting_bars_general_jrc_definitions.pdf)
+- luna: From All Terms: [PNG](figures/prompting/language_changes/luna/from_all_terms.png) | [PDF](figures/prompting/language_changes/luna/from_all_terms.pdf)
+- luna: From Externally Verified: [PNG](figures/prompting/language_changes/luna/from_externally_verified.png) | [PDF](figures/prompting/language_changes/luna/from_externally_verified.pdf)
+- luna: From Llm Enriched: [PNG](figures/prompting/language_changes/luna/from_llm_enriched.png) | [PDF](figures/prompting/language_changes/luna/from_llm_enriched.pdf)
+- luna: To All Terms: [PNG](figures/prompting/language_changes/luna/to_all_terms.png) | [PDF](figures/prompting/language_changes/luna/to_all_terms.pdf)
+- luna: To Externally Verified: [PNG](figures/prompting/language_changes/luna/to_externally_verified.png) | [PDF](figures/prompting/language_changes/luna/to_externally_verified.pdf)
+- luna: To Llm Enriched: [PNG](figures/prompting/language_changes/luna/to_llm_enriched.png) | [PDF](figures/prompting/language_changes/luna/to_llm_enriched.pdf)
+- original_glm: From All Terms: [PNG](figures/prompting/language_changes/original_glm/from_all_terms.png) | [PDF](figures/prompting/language_changes/original_glm/from_all_terms.pdf)
+- original_glm: From Externally Verified: [PNG](figures/prompting/language_changes/original_glm/from_externally_verified.png) | [PDF](figures/prompting/language_changes/original_glm/from_externally_verified.pdf)
+- original_glm: From Llm Enriched: [PNG](figures/prompting/language_changes/original_glm/from_llm_enriched.png) | [PDF](figures/prompting/language_changes/original_glm/from_llm_enriched.pdf)
+- original_glm: To All Terms: [PNG](figures/prompting/language_changes/original_glm/to_all_terms.png) | [PDF](figures/prompting/language_changes/original_glm/to_all_terms.pdf)
+- original_glm: To Externally Verified: [PNG](figures/prompting/language_changes/original_glm/to_externally_verified.png) | [PDF](figures/prompting/language_changes/original_glm/to_externally_verified.pdf)
+- original_glm: To Llm Enriched: [PNG](figures/prompting/language_changes/original_glm/to_llm_enriched.png) | [PDF](figures/prompting/language_changes/original_glm/to_llm_enriched.pdf)
 - Prompting Comet Difference: [PNG](figures/prompting/prompting_comet_difference.png) | [PDF](figures/prompting/prompting_comet_difference.pdf)
 - luna: Prompting Violins Terminology Google Patents: [PNG](figures/prompting/violins/luna/prompting_violins_terminology_google_patents.png) | [PDF](figures/prompting/violins/luna/prompting_violins_terminology_google_patents.pdf)
 - luna: Prompting Violins Terminology Jrc Articles: [PNG](figures/prompting/violins/luna/prompting_violins_terminology_jrc_articles.png) | [PDF](figures/prompting/violins/luna/prompting_violins_terminology_jrc_articles.pdf)
