@@ -10,9 +10,10 @@ Multilingual support should not be confused with uniformly strong performance on
 
 1. Language tables: median and best-model summaries, From/To roles and every dataset/prompt, with terminology restricted to Luna LLM-enriched. Start with dataset-specific coverage; overall tables cover only the common eligible language subset. Select compact panels for publication rather than all scorecards.
 2. Direction performance: native median/best heatmaps across chemical patents, JRC articles and definitions. Terminology shows variant-aware target-term coverage and term BERTScore recall using only Luna LLM-enriched terms. Each dataset has From-language-row and To-language-row matrices (transposes of the same pair scores).
-3. Figure 3: grouped bars with languages on X and signed percentage changes on Y. Each language has COMET, variant-aware coverage and term BERTScore recall bars; one panel per dataset. Green/red shades and patterns distinguish metric gains/losses. A shared symmetric-log Y scale shows smaller changes, negatives and zero. Only the Luna LLM-enriched From and To figures are included. Models are averaged equally; model-specific violins are not in this section.
+3. Figure 3: grouped bars with languages on X and signed percentage changes on Y. Each language has COMET, variant-aware coverage and term BERTScore recall bars; one panel per dataset. Green/red shades and patterns distinguish metric gains/losses. A shared symmetric-log Y scale shows smaller changes, negatives and zero. Only the Luna LLM-enriched From and To figures are included. Bars average models equally. Alongside them, two zoomed native-score language violin figures compare prompts with one dot per model's equal-partner mean.
 4. Model comparison: combined-metric mixed-rank scorecards, the original Chosen zoomed native-score violins, and zoomed API-cost/rank plots with latency bubbles. Retain native values, all plotted points and the original latency-area scale.
-5. Correlation matrices only, grouped into Metrics, Languages and Models. Show both Pearson and Spearman; keep datasets and metric scales separate. Language/model matrices have separate From/To views and average prompts equally. Other metric analyses remain outside this chosen collection.
+5. Correlation matrices only, grouped into Metrics, Languages and Models. Show both Pearson and Spearman. Metric matrices use all available matched model-direction score rows without further averaging; two optional matrices pool datasets. Language/model matrices have separate From/To views and average prompts equally. Other metric analyses remain outside this chosen collection.
+6. Term-group distributions: the existing zero-shot/few-shot figures for Luna and original GLM, comparing all candidates, externally verified and LLM-enriched terms.
 
 The language-table section contains all 28 ranking figure sets. The collection is a working library, not a proposal to publish every table. Section 4 contains seven Luna combined-metric scorecards, nine original Chosen zoomed violin figures and seven zoomed cost/rank/latency figures. Section 5 contains five metric matrices plus sixteen language/model matrix figures.
 
@@ -20,12 +21,13 @@ The language-table section contains all 28 ranking figure sets. The collection i
 
 - Median language tables first average supported partners within each model, then take the median across models per metric. Overall ranks balance dataset/prompt strata and semantic/lexical/terminology families. Rank differences are not native-score gaps.
 - Language partner sets and text populations differ. Perform common-partner and annotation-view sensitivity checks before treating language order as a headline finding. Unranked languages have incomplete coverage, not zero performance.
-- Sections 1-3 use one requested terminology definition: Luna LLM-enriched. This selection does not prove annotation-source superiority or view-robust effects. Other views/groups remain available in the full original analysis, not here.
+- Sections 1-3 use one requested terminology definition: Luna LLM-enriched. This selection does not prove annotation-source superiority or view-robust effects. Sections 4 and 6 retain the wider annotation views/groups for comparison.
 - Best-observed results are selected on the test set. They are not validated deployment policies or per-translation oracles; model identity can vary by direction and metric.
 - Violin points are direction aggregates, not individual translations. Prompt contrasts are descriptive; shared directions do not establish matched rows or significance.
+- Section 3 language violins first average partner directions within each model/prompt. Each violin then summarizes model means, with one dot per model. The two prompts share each panel's zoomed native-score axis; panels have independent ranges. No normalization or log transforms. Colors/shapes identify models.
 - Figure 3 first averages identical partner directions within each model/prompt, then averages the selected models equally. Bars show 100 * (few - zero) / zero, not percentage points; nonpositive baselines are NA. These are relative metric-score changes, not percentage gains in translation quality. Row-count flags do not verify row identities, and equal counts do not prove matched rows. No significance inference.
 - Terminology annotation subsets have different applicability/support. Higher coverage on verified terms is not proof that refinement improved translation quality. Reference term coverage is not language-support or training-data coverage.
-- Metric/language correlations use model observations; model-to-model correlations use supported language profiles. These are small, dependent cohorts, not pooled independent translations. Different metrics and languages can use different supports. Constant vectors or fewer than three observations are NA, not zero. Correlations do not establish significance, causes or intrinsic language difficulty.
+- Metric correlations use every available paired model-direction aggregate, not model means or individual translations. Pairwise supports can differ; pooled matrices weight each available record equally and may reflect dataset differences. Language correlations use model observations; model-to-model correlations use supported language profiles. These are small, dependent cohorts, not pooled independent translations. Different metrics and languages can use different supports. Constant vectors or fewer than three observations are NA, not zero. Correlations do not establish significance, causes or intrinsic language difficulty.
 - Zoomed API-cost panels use different native axis ranges, but preserve all points, original model ranks and the same latency bubble-area scale. Prices are hypothetical hosted repricing, not actual bills; latency comes from original deployments. Quality, cost and timing populations are not proven row-matched.
 
 ## Sources and Sensitivity
@@ -282,7 +284,9 @@ JRC Definitions: best/median terminology scores with to-language rows. Terminolo
 
 ## 03 Zero-Shot vs Few-Shot
 
-Only two grouped bar plots: From and To, Luna LLM-enriched. Languages are on X; three adjacent, differently shaded/patterned metric bars show gains in green and losses in red. The shared symmetric-log Y axis retains actual percentage labels and a linear region around zero. Other groups/views and model-specific violins are omitted here. [Method and support exports](../../story_luna_llm_enriched/figures/prompting/language_changes/README.md).
+Two grouped bar plots plus two language-based zoomed native violin figures: From and To, Luna LLM-enriched. For bars, Languages are on X; three adjacent, differently shaded/patterned metric bars show gains in green and losses in red. The shared symmetric-log Y axis retains actual percentage labels and a linear region around zero. The companion violins keep languages on X and show paired zero/few-shot native-score distributions; dots identify individual models after equal-partner averaging. Every panel zooms without normalization. [Method and support exports](../../story_luna_llm_enriched/figures/prompting/language_changes/README.md) | [Language violin method and model means](../../story_luna_llm_enriched/figures/prompting/language_model_violins/README.md).
+
+Rebuild the language violins only: `uv run --no-sync python scripts/render_evaluation_results.py --language-model-violins-only`.
 
 ### Figure 03 Luna From Llm Enriched
 
@@ -290,11 +294,23 @@ Figure 3: from-language grouped percentage-change bars with symmetric-log Y. COM
 
 [PNG](03_prompting/from/figure_03_luna_from_llm_enriched.png) | [PDF](03_prompting/from/figure_03_luna_from_llm_enriched.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/prompting/language_changes/luna/from_llm_enriched.png)
 
+### Language Model Violins From
+
+From-language zoomed native-score violins: paired zero/few-shot distributions with one colored/shaped dot per model's equal-partner mean. COMET and Luna LLM-enriched variant-aware coverage/term BERTScore recall; datasets remain separate. Padded linear axes, not normalized scores.
+
+[PNG](03_prompting/from/language_model_violins.png) | [PDF](03_prompting/from/language_model_violins.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/prompting/language_model_violins/luna/from_llm_enriched.png)
+
 ### Figure 03 Luna To Llm Enriched
 
 Figure 3: to-language grouped percentage-change bars with symmetric-log Y. COMET plus Luna LLM-enriched variant-aware coverage and term BERTScore recall.
 
 [PNG](03_prompting/to/figure_03_luna_to_llm_enriched.png) | [PDF](03_prompting/to/figure_03_luna_to_llm_enriched.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/prompting/language_changes/luna/to_llm_enriched.png)
+
+### Language Model Violins To
+
+To-language zoomed native-score violins: paired zero/few-shot distributions with one colored/shaped dot per model's equal-partner mean. COMET and Luna LLM-enriched variant-aware coverage/term BERTScore recall; datasets remain separate. Padded linear axes, not normalized scores.
+
+[PNG](03_prompting/to/language_model_violins.png) | [PDF](03_prompting/to/language_model_violins.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/prompting/language_model_violins/luna/to_llm_enriched.png)
 
 ## 04 Model Comparison
 
@@ -442,27 +458,27 @@ JRC Definitions: original Chosen zoomed native-score terminology violins, luna. 
 
 ## 05 Correlations
 
-Only square correlation matrices are selected here, under `metrics/`, `languages/` and `models/`. Metric matrices compare score/prompting-change relationships across models. Language matrices correlate languages across the selected models; model matrices correlate models across supported languages. New language/model matrices cover COMET, chrF++, variant-aware coverage and term BERTScore recall, with separate From/To views and equal prompt averages. New terminology uses Luna LLM-enriched terms; the retained original metric matrices include all Luna term groups. [Language/model method and native vectors](../../story_luna_llm_enriched/figures/entity_correlations/README.md). Scatterplots, sensitivity maps, ranking/overlap and disagreement analyses remain outside Chosen in the [supplementary metric analysis](../../story_luna_llm_enriched/figures/metric_analysis/README.md).
+Only square correlation matrices are selected here, under `metrics/`, `languages/` and `models/`. Metric matrices compare every available matched model-direction row directly, without averaging across directions or models. Prompt changes subtract matched few/zero endpoints per model-direction. [Metric method and exact paired vectors](../../story_luna_llm_enriched/figures/record_metric_correlations/README.md). Language matrices correlate languages across the selected models; model matrices correlate models across supported languages. New language/model matrices cover COMET, chrF++, variant-aware coverage and term BERTScore recall, with separate From/To views and equal prompt averages. New terminology uses Luna LLM-enriched terms; the two pooled metric matrices include all Luna term groups as separate columns and pool dataset records without equal-dataset weighting. [Language/model method and native vectors](../../story_luna_llm_enriched/figures/entity_correlations/README.md). Scatterplots, sensitivity maps, ranking/overlap and disagreement analyses remain outside Chosen in the [supplementary metric analysis](../../story_luna_llm_enriched/figures/metric_analysis/README.md).
 
 Rebuild section 5: `uv run --no-sync python scripts/render_evaluation_results.py --story-correlations-only`.
 
 ### Dataset Correlations Zero Shot
 
-Metric Correlations by Dataset | Zero-Shot. Dataset-specific comparisons of lexical, semantic, QE and terminology scores; new terminology analyses use Luna LLM-enriched annotations. Common-direction support; native scores and support details are exported.
+Metric Correlations by Dataset | Zero-Shot. Dataset-specific comparisons of lexical, semantic, QE and terminology scores across every available matched model-direction row, without further averaging. Luna LLM-enriched terminology; pairwise support and exact vectors exported.
 
-[PNG](05_metric_analysis/metrics/dataset_correlations_zero_shot.png) | [PDF](05_metric_analysis/metrics/dataset_correlations_zero_shot.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/metric_analysis/dataset_correlations_zero_shot.png)
+[PNG](05_metric_analysis/metrics/dataset_correlations_zero_shot.png) | [PDF](05_metric_analysis/metrics/dataset_correlations_zero_shot.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/record_metric_correlations/dataset_correlations_zero_shot.png)
 
 ### Dataset Correlations Few Shot
 
-Metric Correlations by Dataset | Few-Shot. Dataset-specific comparisons of lexical, semantic, QE and terminology scores; new terminology analyses use Luna LLM-enriched annotations. Common-direction support; native scores and support details are exported.
+Metric Correlations by Dataset | Few-Shot. Dataset-specific comparisons of lexical, semantic, QE and terminology scores across every available matched model-direction row, without further averaging. Luna LLM-enriched terminology; pairwise support and exact vectors exported.
 
-[PNG](05_metric_analysis/metrics/dataset_correlations_few_shot.png) | [PDF](05_metric_analysis/metrics/dataset_correlations_few_shot.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/metric_analysis/dataset_correlations_few_shot.png)
+[PNG](05_metric_analysis/metrics/dataset_correlations_few_shot.png) | [PDF](05_metric_analysis/metrics/dataset_correlations_few_shot.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/record_metric_correlations/dataset_correlations_few_shot.png)
 
 ### Prompting Change Agreement
 
-Do Metrics Agree About Prompting Changes?. Dataset-specific comparisons of lexical, semantic, QE and terminology scores; new terminology analyses use Luna LLM-enriched annotations. Common-direction support; native scores and support details are exported.
+Do Metrics Agree About Prompting Changes?. Dataset-specific comparisons of lexical, semantic, QE and terminology scores across every available matched model-direction row, without further averaging. Luna LLM-enriched terminology; pairwise support and exact vectors exported.
 
-[PNG](05_metric_analysis/metrics/prompting_change_agreement.png) | [PDF](05_metric_analysis/metrics/prompting_change_agreement.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/metric_analysis/prompting_change_agreement.png)
+[PNG](05_metric_analysis/metrics/prompting_change_agreement.png) | [PDF](05_metric_analysis/metrics/prompting_change_agreement.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/record_metric_correlations/prompting_change_agreement.png)
 
 ### Languages From Comet
 
@@ -562,13 +578,41 @@ Pearson/Spearman models correlations for Term BERTScore Recall, to-language prof
 
 ### Metrics Luna Zero Shot
 
-Metric-to-metric Pearson and Spearman correlations, zero shot. All datasets weighted equally; seven model observations per metric pair. General metrics and all Luna terminology groups; exploratory, not significance tests.
+Metric-to-metric Pearson and Spearman correlations, zero shot. Every available matched dataset/model/direction row pooled directly, without averaging or equal-dataset weighting. General metrics and all Luna terminology groups; direction aggregates, not individual translations or significance tests.
 
-[PNG](05_metric_analysis/metrics/metrics_luna_zero_shot.png) | [PDF](05_metric_analysis/metrics/metrics_luna_zero_shot.pdf) | [Original PNG](../correlations/luna/metric_correlations_all_datasets_zero_shot.png)
+[PNG](05_metric_analysis/metrics/metrics_luna_zero_shot.png) | [PDF](05_metric_analysis/metrics/metrics_luna_zero_shot.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/record_metric_correlations/metric_correlations_all_datasets_zero_shot.png)
 
 ### Metrics Luna Few Shot
 
-Metric-to-metric Pearson and Spearman correlations, few shot. All datasets weighted equally; seven model observations per metric pair. General metrics and all Luna terminology groups; exploratory, not significance tests.
+Metric-to-metric Pearson and Spearman correlations, few shot. Every available matched dataset/model/direction row pooled directly, without averaging or equal-dataset weighting. General metrics and all Luna terminology groups; direction aggregates, not individual translations or significance tests.
 
-[PNG](05_metric_analysis/metrics/metrics_luna_few_shot.png) | [PDF](05_metric_analysis/metrics/metrics_luna_few_shot.pdf) | [Original PNG](../correlations/luna/metric_correlations_all_datasets_few_shot.png)
+[PNG](05_metric_analysis/metrics/metrics_luna_few_shot.png) | [PDF](05_metric_analysis/metrics/metrics_luna_few_shot.pdf) | [Original PNG](../../story_luna_llm_enriched/figures/record_metric_correlations/metric_correlations_all_datasets_few_shot.png)
+
+## 06 Term Group Distributions
+
+Exact copies of the existing distribution figures, grouped by annotation view and prompting setting. Compare all candidates, externally verified and LLM-enriched terms without treating the groups as independent or assuming identical scored rows. These are descriptive distributions across language directions, not confidence intervals. Original figures remain in `figures/distributions/`. [Direction scores and row counts](../../tables/distribution_points.csv) | [Density-fit support](../../tables/distribution_regions.csv).
+
+### Original Glm Zero Shot
+
+Existing original_glm distributions, zero shot: all candidates, externally verified and LLM-enriched term groups. Direction-level aggregates, not individual translations; different groups can have different row support.
+
+[PNG](06_term_group_distributions/original_glm/performance_distributions_zero_shot.png) | [PDF](06_term_group_distributions/original_glm/performance_distributions_zero_shot.pdf) | [Original PNG](../distributions/original_glm/performance_distributions_zero_shot.png)
+
+### Original Glm Few Shot
+
+Existing original_glm distributions, few shot: all candidates, externally verified and LLM-enriched term groups. Direction-level aggregates, not individual translations; different groups can have different row support.
+
+[PNG](06_term_group_distributions/original_glm/performance_distributions_few_shot.png) | [PDF](06_term_group_distributions/original_glm/performance_distributions_few_shot.pdf) | [Original PNG](../distributions/original_glm/performance_distributions_few_shot.png)
+
+### Luna Zero Shot
+
+Existing luna distributions, zero shot: all candidates, externally verified and LLM-enriched term groups. Direction-level aggregates, not individual translations; different groups can have different row support.
+
+[PNG](06_term_group_distributions/luna/performance_distributions_zero_shot.png) | [PDF](06_term_group_distributions/luna/performance_distributions_zero_shot.pdf) | [Original PNG](../distributions/luna/performance_distributions_zero_shot.png)
+
+### Luna Few Shot
+
+Existing luna distributions, few shot: all candidates, externally verified and LLM-enriched term groups. Direction-level aggregates, not individual translations; different groups can have different row support.
+
+[PNG](06_term_group_distributions/luna/performance_distributions_few_shot.png) | [PDF](06_term_group_distributions/luna/performance_distributions_few_shot.pdf) | [Original PNG](../distributions/luna/performance_distributions_few_shot.png)
 

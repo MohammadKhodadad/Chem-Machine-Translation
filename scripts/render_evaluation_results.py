@@ -1331,6 +1331,102 @@ def build_best_language_rows(points, runs, *, metrics=BEST_LANGUAGE_METRICS):
     return summaries, model_rows
 
 
+def write_model_direction_figures(output, points, runs):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    metrics = ("comet", "chrf2++", *DIRECTION_TERMINOLOGY_METRICS)
+    selected = [row for row in points
+                if (row["view"], row["category"]) == ("shared_general", "not_applicable")
+                or (row["view"], row["category"]) == ("luna", "llm_enriched")]
+    _, models = build_best_language_rows(selected, runs, metrics=metrics)
+    (output / "tables").mkdir(parents=True, exist_ok=True)
+    write_csv(output / "tables/model_direction_scores.csv", models)
+    groups = defaultdict(list)
+    reference = defaultdict(list)
+    for row in models:
+        groups[(row["run"], row["dataset"], row["setting"])].append(row)
+        reference[(row["dataset"], row["metric"])].append(row["value"])
+    limits = {}
+    for key, values in reference.items():
+        low, high = min(values), max(values)
+        padding = (high - low) * 0.03 if high > low else max(abs(low) * 0.03, 0.01)
+        limits[key] = (low - padding, high + padding)
+    saved = []
+    for (run, dataset, setting), rows in sorted(groups.items()):
+        languages = sorted({language for row in rows for language in row["direction"].split("-")})
+        labels = [LANGUAGE_LABELS.get(language, language) for language in languages]
+        figure, axes = plt.subplots(2, 2, figsize=(18, 16), squeeze=False)
+        for axis, metric in zip(axes.flat, metrics, strict=True):
+            matrix = np.full((len(languages), len(languages)), np.nan)
+            for row in rows:
+                if row["metric"] == metric:
+                    source, target = row["direction"].split("-")
+                    matrix[languages.index(source), languages.index(target)] = row["value"]
+            axis.set_title(METRIC_LABELS[metric], fontsize=14)
+            axis.set_xlabel("To (target language)")
+            axis.set_ylabel("From (source language)")
+            axis.set_xticks(range(len(labels)), labels, rotation=45, ha="right", fontsize=9)
+            axis.set_yticks(range(len(labels)), labels, fontsize=9)
+            if not np.isfinite(matrix).any():
+                axis.text(0.5, 0.5, "NA: no shared direction support", ha="center", va="center",
+                          transform=axis.transAxes)
+                continue
+            cmap = plt.get_cmap("YlGnBu").with_extremes(bad="#eeeeee")
+            image = axis.imshow(np.ma.masked_invalid(matrix), cmap=cmap,
+                                vmin=limits[(dataset, metric)][0],
+                                vmax=limits[(dataset, metric)][1])
+            for source_index, target_index in np.ndindex(matrix.shape):
+                value = matrix[source_index, target_index]
+                digits = 3 if metric in ("comet", "term_bertscore_recall") else 1
+                red, green, blue, _ = cmap(image.norm(value))
+                axis.text(target_index, source_index,
+                          f"{value:.{digits}f}" if np.isfinite(value) else "NA",
+                          ha="center", va="center", fontsize=9,
+                          color="white" if np.isfinite(value)
+                          and 0.299 * red + 0.587 * green + 0.114 * blue < 0.5 else "#222222")
+            figure.colorbar(image, ax=axis, shrink=0.8, label="Native score (higher is better)")
+        figure.suptitle(f"Direction Performance | {LABELS[run]}\n"
+                        f"{DATASETS[dataset]} | {setting.replace('_', ' ').title()}",
+                        fontsize=21, y=0.98)
+        figure.subplots_adjust(top=0.90, bottom=0.12, hspace=0.52, wspace=0.36)
+        figure.text(
+            0.5, 0.025,
+            "Individual-model scores, not best/median across models. Source rows; target columns.\n"
+            "General scores are shared; terminology uses Luna LLM-enriched terms. "
+            "Color limits are shared across models and both prompts within each dataset/metric.\n"
+            "Supported directions require all selected models and both prompts. NA is unavailable, "
+            "not zero. Metric supports can differ; matched rows are not established.",
+            ha="center", fontsize=10, linespacing=1.5,
+        )
+        relative = f"languages/direction_models/{run}/{dataset}_{setting}"
+        for extension in ("png", "pdf"):
+            path = output / "figures" / f"{relative}.{extension}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            figure.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(figure)
+        saved.append(relative)
+    folder = output / "figures/languages/direction_models"
+    folder.mkdir(parents=True, exist_ok=True)
+    lines = ["# Individual-Model Direction Performance", "",
+             "One figure per model, dataset and prompt. Rows are source languages; columns are "
+             "target languages. Four native metrics: COMET, chrF++, variant-aware coverage (%) "
+             "and term BERTScore recall. Terminology uses Luna LLM-enriched terms only. "
+             "These are direction aggregates, not individual translations or model summaries. "
+             "Each metric requires every selected model and both prompts for a direction. "
+             "Color limits are identical across models/prompts within each dataset/metric. "
+             "Missing support is NA, not zero; row identities are not verified. "
+             "This collection is outside Chosen.", "",
+             "[Native scores and scored-row counts](../../../tables/model_direction_scores.csv)",
+             "", "Rebuild: `uv run --no-sync python scripts/render_evaluation_results.py "
+             "--model-directions-only`.", ""]
+    for relative in saved:
+        target = Path(relative).relative_to("languages/direction_models").as_posix()
+        lines.append(f"- {target}: [PNG]({target}.png) | [PDF]({target}.pdf)")
+    (folder / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return saved
+
+
 def write_best_language_figures(
     output, points, runs, *, terminology_comparison=False, direction_role=None
 ):
@@ -4060,6 +4156,126 @@ def build_language_prompting_rows(points, runs):
     return language_rows, model_rows
 
 
+def write_language_model_violins(output, points, runs):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    selected = [row for row in points
+                if (row["view"], row["category"]) == ("shared_general", "not_applicable")
+                or (row["view"], row["category"]) == ("luna", "llm_enriched")]
+    _, models = build_language_prompting_rows(selected, runs)
+    (output / "tables").mkdir(parents=True, exist_ok=True)
+    write_csv(output / "tables/language_model_violin_means.csv", models)
+    colors = plt.get_cmap("tab10")
+    markers = ("o", "s", "^", "D", "v", "P", "X")
+    prompt_colors = ("#317b9a", "#d88738")
+    saved = []
+    for role in ("from", "to"):
+        figure, axes = plt.subplots(len(LANGUAGE_PROMPTING_METRICS), len(DATASETS),
+                                    figsize=(26, 21), squeeze=False)
+        for metric_index, metric in enumerate(LANGUAGE_PROMPTING_METRICS):
+            for dataset_index, dataset in enumerate(DATASETS):
+                axis = axes[metric_index, dataset_index]
+                rows = [row for row in models if row["role"] == role
+                        and row["metric"] == metric and row["dataset"] == dataset]
+                languages = sorted({row["language"] for row in rows})
+                lookup = {(row["language"], row["run"]): row for row in rows}
+                values = []
+                for position, language in enumerate(languages):
+                    for prompt_index, setting in enumerate(SETTINGS):
+                        scores = np.asarray([lookup[(language, run)][setting] for run in runs])
+                        center = position + (prompt_index - 0.5) * 0.4
+                        values.extend(scores.tolist())
+                        if len(scores) >= 3 and np.ptp(scores) > 0:
+                            violin = axis.violinplot(
+                                [scores], positions=[center], widths=0.34,
+                                showmedians=True, showextrema=False, bw_method="scott",
+                            )
+                            for body in violin["bodies"]:
+                                body.set_facecolor(prompt_colors[prompt_index])
+                                body.set_edgecolor(prompt_colors[prompt_index])
+                                body.set_alpha(0.25)
+                            violin["cmedians"].set_color("#222222")
+                        else:
+                            axis.hlines(float(np.median(scores)), center - 0.13, center + 0.13,
+                                        color=prompt_colors[prompt_index], linewidth=2)
+                        offsets = np.linspace(-0.09, 0.09, len(runs)) if len(runs) > 1 else [0]
+                        for model_index, (score, offset) in enumerate(
+                            zip(scores, offsets, strict=True)
+                        ):
+                            axis.scatter(center + offset, score, s=30,
+                                         color=colors(model_index),
+                                         marker=markers[model_index % len(markers)],
+                                         edgecolors="white", linewidths=0.35, zorder=3)
+                if values:
+                    low, high = min(values), max(values)
+                    padding = (high - low) * 0.08 if high > low else max(abs(low) * 0.03, 0.01)
+                    axis.set_ylim(low - padding, high + padding)
+                else:
+                    axis.text(0.5, 0.5, "NA: no shared direction support", ha="center", va="center",
+                              transform=axis.transAxes)
+                axis.set_xlim(-0.6, max(len(languages) - 0.4, 0.6))
+                axis.set_xticks(range(len(languages)),
+                                [LANGUAGE_LABELS.get(language, language) for language in languages],
+                                rotation=35, ha="right", fontsize=10)
+                axis.set_xlabel("Source language" if role == "from" else "Target language")
+                axis.set_ylabel(f"{METRIC_LABELS[metric]} (native score)")
+                axis.set_title(DATASETS[dataset], fontsize=14)
+                axis.grid(axis="y", color="#dddddd", linewidth=0.6)
+                axis.set_axisbelow(True)
+                axis.spines[["top", "right"]].set_visible(False)
+        figure.suptitle(f"Language Performance Across Models | {role.title()}\n"
+                        "Zero-Shot vs Few-Shot | Zoomed Native Scores", fontsize=23, y=0.98)
+        handles = [Patch(facecolor=color, alpha=0.4, label=setting.replace("_", " ").title())
+                   for color, setting in zip(prompt_colors, SETTINGS, strict=True)]
+        handles += [Line2D([], [], linestyle="none", marker=markers[index % len(markers)],
+                           color=colors(index), label=LABELS[run], markersize=6)
+                    for index, run in enumerate(runs)]
+        figure.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 0.065),
+                      ncol=5, frameon=False, fontsize=11)
+        figure.subplots_adjust(top=0.91, bottom=0.19, hspace=0.58, wspace=0.38)
+        figure.text(
+            0.5, 0.018,
+            "One dot = one model's equally weighted mean over supported partner directions "
+            "for that language and prompt. Violins summarize model means, not model-pair points.\n"
+            "Both prompts share each panel's zoomed linear native-score axis; panels have "
+            "independent ranges. No normalization or clipping. General scores are shared; "
+            "terminology uses Luna LLM-enriched terms.\n"
+            "All models and both prompts are required per retained direction. Partners/support "
+            "can differ across languages/metrics. NA is unavailable, not zero. Row identities "
+            "unverified; small dependent cohorts, not significance evidence.",
+            ha="center", fontsize=10, linespacing=1.5,
+        )
+        relative = f"prompting/language_model_violins/luna/{role}_llm_enriched"
+        for extension in ("png", "pdf"):
+            path = output / "figures" / f"{relative}.{extension}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            figure.savefig(path, dpi=150, bbox_inches="tight", pad_inches=0.2)
+        plt.close(figure)
+        saved.append(relative)
+    folder = output / "figures/prompting/language_model_violins"
+    lines = ["# Language-Based Zoomed Native Violins", "",
+             "X = language, dots = models, paired violins = zero-shot/few-shot. For each model, "
+             "language and prompt, first average supported partner directions equally. Each "
+             "violin contains one such mean per model, not one point per direction. The median "
+             "line summarizes model means. Constant or fewer than three scores use points and "
+             "a median line without a density estimate. Shared direction support requires all "
+             "models and both prompts; partner sets can differ across languages and metrics. "
+             "Both prompts share a padded native-score axis within each panel; panels zoom "
+             "independently, without normalization, log transforms or clipping. General scores "
+             "are shared; terminology uses Luna llm_enriched only. Counts and direction lists "
+             "are exported; equal counts do not prove matched rows. Descriptive only.", "",
+             "[Model means and direction support](../../../tables/language_model_violin_means.csv)",
+             ""]
+    for relative in saved:
+        target = Path(relative).relative_to("prompting/language_model_violins").as_posix()
+        lines.append(f"- {target}: [PNG]({target}.png) | [PDF]({target}.pdf)")
+    (folder / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return saved
+
+
 def write_language_prompting_figures(
     output, points, runs, *, views=None, categories=None, grouped_bars=False
 ):
@@ -4491,6 +4707,192 @@ STORY_CORRELATION_FIGURES = frozenset((
     "dataset_correlations_zero_shot", "dataset_correlations_few_shot",
     "prompting_change_agreement",
 ))
+
+
+def build_story_record_correlations(points, runs):
+    from scipy.stats import pearsonr, spearmanr
+
+    lookup = {}
+    for row in select_analysis_points(points):
+        metric, category = row["metric"], row["category"]
+        if row["run"] not in runs or row["setting"] not in SETTINGS:
+            continue
+        if not ((metric in GENERAL and (row["view"], category)
+                 == ("shared_general", "not_applicable"))
+                or (metric in TERMINOLOGY and row["view"] == "luna" and category in CATEGORIES)):
+            continue
+        try:
+            value = float(row["value"])
+        except (ValueError, TypeError):
+            continue
+        if not math.isfinite(value):
+            continue
+        key = (category, metric, row["dataset"], row["run"], row["direction"], row["setting"])
+        if key in lookup:
+            raise ValueError(f"Duplicate record-correlation score: {key}")
+        count = row.get("rows_scored")
+        lookup[key] = (value, int(count) if count not in (None, "") else None)
+    available = {key[:2] for key in lookup}
+    columns = [("not_applicable", metric) for metric in GENERAL]
+    columns += [(category, metric) for category in CATEGORIES for metric in TERMINOLOGY]
+    columns = [column for column in columns if column in available]
+    records = sorted({key[2:5] for key in lookup})
+    result = []
+    for dataset in (*DATASETS, "all_datasets"):
+        pooled = dataset == "all_datasets"
+        active = columns if pooled else [column for column in columns
+                                        if column[1] in METRIC_ANALYSIS_METRICS
+                                        and column[0] in ("not_applicable", "llm_enriched")]
+        candidates = [record for record in records if pooled or record[0] == dataset]
+        for setting in (SETTINGS if pooled else (*SETTINGS, "change")):
+            for index, column_x in enumerate(active):
+                for column_y in active[index:]:
+                    values_x, values_y, keys = [], [], []
+                    mismatches = unknown = 0
+                    for record in candidates:
+                        settings = SETTINGS if setting == "change" else (setting,)
+                        endpoints = [[lookup.get((*column, *record, prompt)) for prompt in settings]
+                                     for column in (column_x, column_y)]
+                        if any(value is None for group in endpoints for value in group):
+                            continue
+                        values = [group[1][0] - group[0][0] if setting == "change" else group[0][0]
+                                  for group in endpoints]
+                        values_x.append(values[0])
+                        values_y.append(values[1])
+                        keys.append(record)
+                        counts = [value[1] for group in endpoints for value in group]
+                        unknown += None in counts
+                        mismatches += None not in counts and len(set(counts)) > 1
+                    state = "insufficient_observations" if len(keys) < 3 else (
+                        "constant_scores" if len(set(values_x)) < 2 or len(set(values_y)) < 2
+                        else "completed")
+                    result.append({
+                        "dataset": dataset, "setting": setting,
+                        "category_x": column_x[0], "metric_x": column_x[1],
+                        "category_y": column_y[0], "metric_y": column_y[1],
+                        "pearson": float(pearsonr(values_x, values_y).statistic)
+                        if state == "completed" else None,
+                        "spearman": float(spearmanr(values_x, values_y).statistic)
+                        if state == "completed" else None,
+                        "state": state, "n_observations": len(keys),
+                        "observation_unit": "model_direction_aggregate",
+                        "aggregation": "none", "row_support_status": "row_identity_unverified",
+                        "n_row_count_mismatches": mismatches, "n_unknown_row_counts": unknown,
+                        "record_key_fields": "dataset;run;direction",
+                        "record_keys": json.dumps(keys),
+                        "values_x": json.dumps(values_x), "values_y": json.dumps(values_y),
+                    })
+    return result
+
+
+def write_story_record_correlations(output, points, runs):
+    from textwrap import fill
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = build_story_record_correlations(points, runs)
+    tables = output / "tables/record_metric_correlations"
+    tables.mkdir(parents=True, exist_ok=True)
+    write_csv(tables / "correlations.csv", rows)
+    saved = []
+    contexts = [(setting, False) for setting in (*SETTINGS, "change")]
+    contexts += [(setting, True) for setting in SETTINGS]
+    for setting, pooled in contexts:
+        datasets = ["all_datasets"] if pooled else list(DATASETS)
+        figure, axes = plt.subplots(1 if pooled else 2, 2 if pooled else len(datasets),
+                                    figsize=(32, 19) if pooled else (26, 17), squeeze=False,
+                                    layout="constrained")
+        figure.get_layout_engine().set(rect=(0, 0.15, 1, 0.79))
+        for dataset_index, dataset in enumerate(datasets):
+            selected = [row for row in rows if row["dataset"] == dataset
+                        and row["setting"] == setting]
+            columns = list(dict.fromkeys((row["category_x"], row["metric_x"]) for row in selected))
+            labels = [fill(METRIC_LABELS[metric], 20)
+                      + ("\n" + category.replace("_", " ") if pooled
+                         and category != "not_applicable" else "")
+                      for category, metric in columns]
+            for method_index, method in enumerate(("pearson", "spearman")):
+                axis = axes[0, method_index] if pooled else axes[method_index, dataset_index]
+                values = np.full((len(columns), len(columns)), np.nan)
+                for row in selected:
+                    if row[method] is not None:
+                        index_x = columns.index((row["category_x"], row["metric_x"]))
+                        index_y = columns.index((row["category_y"], row["metric_y"]))
+                        values[index_x, index_y] = values[index_y, index_x] = row[method]
+                image = axis.imshow(np.ma.masked_invalid(values), cmap="RdBu", vmin=-1, vmax=1)
+                for index_y, index_x in np.ndindex(values.shape):
+                    value = values[index_y, index_x]
+                    axis.text(index_x, index_y, "NA" if not np.isfinite(value) else f"{value:.2f}",
+                              ha="center", va="center", fontsize=6 if pooled else 8,
+                              color="white" if np.isfinite(value) and abs(value) > 0.65
+                              else "#222222")
+                axis.set_xticks(range(len(labels)), labels, rotation=60, ha="right", fontsize=7)
+                axis.set_yticks(range(len(labels)), labels, fontsize=7)
+                axis.set_xticks(np.arange(len(labels) + 1) - 0.5, minor=True)
+                axis.set_yticks(np.arange(len(labels) + 1) - 0.5, minor=True)
+                axis.grid(which="minor", color="white", linewidth=0.5)
+                axis.tick_params(which="both", length=0)
+                counts = [row["n_observations"] for row in selected]
+                title = "All Datasets Pooled" if pooled else DATASETS[dataset]
+                support = f"{min(counts)}-{max(counts)}" if counts else "0"
+                axis.set_title(f"{title} | {method.title()}\n"
+                               f"{support} model-direction rows per pair", fontsize=13)
+        figure.colorbar(image, ax=axes.ravel().tolist(), shrink=0.7, label="Correlation")
+        name = (f"metric_correlations_all_datasets_{setting}" if pooled else
+                "prompting_change_agreement" if setting == "change" else
+                f"dataset_correlations_{setting}")
+        title = "Prompting-Change Metric Correlations" if setting == "change" else (
+            f"Metric Correlations | {setting.replace('_', ' ').title()}")
+        figure.suptitle(title + "\nEvery Available Model-Direction Row | No Further Averaging",
+                        fontsize=23, y=0.99)
+        figure.text(
+            0.5, 0.018,
+            "One observation = one matched dataset/model/direction score row, not a model mean "
+            "or an individual translation. Each available row has equal weight; no averaging.\n"
+            + ("All datasets pooled directly; no equal-dataset weighting. All Luna terminology "
+               "groups are separate columns; pooled associations may reflect dataset differences."
+               if pooled else "Datasets separate; shared general metrics and Luna LLM-enriched "
+               "terminology. Metric pairs use their own finite matched-row support.")
+            + "\n" + ("Changes = few-shot minus zero-shot within each matched model-direction "
+                       "row, requiring both metrics and both prompts. " if setting == "change" else
+                       "Each prompting setting is separate; no prompt averaging. ")
+            + "NA = constant or fewer than 3 observations.\n"
+            "Underlying scores are direction aggregates; row identities across metrics are "
+            "unverified. Reused models/texts are dependent; "
+            "descriptive, not significance evidence.",
+            ha="center", fontsize=10, linespacing=1.5,
+        )
+        relative = f"record_metric_correlations/{name}"
+        for extension in ("png", "pdf"):
+            path = output / "figures" / f"{relative}.{extension}"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            figure.savefig(path, dpi=150, bbox_inches="tight", pad_inches=0.2)
+        plt.close(figure)
+        saved.append(relative)
+    folder = output / "figures/record_metric_correlations"
+    lines = ["# Metric Correlations Across All Available Direction Records", "",
+             "Each observation is one matched (dataset, model, direction) score-table row for "
+             "a fixed prompt. These are native direction aggregates, NOT individual translation "
+             "records. No averaging across directions, models, prompts or datasets. Pairwise "
+             "finite support uses every available matched row; no all-model/all-prompt filter. "
+             "Prompting-change correlations require both metric endpoints for both prompts "
+             "and subtract few-shot minus zero-shot before correlating. Constant vectors and "
+             "fewer than three observations are NA, including diagonals. Per-dataset figures "
+             "use shared general metrics and Luna llm_enriched terms; pooled figures retain "
+             "all Luna groups as separate columns and pool all datasets directly, without "
+             "equal-dataset weighting. Dataset composition can affect pooled coefficients. "
+             "Row counts do not establish matched underlying translations; model/text reuse "
+             "creates dependence. No significance inference or causal claims.", "",
+             "[Coefficients, exact paired keys/vectors and row-count flags]"
+             "(../../tables/record_metric_correlations/correlations.csv)", "",
+             "Rebuild: `uv run --no-sync python scripts/render_evaluation_results.py "
+             "--record-metric-correlations-only`.", ""]
+    for relative in saved:
+        target = Path(relative).name
+        lines.append(f"- {target}: [PNG]({target}.png) | [PDF]({target}.pdf)")
+    (folder / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return saved
 
 
 def write_story_metric_analysis(output, points, runs):
@@ -4983,7 +5385,8 @@ def write_story_model_sources(output):
 
 def write_story_sources(
     output, points, runs,
-    *, sections=("rankings", "directions", "prompting", "metrics", "models", "entities")
+    *, sections=("rankings", "directions", "prompting", "language_violins", "metrics", "models",
+                 "entities", "record_metrics")
 ):
     selected = [row for row in points if row["view"] == "shared_general"
                 or (row["view"] == "luna" and row["category"] == "llm_enriched")]
@@ -5005,8 +5408,12 @@ def write_story_sources(
         saved += write_language_prompting_figures(
             folder, selected, runs, views=("luna",), categories=("llm_enriched",), grouped_bars=True
         )
+    if "language_violins" in sections:
+        saved += write_language_model_violins(folder, selected, runs)
     if "metrics" in sections:
         saved += write_story_metric_analysis(folder, selected, runs)
+    if "record_metrics" in sections:
+        saved += write_story_record_correlations(folder, points, runs)
     if "entities" in sections:
         saved += write_story_entity_correlations(folder, selected, runs)
     if "models" in sections:
@@ -5019,7 +5426,9 @@ def write_story_sources(
         "and target rows in To views; these are transposes of the same direction scores.\n\n"
         "[Language tables and coverage](tables/language_rankings/README.md) | "
         "[Prompting method and support](figures/prompting/language_changes/README.md) | "
+        "[Language model-dot violins](figures/prompting/language_model_violins/README.md) | "
         "[Metric analysis](figures/metric_analysis/README.md) | "
+        "[All-record metric correlations](figures/record_metric_correlations/README.md) | "
         "[Language/model correlations](figures/entity_correlations/README.md) | "
         "[Zoomed cost/rank/latency](figures/cost_rank_latency_zoomed/README.md)\n",
         encoding="utf-8",
@@ -5055,6 +5464,13 @@ def story_figure_selection():
             f"Figure 3: {role}-language grouped percentage-change bars with symmetric-log Y. "
             "COMET plus Luna LLM-enriched variant-aware coverage and term BERTScore recall.",
             subpath=f"{role}/{name}")
+        add("03_prompting", f"language_model_violins_{role}",
+            f"{base}/prompting/language_model_violins/luna/{role}_llm_enriched",
+            f"{role.title()}-language zoomed native-score violins: paired zero/few-shot "
+            "distributions with one colored/shaped dot per model's equal-partner mean. "
+            "COMET and Luna LLM-enriched variant-aware coverage/term BERTScore recall; "
+            "datasets remain separate. Padded linear axes, not normalized scores.",
+            subpath=f"{role}/language_model_violins")
         for dataset, label in DATASETS.items():
             for family, view in (("general", "shared_general"), ("terminology", "luna")):
                 relative = f"languages/direction_{family}/{view}/{role}"
@@ -5088,10 +5504,11 @@ def story_figure_selection():
     for name, title in METRIC_ANALYSIS_FIGURES:
         if name not in STORY_CORRELATION_FIGURES:
             continue
-        add("05_metric_analysis", name, f"{base}/metric_analysis/{name}",
+        add("05_metric_analysis", name, f"{base}/record_metric_correlations/{name}",
             f"{title}. Dataset-specific comparisons of lexical, semantic, QE and terminology "
-            "scores; new terminology analyses use Luna LLM-enriched annotations. "
-            "Common-direction support; native scores and support details are exported.",
+            "scores across every available matched model-direction row, without further "
+            "averaging. Luna LLM-enriched terminology; "
+            "pairwise support and exact vectors exported.",
             subpath=f"metrics/{name}")
     for matrix in ("languages", "models"):
         for role in ("from", "to"):
@@ -5106,11 +5523,21 @@ def story_figure_selection():
                     subpath=f"{matrix}/{name}")
     for setting in SETTINGS:
         add("05_metric_analysis", f"metrics_luna_{setting}",
-            f"correlations/luna/metric_correlations_all_datasets_{setting}",
+            f"{base}/record_metric_correlations/metric_correlations_all_datasets_{setting}",
             f"Metric-to-metric Pearson and Spearman correlations, {setting.replace('_', ' ')}. "
-            "All datasets weighted equally; seven model observations per metric pair. "
-            "General metrics and all Luna terminology groups; exploratory, not significance tests.",
+            "Every available matched dataset/model/direction row pooled directly, without "
+            "averaging or equal-dataset weighting. General metrics and all Luna terminology "
+            "groups; direction aggregates, not individual translations or significance tests.",
             optional=True, subpath=f"metrics/metrics_luna_{setting}")
+    for view in VIEWS:
+        for setting in SETTINGS:
+            name = f"performance_distributions_{setting}"
+            add("06_term_group_distributions", f"{view}_{setting}",
+                f"distributions/{view}/{name}",
+                f"Existing {view} distributions, {setting.replace('_', ' ')}: all candidates, "
+                "externally verified and LLM-enriched term groups. Direction-level aggregates, "
+                "not individual translations; different groups can have different row support.",
+                subpath=f"{view}/{name}")
     return selected
 
 
@@ -5141,7 +5568,8 @@ def write_story_chosen_figures(output):
         manifest.append(record)
     wanted = {item["target"] for item in selected}
     sections = ("01_language_tables", "02_direction_performance", "03_prompting",
-                "04_model_behavior", "05_optional_correlations", "05_metric_analysis")
+                "04_model_behavior", "05_optional_correlations", "05_metric_analysis",
+                "06_term_group_distributions")
     for record in previous:
         target = record["target"]
         if target in wanted or not any(target.startswith(f"chosen_story/{section}/")
@@ -5196,14 +5624,19 @@ def write_story_chosen_figures(output):
         "one panel per dataset. Green/red shades and patterns distinguish metric gains/losses. "
         "A shared symmetric-log Y scale shows smaller changes, negatives and zero. "
         "Only the Luna LLM-enriched From and To figures are included. "
-        "Models are averaged equally; model-specific violins are not in this section.",
+        "Bars average models equally. Alongside them, two zoomed native-score language "
+        "violin figures compare prompts with one dot per model's equal-partner mean.",
         "4. Model comparison: combined-metric mixed-rank scorecards, the original Chosen "
         "zoomed native-score violins, and zoomed API-cost/rank plots with latency bubbles. "
         "Retain native values, all plotted points and the original latency-area scale.",
         "5. Correlation matrices only, grouped into Metrics, Languages and Models. "
-        "Show both Pearson and Spearman; keep datasets and metric scales separate. "
+        "Show both Pearson and Spearman. Metric matrices use all available matched "
+        "model-direction score rows without further averaging; "
+        "two optional matrices pool datasets. "
         "Language/model matrices have separate From/To views and average prompts equally. "
-        "Other metric analyses remain outside this chosen collection.", "",
+        "Other metric analyses remain outside this chosen collection.",
+        "6. Term-group distributions: the existing zero-shot/few-shot figures for Luna and "
+        "original GLM, comparing all candidates, externally verified and LLM-enriched terms.", "",
         f"The language-table section contains all {language_count} ranking figure sets. "
         "The collection is a working library, not a proposal to publish every table. "
         "Section 4 contains seven Luna combined-metric scorecards, nine original Chosen zoomed "
@@ -5218,11 +5651,15 @@ def write_story_chosen_figures(output):
         "Unranked languages have incomplete coverage, not zero performance.",
         "- Sections 1-3 use one requested terminology definition: Luna LLM-enriched. "
         "This selection does not prove annotation-source superiority or view-robust effects. "
-        "Other views/groups remain available in the full original analysis, not here.",
+        "Sections 4 and 6 retain the wider annotation views/groups for comparison.",
         "- Best-observed results are selected on the test set. They are not validated deployment "
         "policies or per-translation oracles; model identity can vary by direction and metric.",
         "- Violin points are direction aggregates, not individual translations. Prompt contrasts "
         "are descriptive; shared directions do not establish matched rows or significance.",
+        "- Section 3 language violins first average partner directions within each model/prompt. "
+        "Each violin then summarizes model means, with one dot per model. The two prompts "
+        "share each panel's zoomed native-score axis; panels have independent ranges. "
+        "No normalization or log transforms. Colors/shapes identify models.",
         "- Figure 3 first averages identical partner directions within each model/prompt, then "
         "averages the selected models equally. Bars show 100 * (few - zero) / zero, not "
         "percentage points; nonpositive baselines are NA. These are relative metric-score "
@@ -5231,7 +5668,10 @@ def write_story_chosen_figures(output):
         "- Terminology annotation subsets have different applicability/support. Higher coverage "
         "on verified terms is not proof that refinement improved translation quality. Reference "
         "term coverage is not language-support or training-data coverage.",
-        "- Metric/language correlations use model observations; model-to-model correlations "
+        "- Metric correlations use every available paired model-direction aggregate, not model "
+        "means or individual translations. Pairwise supports can differ; pooled matrices weight "
+        "each available record equally and may reflect dataset differences. Language correlations "
+        "use model observations; model-to-model correlations "
         "use supported language profiles. These are small, dependent cohorts, not pooled "
         "independent translations. Different metrics and languages can use different supports. "
         "Constant vectors or fewer than three observations are NA, not zero. Correlations "
@@ -5254,20 +5694,28 @@ def write_story_chosen_figures(output):
               "02_direction_performance": "02 Direction Performance",
               "03_prompting": "03 Zero-Shot vs Few-Shot",
               "04_model_behavior": "04 Model Comparison",
-              "05_metric_analysis": "05 Correlations"}
+              "05_metric_analysis": "05 Correlations",
+              "06_term_group_distributions": "06 Term Group Distributions"}
     for section, title in titles.items():
         lines += [f"## {title}", ""]
         if section == "01_language_tables":
             lines += ["Ranking hierarchy: `median|top / from|to / luna / dataset_prompt|overall`. "
                       "Terminology uses only LLM-enriched terms. PNG and PDF are available.", ""]
         if section == "03_prompting":
-            lines += ["Only two grouped bar plots: From and To, Luna LLM-enriched. "
+            lines += ["Two grouped bar plots plus two language-based zoomed native violin "
+                      "figures: From and To, Luna LLM-enriched. For bars, "
                       "Languages are on X; three adjacent, differently shaded/patterned metric "
                       "bars show gains in green and losses in red. The shared symmetric-log Y "
                       "axis retains actual percentage labels and a linear region around zero. "
-                      "Other groups/views and model-specific violins are omitted here. "
+                      "The companion violins keep languages on X and show paired zero/few-shot "
+                      "native-score distributions; dots identify individual models after "
+                      "equal-partner averaging. Every panel zooms without normalization. "
                       f"[Method and support exports](../../{STORY_SOURCE_FOLDER}/figures/"
-                      "prompting/language_changes/README.md).", ""]
+                      "prompting/language_changes/README.md) | "
+                      f"[Language violin method and model means](../../{STORY_SOURCE_FOLDER}"
+                      "/figures/prompting/language_model_violins/README.md).", "",
+                      "Rebuild the language violins only: `uv run --no-sync python "
+                      "scripts/render_evaluation_results.py --language-model-violins-only`.", ""]
         if section == "04_model_behavior":
             lines += ["Combined metric = the original balanced mixed rank across semantic, "
                       "lexical and terminology families, not a new raw-score average. "
@@ -5281,13 +5729,20 @@ def write_story_chosen_figures(output):
                       "scripts/render_evaluation_results.py --model-comparison-only`.", ""]
         if section == "05_metric_analysis":
             lines += ["Only square correlation matrices are selected here, under `metrics/`, "
-                      "`languages/` and `models/`. Metric matrices compare score/prompting-change "
-                      "relationships across models. Language matrices correlate languages across "
+                      "`languages/` and `models/`. Metric matrices compare every available matched "
+                      "model-direction row directly, without averaging across "
+                      "directions or models. "
+                      "Prompt changes subtract matched few/zero endpoints per model-direction. "
+                      "[Metric method and exact paired vectors]"
+                      f"(../../{STORY_SOURCE_FOLDER}/figures/"
+                      "record_metric_correlations/README.md). "
+                      "Language matrices correlate languages across "
                       "the selected models; model matrices correlate models across supported "
                       "languages. New language/model matrices cover COMET, chrF++, variant-aware "
                       "coverage and term BERTScore recall, with separate From/To views and "
                       "equal prompt averages. New terminology uses Luna LLM-enriched terms; "
-                      "the retained original metric matrices include all Luna term groups. "
+                      "the two pooled metric matrices include all Luna term groups as separate "
+                      "columns and pool dataset records without equal-dataset weighting. "
                       f"[Language/model method and native vectors](../../{STORY_SOURCE_FOLDER}"
                       "/figures/entity_correlations/README.md). Scatterplots, sensitivity maps, "
                       "ranking/overlap and disagreement analyses remain outside Chosen "
@@ -5295,6 +5750,15 @@ def write_story_chosen_figures(output):
                       "/figures/metric_analysis/README.md).", "",
                       "Rebuild section 5: `uv run --no-sync python "
                       "scripts/render_evaluation_results.py --story-correlations-only`.", ""]
+        if section == "06_term_group_distributions":
+            lines += ["Exact copies of the existing distribution figures, grouped by annotation "
+                      "view and prompting setting. Compare all candidates, externally verified "
+                      "and LLM-enriched terms without treating the groups as independent or "
+                      "assuming identical scored rows. These are descriptive distributions "
+                      "across language directions, not confidence intervals. Original figures "
+                      "remain in `figures/distributions/`. "
+                      "[Direction scores and row counts](../../tables/distribution_points.csv) | "
+                      "[Density-fit support](../../tables/distribution_regions.csv).", ""]
         for item in selected:
             if item["section"] != section:
                 continue
@@ -7338,6 +7802,14 @@ def main():
         help="Render best-model, best/median and hardest-pair plots from native direction CSV.",
     )
     parser.add_argument(
+        "--model-directions-only", action="store_true",
+        help="Render individual-model direction heatmaps outside Chosen from native scores.",
+    )
+    parser.add_argument(
+        "--language-model-violins-only", action="store_true",
+        help="Render language-based model-dot violins and refresh chosen story section 3.",
+    )
+    parser.add_argument(
         "--language-violins-only",
         action="store_true",
         help="Render pair/source/target language violins from native direction CSV only.",
@@ -7387,10 +7859,57 @@ def main():
         help="Render metric/language/model correlation sources and refresh chosen story section 5.",
     )
     parser.add_argument(
+        "--record-metric-correlations-only", action="store_true",
+        help="Correlate all model-direction records and refresh only the chosen metric matrices.",
+    )
+    parser.add_argument(
         "--model-comparison-only", action="store_true",
         help="Render zoomed API-cost/rank/latency plots and refresh chosen story section 4.",
     )
     args = parser.parse_args()
+    if args.language_model_violins_only:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        path = args.output / "tables/prompting_violin_points.csv"
+        if not path.exists():
+            parser.error("Generate native direction scores before language model violins")
+        with path.open(encoding="utf-8", newline="") as handle:
+            points = select_analysis_points(list(csv.DictReader(handle)))
+        runs = sorted({row["run"] for row in points})
+        if set(runs) != set(LABELS):
+            parser.error("Language model violins require the selected model cohort")
+        figures = write_story_sources(args.output, points, runs, sections=("language_violins",))
+        write_story_chosen_figures(args.output)
+        write_readme(
+            args.output,
+            sorted(path.relative_to(args.output / "figures").with_suffix("").as_posix()
+                   for path in (args.output / "figures").rglob("*.png")),
+        )
+        print(f"Wrote {len(figures)} language model-dot violin sets beside existing bars at "
+              f"{args.output / 'figures/chosen_story/03_prompting'}")
+        return
+    if args.model_directions_only:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        path = args.output / "tables/prompting_violin_points.csv"
+        if not path.exists():
+            parser.error("Generate native direction scores before individual-model figures")
+        with path.open(encoding="utf-8", newline="") as handle:
+            points = select_analysis_points(list(csv.DictReader(handle)))
+        runs = sorted({row["run"] for row in points})
+        if set(runs) != set(LABELS):
+            parser.error("Individual-model directions require the selected model cohort")
+        figures = write_model_direction_figures(args.output, points, runs)
+        write_readme(
+            args.output,
+            sorted(path.relative_to(args.output / "figures").with_suffix("").as_posix()
+                   for path in (args.output / "figures").rglob("*.png")),
+        )
+        print(f"Wrote {len(figures)} individual-model direction sets at "
+              f"{args.output / 'figures/languages/direction_models'}")
+        return
     if args.model_comparison_only:
         import matplotlib
 
@@ -7408,7 +7927,7 @@ def main():
         print(f"Wrote {len(figures)} zoomed cost/rank/latency sets at "
               f"{args.output / 'figures/chosen_story/04_model_behavior'}")
         return
-    if args.metric_analysis_only:
+    if args.metric_analysis_only or args.record_metric_correlations_only:
         import matplotlib
 
         matplotlib.use("Agg")
@@ -7420,7 +7939,9 @@ def main():
         runs = sorted({row["run"] for row in points})
         if set(runs) != set(LABELS):
             parser.error("Metric analysis requires the selected model cohort")
-        figures = write_story_sources(args.output, points, runs, sections=("metrics", "entities"))
+        sections = (("record_metrics",) if args.record_metric_correlations_only
+                else ("record_metrics", "entities"))
+        figures = write_story_sources(args.output, points, runs, sections=sections)
         write_story_chosen_figures(args.output)
         write_readme(
             args.output,
@@ -7738,6 +8259,7 @@ def main():
                 figures += write_output_token_rank_figures(args.output, token_bubbles)
     figures += write_chosen_prompting_figures(args.output, zoomed_violin_figures, zoomed=True)
     figures += write_language_analysis(args.output, violin_rows, runs)
+    figures += write_model_direction_figures(args.output, violin_rows, runs)
     figures += write_best_language_figures(args.output, violin_rows, runs)
     figures += write_best_language_figures(
         args.output, violin_rows, runs, terminology_comparison=True

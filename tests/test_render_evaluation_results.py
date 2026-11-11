@@ -692,6 +692,55 @@ def test_direction_performance_orients_source_and_target_rows(
     assert all(f"/shared_general/{role}/" in relative for relative in saved)
 
 
+def test_model_direction_figures_use_individual_scores_and_shared_limits(tmp_path, monkeypatch):
+    import csv
+
+    import matplotlib.figure
+
+    points, runs = language_points(monkeypatch)
+    base = [row for row in points if row["metric"] == "comet"]
+    points = [{**row, "metric": metric} for metric in ("comet", "chrf2++") for row in base]
+    points += [{**row, "view": "luna", "category": category, "metric": metric,
+                "value": float(row["value"]) / divisor}
+               for category in ("llm_enriched", "all_terms")
+               for metric, divisor in (("variant_aware_target_term_coverage", 20),
+                                       ("term_bertscore_recall", 5000)) for row in base]
+    checked, ranges = [], []
+
+    def capture(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        panels = [axis for axis in figure.axes if axis.images]
+        assert len(panels) == 4
+        expected = 0 if path.parent.name == runs[0] else 1000
+        assert float(panels[0].images[0].get_array()[0, 1]) == expected
+        assert panels[0].get_ylabel() == "From (source language)"
+        assert panels[0].get_xlabel() == "To (target language)"
+        assert all(any(text.get_text() == "NA" for text in axis.texts) for axis in panels)
+        assert "not best/median" in figure.texts[-1].get_text()
+        ranges.append([axis.images[0].get_clim() for axis in panels])
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", capture)
+    saved = renderer.write_model_direction_figures(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 4
+    assert all(value == ranges[0] for value in ranges)
+    assert all("chosen" not in path.parts for path in checked)
+    with (tmp_path / "tables/model_direction_scores.csv").open(newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert {row["category"] for row in rows} == {"not_applicable", "llm_enriched"}
+    assert (tmp_path / "figures/languages/direction_models/README.md").exists()
+
+
+def test_model_direction_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["renderer", "--model-directions-only",
+                                    "--output", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores" in capsys.readouterr().err
+
+
 def test_direction_terminology_cli_requires_native_input(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr("sys.argv", ["renderer", "--direction-terminology-only",
                                      "--output", str(tmp_path)])
@@ -1068,6 +1117,58 @@ def test_language_prompting_percentage_masks_nonpositive_baselines(tmp_path, mon
     assert len(checked) == 2
 
 
+@pytest.mark.parametrize("constant", [False, True])
+def test_language_model_violins_average_partners_and_keep_native_model_dots(
+    tmp_path, monkeypatch, constant,
+):
+    import csv
+
+    import matplotlib.figure
+    from matplotlib.collections import PathCollection
+
+    points, runs = language_points(monkeypatch)
+    monkeypatch.setattr(renderer, "LANGUAGE_PROMPTING_METRICS", ("comet",))
+    points = [row for row in points if row["metric"] == "comet"]
+    points += [{**row, "direction": "en-fr", "value": float(row["value"]) + 20}
+               for row in list(points) if row["direction"] == "en-de"]
+    if constant:
+        points = [{**row, "value": 0.5} for row in points]
+    points += [{**row, "view": "luna", "category": "all_terms", "value": 9999}
+               for row in list(points)]
+    checked = []
+
+    def capture(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        axis = figure.axes[0]
+        dots = [item for item in axis.collections if isinstance(item, PathCollection)]
+        n_languages = 2 if path.stem.startswith("from") else 3
+        assert len(dots) == n_languages * len(runs) * 2
+        assert all(len(dot.get_offsets()) == 1 for dot in dots)
+        scores = [float(dot.get_offsets()[0, 1]) for dot in dots]
+        assert max(scores) < 9999
+        low, high = axis.get_ylim()
+        assert low < min(scores) <= max(scores) < high
+        assert axis.get_yscale() == "linear"
+        if constant:
+            assert set(scores) == {0.5}
+        else:
+            assert low > -100
+        assert "One dot = one model" in figure.texts[-1].get_text()
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", capture)
+    saved = renderer.write_language_model_violins(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 2
+    with (tmp_path / "tables/language_model_violin_means.csv").open(newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    selected = next(row for row in rows if row["role"] == "from"
+                    and row["language"] == "en" and row["run"] == runs[0])
+    assert float(selected["zero_shot"]) == pytest.approx(0.5 if constant else 20)
+    assert int(selected["n_directions"]) == 2
+    assert set(selected["directions"].split(";")) == {"en-de", "en-fr"}
+
+
 def test_language_prompting_bars_preserve_percentages_and_symlog(tmp_path, monkeypatch):
     import matplotlib.figure
     import numpy as np
@@ -1225,6 +1326,36 @@ def test_language_mixed_ranks_can_use_only_luna_llm_enriched(tmp_path, monkeypat
     assert captions
 
 
+def test_record_metric_correlations_do_not_average_directions(monkeypatch):
+    monkeypatch.setattr(renderer, "DATASETS", {"sample": "Sample"})
+    runs = list(renderer.LABELS)[:3]
+    points = [{"view": "shared_general", "category": "not_applicable", "dataset": "sample",
+               "setting": setting, "run": run, "model": renderer.LABELS[run],
+               "metric": metric, "direction": direction,
+               "value": model_index * 10 + sign * (100 if metric == "comet" else -100)
+               + (model_index if setting == "few_shot" else 0), "rows_scored": 10}
+              for model_index, run in enumerate(runs)
+              for direction, sign in (("en-de", -1), ("de-en", 1))
+              for setting in renderer.SETTINGS for metric in ("comet", "chrf2++")]
+    rows = renderer.build_story_record_correlations(points, runs)
+    pair = next(row for row in rows if row["dataset"] == "sample"
+                and row["setting"] == "zero_shot" and row["metric_x"] != row["metric_y"])
+    assert pair["n_observations"] == 6
+    assert pair["pearson"] < -0.98
+    assert pair["aggregation"] == "none"
+    assert pair["observation_unit"] == "model_direction_aggregate"
+    incomplete = renderer.build_story_record_correlations(points[1:], runs)
+    pair = next(row for row in incomplete if row["dataset"] == "sample"
+                and row["setting"] == "zero_shot" and row["metric_x"] != row["metric_y"])
+    assert pair["n_observations"] == 5
+    constant = renderer.build_story_record_correlations(
+        [{**row, "value": 1} for row in points], runs)
+    assert all(row["pearson"] is None and row["spearman"] is None
+               and row["state"] == "constant_scores" for row in constant)
+    with pytest.raises(ValueError, match="Duplicate record-correlation"):
+        renderer.build_story_record_correlations(points + points[:1], runs)
+
+
 def metric_analysis_points(monkeypatch):
     monkeypatch.setattr(renderer, "DATASETS", {"sample": "Sample"})
     monkeypatch.setattr(renderer, "METRIC_ANALYSIS_METRICS", (
@@ -1245,6 +1376,44 @@ def metric_analysis_points(monkeypatch):
                                    else index * factor,
                                    "rows_scored": 5 if term else 10})
     return points, runs
+
+
+def test_record_metric_correlations_render_all_five_matrices(tmp_path, monkeypatch):
+    import csv
+    import json
+
+    import matplotlib.figure
+    import numpy as np
+
+    points, runs = metric_analysis_points(monkeypatch)
+    points += [{**row, "category": "all_terms", "value": float(row["value"]) + 100}
+               for row in list(points) if row["view"] == "luna"]
+    checked = []
+
+    def capture(figure, path, **kwargs):
+        if path.suffix != ".png":
+            return
+        panels = [axis for axis in figure.axes if axis.images]
+        assert len(panels) == 2
+        assert all(axis.images[0].get_clim() == (-1, 1) for axis in panels)
+        assert all("6-6 model-direction rows" in axis.get_title() for axis in panels)
+        assert "No Further Averaging" in figure.texts[0].get_text()
+        assert "not a model mean" in figure.texts[-1].get_text()
+        pooled = path.stem.startswith("metric_correlations_all_datasets")
+        assert all(axis.images[0].get_array().shape == ((4, 4) if pooled else (3, 3))
+                   for axis in panels)
+        assert all(np.isfinite(axis.images[0].get_array()).all() for axis in panels)
+        checked.append(path)
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", capture)
+    saved = renderer.write_story_record_correlations(tmp_path, points, runs)
+    assert len(saved) == len(checked) == 5
+    path = tmp_path / "tables/record_metric_correlations/correlations.csv"
+    with path.open(newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert all(len(json.loads(row["values_x"])) == int(row["n_observations"]) == 6 for row in rows)
+    assert any(row["category_x"] == "all_terms" for row in rows if row["dataset"] == "all_datasets")
+    assert all(row["category_x"] != "all_terms" for row in rows if row["dataset"] != "all_datasets")
 
 
 def test_story_metric_analysis_pairs_support_and_detects_opposite_changes(monkeypatch):
@@ -1445,14 +1614,19 @@ def test_story_sources_filter_luna_llm_enriched_and_keep_both_roles(tmp_path, mo
 
     for name in ("write_language_rank_reports", "write_best_language_figures",
                  "write_language_prompting_figures", "write_story_metric_analysis",
-                 "write_story_entity_correlations"):
+                 "write_story_entity_correlations", "write_language_model_violins"):
         monkeypatch.setattr(renderer, name, capture)
     model_calls = []
     monkeypatch.setattr(renderer, "write_story_model_sources",
                         lambda output: model_calls.append(output) or [])
+    record_calls = []
+    monkeypatch.setattr(renderer, "write_story_record_correlations",
+                        lambda output, selected, selected_runs:
+                        record_calls.append((output, selected, selected_runs)) or [])
     renderer.write_story_sources(tmp_path, points, runs)
     assert model_calls == [tmp_path]
-    assert len(checked) == 8
+    assert record_calls == [(tmp_path / renderer.STORY_SOURCE_FOLDER, points, runs)]
+    assert len(checked) == 9
     assert {kwargs["direction_role"] for kwargs in checked if "direction_role" in kwargs} == {
         "from", "to"
     }
@@ -1461,7 +1635,8 @@ def test_story_sources_filter_luna_llm_enriched_and_keep_both_roles(tmp_path, mo
     assert checked[5]["grouped_bars"] is True
 
 
-@pytest.mark.parametrize("flag", ["--metric-analysis-only", "--story-correlations-only"])
+@pytest.mark.parametrize("flag", ["--metric-analysis-only", "--story-correlations-only",
+                                "--record-metric-correlations-only"])
 def test_story_metric_analysis_cli_requires_native_input(tmp_path, monkeypatch, capsys, flag):
     monkeypatch.setattr("sys.argv", ["renderer", flag,
                                      "--output", str(tmp_path)])
@@ -1510,6 +1685,15 @@ def test_story_model_sources_read_native_values_and_preserve_missing_costs(tmp_p
     assert exported[1]["estimated_api_cost_usd"] == ""
 
 
+def test_language_model_violins_cli_requires_native_input(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["renderer", "--language-model-violins-only",
+                                    "--output", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        renderer.main()
+    assert error.value.code == 2
+    assert "Generate native direction scores" in capsys.readouterr().err
+
+
 def test_story_chosen_cli_requires_native_input(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr("sys.argv", ["renderer", "--story-chosen-only", "--output", str(tmp_path)])
     with pytest.raises(SystemExit) as error:
@@ -1522,17 +1706,27 @@ def test_story_chosen_copies_are_exact_idempotent_and_preserve_original_chosen(t
     import hashlib
 
     selected = renderer.story_figure_selection()
-    assert len(selected) == 86
+    assert len(selected) == 92
     assert sum(item["tier"] == "optional" for item in selected) == 2
+    distributions = [item for item in selected if item["section"] == "06_term_group_distributions"]
+    assert len(distributions) == 4
+    assert {item["source"] for item in distributions} == {
+        f"distributions/{view}/performance_distributions_{setting}"
+        for view in renderer.VIEWS for setting in renderer.SETTINGS
+    }
+    assert all(item["target"] == f"chosen_story/06_term_group_distributions/{item['source'][14:]}"
+               for item in distributions)
     metric_correlations = [item for item in selected if item["name"].startswith("metrics_luna_")]
     assert {item["source"] for item in metric_correlations} == {
-        f"correlations/luna/metric_correlations_all_datasets_{setting}"
+        f"../{renderer.STORY_SOURCE_FOLDER}/figures/record_metric_correlations/"
+        f"metric_correlations_all_datasets_{setting}"
         for setting in renderer.SETTINGS
     }
     assert all(item["section"] == "05_metric_analysis"
                and "Pearson and Spearman" in item["purpose"] for item in metric_correlations)
     new_metrics = [item for item in selected if item["section"] == "05_metric_analysis"
-                   and "/metric_analysis/" in item["source"]]
+                   and "/record_metric_correlations/" in item["source"]
+                   and not item["name"].startswith("metrics_luna_")]
     assert {item["name"] for item in new_metrics} == {
         name for name, _ in renderer.METRIC_ANALYSIS_FIGURES
         if name in renderer.STORY_CORRELATION_FIGURES
@@ -1552,6 +1746,15 @@ def test_story_chosen_copies_are_exact_idempotent_and_preserve_original_chosen(t
     assert len(figure_three) == 2
     assert all("/luna/" in item["source"] and "llm_enriched" in item["source"]
                for item in figure_three)
+    language_violins = [item for item in selected
+                       if "/prompting/language_model_violins/" in item["source"]]
+    assert len(language_violins) == 2
+    assert {item["target"] for item in language_violins} == {
+        f"chosen_story/03_prompting/{role}/language_model_violins" for role in ("from", "to")
+    }
+    assert all("/luna/" in item["source"] and "llm_enriched" in item["source"]
+               for item in language_violins)
+    assert sum(item["section"] == "03_prompting" for item in selected) == 4
     ranking_items = [item for item in selected if item["section"] == "01_language_tables"]
     assert len(ranking_items) == 28
     contexts = {"overall"} | {
@@ -1614,7 +1817,9 @@ def test_story_chosen_copies_are_exact_idempotent_and_preserve_original_chosen(t
     snapshots = []
     for _ in range(2):
         saved = renderer.write_story_chosen_figures(tmp_path)
-        assert len(saved) == 86
+        assert len(saved) == 92
+        assert "## 06 Term Group Distributions" in (
+            tmp_path / "figures/chosen_story/README.md").read_text(encoding="utf-8")
         assert not moved.exists() and outside.read_bytes() == b"Supplementary analysis"
         assert not old_model.exists()
         assert not old_correlations.parent.exists()
