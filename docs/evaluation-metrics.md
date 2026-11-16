@@ -1,7 +1,7 @@
 # Evaluation Metrics
 
 This project computes automatic reference-based metrics for source-pair benchmark datasets using
-`scripts/evaluate_parallel_manifest.py`. The bare CLI default computes every registered metric,
+`scripts/evaluate_parallel_manifest.py`. The bare CLI default computes the standard metric suite,
 including learned model metrics and `fsp_mqm`. Use repeated `--metric` flags to override that set.
 The default requires downloaded BERTScore, COMET, COMETKiwi, and XCOMET models, accepted model
 terms where applicable, and an OpenAI-compatible API configuration for `fsp_mqm`; it incurs one
@@ -10,23 +10,22 @@ judge request per evaluated row.
 `config/evaluation/default.toml` explicitly selects the same full suite. Use
 `config/evaluation/cheap.toml` when model downloads and LLM judge calls are not appropriate.
 
-The implementation lives in `src/chem_machine_translation/evaluation/metrics.py`:
+The metric registry and dispatch live in
+[metrics.py](../src/chem_machine_translation/evaluation/metrics.py).
+The call below shows the document-evaluation arguments; other optional metric-specific
+arguments are omitted:
 
 ```python
-def compute_translation_metrics(
-    prediction: str,
-    reference: str,
-    source: str | None = None,
-    metric_names: list[str] | tuple[str, ...] | None = None,
-    bertscore_scorer: BertScoreScorer | None = None,
-    comet_scorer: CometScorer | None = None,
-    cometkiwi_scorer: CometQeScorer | None = None,
-    xcomet_scorer: XCometScorer | None = None,
-    terminology: list[dict[str, Any]] | None = None,
-    mqm_judge: MqmJudge | None = None,
-    metric_details: dict[str, Any] | None = None,
-) -> dict[str, float]:
-    ...
+details = {}
+metrics = compute_translation_metrics(
+  prediction=prediction,
+  reference=reference,
+  source=source,
+  metric_names=("comet", "reference_assignment_comet", "sentalign_comet"),
+  metric_details=details,
+  source_language="en",
+  target_language="de",
+)
 ```
 
 Each benchmark row stores these values under the `metrics` field in the JSONL report. The evaluation
@@ -44,7 +43,8 @@ We separate metrics into two groups:
   things like formula preservation, terminology consistency, and chemical identity.
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
-reference-based BERTScore, BLEURT, and COMET, reference-free COMETKiwi QE, XCOMET-XL, strict and
+reference-based BERTScore, BLEURT, whole-record COMET, Reference Assignment COMET, SentAlign-COMET,
+reference-free COMETKiwi QE, XCOMET-XL, strict and
 variant-aware target-side terminology coverage, term-only BERTScore recall, strict and variant-aware
 source-conditioned terminology success rates, and optional `fsp_mqm` LLM judging. The benchmark
 builders can generate terminology mappings in manifest rows. Terminology consistency is not wired into
@@ -71,6 +71,11 @@ Implemented in code:
 - `term_bertscore_recall`: multilingual BERTScore recall from selected curated reference target terms
   to the full prediction. It is a soft term-retention metric, not precision or F1.
 - `comet`: reference-based COMET with `Unbabel/wmt22-comet-da`, useful for semantic MT quality.
+- `reference_assignment_comet`: our custom reference-anchored, order-unrestricted one-to-one
+  sentence matching followed by COMET and explicit gap penalties. Opt-in only.
+- `sentalign_comet`: official SentAlign 2.0.0 monotonic many-to-many matching in our
+  reference-anchored COMET protocol. Uses BGE-M3/CLS in this project. Opt-in only.
+- `aligned_comet`: legacy alias of `reference_assignment_comet`, not a fourth method.
 - `cometkiwi_qe`: reference-free COMET quality estimation with `Unbabel/wmt22-cometkiwi-da`. It uses
   source and prediction only, so it is useful when a trusted reference is unavailable or reference overlap
   would be misleading.
@@ -98,6 +103,9 @@ Implemented in code:
 | BLEURT | `bleurt` | prediction, reference, local checkpoint | Optional |
 | Term BERTScore recall | `term_bertscore_recall` | prediction, reference, manifest terminology | Full default |
 | Reference-based COMET | `comet` | source, prediction, reference | Full default |
+| Reference Assignment COMET | `reference_assignment_comet` | source, prediction, reference | Optional |
+| SentAlign-COMET | `sentalign_comet` | source, prediction, reference; SentAlign extra | Optional |
+| Legacy Reference Assignment COMET alias | `aligned_comet` | source, prediction, reference | Optional |
 | COMETKiwi QE | `cometkiwi_qe` | source, prediction | Full default |
 | XCOMET-XL | `xcomet_xl` | source, prediction, reference | Full default |
 | Target term coverage | `target_term_coverage` | prediction, reference, manifest terminology | Yes |
@@ -124,6 +132,498 @@ uv run --no-sync python scripts/evaluate_parallel_manifest.py `
 Experiment configurations use `bleurt_checkpoint = "<local-bleurt-checkpoint>"` alongside
 `metrics = ["bleurt"]`. BLEURT is intentionally excluded from the bare CLI and standard evaluation
 defaults.
+
+## Document Evaluation Overview
+
+The evaluation model and the alignment algorithm solve different problems. **COMET judges the
+quality of an already formed source/candidate/reference triple.** An aligner decides which pieces
+of a long document belong in that triple. BGE-M3 supplies alignment embeddings only; it does not
+replace COMET's own learned encoder or scoring model.
+
+Use S for source sentences, R for reference sentences, and C for candidate sentences.
+The four approaches discussed here are:
+
+| Approach | What is aligned first? | Order and grouping | Evaluation unit | Project status |
+| --- | --- | --- | --- | --- |
+| Ordinary COMET | Nothing; pass each entire record | No explicit sentence alignment | One whole-record triple | Implemented as `comet` |
+| Reference Assignment COMET | R-to-S and R-to-C independently | One-to-one; crossings allowed | One block per reference plus unmatched sentences | Custom protocol; implemented |
+| SentAlign-COMET | R-to-S and R-to-C independently | Monotonic contiguous many-to-many | Common reference-span groups plus unmatched spans | Custom protocol with official aligner; implemented |
+| SEGALE | S-to-C; use prepared S-to-R correspondence for reference metrics | Monotonic contiguous many-to-many with adaptive Vecalign selection | Source/candidate spans, with references attached through source indices | Published scheme; not implemented or benchmarked here |
+
+**Monotonic** means an alignment cannot cross: an earlier source span cannot match a later
+candidate span while a later source span matches an earlier candidate span. **Many-to-many** means
+a contiguous group on one side can match a contiguous group on the other, such as one sentence
+translated as two sentences. A **null link** has no text on one side and can represent an omission,
+addition, or alignment failure. It is not proof that the translator made that error.
+
+The three implemented methods share `Unbabel/wmt22-comet-da` in the comparison, but do not share
+the same units or weighting. For either aligned variant, if there are B total blocks, M complete
+triples with COMET scores q, and configured gap score g, the document score is:
+
+$$
+Q = \frac{\sum_{b \in M} q_b + (B - |M|)g}{B},
+\qquad \text{null ratio} = 1 - \frac{|M|}{B}.
+$$
+
+Here g defaults to zero. A block with ten sentences still has the weight of one block. These
+quantities are not percentages of translated content, and raw scores across differently grouped
+methods should not be interpreted as interchangeable quality scales.
+
+## Ordinary COMET
+
+`comet` sends a row's complete `source`, `prediction`, and `reference` strings to the official
+Unbabel scorer. The wrapper builds `src`, `mt`, and `ref` fields, calls the loaded model once for
+the row, and returns its segment score. It performs no sentence segmentation, BGE embedding,
+re-alignment, explicit omission/addition counting, or document-specific aggregation. A short
+sentence or paragraph can therefore be evaluated without an alignment stage.
+
+For the cached `Unbabel/wmt22-comet-da` checkpoint tested here, the normal encoder preparation
+retains at most **510 tokens per input, including special tokens**. The limit is per source,
+candidate, and reference, not a combined 510-token budget. Whole-record calls do not raise an
+over-budget error in our wrapper; long strings are silently truncated by model preprocessing.
+A score can consequently be high even when an unobserved ending is wrong or missing.
+
+This is why a sentence-level metric cannot simply be applied to a book-length string and be
+assumed to evaluate the entire book. The aligned variants send multiple smaller triples instead,
+checking their scoring limits before inference. They improve coverage but introduce segmentation,
+matching, gap handling, and weighting assumptions. Neither turns COMET into an explicit judge of
+cross-sentence coherence, persistent terminology consistency, or logical contradiction.
+
+Use ordinary COMET as a standard short-input baseline. Do not treat a whole-record score as a
+complete long-document assessment without first auditing what the scorer retained.
+
+## Reference Assignment COMET
+
+`reference_assignment_comet` is the explicit name of our existing custom opt-in document metric.
+`aligned_comet` remains a backwards-compatible alias; it does not select SentAlign.
+The metric segments the source, reference, and prediction,
+embeds the sentences with the public `BAAI/bge-m3` dense encoder, and pairs reference sentences
+separately with source and prediction sentences using SciPy's linear assignment solver. Assignment
+uses cosine distance and permits unmatched sentences below `minimum_similarity`. Matched triples
+are scored with `Unbabel/wmt22-comet-da`; unmatched references, translations, and source sentences
+receive the configured `null_score` (default 0). The document score is the equal-weight mean of all
+blocks, including penalties. `reference_assignment_comet_null_alignment_ratio` reports the fraction of blocks
+that could not form a complete triple, including source-reference alignment failures.
+
+This is a reference-anchored, one-to-one assignment protocol, **not an exact SEGALE reproduction**.
+It allows reordered sentence matches but does not implement SEGALE's contiguous many-to-many
+Vecalign search, adaptive skip-penalty search, or fine-tuned BGE-M3 checkpoint. Sentence merges or
+splits can therefore be misclassified as unmatched content. The default similarity threshold is a
+configurable starting point, not a calibrated translation-quality threshold. Validate segmentation
+and alignment on the target domain before comparing models. Local COMET scores are not a measure
+of document-wide coherence or terminology consistency.
+
+The default segmenter is spaCy's language-neutral rule-based sentencizer, applied within paragraphs;
+it needs no language-model downloads. Language-specific pretrained spaCy pipelines can be selected
+via `segmenter_models`, for example `{ de = "de_core_news_sm" }`, after installing those models.
+BGE-M3 is documented as supporting more than 100 languages, including the benchmark languages
+en/de/es/fr/pt/ru/zh/ja, but domain-specific alignment quality remains unverified.
+
+The [reference-assignment preset](../config/evaluation/reference_assignment_comet.toml)
+keeps the metric separate from existing defaults. The old aligned-comet preset still works.
+All model IDs, CPU/GPU settings, batch sizes, sentence limits, token limits, pooling, and null
+penalties are configurable under `[reference_assignment_comet]` (or legacy `[aligned_comet]`).
+Model weights load lazily on the first scored
+record. BGE-M3 and COMET downloads and inference require substantial memory and runtime.
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <report.jsonl> `
+  --metric reference_assignment_comet `
+  --reference-assignment-comet-config config/evaluation/reference_assignment_comet.toml
+```
+
+That script generates translations using its configured translator; its default `dry-run` copies
+the source and is only a pipeline check. Experiment TOMLs can reference the preset using
+`[evaluation] config = "config/evaluation/reference_assignment_comet.toml"` or supply
+`[evaluation.reference_assignment_comet]`
+inline. Reference-only COMET checkpoints are required. Each matched input is checked with the
+actual COMET tokenizer against both the configured token budget and the encoder's effective limit.
+Over-budget embedding or scoring inputs raise errors instead of truncating; exceptionally long
+individual sentences must be split explicitly. `max_sentences` caps assignment memory use.
+
+`metric_details.reference_assignment_comet` preserves block texts, original sentence indices, match states,
+scores, scoring token counts, languages, and effective protocol settings. These fields distinguish
+penalties caused by alignment failures from model-produced COMET scores. Existing `comet` results
+and defaults are unchanged.
+
+### Exact Matching And Scoring Procedure
+
+**Status:** this is our custom reference-anchored alignment-and-aggregation protocol. It is
+implemented and has passed synthetic stress tests, but is not a finalized, independently validated
+research metric or an exact implementation of a published document metric.
+
+The controlling implementation is [aligned_comet.py](../src/chem_machine_translation/evaluation/aligned_comet.py).
+For source sentences S, reference sentences R, and candidate sentences C:
+
+1. Segment each document within nonempty newline-delimited paragraphs. By default, use spaCy's
+  language-neutral sentencizer, not a pretrained language-specific segmentation model.
+2. Encode unique sentence strings with public `BAAI/bge-m3`, using CLS pooling by default.
+  L2-normalize vectors for cosine similarity during matching.
+3. Independently solve R-to-S and R-to-C assignments. Each sentence can participate in at most one
+  pair within each assignment. Matches may cross: original sentence order is not constrained.
+4. For similarity s and threshold t (default 0.5), a real pair costs `1 - s` when `s > t`, and 4
+  otherwise. Leaving one sentence unmatched costs `(1 - t) / 2`; dummy-to-dummy assignment costs
+  zero. SciPy's `linear_sum_assignment` minimizes total cost on this augmented matrix. It is a
+  global assignment, not independent nearest-neighbor selection or monotonic dynamic programming.
+  Similarity exactly equal to the threshold is not an allowed match.
+5. Create one block per reference sentence using its independently assigned source and candidate.
+  Then append one block for each leftover candidate and each leftover source sentence.
+6. Score complete triples with `Unbabel/wmt22-comet-da`. Check each source, reference, and candidate
+  sentence against the smaller of the configured budget and actual COMET encoder limit. The tested
+  checkpoint allows 510 tokens per input, including special tokens. Over-budget matched inputs
+  raise an error; they are not silently truncated. Embedding inputs are also budget-checked.
+7. Give incomplete blocks `null_score` (default 0) and take the equal-weight mean over all blocks.
+  Neither sentence length nor document position affects aggregation weight.
+
+| Block state | Meaning | Default score |
+| --- | --- | --- |
+| `matched` | Reference has both a source match and a candidate match | COMET score |
+| `omission` | Reference has a source match but no candidate match | 0 |
+| `source_unmatched` | Reference has no source match, even if a candidate matched | 0 |
+| `addition` | Candidate sentence was not assigned to a reference | 0 |
+| `source_only` | Source sentence was not assigned to a reference | 0 |
+
+With zero penalties, the document score is the sum of complete-triple COMET scores divided by the
+total number of blocks. The null ratio is `1 - matched_block_count / total_block_count`.
+These are block-level quantities, not a calibrated percentage of correct translation or a direct
+omission/hallucination rate. An unrelated replacement can create both an omission and an addition;
+a failed source-reference match can create both a reference penalty and a leftover-source penalty.
+
+For example, if one reference sentence becomes two candidate sentences, this matcher cannot give
+both candidates to that reference. It may score one partial sentence and mark the other as an
+addition. Conversely, two reference sentences merged into one candidate can leave one reference
+unmatched. These are structural limitations, not necessarily mistranslations. If complete
+independent statements exchange positions, crossing matches are allowed and can preserve the
+control score; that also means this protocol does not penalize harmful reordering by itself.
+
+### Synthetic Long-Prefix Benchmark
+
+**Question tested:** does evaluating aligned sentences expose corrupted endings that whole-record
+COMET largely misses because of its input limit?
+
+The [benchmark runner](../scripts/test_aligned_comet_long_prefix.py) uses manually authored,
+repeated synthetic sentences, not sampled patent/legal benchmark records or generated translations.
+Each fixture keeps the same long correct prefix and has one of three candidate endings: correct
+(`control`, candidate equals reference), unrelated content, or contradictory content. Corruptions
+begin near the end of COMET's retained input window; they are not necessarily entirely outside it.
+
+- 30 cases total: six original English-to-German cases at two prefix lengths, plus 24 multilingual
+  cases covering eight directions and three conditions each.
+- Directions: de-to-en, en-to-de, en-to-es, en-to-fr, en-to-pt, en-to-ru, en-to-zh, en-to-ja.
+  This is not all-pairs coverage of those languages.
+- Original shared prefixes contain 454 or 490 content tokens. Multilingual shared prefixes contain
+  477-496 content tokens. References exceed 900 tokens; multilingual references exceed 1,000.
+- Both methods use the same COMET checkpoint. Ordinary COMET receives whole records through its
+  normal truncating encoder; our method receives token-checked complete sentence triples and zero
+  penalties for incomplete blocks. This comparison therefore changes alignment and aggregation,
+  not only truncation handling.
+- The run uses CPU inference, four PyTorch threads, seed 42, batch size 8, BGE-M3 CLS pooling,
+  similarity threshold 0.5, and zero null scores. Sentence embeddings and identical COMET triples
+  are cached across cases. No LLM judge is used.
+
+Results from the [2026-11-15 rerun](../reports/aligned_comet_long_prefix/bge_multilingual_results_rerun_20261115.json),
+averaged equally across all cases in each condition (including the six original German cases):
+
+| Candidate condition | Cases | Ordinary COMET mean | Reference Assignment COMET mean |
+| --- | --- | --- | --- |
+| Correct control | 10 | 0.9607 | 0.9695 |
+| Unrelated ending | 10 | 0.9449 | 0.3360 |
+| Contradictory ending | 10 | 0.9495 | 0.9047 |
+
+All 30 cases completed with finite scores; all ten controls had zero incomplete blocks. Every
+corrupted case scored below its corresponding control under our method. Inputs, configuration,
+scores, null ratios, and drops from controls exactly reproduced the
+[previous BGE-M3 run](../reports/aligned_comet_long_prefix/bge_multilingual_results.json).
+All scored aligned inputs stayed within 510 tokens. Reports retain full texts, original indices,
+block states and scores, token counts, first differing token positions, retained-token equality,
+model/cache paths, and configuration. The earlier
+[six-case MiniLM experiment](../reports/aligned_comet_long_prefix/results.json) is separate and does
+not define the current embedding configuration.
+
+**Interpretation:** the protocol strongly penalized these unrelated endings, while ordinary COMET
+remained high. Contradictions still scored highly (aligned mean 0.9047), so this is not reliable
+contradiction detection. The controls' different absolute scores do not establish better calibration.
+Repeated fixtures, reference-identical controls, and a small designed case set cannot establish
+human-judgment correlation, real-domain accuracy, statistical significance, or superior model rankings.
+
+### Reproducing The Checks
+
+Run from the repository root in the prepared environment. Real inference requires cached BGE-M3
+and COMET weights and sufficient memory; the runner defaults to offline operation and does not
+download missing models. Use a new output name because the runner writes the report incrementally
+and will overwrite a file at the supplied path.
+
+```powershell
+uv run --no-sync python scripts/test_aligned_comet_long_prefix.py --list-cases
+uv run --no-sync python scripts/test_aligned_comet_long_prefix.py --output reports/aligned_comet_long_prefix/new_run.json
+uv run --no-sync pytest tests/test_aligned_comet.py tests/test_metrics.py tests/test_experiment_pipeline.py tests/test_evaluate_parallel_manifest.py -q
+```
+
+`--list-cases` checks only the 24 multilingual fixtures and requires a cached XLM-R tokenizer;
+it does not run inference. The pytest command checks implementation and integration behavior with
+test doubles; it is not the real-model benchmark. The earlier implementation validation recorded
+68 passing tests. That test count is historical, not a fresh pytest run accompanying this document.
+
+### Limitations And Related Work
+
+One-to-one matching cannot represent sentence splits or merges. Unrestricted matching does not
+penalize reordering. Independent reference-to-source and reference-to-candidate assignments do not
+optimize triple quality jointly. Segmentation errors, threshold choice, cross-lingual embedding
+errors, and source-reference mismatches can produce penalties unrelated to candidate quality.
+Document-wide coherence and terminology consistency are not explicitly evaluated.
+
+[SEGALE (2025)](https://aclanthology.org/2025.emnlp-main.1645/) is related work for alignment followed
+by document evaluation, but its source-candidate monotonic, contiguous many-to-many alignment and
+adaptive selection are fundamentally different from ours. It does not validate our matching rule.
+[COMET (2020)](https://aclanthology.org/2020.emnlp-main.213/) and
+[BGE-M3 (2024)](https://arxiv.org/abs/2402.03216) are component references, not validation of the
+combined protocol. No exact published counterpart for our complete procedure has been verified;
+this is not a claim of novelty. Real-domain alignment inspection, held-out threshold calibration,
+human judgments, and real-domain comparisons remain outstanding. The SentAlign component comparison
+below does not resolve those validation requirements.
+
+## SentAlign-COMET
+
+`sentalign_comet` is an opt-in variant of the same reference-anchored evaluation protocol, using the
+official [SentAlign](https://github.com/steinst/SentAlign) Python package pinned to **2.0.0** instead
+of our linear-assignment matcher. SentAlign provides contiguous, monotonic many-to-many sentence
+alignment, including gaps. This is a custom composition of SentAlign and COMET, not a published
+upstream metric or an exact reproduction of [SentAlign's 2023 paper](https://aclanthology.org/2023.emnlp-demo.22/).
+
+At the user's request, both current aligners use public **BGE-M3 with CLS pooling**, CPU full
+precision, batch size 8, and an 8,192-token embedding budget. SentAlign explicitly supports BGE-M3;
+its original LaBSE/pooler/512-token configuration is not being used here. SentAlign's corrected
+version-2 behavior is selected with `compat="none"`, one worker, the default `sentalign-dp` pathfinder,
+up to four concatenated sentences per side, and cutoff 0.4. Our assignment matcher retains threshold
+0.5. These cutoffs have different algorithmic roles; neither has been calibrated for this domain.
+SentAlign's upstream documentation warns that encoder changes require cutoff tuning.
+
+### Triple Construction And Safety
+
+1. Use the same paragraph-aware segmenter and align reference-to-source and reference-to-candidate
+  separately through official `SentAlign.align`. Retain null links, not only matched pairs.
+2. Reject duplicate, missing, out-of-range, noncontiguous, or empty sentence-index links.
+3. Where the two alignments group reference sentences differently, form the common coarsening:
+  reference spans connected through either alignment become one block. Join each side's sentences
+  in original index order. Every sentence contributes to exactly one block, including null blocks.
+4. Append standalone candidate gaps as additions and standalone source gaps as source-only blocks.
+  A reference group with no source is source-unmatched; one with a source but no candidate is an
+  omission. If a larger group still contains some text on every side, COMET scores the complete
+  grouped texts, even when a subset of reference indices had a null link on one side. The audit
+  records those partial nulls explicitly; they do not receive a separate zero penalty.
+5. Reuse the same reference-based COMET checkpoint, 510-token checks on **every complete grouped
+  input before scoring**, zero scores for incomplete blocks, and equal-block averaging.
+
+COMET inputs are never silently truncated. Connected reference groups can grow beyond four
+sentences even though each pairwise link is capped at four; an oversized scoring group raises an
+error rather than being silently split or truncated. Unlike our custom embedding wrapper, upstream
+SentAlign may truncate embedding inputs at its configured budget. This limitation is recorded in
+the audit and is distinct from COMET scoring safety.
+
+`metric_details.sentalign_comet` includes grouped texts, plural sentence-index lists, partial-null
+indices, COMET token counts/scores, raw pairwise links and similarity scores, anchors/timing info,
+package version, full backend settings, and model/cache paths. The null ratio is the fraction of
+incomplete **groups**, not sentences. Different group sizes change weighting and penalty counts;
+the two aligned scores are not automatically calibrated to the same scale.
+
+### How SentAlign Chooses Links
+
+Official SentAlign computes embeddings for candidate sentence spans, including concatenations,
+and uses its dynamic-programming pathfinder to select an ordered alignment. Span similarity,
+concatenation/length penalties, and the configured cutoff influence whether the path matches a
+span or skips text. This is not a linear assignment over individual sentence vectors, and the
+cutoff is not a COMET quality threshold. We use the upstream algorithm rather than recreating
+its path search in this repository.
+
+For a split R1-to-(C1,C2), the adapter can concatenate C1 and C2 into one candidate input and
+score it against R1 and its source. For a merge (R1,R2)-to-C1, it can concatenate the associated
+source and reference sentences before scoring C1. No missing-content penalty is needed when
+the full content is present in a different sentence structure.
+
+The independent alignments can disagree about reference grouping. If R-to-S groups (R1,R2) and
+R-to-C groups (R2,R3), our adapter must group (R1,R2,R3) together to avoid counting R2 twice.
+This reference-span closure is **our adapter policy**, not an upstream SentAlign evaluation rule.
+It can alter block weights, absorb a partial gap into a scored group, and enlarge scoring inputs.
+Those effects are why the saved raw links and grouped triples are both needed for inspection.
+
+### Three-Way BGE-M3 Comparison
+
+The [comparison report](../reports/aligned_comet_long_prefix/three_metric_bge_comparison_20261115.json)
+contains all texts and audits for **37 cases**: the preserved 30 multilingual long-prefix fixtures,
+plus seven short English-to-German structural cases. All three methods completed all 37 cases;
+the two prior methods reproduced the preserved 30-case scores exactly. Every SentAlign sentence
+index was used once and all scored COMET inputs stayed within 510 tokens.
+
+Long-prefix means, ten cases per condition:
+
+| Condition | Ordinary COMET | Reference Assignment COMET | SentAlign-COMET |
+| --- | --- | --- | --- |
+| Correct control | 0.9607 | 0.9695 | 0.9695 |
+| Unrelated ending | 0.9449 | 0.3360 | 0.4673 |
+| Contradictory ending | 0.9495 | 0.9047 | 0.9047 |
+
+Short structural diagnostics, one manually authored case per condition:
+
+| Condition | Ordinary COMET | Reference Assignment COMET | SentAlign-COMET |
+| --- | --- | --- | --- |
+| Correct control | 0.9305 | 0.9621 | 0.9621 |
+| Harmless sentence split | 0.9305 | 0.6663 | 0.9621 |
+| Harmless sentence merge | 0.9175 | 0.5802 | 0.9445 |
+| Omission | 0.8527 | 0.6448 | 0.6448 |
+| Unrelated addition | 0.8360 | 0.7216 | 0.7216 |
+| Duplicated sentence | 0.8433 | 0.7216 | 0.7216 |
+| Reordered independent statements | 0.9113 | 0.9621 | 0.4836 |
+
+**Recommendation:** prefer SentAlign-COMET for order-preserving translations with differing sentence
+boundaries. Its split and merge links were correct here, avoiding the custom matcher's false
+penalties. Keep reference-assignment COMET when sentence reordering should be tolerated: SentAlign's
+monotonic alignment turned the reordered case into one omission and one addition. Ordinary COMET
+remains a useful short-input baseline, but is unsuitable as the sole evaluator of these long records.
+Both aligned variants detect unrelated endings more strongly than ordinary COMET; both still score
+contradictions highly. The different unrelated-ending scores cannot alone rank alignment quality,
+because their group and penalty counts differ.
+
+This is a small synthetic diagnostic comparison, not human-correlated validation, significance
+testing, or evidence of universally better translation-model rankings. Structural cases cover only
+one direction. Domain segmentation checks, human alignment review, and held-out tuning are still
+required before using either custom composite for research claims.
+
+### Configuration And Reproduction
+
+The [SentAlign preset](../config/evaluation/sentalign_comet.toml) uses `[sentalign_comet]`;
+experiment configurations can supply `[evaluation.sentalign_comet]` inline. All new metrics remain
+excluded from defaults. Install the optional component without replacing existing language wheels:
+
+```powershell
+uv pip install --python .venv/Scripts/python.exe "sentalign==2.0.0"
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <report.jsonl> `
+  --metric comet --metric reference_assignment_comet --metric sentalign_comet `
+  --reference-assignment-comet-config config/evaluation/reference_assignment_comet.toml `
+  --sentalign-comet-config config/evaluation/sentalign_comet.toml
+uv run --no-sync python scripts/test_aligned_comet_long_prefix.py --compare-three --list-cases
+uv run --no-sync python scripts/test_aligned_comet_long_prefix.py --compare-three --output reports/aligned_comet_long_prefix/three_metric_bge_comparison_rerun.json
+```
+
+The real comparison runner requires cached BGE-M3 and COMET weights and sufficient memory.
+Comparison mode refuses an existing output path to preserve reports. The list-only command checks
+24 multilingual and seven structural fixtures without inference; the six original German fixtures
+are added by the full run. The manifest evaluator generates translations rather than rescoring
+historical outputs, and its default dry-run is only a wiring check.
+
+## SEGALE
+
+**SEGALE is a published document-evaluation scheme, not a new COMET checkpoint or a synonym for
+sentence alignment.** Wang et al., *Extending Automatic Machine Translation Evaluation to
+Book-Length Documents* (EMNLP 2025), combine segmentation, semantic alignment, explicit handling
+of unmatched content, and existing sentence-level metrics. See the
+[paper](https://aclanthology.org/2025.emnlp-main.1645/),
+[official repository](https://github.com/NVlabs/SEGALE),
+[alignment implementation](https://github.com/NVlabs/SEGALE/blob/main/segale_align.py), and
+[evaluation implementation](https://github.com/NVlabs/SEGALE/blob/main/segale_eval.py).
+The description below distinguishes the conceptual method from the released code inspected on
+2026-11-15; upstream `main` can change.
+
+### Segmentation And Source-Candidate Alignment
+
+1. Prepare source segments. For reference-based scoring, prepare reference segments corresponding
+  to those source segments, using supplied boundaries or a separate source-reference alignment
+  stage. The released tools can use spaCy or Ersatz for segmentation.
+2. Treat the candidate document as continuous text and segment it, without assuming its boundaries
+  correspond one-to-one with the source or reference.
+3. Embed source and candidate spans, including contiguous concatenations. Run **Vecalign**, an
+  embedding-based monotonic many-to-many aligner, between **source and candidate**, not between
+  reference and candidate. It can match one-to-many or many-to-one spans and leave either side
+  unmatched. A reference is not needed for this core alignment or for reference-free scoring;
+  the released reference-based CLI nevertheless accepts a reference file for preparation and
+  attachment.
+4. Select the alignment through an adaptive search over Vecalign's skip/deletion setting rather
+  than applying our fixed cosine-threshold one-to-one assignment.
+
+The crucial distinction is the **anchor**. SEGALE chooses a source-candidate path first. Our two
+aligned variants independently match each document to the reference, then build triples. Reusing
+COMET and BGE-M3 does not make these fundamentally different optimization problems equivalent.
+
+### Adaptive Penalty Search
+
+Skipping a sentence too cheaply can misclassify legitimate translations as gaps. Making skips too
+expensive can force unrelated or omitted content into bad matches. SEGALE explores different
+Vecalign deletion-penalty settings to balance these cases.
+
+In the inspected release, `run_vecalign_explore` runs deletion-percentile fractions starting at
+0.2 and decreasing by 0.005 while greater than 0.01. This parameter controls Vecalign's deletion
+cost estimation; it is **not** a cosine-similarity threshold or the final metric gap score.
+The code records mean nonzero alignment cost and the zero-cost-link ratio for each candidate
+path. `find_best_alignment` then selects a low-cost path while stopping consideration when its
+heuristic checks indicate a sharp increase in zero-cost links, worsening mean cost, an unusually
+low cost, or excessive zero-cost links. Some thresholds come from a prepared source-reference
+alignment summary, with fallback values when that summary is absent.
+
+This is heuristic alignment selection, not optimization of COMET scores and not calibration
+against human quality labels for each translation. A path's zero-cost ratio is an alignment
+diagnostic, not a calibrated omission or hallucination probability. Exact reproduction requires
+the same encoder, segmentation, Vecalign revision, span limits, preparation parameters, and
+selection settings as the intended experiment.
+
+### Reference Attachment And Scoring
+
+For a selected source span with indices I and candidate span with indices J, the released
+`prepare_doc_windows` builds:
+
+```text
+source input    = concatenate source segments indexed by I
+reference input = concatenate prepared reference segments indexed by I
+candidate input = concatenate candidate sentences indexed by J
+```
+
+Thus a reference is attached **through the source indices**, not by independently finding its best
+candidate match. An empty I yields a candidate-only addition; an empty J yields a source/reference
+span with no candidate. Reference-free metrics need only the source/candidate pair.
+
+The released evaluator supports COMET, COMETKiwi, MetricX, and reference-free MetricX. For its
+COMET branch, complete source/reference/candidate windows are scored normally; candidate-only
+additions and source/reference-only omissions receive zero. Other invalid reference configurations
+are marked with a negative sentinel. Document aggregation averages scores retained as nonnegative,
+including zero penalties. This differs from our implementation, which rejects invalid model scores
+and includes every constructed block's configured penalty rather than using that filtering rule.
+Our scorer retains all finite COMET outputs, including negative values; the inspected release's
+nonnegative filter would also omit any genuine negative COMET predictions.
+MetricX uses a different scale and a worst-score penalty of 25, so SEGALE is not universally a
+"zero-penalty COMET metric."
+
+Segmenting and aligning removes the need to pass an entire book to one sentence-level scoring
+call. It does **not** guarantee that every resulting span fits the scoring model's token window.
+The inspected release's transformer embedding branch truncates overlap inputs at 512 tokens,
+and its COMET branch calls the normal scorer without our explicit pre-inference 510-token guard.
+Do not attribute our no-silent-COMET-truncation guarantee to upstream SEGALE.
+
+### Encoder And Reproduction Caveats
+
+The paper's fine-tuned BGE-M3 setting should not be conflated with the public `BAAI/bge-m3`
+checkpoint used here. The inspected alignment CLI defaults to LASER when no `--embedding_model`
+is supplied; an alternative transformer must be selected explicitly. Its transformer code uses
+pooler output when available, otherwise CLS, and a 512-token embedding limit. Our BGE-M3/CLS/
+8,192-token settings are therefore not automatically the paper's or the released CLI's settings.
+The availability and exact identity of the paper's fine-tuned checkpoint have not been verified
+in this project.
+
+The repository recommends its Docker environment for close reproduction and includes Vecalign
+as a submodule. Its example evaluator also requests GPU execution. Installing SentAlign on
+Windows and changing our registry name is not an implementation or reproduction of that setup.
+
+### What Our Comparison Establishes
+
+**SEGALE was not run in the 37-case comparison.** It is explained here as a separate published
+method, not included as a fourth result column. SentAlign-COMET is not SEGALE with a renamed
+aligner: both the anchor and adaptive path selection differ, and our reference-span closure and
+token guards add project-specific policies.
+
+Our diagnostics support using many-to-many alignment when boundaries vary and caution against
+using whole-record COMET for long inputs. They do not establish that SentAlign beats SEGALE,
+reproduce SEGALE's reported results, or validate either of our custom composites against human
+judgments. A faithful SEGALE baseline would require a separate, explicitly configured integration
+and experiment, not re-labelling the existing scores.
 
 ## COMETKiwi And XCOMET-XL
 

@@ -1,3 +1,10 @@
+from chem_machine_translation.evaluation.aligned_comet import (
+    AlignedCometConfig,
+    AlignedCometResult,
+    AlignedCometScorer,
+    SentAlignCometConfig,
+    SentAlignCometScorer,
+)
 from chem_machine_translation.evaluation.comparison import (
     REPORT_COLUMNS,
     timestamped_report_path,
@@ -34,6 +41,11 @@ from chem_machine_translation.evaluation.metrics import (
 )
 
 __all__ = [
+    "AlignedCometConfig",
+    "AlignedCometResult",
+    "AlignedCometScorer",
+    "SentAlignCometConfig",
+    "SentAlignCometScorer",
     "BERTSCORE_DEFAULT_MODEL",
     "BertScoreResult",
     "BleurtScorer",

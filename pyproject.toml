@@ -18,11 +18,13 @@ dependencies = [
   "datasets>=2.20.0",
   "huggingface-hub>=0.25.0",
   "matplotlib>=3.10.9",
+  "numpy>=1.23.5",
   "openai>=1.40.0",
   "pydantic>=2.8.0",
   "python-dotenv>=1.0.1",
   "rich>=13.7.1",
   "sacrebleu>=2.4.0",
+  "scipy>=1.10.0",
   "setuptools>=70.0.0,<81.0.0",
   "spacy>=3.8.15",
   "stanza>=1.14.0",
@@ -33,6 +35,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+sentalign = [
+  "sentalign==2.0.0",
+]
 bleurt = [
   "bleurt @ git+https://github.com/google-research/bleurt.git",
 ]

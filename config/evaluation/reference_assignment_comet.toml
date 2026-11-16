@@ -1,0 +1,17 @@
+name = "reference_assignment_comet_eval"
+metrics = ["reference_assignment_comet"]
+
+[reference_assignment_comet]
+embedding_model = "BAAI/bge-m3"
+embedding_device = "cpu"
+embedding_batch_size = 8
+embedding_max_tokens = 8192
+embedding_pooling = "cls"
+comet_model = "Unbabel/wmt22-comet-da"
+comet_batch_size = 8
+comet_gpus = 0
+minimum_similarity = 0.5
+null_score = 0.0
+max_comet_tokens = 510
+max_sentences = 1000
+segmenter_models = {}

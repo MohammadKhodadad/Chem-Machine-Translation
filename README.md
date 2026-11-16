@@ -40,6 +40,23 @@ Experiment configs compose the existing step configs:
 - run artifacts: `runs/<experiment>/predictions`, `runs/<experiment>/scores`, `summary.json`, and
   `summary.md`
 
+## Evaluation Methods
+
+The [evaluation metrics guide](docs/evaluation-metrics.md) explains all supported metrics,
+configuration, token limits, alignment rules, and the synthetic three-way comparison:
+
+- `comet`: standard whole-record scoring. Long records can be silently truncated by the model.
+- `reference_assignment_comet`: our reference-anchored one-to-one matcher; permits reordering but
+  cannot represent sentence splits or merges. `aligned_comet` remains its legacy alias.
+- `sentalign_comet`: official SentAlign 2.0.0 many-to-many matching in our reference-anchored COMET
+  protocol; handles boundary changes but constrains sentence order. Both aligners use BGE-M3/CLS.
+
+The aligned variants are opt-in and check complete COMET scoring inputs before inference.
+They are custom evaluation protocols, not independently validated replacements for standard metrics.
+The guide also explains [SEGALE](docs/evaluation-metrics.md#segale), a separate published scheme
+using source-to-candidate Vecalign with adaptive penalty selection. SEGALE was not run in our
+comparison and neither implemented variant is an exact reproduction of it.
+
 ## Standard Terminology Pipeline
 
 The standard benchmark terminology setup is target-side and has three stages.

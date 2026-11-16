@@ -1,0 +1,6 @@
+[submodule "third_party/SEGALE"]
+	path = third_party/SEGALE
+	url = https://github.com/NVlabs/SEGALE.git
+[submodule "third_party/ersatz"]
+	path = third_party/ersatz
+	url = https://github.com/rewicks/ersatz.git

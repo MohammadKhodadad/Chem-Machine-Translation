@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from typing import Any, Protocol
 
@@ -22,6 +22,9 @@ GENERAL_METRIC_NAMES = (
     "bleurt",
     "term_bertscore_recall",
     "comet",
+    "reference_assignment_comet",
+    "sentalign_comet",
+    "aligned_comet",
     "cometkiwi_qe",
     "xcomet_xl",
     "terminology_success_rate",
@@ -30,7 +33,11 @@ GENERAL_METRIC_NAMES = (
     "variant_aware_target_term_coverage",
     "fsp_mqm",
 )
-DEFAULT_METRIC_NAMES = tuple(metric for metric in GENERAL_METRIC_NAMES if metric != "bleurt")
+DEFAULT_METRIC_NAMES = tuple(
+    metric
+    for metric in GENERAL_METRIC_NAMES
+    if metric not in {"bleurt", "aligned_comet", "reference_assignment_comet", "sentalign_comet"}
+)
 TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified", "refined")
 DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
 COMET_DEFAULT_MODEL = "Unbabel/wmt22-comet-da"
@@ -385,6 +392,10 @@ def compute_translation_metrics(
     terminology_term_groups: list[str] | tuple[str, ...] | None = DEFAULT_TERMINOLOGY_TERM_GROUPS,
     mqm_judge: MqmJudge | None = None,
     metric_details: dict[str, Any] | None = None,
+    aligned_comet_scorer: Any | None = None,
+    source_language: str = "xx",
+    target_language: str = "xx",
+    sentalign_comet_scorer: Any | None = None,
 ) -> dict[str, float]:
     selected_metrics = parse_metric_names(metric_names)
     metrics: dict[str, float] = {}
@@ -446,6 +457,30 @@ def compute_translation_metrics(
             prediction=prediction,
             reference=reference,
         )
+
+    for metric_name in ("reference_assignment_comet", "aligned_comet", "sentalign_comet"):
+        if metric_name not in selected_metrics:
+            continue
+        if source is None:
+            raise ValueError("Aligned COMET metric requires source text.")
+        from chem_machine_translation.evaluation.aligned_comet import (
+            AlignedCometScorer,
+            SentAlignCometScorer,
+        )
+
+        scorer = (
+            sentalign_comet_scorer or SentAlignCometScorer()
+            if metric_name == "sentalign_comet"
+            else aligned_comet_scorer or AlignedCometScorer()
+        )
+        result = scorer.score_document(
+            source=source, prediction=prediction, reference=reference,
+            source_language=source_language, target_language=target_language,
+        )
+        metrics[metric_name] = result.score
+        metrics[f"{metric_name}_null_alignment_ratio"] = result.null_alignment_ratio
+        if metric_details is not None:
+            metric_details[metric_name] = asdict(result)
 
     if "cometkiwi_qe" in selected_metrics:
         if source is None:

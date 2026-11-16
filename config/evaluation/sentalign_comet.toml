@@ -1,0 +1,18 @@
+name = "sentalign_comet_eval"
+metrics = ["sentalign_comet"]
+
+[sentalign_comet]
+alignment_model = "BAAI/bge-m3"
+alignment_pooling = "cls"
+alignment_device = "cpu"
+alignment_batch_size = 8
+alignment_max_tokens = 8192
+max_concatenations = 4
+score_cutoff = 0.4
+comet_model = "Unbabel/wmt22-comet-da"
+comet_batch_size = 8
+comet_gpus = 0
+null_score = 0.0
+max_comet_tokens = 510
+max_sentences = 1000
+segmenter_models = {}

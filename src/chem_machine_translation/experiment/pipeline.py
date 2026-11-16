@@ -17,6 +17,10 @@ from chem_machine_translation.benchmark.pipeline import (
 )
 from chem_machine_translation.config import Settings, load_settings
 from chem_machine_translation.core.schemas import Document
+from chem_machine_translation.evaluation.aligned_comet import (
+    AlignedCometScorer,
+    SentAlignCometScorer,
+)
 from chem_machine_translation.evaluation.metrics import (
     HuggingFaceBertScoreScorer,
     OfficialBleurtScorer,
@@ -315,6 +319,15 @@ def write_scores(
         if "comet" in evaluation.metrics
         else None
     )
+    aligned_comet_scorer = (
+        AlignedCometScorer(config=evaluation.aligned_comet)
+        if {"aligned_comet", "reference_assignment_comet"}.intersection(evaluation.metrics)
+        else None
+    )
+    sentalign_comet_scorer = (
+        SentAlignCometScorer(config=evaluation.sentalign_comet)
+        if "sentalign_comet" in evaluation.metrics else None
+    )
     cometkiwi_scorer = (
         UnbabelCometScorer(
             model_name=evaluation.cometkiwi_model,
@@ -360,6 +373,8 @@ def write_scores(
                 cometkiwi_scorer=cometkiwi_scorer,
                 xcomet_scorer=xcomet_scorer,
                 mqm_judge=mqm_judge,
+                aligned_comet_scorer=aligned_comet_scorer,
+                sentalign_comet_scorer=sentalign_comet_scorer,
             )
             score_rows.append(score_row)
             handle.write(json.dumps(score_row, ensure_ascii=False) + "\n")
@@ -376,6 +391,8 @@ def score_prediction_row(
     cometkiwi_scorer: Any | None,
     xcomet_scorer: Any | None,
     mqm_judge: Any | None,
+    aligned_comet_scorer: Any | None = None,
+    sentalign_comet_scorer: Any | None = None,
 ) -> dict[str, Any]:
     if prediction_row.get("error"):
         return {**prediction_row, "metrics": {}, "evaluation_error": "prediction_error"}
@@ -403,6 +420,10 @@ def score_prediction_row(
             terminology_term_groups=evaluation.terminology_groups,
             mqm_judge=mqm_judge,
             metric_details=metric_details,
+            aligned_comet_scorer=aligned_comet_scorer,
+            sentalign_comet_scorer=sentalign_comet_scorer,
+            source_language=str(prediction_row.get("source_language") or "xx"),
+            target_language=str(prediction_row.get("target_language") or "xx"),
         )
         terminology = prediction_row.get("metadata", {}).get("terminology") or []
         for metric_set in evaluation.terminology_metric_sets:

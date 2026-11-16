@@ -8,6 +8,12 @@ from pathlib import Path
 
 from chem_machine_translation.config import DEFAULT_MODEL, load_settings
 from chem_machine_translation.core.schemas import Document
+from chem_machine_translation.evaluation.aligned_comet import (
+    AlignedCometConfig,
+    AlignedCometScorer,
+    SentAlignCometConfig,
+    SentAlignCometScorer,
+)
 from chem_machine_translation.evaluation.metrics import (
     BERTSCORE_DEFAULT_MODEL,
     COMET_DEFAULT_MODEL,
@@ -24,6 +30,10 @@ from chem_machine_translation.evaluation.metrics import (
     compute_corpus_overlap_metrics,
     compute_translation_metrics,
     parse_metric_names,
+)
+from chem_machine_translation.experiment.config import (
+    evaluation_config_from_mapping,
+    load_mapping_from_file,
 )
 from chem_machine_translation.translation.terminology import ManifestTerminologyLayer
 from chem_machine_translation.translation.translators import build_translator
@@ -82,6 +92,14 @@ def parse_args() -> argparse.Namespace:
         help="Metric to compute. Repeat to select multiple metrics.",
     )
     parser.add_argument("--comet-model", default=COMET_DEFAULT_MODEL)
+    parser.add_argument(
+        "--aligned-comet-config", "--reference-assignment-comet-config", type=Path, default=None,
+        help="Evaluation TOML with a [reference_assignment_comet] or legacy [aligned_comet] table.",
+    )
+    parser.add_argument(
+        "--sentalign-comet-config", type=Path, default=None,
+        help="Evaluation TOML with a [sentalign_comet] table.",
+    )
     parser.add_argument("--bertscore-model", default=BERTSCORE_DEFAULT_MODEL)
     parser.add_argument("--bertscore-batch-size", type=int, default=8)
     parser.add_argument("--bertscore-device", default=None)
@@ -129,6 +147,34 @@ def main() -> None:
         if "comet" in metric_names
         else None
     )
+    aligned_comet_scorer = None
+    if {"aligned_comet", "reference_assignment_comet"}.intersection(metric_names):
+        aligned_config = (
+            evaluation_config_from_mapping(
+                load_mapping_from_file(args.aligned_comet_config),
+                base_dir=args.aligned_comet_config.parent,
+            ).aligned_comet
+            if args.aligned_comet_config is not None
+            else AlignedCometConfig(
+                comet_model=args.comet_model, comet_batch_size=args.comet_batch_size,
+                comet_gpus=args.comet_gpus,
+            )
+        )
+        aligned_comet_scorer = AlignedCometScorer(config=aligned_config)
+    sentalign_comet_scorer = None
+    if "sentalign_comet" in metric_names:
+        sentalign_config = (
+            evaluation_config_from_mapping(
+                load_mapping_from_file(args.sentalign_comet_config),
+                base_dir=args.sentalign_comet_config.parent,
+            ).sentalign_comet
+            if args.sentalign_comet_config is not None
+            else SentAlignCometConfig(
+                comet_model=args.comet_model, comet_batch_size=args.comet_batch_size,
+                comet_gpus=args.comet_gpus,
+            )
+        )
+        sentalign_comet_scorer = SentAlignCometScorer(config=sentalign_config)
     bertscore_scorer = (
         HuggingFaceBertScoreScorer(
             model_name=args.bertscore_model,
@@ -221,6 +267,10 @@ def main() -> None:
                 terminology_term_groups=args.terminology_term_group,
                 mqm_judge=mqm_judge,
                 metric_details=metric_details,
+                aligned_comet_scorer=aligned_comet_scorer,
+                sentalign_comet_scorer=sentalign_comet_scorer,
+                source_language=str(manifest_row.get("source_language") or "xx"),
+                target_language=str(manifest_row.get("target_language") or "xx"),
             )
             output_row = {
                 "dataset": document.dataset,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +10,10 @@ except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback when in
     import tomli as tomllib  # type: ignore[no-redef]
 
 from chem_machine_translation.config import DEFAULT_MODEL
+from chem_machine_translation.evaluation.aligned_comet import (
+    AlignedCometConfig,
+    SentAlignCometConfig,
+)
 from chem_machine_translation.evaluation.metrics import (
     BERTSCORE_DEFAULT_MODEL,
     COMET_DEFAULT_MODEL,
@@ -76,6 +80,8 @@ class EvaluationRunConfig:
     comet_gpus: int = 0
     fsp_mqm_model: str = MQM_DEFAULT_MODEL
     fsp_mqm_timeout: float = 120.0
+    aligned_comet: AlignedCometConfig = field(default_factory=AlignedCometConfig)
+    sentalign_comet: SentAlignCometConfig = field(default_factory=SentAlignCometConfig)
 
 
 @dataclass(frozen=True)
@@ -202,6 +208,10 @@ def evaluation_config_from_mapping(
         comet_gpus=int(payload.get("comet_gpus") or 0),
         fsp_mqm_model=str(payload.get("fsp_mqm_model") or MQM_DEFAULT_MODEL),
         fsp_mqm_timeout=float(payload.get("fsp_mqm_timeout") or 120.0),
+        aligned_comet=AlignedCometConfig(**dict(
+            payload.get("reference_assignment_comet") or payload.get("aligned_comet") or {}
+        )),
+        sentalign_comet=SentAlignCometConfig(**dict(payload.get("sentalign_comet") or {})),
     )
 
 

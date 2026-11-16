@@ -40,3 +40,27 @@ def test_resolve_translation_domain_infers_chemistry_source() -> None:
         )
         == "chemistry"
     )
+
+
+def test_aligned_comet_cli_accepts_configuration(monkeypatch) -> None:
+    monkeypatch.setattr(sys, "argv", [
+        "evaluate_parallel_manifest", "--dataset-dir", "unused", "--output", "unused.jsonl",
+        "--metric", "aligned_comet", "--aligned-comet-config", "custom.toml",
+    ])
+    args = evaluator.parse_args()
+    assert args.metric == ["aligned_comet"]
+    assert args.aligned_comet_config == Path("custom.toml")
+
+
+@pytest.mark.parametrize("metric_name", ["reference_assignment_comet", "sentalign_comet"])
+def test_named_document_metrics_accept_configuration(monkeypatch, metric_name):
+    monkeypatch.setattr(sys, "argv", [
+        "evaluate_parallel_manifest", "--dataset-dir", "unused", "--output", "unused.jsonl",
+        "--metric", metric_name, f"--{metric_name.replace('_', '-')}-config", "custom.toml",
+    ])
+    args = evaluator.parse_args()
+    assert args.metric == [metric_name]
+    attribute = "aligned_comet_config" if metric_name == "reference_assignment_comet" else (
+        "sentalign_comet_config"
+    )
+    assert getattr(args, attribute) == Path("custom.toml")
