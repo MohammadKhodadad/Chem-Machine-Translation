@@ -741,6 +741,169 @@ These regression checks verify actual record preservation, all eight candidate c
 dataset/direction coverage, and failure accounting; they do not assert that every quality ordering
 must pass or rerun large neural models during ordinary pytest execution.
 
+## Full-Benchmark Input Coverage Audit
+
+**The current segmentation does not guarantee that all benchmark texts fit COMET.** On
+2026-11-17, the [coverage audit](../scripts/audit_comet_input_coverage.py) scanned every manifest
+record in the same three built datasets, **without the nine-case experiment's eligibility
+filters**. It checked 20,397 source/reference pairs across 53 dataset/directions and 23,724
+distinct `(language, exact text)` inputs. See the
+[complete audit](../reports/comet_input_coverage/full_benchmark_20261117.json) and
+[runtime probes](../reports/comet_input_coverage/runtime_probes_20261117.json).
+
+### Scope And Verified Limits
+
+The audit uses the actual `SpacySentenceSegmenter({})`: a blank multilingual spaCy pipeline plus
+sentencizer, applied independently to each nonempty line. It uses cached XLM-R-large and BGE-M3
+tokenizers, with special tokens included and truncation disabled. Every source and reference in
+all current manifests is included, not just English-source records:
+
+- Google Patents: 10,397 pairs, 13 directions, German, English, Spanish, French, Japanese,
+  Russian, and Chinese.
+- JRC articles: 5,000 pairs, all 20 directed pairs among German, English, Spanish, French,
+  and Portuguese.
+- JRC definitions: 5,000 pairs, the same 20 directions and five languages.
+
+These are paired rows, not independent documents: texts can recur across directions and both JRC
+datasets. Unique inputs are cached by language and SHA-256, while pair counts retain every manifest
+row. The JSON includes every row's IDs and references to its input audit, all 53 direction summaries,
+and the indices, token counts, hashes, and excerpts of overlong sentences.
+
+The installed COMET XLM-R encoder exposes 512 positions from its 514-position model configuration;
+its `prepare_sample` uses `max_length = max_positions - 2`, giving an effective **510-token input
+limit including special tokens**. This is verified against the installed encoder, not guessed
+from an approximate word count. Our aligned scorer checks the same limit before inference.
+
+### Whole Records Versus Individual Sentences
+
+A pair is counted as overflowing when **either its source or reference** exceeds the limit.
+The final column means only that the existing single-sentence inputs pass the checked size and
+preservation constraints. It does not mean an actual alignment or quality score was computed.
+
+| Dataset | Pairs | Whole-record COMET overflow | Individual-sentence overflow | Single-sentence length-safe pairs |
+| --- | --- | --- | --- | --- |
+| Google Patents | 10397 | 7050 (67.8%) | 3883 (37.3%) | 6514 (62.7%) |
+| JRC articles | 5000 | 4600 (92.0%) | 60 (1.2%) | 4940 (98.8%) |
+| JRC definitions | 5000 | 4960 (99.2%) | 1830 (36.6%) | 3170 (63.4%) |
+| All three | 20397 | 16610 (81.4%) | 5773 (28.3%) | 14624 (71.7%) |
+
+Ordinary whole-record COMET therefore cannot inspect the complete source/reference inputs for
+16,610 pairs. Sentence segmentation removes that particular length problem for most article pairs,
+but is insufficient for more than a third of patent and definition pairs. A period-based segmenter
+does not impose a token ceiling on a long sentence, recital, technical formula, or punctuation-poor
+paragraph.
+
+| Dataset | Largest whole input | Largest individual segment | Largest consecutive 1-4-segment span | Most segments in one input |
+| --- | --- | --- | --- | --- |
+| Google Patents | 7788 tokens | 7744 tokens | 7771 tokens | 124 |
+| JRC articles | 1056 tokens | 921 tokens | 921 tokens | 49 |
+| JRC definitions | 1125 tokens | 1091 tokens | 1102 tokens | 46 |
+
+The scan found **zero non-whitespace text-preservation failures**, zero empty sides, zero
+single-sentence or scanned local-span BGE-M3 inputs over 8,192 tokens, and zero inputs over the
+1,000-sentence cap. Thus the observed structural blocker is COMET length, not dropped non-whitespace
+characters, the embedding input budget, or the document sentence-count guard. Whitespace can still
+be normalized by segmentation and rejoining; this is not byte-for-byte reconstruction.
+
+### Language Breakdown
+
+Each row counts distinct language/text inputs **within that dataset**, combining source and
+reference roles. "Overlong" means at least one segment exceeds 510 tokens. These denominators
+differ from paired-row counts above, and are not independent translation-quality observations.
+
+| Dataset | Language | Distinct inputs | Inputs with an overlong segment | Largest segment, tokens |
+| --- | --- | --- | --- | --- |
+| Google Patents | German (`de`) | 777 | 420 | 2144 |
+| Google Patents | English (`en`) | 4588 | 1817 | 7005 |
+| Google Patents | Spanish (`es`) | 1633 | 372 | 3255 |
+| Google Patents | French (`fr`) | 4735 | 808 | 3167 |
+| Google Patents | Japanese (`ja`) | 1316 | 161 | 1306 |
+| Google Patents | Russian (`ru`) | 1806 | 497 | 7744 |
+| Google Patents | Chinese (`zh`) | 1786 | 610 | 2220 |
+| JRC articles | German (`de`) | 481 | 4 | 921 |
+| JRC articles | English (`en`) | 531 | 5 | 743 |
+| JRC articles | Spanish (`es`) | 675 | 9 | 860 |
+| JRC articles | French (`fr`) | 762 | 11 | 860 |
+| JRC articles | Portuguese (`pt`) | 772 | 6 | 882 |
+| JRC definitions | German (`de`) | 526 | 15 | 921 |
+| JRC definitions | English (`en`) | 694 | 188 | 839 |
+| JRC definitions | Spanish (`es`) | 867 | 274 | 1003 |
+| JRC definitions | French (`fr`) | 901 | 323 | 1091 |
+| JRC definitions | Portuguese (`pt`) | 922 | 279 | 969 |
+
+### Additional SentAlign Constraints
+
+The audit also tokenized every possible contiguous span of one to four sentences, matching the
+configured local concatenation range. These are **possible spans**, not selected neural alignment
+links; their existence does not prove a specific document will fail scoring.
+
+| Dataset | Pairs with a segment over 110 words | Pairs with a possible local span over 510 tokens | Pairs with such an overflow span at no more than 110 words |
+| --- | --- | --- | --- |
+| Google Patents | 7417 | 5693 | 1018 |
+| JRC articles | 1904 | 786 | 0 |
+| JRC definitions | 4056 | 3080 | 0 |
+
+The 110-word matching cap can exclude legitimate long text; it is not a COMET token safeguard.
+The final column demonstrates that a span can pass that word-count condition and still exceed
+COMET's token budget. This is particularly relevant to text whose subword-token/whitespace-word
+ratio is high. Passing the word condition alone does not establish that SentAlign would select it.
+
+Furthermore, the reference-span closure used to combine the source/reference and
+candidate/reference alignments can group **more than four sentences**. Scanning local spans is
+therefore not a final upper bound. Only checking the actual constructed triples can establish
+their size safety; the existing scorer does this and raises on oversized matched triples.
+
+### Runtime Checks And Interpretation
+
+For one real overlong English sentence from each dataset, the reproducible probe calls the
+installed COMET encoder's actual `prepare_sample`, then forces the same sentence into a complete
+block and calls our actual `_score_blocks` guard. It uses tokenizer/model metadata, not neural
+weights or an artificial sentence. The repeated same-text triple isolates input-size handling;
+it is not a claimed bilingual alignment result.
+
+| Dataset | Original sentence tokens | Ordinary COMET retained tokens | Aligned guard outcome |
+| --- | --- | --- | --- |
+| Google Patents | 511 | 510 | Rejected before inference |
+| JRC articles | 530 | 510 | Rejected before inference |
+| JRC definitions | 512 | 510 | Rejected before inference |
+
+This establishes two different behaviours: **ordinary COMET silently truncates**, whereas **our
+aligned methods refuse oversized matched blocks**. Rejection prevents silent loss but does not
+make those records successfully scoreable. If an aligner instead assigns a sentence to a gap,
+its text is accounted for in the audit and receives the gap penalty; COMET does not evaluate that
+text. Bookkeeping coverage, input-length safety, and semantic translation coverage are different
+properties.
+
+**Next implementation requirement:** add explicit, lossless token-budget splitting for oversized
+segments, preserving their provenance and correspondence, and make final alignment/group scoring
+budget-aware. Language-aware segmentation may help legal abbreviations and boundary mismatches,
+but cannot guarantee a token ceiling by itself. Raising a configuration limit or silently clipping
+text is not a solution. Any changed segmentation/grouping protocol needs renewed quality diagnostics.
+No production scoring behaviour was changed by this analysis.
+
+Generated model translations are **not included** in the built source/reference manifests. They
+must also pass the same checks: even the 14,624 pairs whose source/reference sentences fit cannot
+guarantee that a future candidate, or SentAlign's actual final groups, will fit. This audit ran no
+neural alignments or COMET inference over the full benchmark and makes no full-scoring success claim.
+
+### Reproducing The Coverage Audit
+
+Both commands require the local built datasets and cached tokenizers/configuration. Neither
+downloads model weights or runs neural inference. Existing output files are not overwritten.
+
+```powershell
+uv run --no-sync pytest tests/test_comet_input_coverage.py -q
+uv run --no-sync python scripts/audit_comet_input_coverage.py `
+  --output reports/comet_input_coverage/full_benchmark_rerun.json
+uv run --no-sync python scripts/audit_comet_input_coverage.py `
+  --probe-report reports/comet_input_coverage/full_benchmark_rerun.json `
+  --output reports/comet_input_coverage/runtime_probes_rerun.json
+```
+
+`--only-dataset` restricts the requested dataset; `--limit-per-dataset` is available for smoke
+checks and explicitly marks the report as not requesting every manifest record. Neither option
+was used for the full-benchmark results above.
+
 ## SEGALE
 
 **SEGALE is a published document-evaluation scheme, not a new COMET checkpoint or a synonym for

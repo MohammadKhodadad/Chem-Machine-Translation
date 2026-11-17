@@ -1,0 +1,60 @@
+{
+  "scope": "Real sentence input-preparation/guard probes; no neural inference or alignment.",
+  "encoder_config_max_position_embeddings": 514,
+  "encoder_max_positions": 512,
+  "effective_token_limit": 510,
+  "construction": "Same real sentence on all sides forces a complete block for the guard.",
+  "probes": [
+    {
+      "dataset": "google_patents",
+      "direction": "en-de",
+      "manifest_line": 1672,
+      "doc_id": "WO-2024115042-A1",
+      "source_id": "within-document:abstract:en-de:WO-2024115042-A1",
+      "side": "source",
+      "sentence_index": 0,
+      "text_sha256": "en:ffe0cdd8a599e1b17d9f54a9741450aedc9c447b7ce91b8c805f714d830624ab",
+      "sentence": "The invention relates to a plant (1) for producing carbon dioxide (CO2), comprising: a separation system (2), wherein the separation system (2) is fluidically connected to a gas mixture (4) consisting of flue gas and carbon dioxide (CO2), wherein the separation system (2) is designed such that the carbon dioxide (CO2) contained in the flue gas and the steam (H2O) are separated, referred to in the following merely as carbon dioxide, wherein the water is not condensed by a stripper or a desorber top condenser before entry into the preheater (6), wherein, during operation, the separation system (2) is operable with steam from a steam line (7); a first carbon dioxide line (5) which is fluidically connected to the separation system (2) and out of which the carbon dioxide (CO2) that has been separated in the separation system (2) flows during operation; a preheater (6) through which the carbon dioxide line (5) leads and which is designed such that the temperature of the carbon dioxide (CO2) is increased; and a multi-stage compressor (13) which is fluidically connected at an inlet side to the carbon dioxide line (12) leading out of the preheater (6), wherein: after a stage (30), the temperature and the pressure of the carbon dioxide (CO2) are increased; after said stage (30), the carbon dioxide (CO2) passes via a line (14) through a steam generator (15); the steam generator (15) is designed such that water (31) fed into the steam generator (15) is used to generate steam by way of an exchange of energy with the thermal energy of the carbon dioxide (CO2) coming from the compressor (13) after a stage (30); the carbon dioxide that has cooled down in the steam generator (15) is recirculated to a subsequent stage in the compressor (13); the steam generated in the steam generator (15) is fluidically connected via the steam line (7) to the separation system (2); the carbon dioxide (CO2) flowing out of the compressor (13) after the stage flows through a first separator (32); and the separator is designed to separate the water (45) condensed in the last steam generator (15).",
+      "full_sentence_tokens": 511,
+      "ordinary_comet_retained_tokens": 510,
+      "ordinary_comet_truncated_tokens": 1,
+      "aligned_guard_error": "Aligned COMET token budget exceeded (510 tokens): {'source': 511, 'reference': 511, 'prediction': 511}. Split the long sentences explicitly; inputs were not truncated."
+    },
+    {
+      "dataset": "jrc_articles",
+      "direction": "de-en",
+      "manifest_line": 12,
+      "doc_id": "jrc21999D0722_02",
+      "source_id": "de-en:jrc21999D0722_02:chunk-0496",
+      "side": "reference",
+      "sentence_index": 0,
+      "text_sha256": "en:e64a29192dea64a6b88a798dbd1e20c5306d561b77d4754efda3e7875f8c0aae",
+      "sentence": "DECISION OF THE EEA JOINT COMMITTEE of 25 September 1998 amending Annex II (Technical regulations, standards, testing and certification) to the EEA Agreement THE EEA JOINT COMMITTEE, Having regard to the Agreement on the European Economic Area, as adjusted by the Protocol adjusting the Agreement on the European Economic Area, hereinafter referred to as \"the Agreement\", and in particular Article 98 thereof, Whereas Annex II to the Agreement was amended by Decision of the EEA Joint Committee No 71/98 of 31 July 1998(1); Whereas Directive 97/41/EC of 25 June 1997 amending Directives 76/895/EEC, 86/362/EEC, 86/363/EEC and 90/642/EEC relating to the fixing of maximum levels for pesticide residues in and on, respectively, fruit and vegetables, cereals, foodstuffs of animal origin, and certain products of plant origin, including fruit and vegetables(2), is to be incorporated into the Agreement, The following point shall be added in point 13 (Council Directive 76/895/EEC) of Chapter XII of Annex II to the Agreement: \"- 397 L 0041: Council Directive 97/41/EC of 25 June 1997 (OJ L 184, 12.7.1997, p. The following indent shall be added in point 38 (Council Directive 86/362/EEC) of Chapter XII of Annex II to the EEA Agreement: \"- 397 L 0041: Council Directive 97/41/EC of 25 June 1997 (OJ L 184, 12.7.1997, p. The following indent shall be added in point 39 (Council Directive 86/363/EEC) of Chapter XII of Annex II to the EEA Agreement: \"- 397 L 0041: Council Directive 97/41/EC of 25 June 1997 (OJ L 184, 12.7.1997, p. The following indent shall be added in point 54 (Council Directive 90/642/EEC) of Chapter XII of Annex II to the EEA Agreement: \"- 397 L 0041: Council Directive 97/41/EC of 25 June 1997 (OJ L 184, 12.7.1997, p. The texts of Directive 97/41/EC in the Icelandic and Norwegian languages, which are annexed to the respective language versions of this Decision, are authentic.",
+      "full_sentence_tokens": 530,
+      "ordinary_comet_retained_tokens": 510,
+      "ordinary_comet_truncated_tokens": 20,
+      "aligned_guard_error": "Aligned COMET token budget exceeded (510 tokens): {'source': 530, 'reference': 530, 'prediction': 530}. Split the long sentences explicitly; inputs were not truncated."
+    },
+    {
+      "dataset": "jrc_definitions",
+      "direction": "de-en",
+      "manifest_line": 138,
+      "doc_id": "jrc31992R3541",
+      "source_id": "de-en:jrc31992R3541:chunk-6636",
+      "side": "reference",
+      "sentence_index": 0,
+      "text_sha256": "en:89b65be16ef96d4de6c7c9f8ab1d941d458aa3ae42305b7ac4157a659f7cf636",
+      "sentence": "COUNCIL REGULATION (EEC) No 3541/92 of 7 December 1992 prohibiting the satisfying of Iraqi claims with regard to contracts and transactions the performance of which was affected by United Nations Security Council Resolution 661 (1990) and related resolutions THE COUNCIL OF THE EUROPEAN COMMUNITIES, Whereas, under Regulations (EEC) No 2340/90 (1) and (EEC) No 3155/90 (2), the Community has taken measures to prevent trade between the Community and Iraq; Whereas the United Nations Security Council has adopted Resolution 687 (1991) of 3 April 1991 which, in its paragraph 29, deals with claims by Iraq in relation to contracts and transactions the performance of which was affected by measures taken by the Security Council pursuant to Resolution 661 (1990) and related resolutions; Whereas the Community and its Member States meeting in Political Cooperation have agreed that Iraq must comply in full with the provisions of paragraph 29 of United Nations Security Council Resolution 687 (1991) and consider that, in deciding whether to reduce or lift measures taken against Iraq, pursuant to paragraph 21 of Security Council Resolution 687, particular account must be taken of any failure by Iraq to comply with paragraph 29 of the same Resolution; Whereas, as a consequence of the embargo against Iraq, economic operators in the Community and third countries are exposed to the risk of claims by the Iraqi side; Whereas it is necessary to protect operators permanently against such claims and to prevent Iraq from obtaining compensation for the negative effects of the embargo; Whereas the Community and its Member States meeting in Political Cooperation have agreed to resort to a Community instrument in order to ensure uniform implementation, throughout the Community, of paragraph 29 of United Nations Security Council Resolution 687 (1991); Whereas such uniform implementation is essential for achieving the aims of the Treaty establishing the European Economic Community and in particular for avoiding distortion of competition; Whereas the Treaty does not provide, for the adoption of this Regulation, powers other than those of Article 235, Having regard to the Treaty establishing the European Economic Community, and in particular Article 235 thereof, Having regard to the proposal from the Commission, Having regard to the opinion of the European Parliament (3), HAS ADOPTED THIS REGULATION: For the purposes of this Regulation: 1. '",
+      "full_sentence_tokens": 512,
+      "ordinary_comet_retained_tokens": 510,
+      "ordinary_comet_truncated_tokens": 2,
+      "aligned_guard_error": "Aligned COMET token budget exceeded (510 tokens): {'source': 512, 'reference': 512, 'prediction': 512}. Split the long sentences explicitly; inputs were not truncated."
+    }
+  ],
+  "versions": {
+    "unbabel-comet": "2.2.7",
+    "transformers": "4.57.6",
+    "spacy": "3.8.15",
+    "sentalign": "2.0.0"
+  }
+}
