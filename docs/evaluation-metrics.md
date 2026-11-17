@@ -475,7 +475,8 @@ Short structural diagnostics, one manually authored case per condition:
 | Duplicated sentence | 0.8433 | 0.7216 | 0.7216 |
 | Reordered independent statements | 0.9113 | 0.9621 | 0.4836 |
 
-**Recommendation:** prefer SentAlign-COMET for order-preserving translations with differing sentence
+**Recommendation from these synthetic cases:** prefer SentAlign-COMET for order-preserving
+translations with differing sentence
 boundaries. Its split and merge links were correct here, avoiding the custom matcher's false
 penalties. Keep reference-assignment COMET when sentence reordering should be tolerated: SentAlign's
 monotonic alignment turned the reordered case into one omission and one addition. Ordinary COMET
@@ -483,6 +484,9 @@ remains a useful short-input baseline, but is unsuitable as the sole evaluator o
 Both aligned variants detect unrelated endings more strongly than ordinary COMET; both still score
 contradictions highly. The different unrelated-ending scores cannot alone rank alignment quality,
 because their group and penalty counts differ.
+
+The real-record experiment below exposes additional failures on unchanged dataset references.
+This synthetic recommendation is not a production-readiness claim.
 
 This is a small synthetic diagnostic comparison, not human-correlated validation, significance
 testing, or evidence of universally better translation-model rankings. Structural cases cover only
@@ -511,6 +515,231 @@ Comparison mode refuses an existing output path to preserve reports. The list-on
 24 multilingual and seven structural fixtures without inference; the six original German fixtures
 are added by the full run. The manifest evaluator generates translations rather than rescoring
 historical outputs, and its default dry-run is only a wiring check.
+
+## Real-Record Diagnostics
+
+The earlier 37-case suite used authored text. The
+[real-record runner](../scripts/evaluate_real_document_metrics.py) instead uses long records from
+**all three current datasets**: Google Patents, JRC-Acquis articles, and JRC-Acquis definitions.
+The [frozen fixture](../tests/fixtures/real_document_metrics.json) preserves the complete original
+source/reference texts, nine donor records, document and row IDs, manifest line numbers, source
+paths, token counts, and SHA-256 text hashes. The
+[2026-11-17 report](../reports/real_document_metrics/comparison_20261117.json) contains all
+constructed candidates, all scores and alignment audits, timings, model/package settings, and
+expected-order checks, including failures.
+
+### Selection And Candidate Construction
+
+Three distinct primary documents per dataset were selected, one in each direction en-to-de,
+en-to-fr, and en-to-es. Within each dataset/direction, choose the longest minimum source/reference
+token length, breaking ties by record ID and excluding already selected document IDs. Selection
+does not use metric scores. Eligibility requires 600-2,000 COMET tokens on **both** sides, at least
+four segmented sentences on each side, and no individual sentence above 510 COMET tokens.
+This last restriction excludes inherently over-budget sentences, not alignment failures or low
+scores. Documents are neither repeated nor concatenated to make them long.
+
+The actual nine sources contain 757-1,437 tokens and their references contain 847-1,725 tokens.
+Donors are distinct documents from the same dataset and language direction, chosen by nearest
+reference token length. All 18 original primary/donor pairs were checked against their CSV text
+and manifest IDs. The source-reference translations are dataset material, not newly authored
+examples or new LLM outputs.
+
+Each primary record produces eight candidates:
+
+| Condition | Construction |
+| --- | --- |
+| `reference_control` | Exact, unmodified dataset reference |
+| `tail_omission_25/50/75` | Remove the last approximately 25%, 50%, or 75% of reference sentences |
+| `tail_replacement_25/50/75` | Replace that tail with sentences from its real donor record |
+| `wrong_document` | Use the donor's full, unmodified reference |
+
+This gives **9 primary records x 8 variants = 72 cases**, with **216 scoring attempts** across
+ordinary COMET, Reference Assignment COMET, and SentAlign-COMET. Percentages describe sentence
+counts, not token/meaning percentages or human quality ratings. Counts are rounded; exact affected
+indices and actual fractions are saved. Donor sentences cycle if there are fewer donor sentences
+than replacement positions. A donor from the same domain may share boilerplate or terminology;
+"different document" does not guarantee every replacement sentence is semantically unrelated.
+
+The reference control is a positive control relative to the dataset, not proof of a flawless
+source-reference pair. Corrupted variants rejoin retained sentences with newlines; this can change
+whitespace tokenization even before the intended corruption. Consequently, not every ordinary
+COMET score change can be attributed solely to translation degradation. Exact retained-token
+equality is recorded to identify the truncation-blind cases without making that assumption.
+These are real-input, controlled-corruption diagnostics, not human-rated "good/half-bad" model
+translations. The metric settings were not retuned after inspecting the outcomes.
+
+### Selected Records
+
+**All nine source texts are English.** Target languages are German (`de`), French (`fr`), and
+Spanish (`es`), with one record per dataset/direction. Each direction therefore contributes three
+primary records, 24 candidate cases, and 72 scores; each dataset contributes the same counts.
+Reverse directions and other languages are not covered by this real-record run.
+
+The case labels below are shorthand used only in this guide: `P` = Google Patents, `A` = JRC
+articles, and `D` = JRC definitions. Patent records are abstract pairs; JRC records are anchored
+chunks, not necessarily complete articles or definitions. In particular, definition-anchored
+chunks can include surrounding recitals. Topics below describe the actual English source text,
+not an assumed chemistry-only domain. JRC identifiers show document ID plus chunk ID; full
+direction-qualified record IDs and original paths are in the frozen fixture.
+
+Token counts use the COMET tokenizer, including special tokens. Sentence counts use the actual
+default segmenter from this experiment; they are not manually corrected linguistic counts.
+Both pairs of size columns are **source / reference**.
+
+| Case | Direction | Document / chunk | Source topic | Tokens | Sentences |
+| --- | --- | --- | --- | --- | --- |
+| P-DE | en -> de | `WO-2021259536-A3` | Power-semiconductor contacts and sintering layers | 1071 / 1052 | 12 / 12 |
+| P-FR | en -> fr | `EP-3080535-A2` | Lightweight ceramic aggregate made from coal ash | 1437 / 1725 | 9 / 10 |
+| P-ES | en -> es | `WO-2012163308-A2` | Oil-industry wastewater treatment and solids/oil separation | 1250 / 1390 | 24 / 17 |
+| A-DE | en -> de | `jrc22004D0121:chunk-0827` | EEA veterinary and phytosanitary rules | 930 / 992 | 11 / 26 |
+| A-FR | en -> fr | `jrc22005A0315_01:chunk-1120` | TDCA amendments, agreement languages and originals | 924 / 1012 | 18 / 15 |
+| A-ES | en -> es | `jrc22006D0045:chunk-1911` | EEA technical regulations, standards and certification | 833 / 973 | 15 / 11 |
+| D-DE | en -> de | `jrc31995R0785:chunk-8798` | Dried-fodder market rules, checks and definitions | 903 / 923 | 5 / 27 |
+| D-FR | en -> fr | `jrc21998A0403_01:chunk-0462` | Convention definitions, including maritime areas | 766 / 979 | 14 / 8 |
+| D-ES | en -> es | `jrc31993R0404:chunk-8007` | Banana-sector market rules and supervision | 757 / 847 | 8 / 8 |
+
+Lengths and boundaries differ materially between languages even within one paired record.
+For example, P-FR has 1,437 source tokens versus 1,725 reference tokens, while D-DE has similar
+token lengths but 5 versus 27 segments. Those are different challenges: document-window coverage
+in the former case, and alignment granularity in the latter. The nominal 50% corruption is also
+rounded by sentence count: it affects 8/17 sentences (47.1%) for P-ES and 14/27 (51.9%) for D-DE.
+
+### Real-Record Results
+
+All 72 cases completed with finite scores for all three methods and no scoring exceptions.
+Both aligned scorers accounted for every segmented sentence exactly once. Every scored aligned
+input stayed within the COMET limit; the largest had **481 tokens**.
+
+Selected means below average three records per dataset/condition. They are method-specific scales,
+not directly interchangeable quality estimates:
+
+| Dataset | Condition | Ordinary COMET | Reference Assignment COMET | SentAlign-COMET |
+| --- | --- | --- | --- | --- |
+| Google Patents | Reference control | 0.8994 | 0.7586 | 0.5591 |
+| Google Patents | 50% tail omission | 0.8994 | 0.4081 | 0.3133 |
+| Google Patents | 50% tail replacement | 0.8994 | 0.4582 | 0.3761 |
+| Google Patents | Wrong document | 0.6257 | 0.2260 | 0.1598 |
+| JRC articles | Reference control | 0.9211 | 0.6198 | 0.8407 |
+| JRC articles | 50% tail omission | 0.9135 | 0.2816 | 0.3734 |
+| JRC articles | 50% tail replacement | 0.9134 | 0.3895 | 0.5023 |
+| JRC articles | Wrong document | 0.7332 | 0.2596 | 0.3764 |
+| JRC definitions | Reference control | 0.9222 | 0.5424 | 0.3068 |
+| JRC definitions | 50% tail omission | 0.9048 | 0.2540 | 0.1145 |
+| JRC definitions | 50% tail replacement | 0.9049 | 0.3211 | 0.1567 |
+| JRC definitions | Wrong document | 0.6677 | 0.0853 | 0.0657 |
+
+#### Per-Record Scores
+
+Each cell below is **ordinary COMET / Reference Assignment COMET / SentAlign-COMET**, rounded
+to four decimals. "Control" is the exact reference; "wrong document" is the exact donor reference.
+These are individual scores, unlike the three-record means above. Other severity levels and
+unrounded values remain available in the linked JSON report.
+
+| Case | Control | 50% tail omission | 50% tail replacement | Wrong document |
+| --- | --- | --- | --- | --- |
+| P-DE | 0.9252 / 0.9173 / 0.6570 | 0.9252 / 0.4569 / 0.3265 | 0.9252 / 0.6546 / 0.4199 | 0.7873 / 0.5570 / 0.3278 |
+| P-FR | 0.8778 / 0.7897 / 0.3534 | 0.8778 / 0.4464 / 0.2562 | 0.8778 / 0.4341 / 0.3156 | 0.6015 / 0.0440 / 0.0759 |
+| P-ES | 0.8952 / 0.5687 / 0.6667 | 0.8952 / 0.3208 / 0.3572 | 0.8952 / 0.2858 / 0.3929 | 0.4882 / 0.0769 / 0.0756 |
+| A-DE | 0.9357 / 0.3848 / 0.9275 | 0.9281 / 0.1713 / 0.4183 | 0.9281 / 0.2881 / 0.4634 | 0.8580 / 0.2528 / 0.4016 |
+| A-FR | 0.8999 / 0.7987 / 0.6730 | 0.8999 / 0.3685 / 0.2858 | 0.8999 / 0.3431 / 0.4094 | 0.5139 / 0.0991 / 0.1786 |
+| A-ES | 0.9277 / 0.6759 / 0.9216 | 0.9127 / 0.3051 / 0.4161 | 0.9123 / 0.5374 / 0.6341 | 0.8278 / 0.4268 / 0.5489 |
+| D-DE | 0.9290 / 0.1672 / 0.1016 | 0.8769 / 0.0350 / 0.0000 | 0.8772 / 0.1022 / 0.0489 | 0.7958 / 0.0500 / 0.0646 |
+| D-FR | 0.9126 / 0.5217 / 0.3448 | 0.9126 / 0.2626 / 0.1854 | 0.9126 / 0.2468 / 0.1912 | 0.5502 / 0.0248 / 0.0417 |
+| D-ES | 0.9249 / 0.9382 / 0.4741 | 0.9249 / 0.4645 / 0.1582 | 0.9249 / 0.6142 / 0.2300 | 0.6572 / 0.1812 / 0.0909 |
+
+Several individual cases explain why the aggregate results need care:
+
+- **P-DE: tail blindness despite clean one-to-one control alignment.** Removing half the
+  reference sentences leaves ordinary COMET at 0.9252, while reference assignment drops from
+  0.9173 to 0.4569. Its control has no null blocks, so this is not merely an already failing
+  source-reference assignment. SentAlign's control nevertheless has a 28.6% null-block ratio.
+- **A-DE: many-to-many alignment helps.** With 11 source versus 26 reference segments, reference
+  assignment gives the unchanged reference 0.3848 and a 57.7% null-block ratio. SentAlign gives
+  0.9275 with no null blocks. The difference demonstrates a real boundary mismatch, not a worse
+  candidate translation under the first method.
+- **D-ES: equal segment counts do not guarantee usable alignment.** Both sides have eight
+  segments. Reference assignment gives the control 0.9382 with no null blocks, but SentAlign gives
+  0.4741 with a 50.0% null-block ratio. Two segments on each side exceed its upstream 110-word
+  limit. A sentence-count check alone would miss this constraint.
+- **A-ES: wrong-document scores need not approach zero.** The donor scores 0.8278 under ordinary
+  COMET, 0.4268 under reference assignment, and 0.5489 under SentAlign. These are same-domain legal
+  texts, so shared language and boilerplate remain possible. A different document is a negative
+  control by construction, not a human-certified zero-quality translation.
+
+Null-block ratios above are the share of constructed scoring blocks assigned gap states, not
+percentages of omitted words or meaning. Different aligners construct different blocks, so their
+ratios are not directly interchangeable coverage estimates. With only one record per
+dataset/direction, the table is diagnostic evidence, not a reliable German/French/Spanish ranking.
+
+#### Expected-Order Checks
+
+Expected-order checks are empirical diagnostics, not assertions that are forced to pass:
+
+| Check | Ordinary COMET | Reference Assignment COMET | SentAlign-COMET |
+| --- | --- | --- | --- |
+| Reference control strictly above degraded variant | 33/63 | 63/63 | 63/63 |
+| Strict ordering: control > 25% > 50% > 75% omission | 2/9 | 8/9 | 8/9 |
+| Strict ordering: control > 25% > 50% > 75% replacement | 2/9 | 9/9 | 7/9 |
+
+Ordinary COMET tied its control exactly on **30 of 63 degraded cases**. In each of those 30 cases,
+the retained candidate token IDs also equal those of the reference. For example, the English-to-
+French patent record keeps ordinary COMET at 0.8778 even with 75% of reference sentences removed
+or replaced. This is measured input-window blindness, not evidence that the corrupted ending is good.
+
+### Alignment Failures On Controls
+
+The real records reveal limitations concealed by the earlier authored examples. On the unchanged
+German JRC definition reference, ordinary COMET scores 0.9290, reference assignment 0.1672, and
+SentAlign-COMET 0.1016. The default segmenter produces **5 English source sentences versus 27 German
+reference sentences**. Long English semicolon-separated recitals and fragmented German legal
+abbreviations make one-to-one matching unsuitable and challenge SentAlign's four-sentence span cap.
+Two English sentences also exceed SentAlign's default **110-word maximum per side**, so the
+upstream pathfinder cannot match those spans even though their COMET token counts fit.
+
+Other selected references have spans over that upstream word limit too. A perfectly identical
+reference/candidate pair can consequently still produce null candidate links: matching is subject
+to span constraints, not just cosine similarity. Source-reference or candidate-reference nulls are
+alignment diagnostics and must not automatically be labelled translation omissions.
+
+Severity ordering also has failures. Both aligned methods tie the 50% and 75% omission variants
+of the German JRC definition case after usable matches are exhausted. SentAlign gives the 75%
+replacement more credit than the 50% replacement in two JRC article cases. Changing alignments,
+group weights, and partial-gap absorption can make a more extensively corrupted candidate score
+higher; the report retains the raw links needed to investigate these cases.
+
+**Conclusion:** both aligned methods detect these constructed long-tail corruptions more reliably
+than whole-record COMET, but neither is validated as a calibrated document-quality score. The
+reference-assignment variant has more consistent replacement ordering on this tiny selection;
+SentAlign can handle real boundary changes but also has damaging span/length constraints with
+current settings. Language-aware legal segmentation, word-limit/span inspection, and held-out
+alignment validation are necessary before drawing production model rankings. This run does not
+measure subtle mistranslation, negation accuracy, human correlation, or real model-output quality.
+
+### Reproducing The Real-Record Checks
+
+The regression tests use the frozen real texts and do not require the full dataset directories or
+model downloads. Real scoring needs cached BGE-M3 and COMET weights and the SentAlign extra.
+Use a new report filename; existing outputs are preserved.
+
+```powershell
+uv run --no-sync pytest tests/test_real_document_metrics.py -q
+uv run --no-sync python scripts/evaluate_real_document_metrics.py `
+  --fixtures tests/fixtures/real_document_metrics.json `
+  --output reports/real_document_metrics/comparison_rerun.json
+```
+
+To repeat selection from the full local dataset directories instead of using the frozen fixture:
+
+```powershell
+uv run --no-sync python scripts/evaluate_real_document_metrics.py --select-only `
+  --output reports/real_document_metrics/fixtures_new.json
+```
+
+The selected directories and eligibility settings are recorded in the fixture. The three dataset
+keys remain separate even though both JRC datasets identify their upstream corpus as `jrc_acquis`.
+These regression checks verify actual record preservation, all eight candidate constructions,
+dataset/direction coverage, and failure accounting; they do not assert that every quality ordering
+must pass or rerun large neural models during ordinary pytest execution.
 
 ## SEGALE
 
