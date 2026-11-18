@@ -52,6 +52,17 @@ def test_aligned_comet_cli_accepts_configuration(monkeypatch) -> None:
     assert args.aligned_comet_config == Path("custom.toml")
 
 
+@pytest.mark.parametrize("metric_name", ["reference_assignment_metricx", "sentalign_metricx"])
+def test_metricx_cli_accepts_shared_configuration(monkeypatch, metric_name):
+    monkeypatch.setattr(sys, "argv", [
+        "evaluate_parallel_manifest", "--dataset-dir", "unused", "--output", "unused.jsonl",
+        "--metric", metric_name, "--metricx-config", "metricx.toml",
+    ])
+    args = evaluator.parse_args()
+    assert args.metric == [metric_name]
+    assert args.metricx_config == Path("metricx.toml")
+
+
 @pytest.mark.parametrize("metric_name", ["reference_assignment_comet", "sentalign_comet"])
 def test_named_document_metrics_accept_configuration(monkeypatch, metric_name):
     monkeypatch.setattr(sys, "argv", [

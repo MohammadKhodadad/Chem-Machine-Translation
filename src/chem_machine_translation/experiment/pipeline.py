@@ -21,6 +21,11 @@ from chem_machine_translation.evaluation.aligned_comet import (
     AlignedCometScorer,
     SentAlignCometScorer,
 )
+from chem_machine_translation.evaluation.aligned_metricx import (
+    ReferenceAssignmentMetricXScorer,
+    SentAlignMetricXScorer,
+    TokenCheckedMetricXScorer,
+)
 from chem_machine_translation.evaluation.metrics import (
     HuggingFaceBertScoreScorer,
     OfficialBleurtScorer,
@@ -328,6 +333,23 @@ def write_scores(
         SentAlignCometScorer(config=evaluation.sentalign_comet)
         if "sentalign_comet" in evaluation.metrics else None
     )
+    metricx_backend = (
+        TokenCheckedMetricXScorer(evaluation.metricx)
+        if {"reference_assignment_metricx", "sentalign_metricx"}.intersection(evaluation.metrics)
+        else None
+    )
+    reference_assignment_metricx_scorer = (
+        ReferenceAssignmentMetricXScorer(
+            evaluation.metricx, alignment_config=evaluation.aligned_comet,
+            metricx_scorer=metricx_backend,
+        ) if "reference_assignment_metricx" in evaluation.metrics else None
+    )
+    sentalign_metricx_scorer = (
+        SentAlignMetricXScorer(
+            evaluation.metricx, alignment_config=evaluation.sentalign_comet,
+            metricx_scorer=metricx_backend,
+        ) if "sentalign_metricx" in evaluation.metrics else None
+    )
     cometkiwi_scorer = (
         UnbabelCometScorer(
             model_name=evaluation.cometkiwi_model,
@@ -375,6 +397,8 @@ def write_scores(
                 mqm_judge=mqm_judge,
                 aligned_comet_scorer=aligned_comet_scorer,
                 sentalign_comet_scorer=sentalign_comet_scorer,
+                reference_assignment_metricx_scorer=reference_assignment_metricx_scorer,
+                sentalign_metricx_scorer=sentalign_metricx_scorer,
             )
             score_rows.append(score_row)
             handle.write(json.dumps(score_row, ensure_ascii=False) + "\n")
@@ -393,6 +417,8 @@ def score_prediction_row(
     mqm_judge: Any | None,
     aligned_comet_scorer: Any | None = None,
     sentalign_comet_scorer: Any | None = None,
+    reference_assignment_metricx_scorer: Any | None = None,
+    sentalign_metricx_scorer: Any | None = None,
 ) -> dict[str, Any]:
     if prediction_row.get("error"):
         return {**prediction_row, "metrics": {}, "evaluation_error": "prediction_error"}
@@ -422,6 +448,8 @@ def score_prediction_row(
             metric_details=metric_details,
             aligned_comet_scorer=aligned_comet_scorer,
             sentalign_comet_scorer=sentalign_comet_scorer,
+            reference_assignment_metricx_scorer=reference_assignment_metricx_scorer,
+            sentalign_metricx_scorer=sentalign_metricx_scorer,
             source_language=str(prediction_row.get("source_language") or "xx"),
             target_language=str(prediction_row.get("target_language") or "xx"),
         )

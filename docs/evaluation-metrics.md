@@ -44,6 +44,7 @@ We separate metrics into two groups:
 
 At the moment, the codebase implements `sequence_similarity`, BLEU, chrF, chrF2++,
 reference-based BERTScore, BLEURT, whole-record COMET, Reference Assignment COMET, SentAlign-COMET,
+Reference Assignment MetricX-24, SentAlign-MetricX-24,
 reference-free COMETKiwi QE, XCOMET-XL, strict and
 variant-aware target-side terminology coverage, term-only BERTScore recall, strict and variant-aware
 source-conditioned terminology success rates, and optional `fsp_mqm` LLM judging. The benchmark
@@ -76,6 +77,10 @@ Implemented in code:
 - `sentalign_comet`: official SentAlign 2.0.0 monotonic many-to-many matching in our
   reference-anchored COMET protocol. Uses BGE-M3/CLS in this project. Opt-in only.
 - `aligned_comet`: legacy alias of `reference_assignment_comet`, not a fourth method.
+- `reference_assignment_metricx`: the same custom one-to-one reference assignment followed by
+  MetricX-24 error scoring. Native 0-25 scale, lower is better. Opt-in only.
+- `sentalign_metricx`: the same official SentAlign reference-span closure followed by MetricX-24
+  error scoring. Native 0-25 scale, lower is better. Opt-in only.
 - `cometkiwi_qe`: reference-free COMET quality estimation with `Unbabel/wmt22-cometkiwi-da`. It uses
   source and prediction only, so it is useful when a trusted reference is unavailable or reference overlap
   would be misleading.
@@ -903,6 +908,103 @@ uv run --no-sync python scripts/audit_comet_input_coverage.py `
 `--only-dataset` restricts the requested dataset; `--limit-per-dataset` is available for smoke
 checks and explicitly marks the report as not requesting every manifest record. Neither option
 was used for the full-benchmark results above.
+
+## Aligned MetricX-24
+
+Two additional opt-in metrics reuse our existing alignment methods with a different scoring
+backend: `reference_assignment_metricx` and `sentalign_metricx`. The implementation is in
+[aligned_metricx.py](../src/chem_machine_translation/evaluation/aligned_metricx.py), with a
+[shared preset](../config/evaluation/aligned_metricx.toml). Existing COMET metrics, defaults,
+alignment policies, and historical scores are unchanged. These variants are not SEGALE.
+
+### Model And Score Semantics
+
+The default model is `google/metricx-24-hybrid-xl-v2p6`, using the official `google/mt5-xl`
+tokenizer. Its mT5 backbone covers all eight languages in our built datasets. Published MetricX-24
+results include en-to-de, en-to-es, and ja-to-zh; this does not establish equal quality across
+our directions or chemistry/legal domains. See the
+[model card](https://huggingface.co/google/metricx-24-hybrid-xl-v2p6),
+[official model implementation](https://github.com/google-research/metricx/blob/main/metricx24/models.py),
+and [official input preparation](https://github.com/google-research/metricx/blob/main/metricx24/predict.py).
+
+MetricX produces an **error score from 0 to 25, lower is better**. We retain this native scale:
+
+- Complete aligned blocks receive MetricX scores.
+- All gap states receive `metricx.null_score`, **25 by default**, not COMET's zero.
+- The document score remains the equal-block arithmetic mean, including gap penalties.
+- The null-alignment ratio is still reported separately, alongside all original block states,
+  indices, and SentAlign link/closure audits.
+
+The range alone does not make the score a calibrated percentage or make scores from different
+aligners directly interchangeable. Partial gaps absorbed inside a complete SentAlign group retain
+the existing policy: score the whole group and preserve the partial-null indices in its audit.
+They do not receive additional per-sentence gap penalties.
+
+### Combined Input Budget And Inference
+
+Each complete block is serialized as one sequence:
+
+```text
+source: <source span> candidate: <candidate span> reference: <reference span>
+```
+
+The default budget is **1,536 combined tokens**, including prefixes and the tokenizer's EOS.
+It is not a separate 1,536-token allowance per side. All matched blocks are checked without
+truncation before model weights are loaded or inference begins. Oversized blocks raise a clear
+error; merging does not bypass this guard. EOS is removed only after validating the complete
+encoded sequence, matching the official prediction protocol; padding does not remove text.
+
+The backend uses Hugging Face's standard `MT5ForConditionalGeneration` checkpoint layout with a
+single zero decoder token, reads logit index `250089` (`<extra_id_10>`), and clips it to [0, 25],
+matching the official MetricX-24 regression computation. It does not generate a translation or
+interpret generated text as a score. A tiny, randomly initialized mT5 test verifies the logit
+calculation against the explicit encoder/decoder computation; it is not a quality benchmark.
+The numeric regression index is fixed by the checkpoint. The actual mT5 SentencePiece vocabulary
+can include a leading word-boundary marker on its token name, so validation checks the token at
+index `250089`, not a literal-name lookup that can incorrectly return the unknown-token ID.
+
+The documented training input length is 1,536 across Large, XL, and XXL. Larger model variants
+do not automatically provide a longer trained context. Experiments above 1,536 require both a
+larger `max_input_tokens` and `allow_long_inputs = true`; this is explicit length extrapolation,
+not an assertion that the resulting scores remain reliable. See the
+[upstream warning](https://github.com/google-research/metricx#reference-based).
+
+### Configuration And Use
+
+The `[metricx]` section controls the common scoring backend. For compatibility and reuse, alignment
+settings still come from `[reference_assignment_comet]` (or its legacy `[aligned_comet]` alias)
+and `[sentalign_comet]`. Their COMET model, COMET batch/device, COMET token-limit, and COMET gap-score
+fields do not control MetricX scoring. The output audit omits those irrelevant COMET fields and
+records the actual MetricX model, input budget, gap score, and `score_direction = lower_is_better`.
+
+The preset selects both new metrics. It defaults to CPU and batch size 1 so it does not assume
+CUDA availability, but XL CPU inference is expensive. On compatible GPU hardware, edit `[metricx]`
+to use `device = "cuda"` and optionally the official
+`google/metricx-24-hybrid-xl-v2p6-bfloat16` checkpoint with `dtype = "bfloat16"`. The experiment
+pipeline and manifest CLI share one lazy MetricX model between the two variants within a run.
+Model weights are only requested if the explicitly selected metric reaches a matched block.
+
+The optional `metricx` extra declares SentencePiece/Protobuf tokenizer dependencies. SentAlign
+additionally needs the existing `sentalign` extra. Prepare these extras in the environment first;
+avoid synchronizing an existing environment blindly because it can remove separately installed
+spaCy language-model wheels. Once prepared:
+
+```powershell
+uv run --no-sync python scripts/evaluate_parallel_manifest.py `
+  --dataset-dir <dataset-dir> --output <new-report.jsonl> `
+  --metric reference_assignment_metricx --metric sentalign_metricx `
+  --metricx-config config/evaluation/aligned_metricx.toml
+```
+
+For experiment TOMLs, reference the same preset with `evaluation.config`, or include the two
+metric names and a nested `evaluation.metricx` table directly. Scores and audits are written under
+the selected metric names, with `<metric>_null_alignment_ratio` as the companion numeric field.
+
+These metrics retain the alignment limitations described above: long individual sentences,
+SentAlign's word limits, and oversized final groups can still prevent meaningful/full scoring.
+Adding MetricX is not the lossless budget-splitting improvement proposed by the coverage audit.
+No real XL checkpoint inference or new human-correlation/quality comparison has been run as part
+of this integration; the old COMET comparison tables are not MetricX results.
 
 ## SEGALE
 

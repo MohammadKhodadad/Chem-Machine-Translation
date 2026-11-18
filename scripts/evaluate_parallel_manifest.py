@@ -14,6 +14,11 @@ from chem_machine_translation.evaluation.aligned_comet import (
     SentAlignCometConfig,
     SentAlignCometScorer,
 )
+from chem_machine_translation.evaluation.aligned_metricx import (
+    ReferenceAssignmentMetricXScorer,
+    SentAlignMetricXScorer,
+    TokenCheckedMetricXScorer,
+)
 from chem_machine_translation.evaluation.metrics import (
     BERTSCORE_DEFAULT_MODEL,
     COMET_DEFAULT_MODEL,
@@ -100,6 +105,10 @@ def parse_args() -> argparse.Namespace:
         "--sentalign-comet-config", type=Path, default=None,
         help="Evaluation TOML with a [sentalign_comet] table.",
     )
+    parser.add_argument(
+        "--metricx-config", type=Path, default=None,
+        help="Evaluation TOML with [metricx] and optional alignment settings.",
+    )
     parser.add_argument("--bertscore-model", default=BERTSCORE_DEFAULT_MODEL)
     parser.add_argument("--bertscore-batch-size", type=int, default=8)
     parser.add_argument("--bertscore-device", default=None)
@@ -175,6 +184,23 @@ def main() -> None:
             )
         )
         sentalign_comet_scorer = SentAlignCometScorer(config=sentalign_config)
+    reference_assignment_metricx_scorer = sentalign_metricx_scorer = None
+    if {"reference_assignment_metricx", "sentalign_metricx"}.intersection(metric_names):
+        metricx_config = evaluation_config_from_mapping(
+            load_mapping_from_file(args.metricx_config) if args.metricx_config else {},
+            base_dir=args.metricx_config.parent if args.metricx_config else Path.cwd(),
+        )
+        metricx_backend = TokenCheckedMetricXScorer(metricx_config.metricx)
+        if "reference_assignment_metricx" in metric_names:
+            reference_assignment_metricx_scorer = ReferenceAssignmentMetricXScorer(
+                metricx_config.metricx, alignment_config=metricx_config.aligned_comet,
+                metricx_scorer=metricx_backend,
+            )
+        if "sentalign_metricx" in metric_names:
+            sentalign_metricx_scorer = SentAlignMetricXScorer(
+                metricx_config.metricx, alignment_config=metricx_config.sentalign_comet,
+                metricx_scorer=metricx_backend,
+            )
     bertscore_scorer = (
         HuggingFaceBertScoreScorer(
             model_name=args.bertscore_model,
@@ -269,6 +295,8 @@ def main() -> None:
                 metric_details=metric_details,
                 aligned_comet_scorer=aligned_comet_scorer,
                 sentalign_comet_scorer=sentalign_comet_scorer,
+                reference_assignment_metricx_scorer=reference_assignment_metricx_scorer,
+                sentalign_metricx_scorer=sentalign_metricx_scorer,
                 source_language=str(manifest_row.get("source_language") or "xx"),
                 target_language=str(manifest_row.get("target_language") or "xx"),
             )

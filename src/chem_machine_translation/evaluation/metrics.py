@@ -24,6 +24,8 @@ GENERAL_METRIC_NAMES = (
     "comet",
     "reference_assignment_comet",
     "sentalign_comet",
+    "reference_assignment_metricx",
+    "sentalign_metricx",
     "aligned_comet",
     "cometkiwi_qe",
     "xcomet_xl",
@@ -36,7 +38,10 @@ GENERAL_METRIC_NAMES = (
 DEFAULT_METRIC_NAMES = tuple(
     metric
     for metric in GENERAL_METRIC_NAMES
-    if metric not in {"bleurt", "aligned_comet", "reference_assignment_comet", "sentalign_comet"}
+    if metric not in {
+        "bleurt", "aligned_comet", "reference_assignment_comet", "sentalign_comet",
+        "reference_assignment_metricx", "sentalign_metricx",
+    }
 )
 TERMINOLOGY_TERM_GROUPS = ("llm", "algorithmic", "verified", "refined")
 DEFAULT_TERMINOLOGY_TERM_GROUPS = ("verified",)
@@ -396,6 +401,8 @@ def compute_translation_metrics(
     source_language: str = "xx",
     target_language: str = "xx",
     sentalign_comet_scorer: Any | None = None,
+    reference_assignment_metricx_scorer: Any | None = None,
+    sentalign_metricx_scorer: Any | None = None,
 ) -> dict[str, float]:
     selected_metrics = parse_metric_names(metric_names)
     metrics: dict[str, float] = {}
@@ -472,6 +479,30 @@ def compute_translation_metrics(
             sentalign_comet_scorer or SentAlignCometScorer()
             if metric_name == "sentalign_comet"
             else aligned_comet_scorer or AlignedCometScorer()
+        )
+        result = scorer.score_document(
+            source=source, prediction=prediction, reference=reference,
+            source_language=source_language, target_language=target_language,
+        )
+        metrics[metric_name] = result.score
+        metrics[f"{metric_name}_null_alignment_ratio"] = result.null_alignment_ratio
+        if metric_details is not None:
+            metric_details[metric_name] = asdict(result)
+
+    for metric_name in ("reference_assignment_metricx", "sentalign_metricx"):
+        if metric_name not in selected_metrics:
+            continue
+        if source is None:
+            raise ValueError("Aligned MetricX metric requires source text.")
+        from chem_machine_translation.evaluation.aligned_metricx import (
+            ReferenceAssignmentMetricXScorer,
+            SentAlignMetricXScorer,
+        )
+
+        scorer = (
+            sentalign_metricx_scorer or SentAlignMetricXScorer()
+            if metric_name == "sentalign_metricx"
+            else reference_assignment_metricx_scorer or ReferenceAssignmentMetricXScorer()
         )
         result = scorer.score_document(
             source=source, prediction=prediction, reference=reference,

@@ -35,6 +35,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+metricx = [
+  "protobuf>=4.25.0",
+  "sentencepiece>=0.2.0",
+]
 sentalign = [
   "sentalign==2.0.0",
 ]

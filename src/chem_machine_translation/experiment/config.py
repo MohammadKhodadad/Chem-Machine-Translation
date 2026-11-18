@@ -14,6 +14,7 @@ from chem_machine_translation.evaluation.aligned_comet import (
     AlignedCometConfig,
     SentAlignCometConfig,
 )
+from chem_machine_translation.evaluation.aligned_metricx import MetricXConfig
 from chem_machine_translation.evaluation.metrics import (
     BERTSCORE_DEFAULT_MODEL,
     COMET_DEFAULT_MODEL,
@@ -82,6 +83,7 @@ class EvaluationRunConfig:
     fsp_mqm_timeout: float = 120.0
     aligned_comet: AlignedCometConfig = field(default_factory=AlignedCometConfig)
     sentalign_comet: SentAlignCometConfig = field(default_factory=SentAlignCometConfig)
+    metricx: MetricXConfig = field(default_factory=MetricXConfig)
 
 
 @dataclass(frozen=True)
@@ -212,6 +214,7 @@ def evaluation_config_from_mapping(
             payload.get("reference_assignment_comet") or payload.get("aligned_comet") or {}
         )),
         sentalign_comet=SentAlignCometConfig(**dict(payload.get("sentalign_comet") or {})),
+        metricx=MetricXConfig(**dict(payload.get("metricx") or {})),
     )
 
 

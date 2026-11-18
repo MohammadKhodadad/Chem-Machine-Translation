@@ -368,6 +368,10 @@ dependencies = [
 bleurt = [
     { name = "bleurt" },
 ]
+metricx = [
+    { name = "protobuf" },
+    { name = "sentencepiece" },
+]
 sentalign = [
     { name = "sentalign" },
 ]
@@ -391,12 +395,14 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.9" },
     { name = "numpy", specifier = ">=1.23.5" },
     { name = "openai", specifier = ">=1.40.0" },
+    { name = "protobuf", marker = "extra == 'metricx'", specifier = ">=4.25.0" },
     { name = "pydantic", specifier = ">=2.8.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "rich", specifier = ">=13.7.1" },
     { name = "sacrebleu", specifier = ">=2.4.0" },
     { name = "scipy", specifier = ">=1.10.0" },
     { name = "sentalign", marker = "extra == 'sentalign'", specifier = "==2.0.0" },
+    { name = "sentencepiece", marker = "extra == 'metricx'", specifier = ">=0.2.0" },
     { name = "setuptools", specifier = ">=70.0.0,<81.0.0" },
     { name = "spacy", specifier = ">=3.8.15" },
     { name = "stanza", specifier = ">=1.14.0" },
@@ -406,7 +412,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.12.3" },
     { name = "unbabel-comet", specifier = ">=2.2.0" },
 ]
-provides-extras = ["sentalign", "bleurt", "tokens"]
+provides-extras = ["metricx", "sentalign", "bleurt", "tokens"]
 
 [package.metadata.requires-dev]
 dev = [

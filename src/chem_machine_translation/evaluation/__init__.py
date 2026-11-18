@@ -5,6 +5,12 @@ from chem_machine_translation.evaluation.aligned_comet import (
     SentAlignCometConfig,
     SentAlignCometScorer,
 )
+from chem_machine_translation.evaluation.aligned_metricx import (
+    MetricXConfig,
+    ReferenceAssignmentMetricXScorer,
+    SentAlignMetricXScorer,
+    TokenCheckedMetricXScorer,
+)
 from chem_machine_translation.evaluation.comparison import (
     REPORT_COLUMNS,
     timestamped_report_path,
@@ -41,6 +47,10 @@ from chem_machine_translation.evaluation.metrics import (
 )
 
 __all__ = [
+    "MetricXConfig",
+    "ReferenceAssignmentMetricXScorer",
+    "SentAlignMetricXScorer",
+    "TokenCheckedMetricXScorer",
     "AlignedCometConfig",
     "AlignedCometResult",
     "AlignedCometScorer",

@@ -1,0 +1,25 @@
+name = "aligned-metricx-24-xl"
+metrics = ["reference_assignment_metricx", "sentalign_metricx"]
+
+[metricx]
+model = "google/metricx-24-hybrid-xl-v2p6"
+tokenizer = "google/mt5-xl"
+device = "cpu"
+dtype = "auto"
+batch_size = 1
+max_input_tokens = 1536
+null_score = 25.0
+allow_long_inputs = false
+
+[reference_assignment_comet]
+embedding_model = "BAAI/bge-m3"
+embedding_pooling = "cls"
+embedding_max_tokens = 8192
+minimum_similarity = 0.5
+
+[sentalign_comet]
+alignment_model = "BAAI/bge-m3"
+alignment_pooling = "cls"
+alignment_max_tokens = 8192
+max_concatenations = 4
+score_cutoff = 0.4
