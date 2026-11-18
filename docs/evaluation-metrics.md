@@ -255,7 +255,7 @@ and defaults are unchanged.
 ### Exact Matching And Scoring Procedure
 
 **Status:** this is our custom reference-anchored alignment-and-aggregation protocol. It is
-implemented and has passed synthetic stress tests, but is not a finalized, independently validated
+implemented and has passed synthetic tests, but is not a finalized, independently validated
 research metric or an exact implementation of a published document metric.
 
 The controlling implementation is [aligned_comet.py](../src/chem_machine_translation/evaluation/aligned_comet.py).
@@ -533,6 +533,14 @@ paths, token counts, and SHA-256 text hashes. The
 constructed candidates, all scores and alignment audits, timings, model/package settings, and
 expected-order checks, including failures.
 
+A [Chinese patent fixture](../tests/fixtures/real_document_metrics_chinese_length_safe.json) and
+[2026-11-18 rerun report](../reports/real_document_metrics/comparison_chinese_length_safe_20261118.json)
+add one English-to-Chinese record and its real donor. The original nine-record fixture and report
+are preserved unchanged. The Chinese record uses **the same eligibility rules and scorer settings
+as the original nine** and is included in the four-record patent means below. An earlier Chinese
+run that allowed oversized segments is retained only as a separate failure example, not as part
+of this comparison.
+
 ### Selection And Candidate Construction
 
 Three distinct primary documents per dataset were selected, one in each direction en-to-de,
@@ -543,7 +551,16 @@ four segmented sentences on each side, and no individual sentence above 510 COME
 This last restriction excludes inherently over-budget sentences, not alignment failures or low
 scores. Documents are neither repeated nor concatenated to make them long.
 
-The actual nine sources contain 757-1,437 tokens and their references contain 847-1,725 tokens.
+For the Chinese supplement, only Google Patents is selected, because the two JRC datasets do not
+contain Chinese. The same 600-2,000-token range, four-segment minimum, and
+510-token maximum per segment apply, with `--allow-overlong-sentences` **disabled**. Of 883
+`en-zh` patent pairs, 579 meet the full-text length range and 13 also meet the segment-count
+requirement; excluding the two with overlong segments leaves **11 eligible pairs**. The longest
+eligible pair is selected without checking its scores: `TW-201519892-A`, whose largest segment
+has 388 tokens. Its donor is a different eligible patent, `CN-101031558-B`, chosen by the same
+nearest-reference-length rule. No Chinese-specific splitting or truncation setting is introduced.
+
+The actual ten sources contain 757-1,437 tokens and their references contain 847-1,725 tokens.
 Donors are distinct documents from the same dataset and language direction, chosen by nearest
 reference token length. All 18 original primary/donor pairs were checked against their CSV text
 and manifest IDs. The source-reference translations are dataset material, not newly authored
@@ -558,12 +575,16 @@ Each primary record produces eight candidates:
 | `tail_replacement_25/50/75` | Replace that tail with sentences from its real donor record |
 | `wrong_document` | Use the donor's full, unmodified reference |
 
-This gives **9 primary records x 8 variants = 72 cases**, with **216 scoring attempts** across
+The original run gives **9 primary records x 8 variants = 72 cases**, with **216 scoring attempts** across
 ordinary COMET, Reference Assignment COMET, and SentAlign-COMET. Percentages describe sentence
 counts, not token/meaning percentages or human quality ratings. Counts are rounded; exact affected
 indices and actual fractions are saved. Donor sentences cycle if there are fewer donor sentences
 than replacement positions. A donor from the same domain may share boilerplate or terminology;
 "different document" does not guarantee every replacement sentence is semantically unrelated.
+
+With the Chinese supplement, the combined inventory is **10 primary records, 80 cases, and 240
+scoring attempts**, all yielding finite scores without scoring exceptions. The Chinese supplement
+contributes eight cases and 24 successful scoring attempts under the original eligibility rules.
 
 The reference control is a positive control relative to the dataset, not proof of a flawless
 source-reference pair. Corrupted variants rejoin retained sentences with newlines; this can change
@@ -575,10 +596,11 @@ translations. The metric settings were not retuned after inspecting the outcomes
 
 ### Selected Records
 
-**All nine source texts are English.** Target languages are German (`de`), French (`fr`), and
-Spanish (`es`), with one record per dataset/direction. Each direction therefore contributes three
-primary records, 24 candidate cases, and 72 scores; each dataset contributes the same counts.
-Reverse directions and other languages are not covered by this real-record run.
+**All ten source texts are English.** The original targets are German (`de`), French (`fr`), and
+Spanish (`es`), with one record per dataset/direction. Each original direction contributes three
+primary records, 24 candidate cases, and 72 scores. Chinese (`zh`) adds one Google Patents record
+and eight candidate cases; no Chinese JRC records or reverse directions are included. Google
+Patents now has four primary records, while each JRC dataset retains three.
 
 The case labels below are shorthand used only in this guide: `P` = Google Patents, `A` = JRC
 articles, and `D` = JRC definitions. Patent records are abstract pairs; JRC records are anchored
@@ -596,6 +618,7 @@ Both pairs of size columns are **source / reference**.
 | P-DE | en -> de | `WO-2021259536-A3` | Power-semiconductor contacts and sintering layers | 1071 / 1052 | 12 / 12 |
 | P-FR | en -> fr | `EP-3080535-A2` | Lightweight ceramic aggregate made from coal ash | 1437 / 1725 | 9 / 10 |
 | P-ES | en -> es | `WO-2012163308-A2` | Oil-industry wastewater treatment and solids/oil separation | 1250 / 1390 | 24 / 17 |
+| P-ZH | en -> zh | `TW-201519892-A` | Crystalline laquinimod sodium particles, impurity limits and pharmaceutical quality control | 989 / 871 | 7 / 5 |
 | A-DE | en -> de | `jrc22004D0121:chunk-0827` | EEA veterinary and phytosanitary rules | 930 / 992 | 11 / 26 |
 | A-FR | en -> fr | `jrc22005A0315_01:chunk-1120` | TDCA amendments, agreement languages and originals | 924 / 1012 | 18 / 15 |
 | A-ES | en -> es | `jrc22006D0045:chunk-1911` | EEA technical regulations, standards and certification | 833 / 973 | 15 / 11 |
@@ -611,19 +634,22 @@ rounded by sentence count: it affects 8/17 sentences (47.1%) for P-ES and 14/27 
 
 ### Real-Record Results
 
-All 72 cases completed with finite scores for all three methods and no scoring exceptions.
+All 80 cases completed with finite scores for all three methods and no scoring exceptions.
 Both aligned scorers accounted for every segmented sentence exactly once. Every scored aligned
-input stayed within the COMET limit; the largest had **481 tokens**.
+input stayed within the COMET limit; the largest had **481 tokens**. The Chinese record's largest
+scored input was 388 tokens for Reference Assignment COMET and 428 tokens for SentAlign.
 
-Selected means below average three records per dataset/condition. They are method-specific scales,
-not directly interchangeable quality estimates:
+Google Patents means below now average **four records** per condition (`en-de`, `en-fr`, `en-es`,
+`en-zh`); each JRC mean still averages three. These are equal-record means, not language-balanced
+cross-dataset comparisons. Values are method-specific scales, not directly interchangeable quality
+estimates:
 
 | Dataset | Condition | Ordinary COMET | Reference Assignment COMET | SentAlign-COMET |
 | --- | --- | --- | --- | --- |
-| Google Patents | Reference control | 0.8994 | 0.7586 | 0.5591 |
-| Google Patents | 50% tail omission | 0.8994 | 0.4081 | 0.3133 |
-| Google Patents | 50% tail replacement | 0.8994 | 0.4582 | 0.3761 |
-| Google Patents | Wrong document | 0.6257 | 0.2260 | 0.1598 |
+| Google Patents | Reference control | 0.9134 | 0.7367 | 0.5863 |
+| Google Patents | 50% tail omission | 0.9134 | 0.4068 | 0.3349 |
+| Google Patents | 50% tail replacement | 0.9134 | 0.4220 | 0.3598 |
+| Google Patents | Wrong document | 0.6275 | 0.1807 | 0.2031 |
 | JRC articles | Reference control | 0.9211 | 0.6198 | 0.8407 |
 | JRC articles | 50% tail omission | 0.9135 | 0.2816 | 0.3734 |
 | JRC articles | 50% tail replacement | 0.9134 | 0.3895 | 0.5023 |
@@ -637,7 +663,7 @@ not directly interchangeable quality estimates:
 
 Each cell below is **ordinary COMET / Reference Assignment COMET / SentAlign-COMET**, rounded
 to four decimals. "Control" is the exact reference; "wrong document" is the exact donor reference.
-These are individual scores, unlike the three-record means above. Other severity levels and
+These are individual scores, unlike the dataset means above. Other severity levels and
 unrounded values remain available in the linked JSON report.
 
 | Case | Control | 50% tail omission | 50% tail replacement | Wrong document |
@@ -645,6 +671,7 @@ unrounded values remain available in the linked JSON report.
 | P-DE | 0.9252 / 0.9173 / 0.6570 | 0.9252 / 0.4569 / 0.3265 | 0.9252 / 0.6546 / 0.4199 | 0.7873 / 0.5570 / 0.3278 |
 | P-FR | 0.8778 / 0.7897 / 0.3534 | 0.8778 / 0.4464 / 0.2562 | 0.8778 / 0.4341 / 0.3156 | 0.6015 / 0.0440 / 0.0759 |
 | P-ES | 0.8952 / 0.5687 / 0.6667 | 0.8952 / 0.3208 / 0.3572 | 0.8952 / 0.2858 / 0.3929 | 0.4882 / 0.0769 / 0.0756 |
+| P-ZH | 0.9553 / 0.6712 / 0.6679 | 0.9553 / 0.4030 / 0.3997 | 0.9553 / 0.3135 / 0.3109 | 0.6330 / 0.0447 / 0.3331 |
 | A-DE | 0.9357 / 0.3848 / 0.9275 | 0.9281 / 0.1713 / 0.4183 | 0.9281 / 0.2881 / 0.4634 | 0.8580 / 0.2528 / 0.4016 |
 | A-FR | 0.8999 / 0.7987 / 0.6730 | 0.8999 / 0.3685 / 0.2858 | 0.8999 / 0.3431 / 0.4094 | 0.5139 / 0.0991 / 0.1786 |
 | A-ES | 0.9277 / 0.6759 / 0.9216 | 0.9127 / 0.3051 / 0.4161 | 0.9123 / 0.5374 / 0.6341 | 0.8278 / 0.4268 / 0.5489 |
@@ -674,7 +701,38 @@ Several individual cases explain why the aggregate results need care:
 Null-block ratios above are the share of constructed scoring blocks assigned gap states, not
 percentages of omitted words or meaning. Different aligners construct different blocks, so their
 ratios are not directly interchangeable coverage estimates. With only one record per
-dataset/direction, the table is diagnostic evidence, not a reliable German/French/Spanish ranking.
+dataset/direction, the table is diagnostic evidence, not a reliable ranking of these languages.
+
+#### Chinese Results Under The Same Rules
+
+P-ZH uses `TW-201519892-A`; its donor is the distinct `CN-101031558-B` patent (832 source / 787
+reference tokens, maximum segment 296 tokens). The primary's seven source segments have lengths
+388, 220, 43, 30, 194, 59, and 67 tokens. Its five reference segments have lengths **344, 265,
+155, 54, and 61 tokens**. All primary and donor segments satisfy the same 510-token limit as the
+other languages, without manual cleanup or Chinese-specific segmentation.
+
+The Chinese control scores **0.9553 / 0.6712 / 0.6679** under ordinary COMET / Reference Assignment
+COMET / SentAlign-COMET. Both aligners have five matched control blocks out of seven, with a
+**28.6% null-block ratio**. The matched blocks contain substantive reference text, not the comment
+fragments from the earlier oversized-input example. All 24 Chinese scoring attempts succeed.
+
+The 25% and 50% omission and replacement variants retain the same ordinary-COMET candidate token
+IDs as the control, so all four receive its exact score. The 75% omission and replacement scores
+fall to 0.8841 and 0.8432, respectively. Fractions are still rounded by segment count: the 50%
+variant changes 2/5 segments (40%), while 75% changes 4/5 (80%).
+
+Reference Assignment COMET has strict severity ordering for both omission and replacement.
+SentAlign has strict omission ordering, but its replacement score rises from **0.3109 at 50%**
+to **0.4039 at 75%**. The donor's wrong-document scores are **0.6330 / 0.0447 / 0.3331**. Thus
+consistent eligibility removes the earlier input-size rejection, not all alignment or calibration
+limitations. This remains one Chinese record, not a Chinese-language quality benchmark.
+
+The [earlier oversized-input fixture](../tests/fixtures/real_document_metrics_chinese.json) and
+[its report](../reports/real_document_metrics/comparison_chinese_20261118.json) are preserved
+separately. That `CN-105142674-A` example allowed overlong segments, rejected all eight Reference
+Assignment COMET attempts, and scored only comment fragments in SentAlign's control. It is
+**excluded from every comparison table, average, and expected-order total above and below**.
+Its `Rejected` values indicate an input-size error, not a judgment of poor translation quality.
 
 #### Expected-Order Checks
 
@@ -682,11 +740,16 @@ Expected-order checks are empirical diagnostics, not assertions that are forced 
 
 | Check | Ordinary COMET | Reference Assignment COMET | SentAlign-COMET |
 | --- | --- | --- | --- |
-| Reference control strictly above degraded variant | 33/63 | 63/63 | 63/63 |
-| Strict ordering: control > 25% > 50% > 75% omission | 2/9 | 8/9 | 8/9 |
-| Strict ordering: control > 25% > 50% > 75% replacement | 2/9 | 9/9 | 7/9 |
+| Reference control strictly above degraded variant | 36/70 | 70/70 | 70/70 |
+| Strict ordering: control > 25% > 50% > 75% omission | 2/10 | 9/10 | 9/10 |
+| Strict ordering: control > 25% > 50% > 75% replacement | 2/10 | 10/10 | 7/10 |
 
-Ordinary COMET tied its control exactly on **30 of 63 degraded cases**. In each of those 30 cases,
+These checks combine the original nine records with the consistently selected Chinese case.
+All comparisons are scored. The original control-above-degraded counts were 33/63, 63/63, and
+63/63; Chinese adds 3/7, 7/7, and 7/7 respectively. The oversized-input example is not included.
+
+Ordinary COMET tied its control exactly on **34 of 70 degraded cases** (30/63 originally, plus four
+Chinese tail-corruption cases). In each of those 34 cases,
 the retained candidate token IDs also equal those of the reference. For example, the English-to-
 French patent record keeps ordinary COMET at 0.8778 even with 75% of reference sentences removed
 or replaced. This is measured input-window blindness, not evidence that the corrupted ending is good.
@@ -712,8 +775,10 @@ replacement more credit than the 50% replacement in two JRC article cases. Chang
 group weights, and partial-gap absorption can make a more extensively corrupted candidate score
 higher; the report retains the raw links needed to investigate these cases.
 
-**Conclusion:** both aligned methods detect these constructed long-tail corruptions more reliably
-than whole-record COMET, but neither is validated as a calibrated document-quality score. The
+**Conclusion:** on the consistently selected ten-record cohort, both aligned methods detect these constructed
+long-tail corruptions more reliably than whole-record COMET, but neither is validated as a
+calibrated document-quality score. The Chinese rerun succeeds without token-budget rejections
+but retains an alignment-related severity-order failure for SentAlign replacement. The
 reference-assignment variant has more consistent replacement ordering on this tiny selection;
 SentAlign can handle real boundary changes but also has damaging span/length constraints with
 current settings. Language-aware legal segmentation, word-limit/span inspection, and held-out
@@ -731,6 +796,9 @@ uv run --no-sync pytest tests/test_real_document_metrics.py -q
 uv run --no-sync python scripts/evaluate_real_document_metrics.py `
   --fixtures tests/fixtures/real_document_metrics.json `
   --output reports/real_document_metrics/comparison_rerun.json
+uv run --no-sync python scripts/evaluate_real_document_metrics.py `
+  --fixtures tests/fixtures/real_document_metrics_chinese_length_safe.json `
+  --output reports/real_document_metrics/comparison_chinese_rerun.json
 ```
 
 To repeat selection from the full local dataset directories instead of using the frozen fixture:
@@ -738,6 +806,9 @@ To repeat selection from the full local dataset directories instead of using the
 ```powershell
 uv run --no-sync python scripts/evaluate_real_document_metrics.py --select-only `
   --output reports/real_document_metrics/fixtures_new.json
+uv run --no-sync python scripts/evaluate_real_document_metrics.py --select-only `
+  --only-dataset google_patents --directions en-zh `
+  --output reports/real_document_metrics/fixtures_chinese_new.json
 ```
 
 The selected directories and eligibility settings are recorded in the fixture. The three dataset
@@ -778,6 +849,43 @@ The installed COMET XLM-R encoder exposes 512 positions from its 514-position mo
 its `prepare_sample` uses `max_length = max_positions - 2`, giving an effective **510-token input
 limit including special tokens**. This is verified against the installed encoder, not guessed
 from an approximate word count. Our aligned scorer checks the same limit before inference.
+The limit applies separately to source, candidate, and reference, not to their combined length.
+An overlong input has **strictly more than 510 tokens**, not 510 words.
+
+### How Sentence Separation Works
+
+The audit calls [`SpacySentenceSegmenter.segment`](../src/chem_machine_translation/evaluation/aligned_comet.py)
+independently for each source and reference text. The aligned scorers also segment the candidate
+independently; sentence boundaries are not copied from the source or reference.
+
+1. Empty or whitespace-only text produces no segments.
+2. The text is split into lines with `splitlines()`. Blank lines are ignored, and each remaining
+  line is processed independently. Consequently, a newline forces separation even if it occurs
+  in the middle of a grammatical sentence; a segment never crosses a line boundary.
+3. For this audit, the model mapping is empty (`SpacySentenceSegmenter({})`), so every language
+  uses `spacy.blank("xx")` plus spaCy's rule-based `sentencizer`. This is a multilingual tokenizer
+  followed by punctuation-based sentence-boundary rules, not a trained language-specific parser.
+  Passing a language code does not automatically select a model for that language.
+4. The segmenter takes the resulting `pipeline(line).sents` spans in their original order,
+  strips leading/trailing whitespace from each, and discards empty spans. It does not translate
+  or paraphrase the content. The audit separately verifies preservation of all non-whitespace
+  characters.
+5. Only after segmentation are the segments tokenized with COMET's XLM-R tokenizer for length
+  checks. spaCy tokens and COMET subword tokens are different units. There is **no token-budget
+  splitting**: a segment longer than 510 COMET tokens remains one overlong segment.
+
+For example, `First sentence. Second sentence.` produces two segments, while
+`First clause; second clause.` remains one. `This continues\non the next line.` also produces
+two segments because of the newline, despite being one grammatical sentence. Adjacent Chinese
+or Japanese sentences without whitespace can remain a single segment, as discussed below.
+
+The implementation supports an explicit language-to-model mapping outside this audit. For a
+configured language it loads that spaCy pipeline and uses its existing `parser`, `senter`, or
+`sentencizer`; if none is present, it adds a `sentencizer`. Unconfigured languages still fall back
+to the blank multilingual pipeline. Using language-specific models would change the segmentation
+and require rerunning the audit; it would not itself guarantee that every segment fits COMET.
+Sentence separation is also distinct from alignment: the aligner subsequently decides which
+segments correspond, and grouped alignment inputs may be longer than the individual segments.
 
 ### Whole Records Versus Individual Sentences
 
@@ -816,25 +924,63 @@ Each row counts distinct language/text inputs **within that dataset**, combining
 reference roles. "Overlong" means at least one segment exceeds 510 tokens. These denominators
 differ from paired-row counts above, and are not independent translation-quality observations.
 
-| Dataset | Language | Distinct inputs | Inputs with an overlong segment | Largest segment, tokens |
+The units must be distinguished:
+
+- **Sentence-segment percentage:** overlong segments divided by all segments. This counts
+  individual segments, not rows or texts.
+- **Affected-text percentage:** distinct language/text inputs containing at least one overlong
+  segment divided by all distinct inputs in that group. Each text is flagged only once, regardless
+  of how many of its segments overflow; identical texts reused across pairs are deduplicated.
+- **Affected-pair percentage:** manifest translation-pair rows whose source or reference contains
+  at least one overlong segment. The earlier **5773 / 20397 (28.3%)** is this measure, not the
+  percentage of sentences or distinct texts.
+
+| Dataset | Language | Distinct inputs | Inputs with an overlong segment | Affected-text percentage | Largest segment, tokens |
+| --- | --- | --- | --- | --- | --- |
+| Google Patents | German (`de`) | 777 | 420 | 54.05% | 2144 |
+| Google Patents | English (`en`) | 4588 | 1817 | 39.60% | 7005 |
+| Google Patents | Spanish (`es`) | 1633 | 372 | 22.78% | 3255 |
+| Google Patents | French (`fr`) | 4735 | 808 | 17.06% | 3167 |
+| Google Patents | Japanese (`ja`) | 1316 | 161 | 12.23% | 1306 |
+| Google Patents | Russian (`ru`) | 1806 | 497 | 27.52% | 7744 |
+| Google Patents | Chinese (`zh`) | 1786 | 610 | 34.15% | 2220 |
+| JRC articles | German (`de`) | 481 | 4 | 0.83% | 921 |
+| JRC articles | English (`en`) | 531 | 5 | 0.94% | 743 |
+| JRC articles | Spanish (`es`) | 675 | 9 | 1.33% | 860 |
+| JRC articles | French (`fr`) | 762 | 11 | 1.44% | 860 |
+| JRC articles | Portuguese (`pt`) | 772 | 6 | 0.78% | 882 |
+| JRC definitions | German (`de`) | 526 | 15 | 2.85% | 921 |
+| JRC definitions | English (`en`) | 694 | 188 | 27.09% | 839 |
+| JRC definitions | Spanish (`es`) | 867 | 274 | 31.60% | 1003 |
+| JRC definitions | French (`fr`) | 901 | 323 | 35.85% | 1091 |
+| JRC definitions | Portuguese (`pt`) | 922 | 279 | 30.26% | 969 |
+
+Pooling all three datasets and deduplicating language/text inputs across datasets gives the
+following results, sorted by sentence-segment overflow rate. A segment occurring in different
+distinct texts is counted within each text; this is not a deduplicated sentence inventory.
+
+| Language | Overlong segments / all segments | Sentence-segment percentage | Affected texts / distinct inputs | Affected-text percentage |
 | --- | --- | --- | --- | --- |
-| Google Patents | German (`de`) | 777 | 420 | 2144 |
-| Google Patents | English (`en`) | 4588 | 1817 | 7005 |
-| Google Patents | Spanish (`es`) | 1633 | 372 | 3255 |
-| Google Patents | French (`fr`) | 4735 | 808 | 3167 |
-| Google Patents | Japanese (`ja`) | 1316 | 161 | 1306 |
-| Google Patents | Russian (`ru`) | 1806 | 497 | 7744 |
-| Google Patents | Chinese (`zh`) | 1786 | 610 | 2220 |
-| JRC articles | German (`de`) | 481 | 4 | 921 |
-| JRC articles | English (`en`) | 531 | 5 | 743 |
-| JRC articles | Spanish (`es`) | 675 | 9 | 860 |
-| JRC articles | French (`fr`) | 762 | 11 | 860 |
-| JRC articles | Portuguese (`pt`) | 772 | 6 | 882 |
-| JRC definitions | German (`de`) | 526 | 15 | 921 |
-| JRC definitions | English (`en`) | 694 | 188 | 839 |
-| JRC definitions | Spanish (`es`) | 867 | 274 | 1003 |
-| JRC definitions | French (`fr`) | 901 | 323 | 1091 |
-| JRC definitions | Portuguese (`pt`) | 922 | 279 | 969 |
+| Chinese (`zh`) | 612 / 2027 | 30.19% | 610 / 1786 | 34.15% |
+| English (`en`) | 2024 / 38670 | 5.23% | 2007 / 5804 | 34.58% |
+| Japanese (`ja`) | 161 / 3490 | 4.61% | 161 / 1316 | 12.23% |
+| Russian (`ru`) | 505 / 14709 | 3.43% | 497 / 1806 | 27.52% |
+| Spanish (`es`) | 655 / 20632 | 3.17% | 653 / 3165 | 20.63% |
+| French (`fr`) | 1149 / 38303 | 3.00% | 1138 / 6387 | 17.82% |
+| German (`de`) | 443 / 22938 | 1.93% | 435 / 1777 | 24.48% |
+| Portuguese (`pt`) | 281 / 15338 | 1.83% | 281 / 1683 | 16.70% |
+
+Dataset composition matters: German patent segments overflow at **14.87%**, versus **0.03%**
+for JRC articles and **0.17%** for JRC definitions. Pooled language rankings are descriptive,
+not controlled comparisons of language difficulty.
+
+**Segmentation caveat:** these counts use the existing pipeline's segments, not linguistically
+verified sentences. A focused runtime check on 2026-11-18 confirmed that the same splitter returns
+one segment for two adjacent Chinese or Japanese sentences separated by their normal full stop
+without whitespace, while returning two for the English equivalent. Thus Chinese's high segment
+overflow rate can partly reflect missed boundaries. A language-aware segmentation rerun is needed
+before attributing these differences to language alone; the figures above retain the original
+audit's segmentation and tokenizer settings. Generated translations are not included.
 
 ### Additional SentAlign Constraints
 

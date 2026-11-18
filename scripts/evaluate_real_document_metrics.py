@@ -31,7 +31,7 @@ def text_hash(text: str) -> str:
 
 
 def select_documents(dataset_dirs, tokenizer, segmenter, directions, min_tokens=600,
-                     max_tokens=2000):
+                     max_tokens=2000, allow_overlong_sentences=False):
     documents = []
     screening = []
     for dataset, directory in dataset_dirs.items():
@@ -60,7 +60,7 @@ def select_documents(dataset_dirs, tokenizer, segmenter, directions, min_tokens=
                     len(tokenizer.encode(sentence, add_special_tokens=True, truncation=False))
                     for sentence in source_sentences + reference_sentences
                 )
-                if maximum_sentence_tokens > 510:
+                if maximum_sentence_tokens > 510 and not allow_overlong_sentences:
                     continue
                 identity = str(row.get("source_id") or row["source_row_id"])
                 by_direction[row["direction"]].append({
@@ -71,6 +71,7 @@ def select_documents(dataset_dirs, tokenizer, segmenter, directions, min_tokens=
                     "reference_sentences": reference_sentences,
                     "full_token_counts": counts,
                     "maximum_sentence_tokens": maximum_sentence_tokens,
+                    "selection_allow_overlong_sentences": allow_overlong_sentences,
                     "source_sha256": text_hash(source), "reference_sha256": text_hash(reference),
                     "provenance": {
                         "dataset_dir": directory.as_posix(),
@@ -313,6 +314,8 @@ def main():
     parser.add_argument("--select-only", action="store_true")
     parser.add_argument("--fixtures", type=Path)
     parser.add_argument("--directions", nargs="+", default=["en-de", "en-fr", "en-es"])
+    parser.add_argument("--only-dataset", choices=sorted(DEFAULT_DATASETS))
+    parser.add_argument("--allow-overlong-sentences", action="store_true")
     parser.add_argument("--min-tokens", type=int, default=600)
     parser.add_argument("--max-tokens", type=int, default=2000)
     args = parser.parse_args()
@@ -328,15 +331,19 @@ def main():
         report = json.loads(args.fixtures.read_text(encoding="utf-8"))
     else:
         documents, screening = select_documents(
-            DEFAULT_DATASETS, tokenizer, segmenter, args.directions,
-            args.min_tokens, args.max_tokens,
+            {name: path for name, path in DEFAULT_DATASETS.items()
+             if args.only_dataset is None or name == args.only_dataset},
+            tokenizer, segmenter, args.directions,
+            args.min_tokens, args.max_tokens, args.allow_overlong_sentences,
         )
         report = {
             "protocol": "Real benchmark records with deterministic reference-derived degradations.",
             "quality_labels": "Construction labels only; not human ratings or new MT outputs.",
             "selection": {
                 "min_tokens_per_side": args.min_tokens, "max_tokens_per_side": args.max_tokens,
-                "minimum_sentences_per_side": 4, "max_individual_sentence_tokens": 510,
+                "minimum_sentences_per_side": 4,
+                "max_individual_sentence_tokens": None if args.allow_overlong_sentences else 510,
+                "allow_overlong_sentences": args.allow_overlong_sentences,
                 "directions": args.directions, "screening": screening,
                 "rule": (
                     "Longest minimum side length first; distinct documents; "

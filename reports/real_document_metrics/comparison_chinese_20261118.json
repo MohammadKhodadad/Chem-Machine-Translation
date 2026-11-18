@@ -1,0 +1,3552 @@
+{
+  "protocol": "Real benchmark records with deterministic reference-derived degradations.",
+  "quality_labels": "Construction labels only; not human ratings or new MT outputs.",
+  "selection": {
+    "min_tokens_per_side": 600,
+    "max_tokens_per_side": 2000,
+    "minimum_sentences_per_side": 4,
+    "max_individual_sentence_tokens": null,
+    "allow_overlong_sentences": true,
+    "directions": [
+      "en-zh"
+    ],
+    "screening": [
+      {
+        "dataset": "google_patents",
+        "direction": "en-zh",
+        "eligible_count": 13
+      }
+    ],
+    "rule": "Longest minimum side length first; distinct documents; no score-based selection."
+  },
+  "documents": [
+    {
+      "id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6. L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'. <!-- 2 --> <!-- 3 -->",
+      "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。 <!-- 2 --> <!-- 3 -->",
+      "source_language": "en",
+      "target_language": "zh",
+      "reference_sentences": [
+        "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+        "<!--",
+        "2 --> <!--",
+        "3 -->"
+      ],
+      "full_token_counts": {
+        "source": 1072,
+        "reference": 1007
+      },
+      "maximum_sentence_tokens": 995,
+      "selection_allow_overlong_sentences": true,
+      "source_sha256": "11ece3ed639c0a9dde8b1c64fd1d6a0487a2c44ea77ffd06d37be5ac8c12a716",
+      "reference_sha256": "7962680085bacd8b3daf2c4a46cac2a67cce133b9e481b9917f252cc240b1552",
+      "provenance": {
+        "dataset_dir": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local",
+        "manifest": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local/google-patents-13-directions-10397-pairs-manifest.jsonl",
+        "manifest_line": 5774,
+        "dataset": "google_patents",
+        "source_id": "within-document:abstract:en-zh:CN-105142674-A",
+        "source_row_id": "within-document:abstract:en-zh:CN-105142674-A_source",
+        "target_row_id": "within-document:abstract:en-zh:CN-105142674-A_target",
+        "doc_id": "CN-105142674-A",
+        "anchor_id": null,
+        "publication_number": "CN-105142674-A",
+        "section_type": null
+      },
+      "donor": {
+        "id": "google_patents:en-zh:within-document:abstract:en-zh:TW-201519892-A",
+        "dataset": "google_patents",
+        "direction": "en-zh",
+        "source": "The subject invention provides a mixture of crystalline laquinimod sodium particles, wherein (i) 90% or more of the total amount by volume of the laquinimod sodium particles have a size of 40 microns or less or (ii) 50% or more of the total amount by volume of the laquinimod sodium particles have a size of 15 microns or less, and wherein: (a) the mixture has a bulk density of 0.2 g/mL to 0.4 g/mL; (b) the mixture has a tapped density of 0.40 g/mL to 0.7 g/mL; (c) an amount of heavy metal in the mixture is no more than 0.002% of heavy metal relative to the amount by weight of laquinimod soditum; (d) an amount of 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline (MCQ) in the mixture is no more than 0.15% relative to the amount of laquinimod sodium as measured by HPLC; (e) an amount of 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylic acid (MCQCA) in the mixture is no more than 0.15% relative to the amount of laquinimod sodium as measured by HPLC; or (f) an amount of methyl 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylate (MCQME) in the mixture is no more than 0.12% relative to the amount of laquinimod sodium as measured by HPLC. The subject invention also provides a pharmaceutical composition comprising an amount of laquinimod and at least one of 2-chloro-6-(3-(ethyl(phenyl)amino)-2-hydroxy-N-methyl-3-oxopropanamido)benzoic acid (BH-3-HLAQ), 5-Chloro-4-hydroxy-1-methylquinolin-2(1H)-one (MCQ), 5-Chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylic acid (MCQCA), Methyl 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylate (MCQME), N-Ethylaniline (NEA), and Ethyl 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylate (MCQEE). The subject invention also provides processes for preparing BH-3-HLAQ, MCQ, MCQCA, MCQME, MCQEE, and compounds prepared by said processes. The subject invention also provides a process for testing whether a sample of laquinimod contains an undesirable impurity. The subject invention further provides a process for preparing a validated pharmaceutical composition comprising laquinimod, a process for preparing a pharmaceutical composition comprising laquinimod, or for distributing a validated batch of a pharmaceutical composition comprising laquinimod, a process for validating a batch of a pharmaceutical product containing laquinimod or a pharmaceutically acceptable salt thereof and a pharmaceutically acceptable carrier for distribution, and a process for preparing a packaged pharmaceutical composition comprising laquinimod or a pharmaceutically acceptable salt thereof, each comprising determining the amount of at least one of BH-3-HLAQ, MCQ, MCQCA, MCQME, NEA, and MCQEE in a sample or batch. The subject invention further provides use of BH-3-HLAQ, MCQ, MCQCA, MCQME, MCQEE as a reference standard to detect trace amounts of the impurity in a pharmaceutical composition comprising laquinimod. Finally, the subject invention provides methods of determining the concentration of BH-3-HLAQ, MCQ, MCQCA, MCQME, MCQEE, 5-HLAQ, SPIRO-LAQ or 3 H-LAQ in a pharmaceutical composition comprising laquinimod.",
+        "reference": "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。 本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。 本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。 本發明另外提供一種以BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE作為參考標準物於偵測包含拉喹莫德之醫藥組合物中痕量雜質上之用途。 最後，本發明提供一種測定包含拉喹莫德之醫藥組合物中BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE、5-HLAQ、SPIRO-LAQ或3 H-LAQ之濃度的方法。",
+        "source_language": "en",
+        "target_language": "zh",
+        "reference_sentences": [
+          "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。",
+          "本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。",
+          "本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。",
+          "本發明另外提供一種以BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE作為參考標準物於偵測包含拉喹莫德之醫藥組合物中痕量雜質上之用途。",
+          "最後，本發明提供一種測定包含拉喹莫德之醫藥組合物中BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE、5-HLAQ、SPIRO-LAQ或3 H-LAQ之濃度的方法。"
+        ],
+        "full_token_counts": {
+          "source": 989,
+          "reference": 871
+        },
+        "maximum_sentence_tokens": 388,
+        "selection_allow_overlong_sentences": true,
+        "source_sha256": "e8f06a6364e97ca5bf23fc573d3cf3e8a5f0dea0a7352250f40bbbc6dce454c1",
+        "reference_sha256": "81d0fa57668f08a4218e34a1bf0a05f14e8d92031594c27a29e8da7728c5f30d",
+        "provenance": {
+          "dataset_dir": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local",
+          "manifest": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local/google-patents-13-directions-10397-pairs-manifest.jsonl",
+          "manifest_line": 5853,
+          "dataset": "google_patents",
+          "source_id": "within-document:abstract:en-zh:TW-201519892-A",
+          "source_row_id": "within-document:abstract:en-zh:TW-201519892-A_source",
+          "target_row_id": "within-document:abstract:en-zh:TW-201519892-A_target",
+          "doc_id": "TW-201519892-A",
+          "anchor_id": null,
+          "publication_number": "TW-201519892-A",
+          "section_type": null
+        }
+      }
+    }
+  ],
+  "started_at": "2026-11-18T18:13:03.677084+00:00",
+  "comet_checkpoint": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--Unbabel--wmt22-comet-da\\snapshots\\2760a223ac957f30acfb18c8aa649b01cf1d75f2\\checkpoints\\model.ckpt",
+  "embedding_snapshot": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+  "reference_assignment_config": {
+    "embedding_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+    "embedding_device": "cpu",
+    "embedding_batch_size": 8,
+    "embedding_max_tokens": 8192,
+    "embedding_pooling": "cls",
+    "segmenter_models": {},
+    "comet_model": "Unbabel/wmt22-comet-da",
+    "comet_batch_size": 8,
+    "comet_gpus": 0,
+    "minimum_similarity": 0.5,
+    "null_score": 0.0,
+    "max_comet_tokens": 510,
+    "max_sentences": 1000
+  },
+  "sentalign_config": {
+    "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+    "alignment_pooling": "cls",
+    "alignment_device": "cpu",
+    "alignment_batch_size": 8,
+    "alignment_max_tokens": 8192,
+    "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+    "max_concatenations": 4,
+    "score_cutoff": 0.4,
+    "segmenter_models": {},
+    "comet_model": "Unbabel/wmt22-comet-da",
+    "comet_batch_size": 8,
+    "comet_gpus": 0,
+    "null_score": 0.0,
+    "max_comet_tokens": 510,
+    "max_sentences": 1000
+  },
+  "package_versions": {
+    "sentalign": "2.0.0",
+    "unbabel-comet": "2.2.7",
+    "transformers": "4.57.6",
+    "torch": "2.13.0",
+    "spacy": "3.8.15"
+  },
+  "seed": 42,
+  "torch_threads": 4,
+  "results": [
+    {
+      "condition": "reference_control",
+      "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。 <!-- 2 --> <!-- 3 -->",
+      "changed_reference_indices": [],
+      "nominal_corruption_fraction": 0.0,
+      "construction": "Unmodified dataset reference; positive control, not a model output.",
+      "prediction_sha256": "7962680085bacd8b3daf2c4a46cac2a67cce133b9e481b9917f252cc240b1552",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.9441078901290894,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.42555929933275494
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 995}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.42555929933275494,
+          "null_alignment_ratio": 0.5714285714285714,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "<!--",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [
+                1
+              ],
+              "state": "matched",
+              "score": 0.9955874085426331,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 6,
+                "reference": 6,
+                "prediction": 6
+              }
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "2 --> <!--",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [
+                2
+              ],
+              "state": "matched",
+              "score": 0.9934853315353394,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 8,
+                "reference": 8,
+                "prediction": 8
+              }
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "3 -->",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [
+                3
+              ],
+              "state": "matched",
+              "score": 0.9898423552513123,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 4,
+                "reference": 4,
+                "prediction": 4
+              }
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0005271999398246408,
+                  "embeddings": 45.82803610002156,
+                  "anchoring": 6.360001862049103e-05,
+                  "read-embeddings": 2.400018274784088e-06,
+                  "align": 0.02420919993892312
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.99999994
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 0.99999994
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.00016960001084953547,
+                  "embeddings": 0.01103489997331053,
+                  "anchoring": 4.429998807609081e-05,
+                  "read-embeddings": 2.499902620911598e-06,
+                  "align": 0.0009681000374257565
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 16
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 4.300540099968202,
+        "reference_assignment_comet": 19.351484299986623,
+        "sentalign_comet": 46.46117300004698
+      },
+      "prediction_tokens": 1007,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": true,
+      "first_different_token": null
+    },
+    {
+      "condition": "tail_omission_25",
+      "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。\n<!--\n2 --> <!--",
+      "changed_reference_indices": [
+        3
+      ],
+      "nominal_corruption_fraction": 0.25,
+      "actual_sentence_corruption_fraction": 0.25,
+      "donor_id": null,
+      "construction": "Keep the first 3 reference sentences; omission of the last 1. Replacement sentences come from a different real document, not authored text.",
+      "prediction_sha256": "078cd3854d3af5dc2250fcb33646445d7aa2816da278aafd706b2bd77315da8b",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.9441078901290894,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.28415324858256746
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 995}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.28415324858256746,
+          "null_alignment_ratio": 0.7142857142857143,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "<!--",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [
+                1
+              ],
+              "state": "matched",
+              "score": 0.9955874085426331,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 6,
+                "reference": 6,
+                "prediction": 6
+              }
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "2 --> <!--",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [
+                2
+              ],
+              "state": "matched",
+              "score": 0.9934853315353394,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 8,
+                "reference": 8,
+                "prediction": 8
+              }
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                3
+              ]
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0005981000140309334,
+                  "embeddings": 0.006030800053849816,
+                  "anchoring": 1.2200092896819115e-05,
+                  "read-embeddings": 2.900022082030773e-06,
+                  "align": 0.0009778999956324697
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    1
+                  ],
+                  "score": 1.0000001
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 0.99999994
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.00016830000095069408,
+                  "embeddings": 15.568195299943909,
+                  "anchoring": 2.6899971999228e-05,
+                  "read-embeddings": 2.199900336563587e-06,
+                  "align": 0.0005610999651253223
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 12
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 3.686631799908355,
+        "reference_assignment_comet": 0.007761600078083575,
+        "sentalign_comet": 15.584496800089255
+      },
+      "prediction_tokens": 1005,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": true,
+      "first_different_token": 1004
+    },
+    {
+      "condition": "tail_replacement_25",
+      "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。\n<!--\n2 --> <!--\n本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。",
+      "changed_reference_indices": [
+        3
+      ],
+      "nominal_corruption_fraction": 0.25,
+      "actual_sentence_corruption_fraction": 0.25,
+      "donor_id": "google_patents:en-zh:within-document:abstract:en-zh:TW-201519892-A",
+      "construction": "Keep the first 3 reference sentences; replacement of the last 1. Replacement sentences come from a different real document, not authored text.",
+      "prediction_sha256": "5f8abb96dcdbf319ad95468b5dc0d8b3aa3494f35bbb67814594633e1acdcfba",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.9441078901290894,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.24863409250974655
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 995}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.24863409250974655,
+          "null_alignment_ratio": 0.75,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "<!--",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [
+                1
+              ],
+              "state": "matched",
+              "score": 0.9955874085426331,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 6,
+                "reference": 6,
+                "prediction": 6
+              }
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "2 --> <!--",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [
+                2
+              ],
+              "state": "matched",
+              "score": 0.9934853315353394,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 8,
+                "reference": 8,
+                "prediction": 8
+              }
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                3
+              ]
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                3
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0003501999890431762,
+                  "embeddings": 0.000727499951608479,
+                  "anchoring": 8.600065484642982e-06,
+                  "read-embeddings": 1.600012183189392e-06,
+                  "align": 0.00040829996578395367
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    1
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 0.99999994
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.00013289996422827244,
+                  "embeddings": 30.982674700091593,
+                  "anchoring": 1.2499978765845299e-05,
+                  "read-embeddings": 1.9000144675374031e-06,
+                  "align": 0.00044680002611130476
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 16
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 3.6861398000037298,
+        "reference_assignment_comet": 0.7830606000497937,
+        "sentalign_comet": 30.993064200039953
+      },
+      "prediction_tokens": 1347,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": true,
+      "first_different_token": 1004
+    },
+    {
+      "condition": "tail_omission_50",
+      "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。\n<!--",
+      "changed_reference_indices": [
+        2,
+        3
+      ],
+      "nominal_corruption_fraction": 0.5,
+      "actual_sentence_corruption_fraction": 0.5,
+      "donor_id": null,
+      "construction": "Keep the first 2 reference sentences; omission of the last 2. Replacement sentences come from a different real document, not authored text.",
+      "prediction_sha256": "2426045c08f89a021d3abd8ac6d8c4f7dcfed6eebc41597d815d0bfb5ae4f873",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.9441078901290894,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.1422267726489476
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 995}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.1422267726489476,
+          "null_alignment_ratio": 0.8571428571428572,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "<!--",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [
+                1
+              ],
+              "state": "matched",
+              "score": 0.9955874085426331,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 6,
+                "reference": 6,
+                "prediction": 6
+              }
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                2
+              ]
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                3
+              ]
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0002669999375939369,
+                  "embeddings": 0.0012946000788360834,
+                  "anchoring": 2.8199981898069382e-05,
+                  "read-embeddings": 1.800013706088066e-06,
+                  "align": 0.0005986999021843076
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    1
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0001235998934134841,
+                  "embeddings": 7.995070299948566,
+                  "anchoring": 1.5600002370774746e-05,
+                  "read-embeddings": 1.1998927220702171e-06,
+                  "align": 0.0005269000539556146
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 8
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 3.653428800054826,
+        "reference_assignment_comet": 0.007138099987059832,
+        "sentalign_comet": 8.0053242999129
+      },
+      "prediction_tokens": 999,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": true,
+      "first_different_token": 998
+    },
+    {
+      "condition": "tail_replacement_50",
+      "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。\n<!--\n本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。\n本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。",
+      "changed_reference_indices": [
+        2,
+        3
+      ],
+      "nominal_corruption_fraction": 0.5,
+      "actual_sentence_corruption_fraction": 0.5,
+      "donor_id": "google_patents:en-zh:within-document:abstract:en-zh:TW-201519892-A",
+      "construction": "Keep the first 2 reference sentences; replacement of the last 2. Replacement sentences come from a different real document, not authored text.",
+      "prediction_sha256": "bcddc0449663e0407f307d4bb0aa15d0bbd72f01c52249dfde9f843dcbb64ff9",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.9441078901290894,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.17120663076639175
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 995}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.17120663076639175,
+          "null_alignment_ratio": 0.75,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "<!--",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [
+                1
+              ],
+              "state": "matched",
+              "score": 0.9955874085426331,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 6,
+                "reference": 6,
+                "prediction": 6
+              }
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                2
+              ]
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [
+                3
+              ],
+              "state": "matched",
+              "score": 0.374065637588501,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 4,
+                "reference": 4,
+                "prediction": 265
+              }
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                2
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0002082000719383359,
+                  "embeddings": 0.0007260000566020608,
+                  "anchoring": 8.100061677396297e-06,
+                  "read-embeddings": 1.100008375942707e-06,
+                  "align": 0.0003958999877795577
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    1
+                  ],
+                  "score": 1.0000001
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    2
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.4566803
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0001314000692218542,
+                  "embeddings": 38.845236900029704,
+                  "anchoring": 1.1599971912801266e-05,
+                  "read-embeddings": 1.600012183189392e-06,
+                  "align": 0.0005513998912647367
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 16
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 3.771770399995148,
+        "reference_assignment_comet": 0.5803329999325797,
+        "sentalign_comet": 39.71554580004886
+      },
+      "prediction_tokens": 1604,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": true,
+      "first_different_token": 998
+    },
+    {
+      "condition": "tail_omission_75",
+      "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+      "changed_reference_indices": [
+        1,
+        2,
+        3
+      ],
+      "nominal_corruption_fraction": 0.75,
+      "actual_sentence_corruption_fraction": 0.75,
+      "donor_id": null,
+      "construction": "Keep the first 1 reference sentences; omission of the last 3. Replacement sentences come from a different real document, not authored text.",
+      "prediction_sha256": "9da6b470b7f06a268432d2cd8139c8c3a5050353be9a70baf0d58dc7df56972d",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.9441078901290894,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.0
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 995}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.0,
+          "null_alignment_ratio": 1.0,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                1
+              ]
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                2
+              ]
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                3
+              ]
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.00035800004843622446,
+                  "embeddings": 0.0008048999588936567,
+                  "anchoring": 1.1699972674250603e-05,
+                  "read-embeddings": 1.400010660290718e-06,
+                  "align": 0.00045279995538294315
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.00011160003487020731,
+                  "embeddings": 2.6168714000377804,
+                  "anchoring": 1.079996582120657e-05,
+                  "read-embeddings": 1.800013706088066e-06,
+                  "align": 0.0002612000098451972
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 4
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 3.9444900000235066,
+        "reference_assignment_comet": 0.007028499967418611,
+        "sentalign_comet": 2.62542910000775
+      },
+      "prediction_tokens": 995,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": true,
+      "first_different_token": 994
+    },
+    {
+      "condition": "tail_replacement_75",
+      "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。\n本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。\n本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。\n本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。",
+      "changed_reference_indices": [
+        1,
+        2,
+        3
+      ],
+      "nominal_corruption_fraction": 0.75,
+      "actual_sentence_corruption_fraction": 0.75,
+      "donor_id": "google_patents:en-zh:within-document:abstract:en-zh:TW-201519892-A",
+      "construction": "Keep the first 1 reference sentences; replacement of the last 3. Replacement sentences come from a different real document, not authored text.",
+      "prediction_sha256": "c1a09f695cd6663c6410e38d1553a92c8d662322db322630cc3ec07d87ae55e3",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.9441078901290894,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.04156284862094455
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 995}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.04156284862094455,
+          "null_alignment_ratio": 0.8888888888888888,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                1
+              ]
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                2
+              ]
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [
+                2
+              ],
+              "state": "matched",
+              "score": 0.374065637588501,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 4,
+                "reference": 4,
+                "prediction": 265
+              }
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                1
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                3
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.00025459995958954096,
+                  "embeddings": 0.0007109000580385327,
+                  "anchoring": 1.079996582120657e-05,
+                  "read-embeddings": 1.600012183189392e-06,
+                  "align": 0.0004832000704482198
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 0.4566803
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0001802999759092927,
+                  "embeddings": 43.91247579990886,
+                  "anchoring": 1.3899989426136017e-05,
+                  "read-embeddings": 1.300009898841381e-06,
+                  "align": 0.0005472999764606357
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 16
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 3.898936100071296,
+        "reference_assignment_comet": 0.4313945999601856,
+        "sentalign_comet": 43.922308500041254
+      },
+      "prediction_tokens": 1753,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": true,
+      "first_different_token": 994
+    },
+    {
+      "condition": "wrong_document",
+      "prediction": "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。 本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。 本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。 本發明另外提供一種以BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE作為參考標準物於偵測包含拉喹莫德之醫藥組合物中痕量雜質上之用途。 最後，本發明提供一種測定包含拉喹莫德之醫藥組合物中BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE、5-HLAQ、SPIRO-LAQ或3 H-LAQ之濃度的方法。",
+      "changed_reference_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "nominal_corruption_fraction": 1.0,
+      "actual_sentence_corruption_fraction": 1.0,
+      "donor_id": "google_patents:en-zh:within-document:abstract:en-zh:TW-201519892-A",
+      "construction": "Unmodified translation of a different document in the same dataset.",
+      "prediction_sha256": "81d0fa57668f08a4218e34a1bf0a05f14e8d92031594c27a29e8da7728c5f30d",
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "scores": {
+        "comet": 0.7510907053947449,
+        "reference_assignment_comet": null,
+        "sentalign_comet": 0.08253857824537489
+      },
+      "errors": {
+        "reference_assignment_comet": "ValueError: Aligned COMET token budget exceeded (510 tokens): {'source': 654, 'reference': 995, 'prediction': 265}. Split the long sentences explicitly; inputs were not truncated."
+      },
+      "metric_details": {
+        "sentalign_comet": {
+          "score": 0.08253857824537489,
+          "null_alignment_ratio": 0.7777777777777778,
+          "blocks": [
+            {
+              "source": "",
+              "reference": "式(A)的结合物，其中：D代表基团D1或D2，虚线指示C2和C3之间的双键的可选存在；当C2和C3之间存在双键时，R 2 选自由以下组成的组：(ia)C 5-10 芳基基团，由一个或多个选自包括以下基团的组中的取代基可选取代：卤素、硝基、氰基、醚、羧基、酯、C 1-7 烷基、C 3-7 杂环基和二-氧基-C 1-3 亚烷基；(ib)C 1-5 饱和脂肪族烷基；(ic)C 3-6 饱和环烷基；(id)其中R 31 、R 32 和R 33 中每个独立地选自H、C 1-3 饱和烷基、C 2-3 烯基、C 2-3 炔基和环丙基，其中R 2 基团中的碳原子总数不超过5；(ie)其中R 35a 和R 35b 中的一个是H而另一个选自：苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；和(if)其中R 34 选自：H；C 1-3 饱和烷基；C 2-3 烯基；C 2-3 炔基；环丙基；苯基，该苯基被选自卤素、甲基、甲氧基的基团可选取代；吡啶基；和苯硫基；(ig)卤素；当C2和C3之间存在单键时，其中R 36a 和R 36b 独立地选自H、F、C 1-4 饱和烷基、C 2-3 烯基，该烷基和烯基基团被选自C 1-4 烷基酰胺基和C 1-4 烷基酯的基团可选取代；或者，当R 16a 和R 16b 中的一个是H时，另一个选自腈和C 1-4 烷基酯；Dˊ代表基团Dˊ1或Dˊ2：其中虚线指示C2ˊ和C3ˊ之间双键的可选存在；R 6 和R 9 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；R 7 独立地选自H、R、OH、OR、SH、SR、NH 2 、NHR、NRR’、NO 2 、Me 3 Sn和卤素；Y选自式A1、A2、A3、A4、A5和A6。L是连接至细胞结合剂的接头；CBA是细胞结合剂；n是选自0至48的范围内的整数；R A4 是C 1-6 亚烷基基团；要么(a)R 10 是H，和R 11 是OH、OR A ，其中R A 是C 1-4 烷基；或(b)R 10 和R 11 形成它们键连的氮和碳原子之间的氮-碳双键；或(c)R 10 是H和R 11 是OSO z M，其中z是2或3并且M是单价药用阳离子；R和R’各自独立地选自可选取代的C 1-12 烷基、C 3-20 杂环基和C 5-20 芳基基团，并且可选地关联基团NRR’，R和R’连同它们连接的氮原子一起形成可选取代的4-、5-、6-或7-元杂环环；其中R 16 、R 17 、R 19 、R 20 、R 21 和R 22 是如分别对R 6 、R 7 、R 9 、R 10 、R 11 和R 2 所限定的；其中Z是CH或N；其中T和T’独立地选自单键或C 1-9 亚烷基，该链可以被一个或多个杂原子例如O、S、N(H)、NMe中断，条件是X和X’之间的原子的最短链中的原子数是3至12个原子；和X和X’独立地选自O、S和N(H)；除了C2和C3与C2’和C3’二者之间不能都是双键之外。",
+              "prediction": "",
+              "source_indices": [],
+              "reference_indices": [
+                0
+              ],
+              "prediction_indices": [],
+              "state": "source_unmatched",
+              "score": 0.0,
+              "source_null_reference_indices": [
+                0
+              ],
+              "candidate_null_reference_indices": [
+                0
+              ]
+            },
+            {
+              "source": "<!--",
+              "reference": "<!--",
+              "prediction": "",
+              "source_indices": [
+                2
+              ],
+              "reference_indices": [
+                1
+              ],
+              "prediction_indices": [],
+              "state": "omission",
+              "score": 0.0,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [
+                1
+              ]
+            },
+            {
+              "source": "2 --> <!--",
+              "reference": "2 --> <!--",
+              "prediction": "本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。",
+              "source_indices": [
+                3
+              ],
+              "reference_indices": [
+                2
+              ],
+              "prediction_indices": [
+                1
+              ],
+              "state": "matched",
+              "score": 0.3273724615573883,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 8,
+                "reference": 8,
+                "prediction": 265
+              }
+            },
+            {
+              "source": "3 -->",
+              "reference": "3 -->",
+              "prediction": "最後，本發明提供一種測定包含拉喹莫德之醫藥組合物中BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE、5-HLAQ、SPIRO-LAQ或3 H-LAQ之濃度的方法。",
+              "source_indices": [
+                4
+              ],
+              "reference_indices": [
+                3
+              ],
+              "prediction_indices": [
+                4
+              ],
+              "state": "matched",
+              "score": 0.4154747426509857,
+              "source_null_reference_indices": [],
+              "candidate_null_reference_indices": [],
+              "token_counts": {
+                "source": 4,
+                "reference": 4,
+                "prediction": 61
+              }
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                0
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                2
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "",
+              "reference": "",
+              "prediction": "本發明另外提供一種以BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE作為參考標準物於偵測包含拉喹莫德之醫藥組合物中痕量雜質上之用途。",
+              "source_indices": [],
+              "reference_indices": [],
+              "prediction_indices": [
+                3
+              ],
+              "state": "addition",
+              "score": 0.0
+            },
+            {
+              "source": "A conjugate of formula wherein: d represents a group D1 or D2, the dotted line indicating the optional presence of a double bond between C2 and C3; when there is a double bond between C2 and C3, R 2 Selected from the group consisting of: (ia) C 5-10 An aryl group optionally substituted with one or more substituents selected from the group comprising: halogen, nitro, cyano, ether, carboxyl, ester, C 1-7 Alkyl radical, C 3-7 Heterocyclyl and di-oxy-C 1-3 An alkylene group; (ib) C 1-5 A saturated aliphatic alkyl group; C 3-6 A saturated cycloalkyl group; (id) wherein R 31 、R 32 And R 33 Each independently selected from H, C 1-3 Saturated alkyl radical, C 2-3 Alkenyl radical, C 2-3 Alkynyl and cyclopropyl, wherein R 2 The total number of carbon atoms in the group is not more than 5; (ie) wherein R 35a And R 35b One of which is H and the other is selected from: phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; and (if) wherein R 34 Selected from: h; c 1-3 A saturated alkyl group; c 2-3 An alkenyl group; c 2-3 An alkynyl group; a cyclopropyl group; phenyl optionally substituted with a group selected from halogen, methyl, methoxy; a pyridyl group; and a phenylthio group; (ig) halogen; when a single bond is present between C2 and C3, wherein R 36a And R 36b Independently selected from H, F, C 1-4 Saturated alkyl radical, C 2-3 Alkenyl, the alkyl and alkenyl radicals being selected from C 1-4 Alkylamide group and C 1-4 The alkyl ester group is optionally substituted; or, when R is 16a And R 16b When one of them is H, the other is selected from the group consisting of nitrile and C 1-4 An alkyl ester; d ' represents a group D ' 1 or D ' 2: wherein the dashed line indicates the optional presence of a double bond between C2 'and C3'; r 6 And R 9 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; r 7 Independently selected from H, R, OH, OR, SH, SR, NH 2 、NHR、NRR’、NO 2 、Me 3 Sn and halogen; y is selected from the group consisting of formula A1, A2, A3, A4, A5 and A6.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                0
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            },
+            {
+              "source": "L is a linker to a cell binding agent; CBA is a cell binding agent; n is an integer selected from the range of 0 to 48; r A4 Is C 1-6 An alkylene group; or R 10 Is H, and R 11 Is OH, OR A Wherein R is A Is C 1-4 An alkyl group; or (b) R 10 And R 11 Form a nitrogen-carbon double bond between the nitrogen and carbon atoms to which they are bonded; or R 10 Is H and R 11 Is OSO z M, wherein z is 2 or 3 and M is a monovalent pharmaceutically acceptable cation; r and R' are each independently selected from optionally substituted C 1-12 Alkyl radical, C 3-20 Heterocyclyl and C 5-20 An aryl radical, andoptionally the linking groups NRR ', R and R' together with the nitrogen atom to which they are attached form an optionally substituted 4-, 5-, 6-or 7-membered heterocyclic ring; wherein R is 16 、R 17 、R 19 、R 20 、R 21 And R 22 Such as for R respectively 6 、R 7 、R 9 、R 10 、R 11 And R 2 As defined; wherein Z is CH or N; wherein T and T' are independently selected from a single bond or C 1-9 Alkylene, which chain may be interrupted by one or more heteroatoms such as O, S, N , NMe, with the proviso that the number of atoms in the shortest chain of atoms between X and X' is 3 to 12 atoms; and X' are independently selected from O, S and N ; except that there cannot be double bonds between both C2 and C3 and C2 'and C3'.",
+              "reference": "",
+              "prediction": "",
+              "source_indices": [
+                1
+              ],
+              "reference_indices": [],
+              "prediction_indices": [],
+              "state": "source_only",
+              "score": 0.0
+            }
+          ],
+          "config": {
+            "alignment_model": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+            "alignment_pooling": "cls",
+            "alignment_device": "cpu",
+            "alignment_batch_size": 8,
+            "alignment_max_tokens": 8192,
+            "alignment_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+            "max_concatenations": 4,
+            "score_cutoff": 0.4,
+            "segmenter_models": {},
+            "comet_model": "Unbabel/wmt22-comet-da",
+            "comet_batch_size": 8,
+            "comet_gpus": 0,
+            "null_score": 0.0,
+            "max_comet_tokens": 510,
+            "max_sentences": 1000,
+            "alignment": "sentalign_2_reference_span_closure",
+            "aggregation": "equal_block_mean",
+            "source_language": "en",
+            "target_language": "zh",
+            "sentalign_version": "2.0.0",
+            "compat": "none",
+            "alignment_inputs_may_truncate": true,
+            "source_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [
+                    2
+                  ],
+                  "score": 1.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.9999998
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 1.0
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.0002610000083222985,
+                  "embeddings": 0.0007279000710695982,
+                  "anchoring": 1.0600080713629723e-05,
+                  "read-embeddings": 1.100008375942707e-06,
+                  "align": 0.00041640002746134996
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "candidate_alignment": {
+              "links": [
+                {
+                  "src": [
+                    0
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    1
+                  ],
+                  "trg": [],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    0
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    2
+                  ],
+                  "trg": [
+                    1
+                  ],
+                  "score": 0.41338256
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    2
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [],
+                  "trg": [
+                    3
+                  ],
+                  "score": 0.0
+                },
+                {
+                  "src": [
+                    3
+                  ],
+                  "trg": [
+                    4
+                  ],
+                  "score": 0.4519816
+                }
+              ],
+              "info": {
+                "timings_seconds": {
+                  "overlaps": 0.00026400003116577864,
+                  "embeddings": 20.732498799916357,
+                  "anchoring": 2.7099973522126675e-05,
+                  "read-embeddings": 1.6998965293169022e-06,
+                  "align": 0.0004995000781491399
+                },
+                "anchoring": {
+                  "strategy": "mutual-best",
+                  "node_limit": 100000000,
+                  "nodes": 20
+                }
+              },
+              "anchors": []
+            },
+            "backend_config": {
+              "corpus_folder": null,
+              "source_language": "eng",
+              "target_language": "isl",
+              "filename": null,
+              "output_folder": "output",
+              "max_concatenations": 4,
+              "free_concatenations": 2,
+              "score_cutoff": 0.4,
+              "minimum_length_words": 1,
+              "maximum_length_words": 110,
+              "penalty_after_words": 80,
+              "penalty_per_word": 0.01,
+              "anchoring_delimiter": 100000000,
+              "maximum_length_gale_church": 10000,
+              "proc_device": "cpu",
+              "num_proc": 1,
+              "compat": "none",
+              "overwrite": false,
+              "model_name": "C:\\Users\\khoda\\.cache\\huggingface\\hub\\models--BAAI--bge-m3\\snapshots\\5617a9f61b028005a4858fdac845db406aefb181",
+              "max_length": 128,
+              "batch_size": 8,
+              "cutoff_penalty": 1.25,
+              "minimum_labse_anchor": 0.95,
+              "labse_subtraction": 0.05,
+              "abs_minimum_labse_anchor": 0.8,
+              "info_folder": null,
+              "scorer": "embedding",
+              "encoder_kind": "hf",
+              "pooling": "cls",
+              "max_tokens": 8192,
+              "model_revision": null,
+              "batch_order": "length",
+              "dedupe_texts": true,
+              "embedding_cache": "D:\\jobs\\Jobs\\BASF\\Reranker\\Chem-Machine-Translation\\benchmark_work\\sentalign_real_embedding_cache",
+              "trust_remote_code": false,
+              "half": false,
+              "batch_texts": 200000,
+              "anchors": "auto",
+              "anchor_margin": 0.05,
+              "anchor_min_words": 4,
+              "max_segment_nodes": 4000000000,
+              "pathfinder": "sentalign-dp",
+              "path_backend": "auto",
+              "reward": "sentalign",
+              "length_prior": false,
+              "pathfinder_options": null
+            }
+          }
+        }
+      },
+      "seconds": {
+        "comet": 3.642898299964145,
+        "reference_assignment_comet": 0.386648099985905,
+        "sentalign_comet": 22.25810370000545
+      },
+      "prediction_tokens": 871,
+      "regular_retained_prediction_tokens": 510,
+      "regular_reference_prediction_ids_equal": false,
+      "first_different_token": 1
+    }
+  ],
+  "completed": true,
+  "summary": [
+    {
+      "dataset": "google_patents",
+      "condition": "reference_control",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.9441078901290894
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "reference_control",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "reference_control",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.42555929933275494
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_25",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.9441078901290894
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_25",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_25",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.28415324858256746
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_50",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.9441078901290894
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_50",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_50",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.1422267726489476
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_75",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.9441078901290894
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_75",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_omission_75",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.0
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_25",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.9441078901290894
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_25",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_25",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.24863409250974655
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_50",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.9441078901290894
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_50",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_50",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.17120663076639175
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_75",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.9441078901290894
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_75",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "tail_replacement_75",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.04156284862094455
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "wrong_document",
+      "metric": "comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.7510907053947449
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "wrong_document",
+      "metric": "reference_assignment_comet",
+      "case_count": 1,
+      "scored_count": 0,
+      "mean": null
+    },
+    {
+      "dataset": "google_patents",
+      "condition": "wrong_document",
+      "metric": "sentalign_comet",
+      "case_count": 1,
+      "scored_count": 1,
+      "mean": 0.08253857824537489
+    }
+  ],
+  "quality_checks": [
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_25",
+      "passed": false,
+      "drop": 0.0
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_25",
+      "passed": false,
+      "drop": 0.0
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_50",
+      "passed": false,
+      "drop": 0.0
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_50",
+      "passed": false,
+      "drop": 0.0
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_75",
+      "passed": false,
+      "drop": 0.0
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_75",
+      "passed": false,
+      "drop": 0.0
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "control_above_degraded",
+      "condition": "wrong_document",
+      "passed": true,
+      "drop": 0.19301718473434448
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "strict_degradation_order",
+      "condition": "omission",
+      "passed": false,
+      "scores": [
+        0.9441078901290894,
+        0.9441078901290894,
+        0.9441078901290894,
+        0.9441078901290894
+      ]
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "comet",
+      "expectation": "strict_degradation_order",
+      "condition": "replacement",
+      "passed": false,
+      "scores": [
+        0.9441078901290894,
+        0.9441078901290894,
+        0.9441078901290894,
+        0.9441078901290894
+      ]
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_25",
+      "passed": null,
+      "drop": null
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_25",
+      "passed": null,
+      "drop": null
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_50",
+      "passed": null,
+      "drop": null
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_50",
+      "passed": null,
+      "drop": null
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_75",
+      "passed": null,
+      "drop": null
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_75",
+      "passed": null,
+      "drop": null
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "control_above_degraded",
+      "condition": "wrong_document",
+      "passed": null,
+      "drop": null
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "strict_degradation_order",
+      "condition": "omission",
+      "passed": null,
+      "scores": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "reference_assignment_comet",
+      "expectation": "strict_degradation_order",
+      "condition": "replacement",
+      "passed": null,
+      "scores": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_25",
+      "passed": true,
+      "drop": 0.14140605075018747
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_25",
+      "passed": true,
+      "drop": 0.17692520682300839
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_50",
+      "passed": true,
+      "drop": 0.2833325266838074
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_50",
+      "passed": true,
+      "drop": 0.2543526685663632
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_omission_75",
+      "passed": true,
+      "drop": 0.42555929933275494
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "control_above_degraded",
+      "condition": "tail_replacement_75",
+      "passed": true,
+      "drop": 0.3839964507118104
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "control_above_degraded",
+      "condition": "wrong_document",
+      "passed": true,
+      "drop": 0.34302072108738
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "strict_degradation_order",
+      "condition": "omission",
+      "passed": true,
+      "scores": [
+        0.42555929933275494,
+        0.28415324858256746,
+        0.1422267726489476,
+        0.0
+      ]
+    },
+    {
+      "document_id": "google_patents:en-zh:within-document:abstract:en-zh:CN-105142674-A",
+      "dataset": "google_patents",
+      "metric": "sentalign_comet",
+      "expectation": "strict_degradation_order",
+      "condition": "replacement",
+      "passed": true,
+      "scores": [
+        0.42555929933275494,
+        0.24863409250974655,
+        0.17120663076639175,
+        0.04156284862094455
+      ]
+    }
+  ],
+  "finished_at": "2026-11-18T18:17:25.495262+00:00"
+}

@@ -20,6 +20,11 @@ finally:
 REAL_DOCUMENTS = json.loads(
     (Path(__file__).parent / "fixtures" / "real_document_metrics.json").read_text(encoding="utf-8")
 )["documents"]
+CHINESE_DOCUMENTS = json.loads(
+    (
+        Path(__file__).parent / "fixtures" / "real_document_metrics_chinese_length_safe.json"
+    ).read_text(encoding="utf-8")
+)["documents"]
 
 
 def test_real_variants_use_only_reference_and_real_donor_sentences():
@@ -78,7 +83,24 @@ def test_real_fixture_covers_all_three_datasets_and_directions():
         assert len({document["provenance"]["doc_id"] for document in documents}) == 3
 
 
-@pytest.mark.parametrize("document", REAL_DOCUMENTS, ids=lambda document: document["id"])
+def test_chinese_fixture_uses_same_eligibility_as_original_cohort():
+    assert len(REAL_DOCUMENTS) == 9
+    assert len(CHINESE_DOCUMENTS) == 1
+    document = CHINESE_DOCUMENTS[0]
+    assert document["dataset"] == "google_patents"
+    assert document["direction"] == "en-zh"
+    assert document["source_language"] == "en"
+    assert document["target_language"] == "zh"
+    assert document["selection_allow_overlong_sentences"] is False
+    assert document["maximum_sentence_tokens"] == 388
+    assert len(document["reference_sentences"]) == 5
+    assert document["provenance"]["publication_number"] == "TW-201519892-A"
+    assert document["donor"]["selection_allow_overlong_sentences"] is False
+
+
+@pytest.mark.parametrize(
+    "document", REAL_DOCUMENTS + CHINESE_DOCUMENTS, ids=lambda document: document["id"],
+)
 def test_actual_long_record_provenance_and_all_eight_variants(document):
     donor = document["donor"]
     for item in (document, donor):
@@ -103,13 +125,21 @@ def test_actual_long_record_provenance_and_all_eight_variants(document):
         assert runner.text_hash(variant["prediction"]) == variant["prediction_sha256"]
 
 
-def test_selection_reads_actual_context_column_and_keeps_distinct_donor(tmp_path, monkeypatch):
+@pytest.mark.parametrize("allow_overlong, expected_primary, expected_donor, eligible", [
+    (False, "2", "1", 3), (True, "3", "2", 4),
+])
+def test_selection_reads_actual_context_column_and_keeps_distinct_donor(
+    tmp_path, monkeypatch, allow_overlong, expected_primary, expected_donor, eligible,
+):
     metadata = []
     pairs = {}
-    for index, count in enumerate((4, 5, 6)):
+    for index, count in enumerate((4, 5, 6, 600)):
         identity = str(index)
         source = " | ".join(["word " * count] * 4)
         reference = " | ".join([f"target{index} " * count] * 4)
+        if index == 3:
+            source = " | ".join(["word " * count] + ["word"] * 3)
+            reference = " | ".join([f"target{index} " * count] + [f"target{index}"] * 3)
         pairs[identity] = ({"context": source}, {"context": reference})
         metadata.append({
             "dataset": "patents", "source_id": identity, "source_row_id": identity,
@@ -137,7 +167,9 @@ def test_selection_reads_actual_context_column_and_keeps_distinct_donor(tmp_path
     monkeypatch.setattr(runner, "ParallelRowsLoader", Loader)
     documents, screening = runner.select_documents(
         {"patents": tmp_path}, Tokenizer(), Segmenter(), ["en-de"], min_tokens=10,
+        allow_overlong_sentences=allow_overlong,
     )
-    assert documents[0]["provenance"]["source_id"] == "2"
-    assert documents[0]["donor"]["provenance"]["source_id"] == "1"
-    assert screening[0]["eligible_count"] == 3
+    assert documents[0]["provenance"]["source_id"] == expected_primary
+    assert documents[0]["donor"]["provenance"]["source_id"] == expected_donor
+    assert documents[0]["selection_allow_overlong_sentences"] is allow_overlong
+    assert screening[0]["eligible_count"] == eligible

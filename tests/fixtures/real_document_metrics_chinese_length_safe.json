@@ -1,0 +1,98 @@
+{
+  "protocol": "Real benchmark records with deterministic reference-derived degradations.",
+  "quality_labels": "Construction labels only; not human ratings or new MT outputs.",
+  "selection": {
+    "min_tokens_per_side": 600,
+    "max_tokens_per_side": 2000,
+    "minimum_sentences_per_side": 4,
+    "max_individual_sentence_tokens": 510,
+    "allow_overlong_sentences": false,
+    "directions": [
+      "en-zh"
+    ],
+    "screening": [
+      {
+        "dataset": "google_patents",
+        "direction": "en-zh",
+        "eligible_count": 11
+      }
+    ],
+    "rule": "Longest minimum side length first; distinct documents; no score-based selection."
+  },
+  "documents": [
+    {
+      "id": "google_patents:en-zh:within-document:abstract:en-zh:TW-201519892-A",
+      "dataset": "google_patents",
+      "direction": "en-zh",
+      "source": "The subject invention provides a mixture of crystalline laquinimod sodium particles, wherein (i) 90% or more of the total amount by volume of the laquinimod sodium particles have a size of 40 microns or less or (ii) 50% or more of the total amount by volume of the laquinimod sodium particles have a size of 15 microns or less, and wherein: (a) the mixture has a bulk density of 0.2 g/mL to 0.4 g/mL; (b) the mixture has a tapped density of 0.40 g/mL to 0.7 g/mL; (c) an amount of heavy metal in the mixture is no more than 0.002% of heavy metal relative to the amount by weight of laquinimod soditum; (d) an amount of 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline (MCQ) in the mixture is no more than 0.15% relative to the amount of laquinimod sodium as measured by HPLC; (e) an amount of 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylic acid (MCQCA) in the mixture is no more than 0.15% relative to the amount of laquinimod sodium as measured by HPLC; or (f) an amount of methyl 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylate (MCQME) in the mixture is no more than 0.12% relative to the amount of laquinimod sodium as measured by HPLC. The subject invention also provides a pharmaceutical composition comprising an amount of laquinimod and at least one of 2-chloro-6-(3-(ethyl(phenyl)amino)-2-hydroxy-N-methyl-3-oxopropanamido)benzoic acid (BH-3-HLAQ), 5-Chloro-4-hydroxy-1-methylquinolin-2(1H)-one (MCQ), 5-Chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylic acid (MCQCA), Methyl 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylate (MCQME), N-Ethylaniline (NEA), and Ethyl 5-chloro-4-hydroxy-1-methyl-2-oxo-1,2-dihydroquinoline-3-carboxylate (MCQEE). The subject invention also provides processes for preparing BH-3-HLAQ, MCQ, MCQCA, MCQME, MCQEE, and compounds prepared by said processes. The subject invention also provides a process for testing whether a sample of laquinimod contains an undesirable impurity. The subject invention further provides a process for preparing a validated pharmaceutical composition comprising laquinimod, a process for preparing a pharmaceutical composition comprising laquinimod, or for distributing a validated batch of a pharmaceutical composition comprising laquinimod, a process for validating a batch of a pharmaceutical product containing laquinimod or a pharmaceutically acceptable salt thereof and a pharmaceutically acceptable carrier for distribution, and a process for preparing a packaged pharmaceutical composition comprising laquinimod or a pharmaceutically acceptable salt thereof, each comprising determining the amount of at least one of BH-3-HLAQ, MCQ, MCQCA, MCQME, NEA, and MCQEE in a sample or batch. The subject invention further provides use of BH-3-HLAQ, MCQ, MCQCA, MCQME, MCQEE as a reference standard to detect trace amounts of the impurity in a pharmaceutical composition comprising laquinimod. Finally, the subject invention provides methods of determining the concentration of BH-3-HLAQ, MCQ, MCQCA, MCQME, MCQEE, 5-HLAQ, SPIRO-LAQ or 3 H-LAQ in a pharmaceutical composition comprising laquinimod.",
+      "reference": "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。 本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。 本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。 本發明另外提供一種以BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE作為參考標準物於偵測包含拉喹莫德之醫藥組合物中痕量雜質上之用途。 最後，本發明提供一種測定包含拉喹莫德之醫藥組合物中BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE、5-HLAQ、SPIRO-LAQ或3 H-LAQ之濃度的方法。",
+      "source_language": "en",
+      "target_language": "zh",
+      "reference_sentences": [
+        "本發明提供拉喹莫德鈉(laquinimod sodium)結晶粒子之混合物，其中(i)佔總體積量90%或90%以上之拉喹莫德鈉粒子具有40微米或40微米以下之粒徑或(ii)佔總體積量50%或50%以上之拉喹莫德鈉粒子具有15微米或15微米以下之粒徑，且其中：a)該混合物具有0.2g/mL至0.4g/mL之容積密度；b)該混合物具有0.40g/mL至0.7g/mL之敲緊密度；c)該混合物中重金屬之量相對於拉喹莫德鈉重量計不超過0.002%的重金屬；d)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉(MCQ)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；e)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.15%；或f)該混合物中5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)之量如由HPLC所量測相對於拉喹莫德鈉之量不超過0.12%。",
+        "本發明亦提供一種醫藥組合物，其包含一定量拉喹莫德及2-氯-6-(3-(乙基(苯基)胺基)-2-羥基-N-甲基-3-側氧基丙醯胺基)苯甲酸(BH-3-HLAQ)、5-氯-4-羥基-1-甲基喹啉-2(1H)-酮(MCQ)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸(MCQCA)、5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸甲酯(MCQME)、N-乙基苯胺(NEA)及5-氯-4-羥基-1-甲基-2-側氧基-1,2-二氫喹啉-3-甲酸乙酯(MCQEE)中之至少一者。本發明亦提供用於製備BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE之方法及藉由該等方法製備之化合物。本發明亦提供一種測試拉喹莫德樣品是否含有不希望有的雜質之方法。",
+        "本發明另外提供一種製備包含拉喹莫德之驗證醫藥組合物的方法、一種製備包含拉喹莫德之醫藥組合物或用於分配該已驗證批次之包含拉喹莫德之醫藥組合物的方法、一種驗證含有拉喹莫德或其醫藥學上可接受之鹽及醫藥學上可接受之載劑之醫藥產品批次以用於分配的方法、及一種製備包含拉喹莫德或其醫藥學上可接受之鹽之封裝醫藥組合物的方法，每一方法包括測定樣品或批次中BH-3-HLAQ、MCQ、MCQCA、MCQME、NEA及MCQEE中之至少一者的量。",
+        "本發明另外提供一種以BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE作為參考標準物於偵測包含拉喹莫德之醫藥組合物中痕量雜質上之用途。",
+        "最後，本發明提供一種測定包含拉喹莫德之醫藥組合物中BH-3-HLAQ、MCQ、MCQCA、MCQME、MCQEE、5-HLAQ、SPIRO-LAQ或3 H-LAQ之濃度的方法。"
+      ],
+      "full_token_counts": {
+        "source": 989,
+        "reference": 871
+      },
+      "maximum_sentence_tokens": 388,
+      "selection_allow_overlong_sentences": false,
+      "source_sha256": "e8f06a6364e97ca5bf23fc573d3cf3e8a5f0dea0a7352250f40bbbc6dce454c1",
+      "reference_sha256": "81d0fa57668f08a4218e34a1bf0a05f14e8d92031594c27a29e8da7728c5f30d",
+      "provenance": {
+        "dataset_dir": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local",
+        "manifest": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local/google-patents-13-directions-10397-pairs-manifest.jsonl",
+        "manifest_line": 5853,
+        "dataset": "google_patents",
+        "source_id": "within-document:abstract:en-zh:TW-201519892-A",
+        "source_row_id": "within-document:abstract:en-zh:TW-201519892-A_source",
+        "target_row_id": "within-document:abstract:en-zh:TW-201519892-A_target",
+        "doc_id": "TW-201519892-A",
+        "anchor_id": null,
+        "publication_number": "TW-201519892-A",
+        "section_type": null
+      },
+      "donor": {
+        "id": "google_patents:en-zh:within-document:abstract:en-zh:CN-101031558-B",
+        "dataset": "google_patents",
+        "direction": "en-zh",
+        "source": "An HIV replication inhibitor of the formula an N-oxide, a pharmaceutically acceptable addition salt, a quaternary amine or a stereochemically isomeric form thereof, wherein-a 1 ＝a 2 -a 3 ＝a 4 -is-CH-, -N-CH-, -N-CH-, -N-CH-N-CH-, -N-CH-; -b 1 ＝b 2 -b 3 ＝b 4 -CH-, -N-CH-, -N-CH-, -N-CH-N-CH-, -N-CH-N-CH-. R 1 Is hydrogen; an aryl group; a formyl group; c 1-6 An alkylcarbonyl group; optionally substituted C 1-6 An alkyl group; c 1-6 An alkoxycarbonyl group. R 2 Is OH; an aryl group; optionally substituted C 1-6 An alkyl group; c 2-6 Alkenyl or C 2-6 An alkynyl group; a substituted carbonyl group; a carboxyl group; CN; a nitro group; an amino group; a substituted amino group; a polyhalomethyl group; polyhalomethylthio radicals; -S (═ O) p R 6 ；C(＝NH)R 6 。R 2a Is CN; an amino group; a substituted amino group; optionally substituted C 1-6 An alkyl group; halogen; optionally substituted C 1-6 An alkoxy group; a substituted carbonyl group; -CH ═ N-NH-C (═ O) -R 16 (ii) a Optionally substituted C 1-6 Alkoxy radical C 1-6 An alkyl group; substituted C 2-6 Alkenyl or C 2-6 An alkynyl group; -C (═ N-O-R) 8 )-C 1-4 An alkyl group; r 7 or-X 3 -R 7 。X 1 is-NR 1 -、-O-、-C(＝O)-、-CH 2 -、-CHOH-、-S-、-S(＝O) p -；R 3 Is CN; an amino group; c 1-6 An alkyl group; halogen; optionally substituted C 1-6 An alkoxy group; a substituted carbonyl group; -CH ═ N-NH-C (═ O) -R 16 (ii) a Substituted C 1-6 An alkyl group; optionally substituted C 1-6 Alkoxy radical C 1-6 An alkyl group; substituted C 2-6 Alkenyl or C 2-6 An alkynyl group; -C (═ N-O-R) 8 )-C 1-4 An alkyl group; r 7 ；-X 3 -R 7 。R 4 Is halogen; OH; optionally substituted C 1-6 Alkyl radical, C 2-6 Alkenyl or C 2-6 An alkynyl group; c 3-7 A cycloalkyl group; c 1-6 An alkoxy group; CN; a nitro group; polyhalo C 1-6 An alkyl group; polyhalo C 1-6 An alkoxy group; a substituted carbonyl group; a formyl group; an amino group; mono-or di 1-4 Alkyl) amino or R 7 。R 5 Is a 5-or 6-membered fully unsaturated ring system, wherein 1 to 4 ring atoms are nitrogen, oxygen or a stream; the ring may be optionally substituted and may be optionally fused with a benzene ring; processes for preparing said compounds and pharmaceutical compositions comprising said compounds. The invention also relates to the use of these compounds in the prevention or treatment of HIV infection.",
+        "reference": "下式的HIV复制抑制剂其N-氧化物、可药用加成盐、季胺或立体化学异构形式，其中-a 1 ＝a 2 -a 3 ＝a 4 -是-CH＝CH-CH＝CH-、-N＝CH-CH＝CH-、-N＝CH-N＝CH-、-N＝CH-CH＝N-、-N＝N-CH＝CH-；-b 1 ＝b 2 -b 3 ＝b 4 -是-CH＝CH-CH＝CH-、-N＝CH-CH＝CH-、-N＝CH-N＝CH-、-N＝CH-CH＝N-、-N＝N-CH＝CH-。R 1 是氢；芳基；甲酰基；C 1-6 烷基羰基；任选取代了的C 1-6 烷基；C 1-6 烷氧基羰基。R 2 是OH；芳基；任选取代了的C 1-6 烷基；C 2-6 烯基或C 2-6 炔基；取代了的羰基；羧基；CN；硝基；氨基；取代了的氨基；多卤素甲基；多卤素甲硫基；-S(＝O) p R 6 ；C(＝NH)R 6 。R 2a 是CN；氨基；取代了的氨基；任选取代了的C 1-6 烷基；卤素；任选取代了的C 1-6 烷氧基；取代了的羰基；-CH＝N-NH-C(＝O)-R 16 ；任选取代了的C 1-6 烷氧基C 1-6 烷基；取代了的C 2-6 烯基或C 2-6 炔基；-C(＝N-O-R 8 )-C 1-4 烷基；R 7 或-X 3 -R 7 。X 1 是-NR 1 -、-O-、-C(＝O)-、-CH 2 -、-CHOH-、-S-、-S(＝O) p -；R 3 是CN；氨基；C 1-6 烷基；卤素；任选取代了的C 1-6 烷氧基；取代了的羰基；-CH＝N-NH-C(＝O)-R 16 ；取代了的C 1-6 烷基；任选取代了的C 1-6 烷氧基C 1-6 烷基；取代了的C 2-6 烯基或C 2-6 炔基；-C(＝N-O-R 8 )-C 1-4 烷基；R 7 ；-X 3 -R 7 。R 4 是卤素；OH；任选取代了的C 1-6 烷基、C 2-6 烯基或C 2-6 炔基；C 3-7 环烷基；C 1-6 烷氧基；CN；硝基；多卤素C 1-6 烷基；多卤素C 1-6 烷氧基；取代了的羰基；甲酰基；氨基；一-或二(C 1-4 烷基)氨基或R 7 。R 5 是5或6元完全不饱和环系统，其中1-4个环原子是氮、氧或流；所述环可以任选被取代并且可以任选与苯环稠合；制备所述化合物的方法和包含所述化合物的药物组合物。本发明还涉及这些化合物在预防或治疗HIV感染方面的应用。",
+        "source_language": "en",
+        "target_language": "zh",
+        "reference_sentences": [
+          "下式的HIV复制抑制剂其N-氧化物、可药用加成盐、季胺或立体化学异构形式，其中-a 1 ＝a 2 -a 3 ＝a 4 -是-CH＝CH-CH＝CH-、-N＝CH-CH＝CH-、-N＝CH-N＝CH-、-N＝CH-CH＝N-、-N＝N-CH＝CH-；-b 1 ＝b 2 -b 3 ＝b 4 -是-CH＝CH-CH＝CH-、-N＝CH-CH＝CH-、-N＝CH-N＝CH-、-N＝CH-CH＝N-、-N＝N-CH＝CH-。R 1 是氢；芳基；甲酰基；C 1-6 烷基羰基；任选取代了的C 1-6 烷基；C 1-6 烷氧基羰基。R 2 是OH；芳基；任选取代了的C 1-6 烷基；C 2-6 烯基或C 2-6 炔基；取代了的羰基；羧基；CN；硝基；氨基；取代了的氨基；多卤素甲基；多卤素甲硫基；-S(＝O) p R 6 ；C(＝NH)R 6 。",
+          "R 2a 是CN；氨基；取代了的氨基；任选取代了的C 1-6 烷基；卤素；任选取代了的C 1-6 烷氧基；取代了的羰基；-CH＝N-NH-C(＝O)-R 16 ；任选取代了的C 1-6 烷氧基C 1-6 烷基；取代了的C 2-6 烯基或C 2-6 炔基；-C(＝N-O-R 8 )-C 1-4 烷基；R 7 或-X 3 -R 7 。",
+          "X 1 是-NR 1 -、-O-、-C(＝O)-、-CH 2 -、-CHOH-、-S-、-S(＝O) p -；R 3 是CN；氨基；C 1-6 烷基；卤素；任选取代了的C 1-6 烷氧基；取代了的羰基；-CH＝N-NH-C(＝O)-R 16 ；取代了的C 1-6 烷基；任选取代了的C 1-6 烷氧基C 1-6 烷基；取代了的C 2-6 烯基或C 2-6 炔基；-C(＝N-O-R 8 )-C 1-4 烷基；R 7 ；-X 3 -R 7 。",
+          "R 4 是卤素；OH；任选取代了的C 1-6 烷基、C 2-6 烯基或C 2-6 炔基；C 3-7 环烷基；C 1-6 烷氧基；CN；硝基；多卤素C 1-6 烷基；多卤素C 1-6 烷氧基；取代了的羰基；甲酰基；氨基；一-或二(C 1-4 烷基)氨基或R 7 。",
+          "R 5 是5或6元完全不饱和环系统，其中1-4个环原子是氮、氧或流；所述环可以任选被取代并且可以任选与苯环稠合；制备所述化合物的方法和包含所述化合物的药物组合物。本发明还涉及这些化合物在预防或治疗HIV感染方面的应用。"
+        ],
+        "full_token_counts": {
+          "source": 832,
+          "reference": 787
+        },
+        "maximum_sentence_tokens": 296,
+        "selection_allow_overlong_sentences": false,
+        "source_sha256": "a1d50a7c540fc867dbea6c66b6ae405bc2c54e45b3c4e84df65c752f1876a2e1",
+        "reference_sha256": "0b62ec6f788230db37fef430ae1ae852bd036ff077f48b5ce9893ed1a712f7f6",
+        "provenance": {
+          "dataset_dir": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local",
+          "manifest": "benchmark_datasets/google_patents_judged_exact_high_glm_flash_local/google-patents-13-directions-10397-pairs-manifest.jsonl",
+          "manifest_line": 6121,
+          "dataset": "google_patents",
+          "source_id": "within-document:abstract:en-zh:CN-101031558-B",
+          "source_row_id": "within-document:abstract:en-zh:CN-101031558-B_source",
+          "target_row_id": "within-document:abstract:en-zh:CN-101031558-B_target",
+          "doc_id": "CN-101031558-B",
+          "anchor_id": null,
+          "publication_number": "CN-101031558-B",
+          "section_type": null
+        }
+      }
+    }
+  ]
+}
