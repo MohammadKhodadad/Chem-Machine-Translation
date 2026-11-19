@@ -18,6 +18,22 @@ finally:
     sys.path.remove(str(SCRIPTS))
 
 
+def test_sentence_histogram_keeps_510_inside_limit_and_preserves_tail():
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        from plot_comet_sentence_lengths import UPPER_BOUNDS, histogram
+    finally:
+        sys.path.remove(str(SCRIPTS))
+    counts = {0: 1, 50: 2, 510: 3, 511: 4, 8000: 5, 8001: 6}
+    result = histogram(counts)
+    boundary = UPPER_BOUNDS.index(510)
+    assert result[0] == 3
+    assert result[boundary] == 3
+    assert result[boundary + 1] == 4
+    assert result[-2:] == [5, 6]
+    assert sum(result) == sum(counts.values())
+
+
 class WordTokenizer:
     def __call__(self, texts, *, add_special_tokens, truncation):
         assert add_special_tokens is True
@@ -78,6 +94,57 @@ def test_embedding_budget_and_empty_text_are_separate_blockers():
     assert summary["single_sentence_embedding_overflow"] == 1
     assert summary["empty_side"] == 1
     assert summary["single_sentence_length_safe"] == 0
+
+
+@pytest.mark.parametrize("corruption", [None, "content", "length"])
+def test_sentence_distributions_deduplicate_inputs_but_keep_pair_rows(monkeypatch, corruption):
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        import plot_comet_sentence_lengths as plotter
+    finally:
+        sys.path.remove(str(SCRIPTS))
+    texts = {}
+
+    def add_text(text, language):
+        key = language + ":" + runner.sha256(text.encode("utf-8")).hexdigest()
+        texts[key] = {**audit(text), "language": language}
+        return key
+
+    long_text, short_text, reference = "word " * 509, "first\nsecond", "Referenz"
+    long_key = add_text(long_text, "en")
+    short_key = add_text(short_text, "en")
+    reference_key = add_text(reference, "de")
+    report = {
+        "manifests": {"sample": "sample/manifest.jsonl"}, "text_audits": texts,
+        "records": [{"dataset": "sample", "index": index, "source": source,
+                     "reference": reference_key} for index, source in enumerate(
+                         (long_key, short_key))],
+    }
+    pairs = [({"context": source}, {"context": reference})
+             for source in (long_text, short_text)]
+
+    class Loader:
+        def __init__(self, path):
+            pass
+
+        def rows_for_manifest(self, row):
+            return pairs[row["index"]]
+
+    monkeypatch.setattr(plotter, "ParallelRowsLoader", Loader)
+    if corruption == "content":
+        pairs[0][0]["context"] = "changed content"
+    elif corruption == "length":
+        texts[long_key]["sentence_tokens_total"] += 1
+    if corruption:
+        with pytest.raises(ValueError, match="saved audit"):
+            plotter.collect_distributions(report, WordTokenizer(), Segmenter())
+        return
+    result = plotter.collect_distributions(report, WordTokenizer(), Segmenter())
+    assert result["sentence_tokens_by_language"] == {"en": {511: 1, 3: 2}, "de": {3: 1}}
+    assert result["max_sentence_tokens_per_unique_input_by_language"] == {
+        "en": {511: 1, 3: 1}, "de": {3: 1},
+    }
+    assert result["max_sentence_tokens_per_pair_row"] == {511: 1, 3: 1}
 
 
 @pytest.mark.parametrize("limit, expected_count", [(None, 2), (1, 1)])

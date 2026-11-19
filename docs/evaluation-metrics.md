@@ -982,6 +982,47 @@ overflow rate can partly reflect missed boundaries. A language-aware segmentatio
 before attributing these differences to language alone; the figures above retain the original
 audit's segmentation and tokenizer settings. Generated translations are not included.
 
+### Sentence-Length Distributions
+
+The following bar charts use XLM-R/COMET token lengths **including special tokens**, without
+truncation, and the same sentence splitter as the audit. Every panel marks **510 tokens** with a
+dashed line; teal bars contain lengths at or below 510, and red bars contain lengths above 510.
+The bins have inclusive integer endpoints and unequal widths, displayed as categorical ranges,
+not a density estimate. Counts use a logarithmic vertical scale to keep the long tail visible;
+panel titles give the exact sample size and overflow count/percentage.
+
+**Per sentence, by language:** count each segment within each unique language/text input once,
+matching the table above. Across all eight languages there are **156,107 segments**, including
+**5,830 above 510 tokens**. Identical sentences in different texts are still separate occurrences.
+
+![Sentence token-length distributions for eight languages](../reports/comet_input_coverage/sentence_lengths_20261118/sentence_lengths_by_language.png)
+
+**Per input text, by language:** take the **maximum sentence length**, not the full-text token
+length, for each of the **23,724 unique language/text inputs**. This gives one observation per
+deduplicated source or reference text; **5,782** contain a sentence above 510 tokens.
+
+![Maximum sentence token length per input, for eight languages](../reports/comet_input_coverage/sentence_lengths_20261118/maximum_sentence_per_input_by_language.png)
+
+**Per paired data row:** take the maximum sentence length across **both source and reference**
+for every original manifest row, without deduplicating rows. There are **20,397 rows**, of which
+**5,773 (28.30%)** have a maximum above 510. This is the row-level counterpart of the earlier
+pair-overflow analysis, not a distribution of whole-document lengths.
+
+![Maximum sentence token length per paired data row](../reports/comet_input_coverage/sentence_lengths_20261118/maximum_sentence_per_pair_row.png)
+
+The [plotting script](../scripts/plot_comet_sentence_lengths.py) reconstructs the original CSV
+texts, verifies their hashes, and checks every input's sentence count, token total, maximum, and
+overflow count against the saved audit before plotting. Exact length-frequency counts and the
+audit checksum are saved in [the distribution data](../reports/comet_input_coverage/sentence_lengths_20261118/distributions.json).
+Reproduce the charts with:
+
+```powershell
+uv run --no-sync python scripts/plot_comet_sentence_lengths.py
+```
+
+An existing checksum-matched distribution file is reused on subsequent runs. These are descriptive
+pipeline-segment distributions; the language-specific segmentation caveat above still applies.
+
 ### Additional SentAlign Constraints
 
 The audit also tokenized every possible contiguous span of one to four sentences, matching the
