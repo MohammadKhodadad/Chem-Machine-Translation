@@ -17,6 +17,27 @@ try:
 finally:
     sys.path.remove(str(SCRIPTS))
 
+def test_coverage_summary_uses_pooled_counts_not_mean_document_percentages():
+    rows = []
+    for matched, excluded in ((2, 1), (8, 0)):
+        coverage = {
+            "total_blocks": matched, "matched_blocks": matched,
+            "scored_blocks": matched - excluded, "excluded_blocks": excluded,
+            "sentences": {side: {"total_sentences": matched, "excluded_sentences": excluded,
+                                 "scored_sentences": matched - excluded}
+                          for side in ("source", "reference", "prediction")},
+        }
+        rows.append({
+            "dataset": "sample", "direction": "en-de",
+            "scores": {metric: 0.9 for metric in runner.METRICS},
+            "metric_details": {metric: {"coverage": coverage} for metric in runner.METRICS[1:]},
+        })
+    summary = runner.summarize_coverage(rows)
+    assert len(summary) == 4
+    assert all(item["excluded_matched_block_percentage"] == 10 for item in summary)
+    assert all(item["sentences"]["reference"]["excluded_percentage"] == 10 for item in summary)
+
+
 REAL_DOCUMENTS = json.loads(
     (Path(__file__).parent / "fixtures" / "real_document_metrics.json").read_text(encoding="utf-8")
 )["documents"]

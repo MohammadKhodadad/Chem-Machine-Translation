@@ -228,6 +228,105 @@ def test_comet_inputs_over_budget_raise_instead_of_truncating():
     assert comet.calls == []
 
 
+@pytest.mark.parametrize("config_class, scorer_class", [
+    (AlignedCometConfig, AlignedCometScorer), (SentAlignCometConfig, SentAlignCometScorer),
+])
+@pytest.mark.parametrize("tokens", [510, 511])
+@pytest.mark.parametrize("long_side", ["source", "reference", "prediction"])
+def test_filtered_blocks_keep_gaps_and_report_original_sentence_coverage(
+    config_class, scorer_class, tokens, long_side,
+):
+    comet = FakeComet()
+    scorer = scorer_class(config_class(exclude_overlong_blocks=True), comet_scorer=comet)
+    blocks = [
+        {"source": "s0", "reference": "r0", "prediction": "c0",
+         "source_index": 0, "reference_index": 0, "prediction_index": 0,
+         "state": "matched", "score": 0},
+        {"source": "s1", "reference": "r1", "prediction": "c1",
+         "source_index": 1, "reference_index": 1, "prediction_index": 1,
+         "state": "matched", "score": 0},
+        {"source": "s2", "reference": "r2", "prediction": "",
+         "source_index": 2, "reference_index": 2, "prediction_index": None,
+         "state": "omission", "score": 0},
+    ]
+    blocks[0][long_side] = "word " * (tokens - 2)
+    result = scorer._score_blocks(blocks, "en", "de", "test")
+    removed = int(tokens > 510)
+    assert result.score == pytest.approx((2 - removed) * 0.9 / (3 - removed))
+    assert len(comet.calls) == 2 - removed
+    assert result.null_alignment_ratio == pytest.approx(1 / 3)
+    assert result.coverage["excluded_blocks"] == removed
+    assert result.coverage["excluded_matched_block_percentage"] == 50 * removed
+    assert result.coverage["sentences"]["source"]["excluded_percentage"] == pytest.approx(
+        100 * removed / 3,
+    )
+    assert result.blocks[0]["score"] is None if removed else result.blocks[0]["score"] == 0.9
+
+
+@pytest.mark.parametrize("scorer_class, config_class", [
+    (AlignedCometScorer, AlignedCometConfig), (SentAlignCometScorer, SentAlignCometConfig),
+])
+def test_filtering_all_matched_blocks_returns_unscored_with_audit(scorer_class, config_class):
+    comet = FakeComet()
+    scorer = scorer_class(config_class(exclude_overlong_blocks=True, max_comet_tokens=2),
+                          comet_scorer=comet)
+    result = scorer._score_blocks([
+        {"source": "s0", "reference": "r0", "prediction": "c0", "state": "matched",
+         "source_index": 0, "reference_index": 0, "prediction_index": 0, "score": 0},
+    ], "en", "de", "test")
+    assert result.score is None
+    assert result.coverage["score_status"] == "unscored_no_matched_blocks"
+    assert result.coverage["sentences"]["reference"]["excluded_percentage"] == 100
+    assert result.blocks[0]["exclusion_reason"] == "comet_token_limit"
+    assert not comet.calls
+
+
+def test_sentalign_filters_after_span_closure_and_retains_coverage():
+    comet = FakeComet()
+    scorer = SentAlignCometScorer(
+        SentAlignCometConfig(exclude_overlong_blocks=True, max_comet_tokens=3),
+        segmenter=FakeSegmenter(), comet_scorer=comet,
+        aligner=FakeSentAlign(
+            [((0, 1), (0,)), ((2,), (1,))],
+            [((0, 1), (0,)), ((2,), (1,))],
+        ),
+    )
+    result = scorer.score_document("s0 | s1", "c0 | c1", "r0 | r1 | r2")
+    assert result.score == 0.9
+    assert comet.calls == [("s1", "c1", "r2")]
+    assert result.blocks[0]["reference_indices"] == [0, 1]
+    assert result.coverage["sentences"]["reference"]["excluded_percentage"] == pytest.approx(
+        200 / 3,
+    )
+    assert result.coverage["sentences"]["source"]["excluded_percentage"] == 50
+
+
+def test_filtered_metric_dispatch_preserves_unscored_audit_without_zero_score():
+    scorer, _ = make_scorer(exclude_overlong_blocks=True, max_comet_tokens=3)
+    details = {}
+    metrics = compute_translation_metrics(
+        source="source A", reference="reference A", prediction="translation A",
+        metric_names=["reference_assignment_comet"], aligned_comet_scorer=scorer,
+        metric_details=details,
+    )
+    assert "reference_assignment_comet" not in metrics
+    assert metrics["reference_assignment_comet_unscored"] == 1
+    assert metrics["reference_assignment_comet_excluded_matched_block_percentage"] == 100
+    assert details["reference_assignment_comet"]["score"] is None
+    assert details["reference_assignment_comet"]["coverage"]["excluded_blocks"] == 1
+
+
+def test_filtered_empty_candidate_is_unscored_but_not_counted_as_length_exclusion():
+    scorer, comet = make_scorer(exclude_overlong_blocks=True)
+    result = scorer.score_document(source="source A", reference="reference A", prediction="")
+    assert result.score is None
+    assert result.coverage["matched_blocks"] == result.coverage["excluded_blocks"] == 0
+    assert result.coverage["excluded_matched_block_percentage"] is None
+    assert result.coverage["sentences"]["reference"]["scored_percentage"] == 0
+    assert result.null_alignment_ratio == 1
+    assert not comet.calls
+
+
 @pytest.mark.parametrize("metric_name", [
     "aligned_comet", "reference_assignment_comet", "sentalign_comet",
 ])
@@ -300,6 +399,62 @@ def test_evaluation_config_overrides_models_and_propagates_languages(tmp_path):
     )
     assert result["metrics"]["aligned_comet"] == pytest.approx(0.9)
     assert result["metric_details"]["aligned_comet"]["config"]["source_language"] == "en"
+
+
+@pytest.mark.parametrize("metric_name, config_key", [
+    ("reference_assignment_comet", "aligned_comet"), ("sentalign_comet", "sentalign_comet"),
+])
+@pytest.mark.parametrize("filtered", [False, True])
+def test_filter_configuration_reaches_benchmark_and_only_batches_retained_blocks(
+    tmp_path, metric_name, config_key, filtered,
+):
+    evaluation = evaluation_config_from_mapping({
+        "metrics": [metric_name], config_key: {"exclude_overlong_blocks": filtered},
+    }, base_dir=tmp_path)
+
+    class BatchComet(FakeComet):
+        def token_count(self, text):
+            return 511 if text == "source A" else super().token_count(text)
+
+        def score_many(self, blocks):
+            assert [block["source"] for block in blocks] == ["source B"]
+            return [self.score(block["source"], block["prediction"], block["reference"])
+                    for block in blocks]
+
+    comet = BatchComet()
+    config = getattr(evaluation, config_key)
+    assert config.exclude_overlong_blocks is filtered
+    if metric_name == "reference_assignment_comet":
+        scorer = AlignedCometScorer(config, segmenter=FakeSegmenter(),
+                                    embedder=FakeEmbedder(), comet_scorer=comet)
+    else:
+        scorer = SentAlignCometScorer(
+            config, segmenter=FakeSegmenter(), comet_scorer=comet,
+            aligner=FakeSentAlign(
+                [((0,), (0,)), ((1,), (1,))],
+                [((0,), (0,)), ((1,), (1,)), ((), (2,))],
+            ),
+        )
+    result = score_prediction_row({
+        "source_text": "source A | source B",
+        "ground_truth_translation": "reference A | reference B",
+        "predicted_translation": "translation A | translation B | addition",
+        "source_language": "en", "target_language": "de",
+    }, evaluation=evaluation, bertscore_scorer=None, bleurt_scorer=None, comet_scorer=None,
+        cometkiwi_scorer=None, xcomet_scorer=None, mqm_judge=None,
+        aligned_comet_scorer=scorer, sentalign_comet_scorer=scorer)
+    if not filtered:
+        assert result["metrics"] == {}
+        assert "token budget" in result["evaluation_error"]
+        assert not comet.calls
+        return
+    assert not result.get("evaluation_error")
+    assert comet.calls == [("source B", "translation B", "reference B")]
+    assert result["metrics"][metric_name] == pytest.approx(0.45)
+    assert result["metrics"][f"{metric_name}_excluded_matched_block_percentage"] == 50
+    assert result["metrics"][f"{metric_name}_reference_scored_percentage"] == 50
+    assert result["metric_details"][metric_name]["blocks"][0]["score"] is None
+    assert result["metric_details"][metric_name]["blocks"][2]["state"] == "addition"
 
 
 @pytest.mark.parametrize("language", ["en", "de", "es", "fr", "pt", "ru", "zh", "ja"])

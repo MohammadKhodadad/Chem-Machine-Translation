@@ -484,8 +484,20 @@ def compute_translation_metrics(
             source=source, prediction=prediction, reference=reference,
             source_language=source_language, target_language=target_language,
         )
-        metrics[metric_name] = result.score
+        if result.score is not None:
+            metrics[metric_name] = result.score
         metrics[f"{metric_name}_null_alignment_ratio"] = result.null_alignment_ratio
+        if result.config.get("exclude_overlong_blocks"):
+            metrics[f"{metric_name}_unscored"] = float(result.score is None)
+            for name in ("matched_blocks", "scored_blocks", "excluded_blocks",
+                         "excluded_matched_block_percentage"):
+                value = result.coverage[name]
+                if value is not None:
+                    metrics[f"{metric_name}_{name}"] = float(value)
+            for side, values in result.coverage["sentences"].items():
+                for name, value in values.items():
+                    if value is not None:
+                        metrics[f"{metric_name}_{side}_{name}"] = float(value)
         if metric_details is not None:
             metric_details[metric_name] = asdict(result)
 

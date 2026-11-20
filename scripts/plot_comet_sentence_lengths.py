@@ -98,6 +98,14 @@ def plot_distributions(distributions, output):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    all_sentences = Counter()
+    for counts in distributions["sentence_tokens_by_language"].values():
+        all_sentences.update({int(length): count for length, count in counts.items()})
+    figure, axis = plt.subplots(figsize=(15, 6), layout="constrained")
+    draw_bars(axis, all_sentences, "All sentences (all languages combined)")
+    figure.savefig(output / "sentence_lengths_all_languages.png", dpi=160, facecolor="white")
+    plt.close(figure)
+
     for key, filename, title in (
         ("sentence_tokens_by_language", "sentence_lengths_by_language.png",
          "Individual sentence lengths by language"),
@@ -156,7 +164,7 @@ def main():
         }
         cache.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     plot_distributions(result, args.output_dir)
-    print(f"Saved distributions and three charts to {args.output_dir}")
+    print(f"Saved distributions and four charts to {args.output_dir}")
 
 
 if __name__ == "__main__":

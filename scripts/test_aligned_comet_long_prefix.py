@@ -433,6 +433,7 @@ def main():
     )
     parser.add_argument("--list-cases", action="store_true")
     parser.add_argument("--compare-three", action="store_true")
+    parser.add_argument("--exclude-overlong-blocks", action="store_true")
     args = parser.parse_args()
     if args.list_cases:
         from transformers import AutoTokenizer
@@ -468,7 +469,9 @@ def main():
     model.eval()
     tokenizer = model.encoder.tokenizer
     embedding_path = snapshot_download("BAAI/bge-m3", local_files_only=True)
-    config = AlignedCometConfig(embedding_model=embedding_path)
+    config = AlignedCometConfig(
+        embedding_model=embedding_path, exclude_overlong_blocks=args.exclude_overlong_blocks,
+    )
     aligned = AlignedCometScorer(
         config=config, embedder=CachedEmbedder(config), comet_scorer=CachedComet(model),
     )
@@ -480,6 +483,7 @@ def main():
             SentAlignCometConfig(
                 alignment_model=embedding_path,
                 alignment_cache=str(Path("benchmark_work/sentalign_embedding_cache").resolve()),
+                exclude_overlong_blocks=args.exclude_overlong_blocks,
             ),
             comet_scorer=CachedComet(model),
         )
@@ -579,7 +583,10 @@ def main():
     for row in results:
         control = controls[(row.get("target_language", "de"), row["prefix_content_tokens"])]
         row["regular_drop_from_control"] = control["regular_comet"] - row["regular_comet"]
-        row["aligned_drop_from_control"] = control["aligned_comet"] - row["aligned_comet"]
+        row["aligned_drop_from_control"] = (
+            control["aligned_comet"] - row["aligned_comet"]
+            if control["aligned_comet"] is not None and row["aligned_comet"] is not None else None
+        )
         if sentalign is not None:
             row["sentalign_drop_from_control"] = (
                 control["sentalign_comet"] - row["sentalign_comet"]

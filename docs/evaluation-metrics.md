@@ -817,6 +817,153 @@ These regression checks verify actual record preservation, all eight candidate c
 dataset/direction coverage, and failure accounting; they do not assert that every quality ordering
 must pass or rerun large neural models during ordinary pytest execution.
 
+## Optional Post-Alignment Length Filtering
+
+Both `reference_assignment_comet` and `sentalign_comet` support
+`exclude_overlong_blocks = true`, added and tested on 2026-11-19. The default remains **false**:
+strict evaluation still rejects an oversized matched block rather than truncating it.
+Enable filtering in an evaluation configuration with:
+
+```toml
+metrics = ["reference_assignment_comet", "sentalign_comet"]
+
+[aligned_comet]
+exclude_overlong_blocks = true
+
+[sentalign_comet]
+exclude_overlong_blocks = true
+```
+
+Alignment runs first on the complete segmented inputs. The filter then checks each final
+source/reference/candidate block, **after SentAlign's reference-span closure and merging**.
+If any field exceeds the effective COMET limit (normally 510 tokens including special tokens),
+that matched block is excluded from inference and the score denominator. Its original text,
+sentence indices, alignment state, token counts, and exclusion reason remain in the audit,
+with `excluded = true` and a null block score. No sentence is silently truncated.
+Unmatched blocks retain their configured null penalties; exclusions are not counted as alignment
+nulls. Scores are equal-block means over the remaining blocks, not full-document quality scores.
+
+**No scoreable matched blocks means unscored**, even when penalty-only blocks remain. In result
+JSON this is `score: null`; benchmark metric output omits that document's main metric value and
+sets its `_unscored` flag to 1. This deliberately differs from strict mode's zero for an all-null
+alignment. Consumers must count missing scores and not replace them with zero.
+
+Every result includes a `coverage` audit: total/matched/scored/excluded block counts, the percentage
+of matched blocks excluded, and original sentence totals plus excluded and COMET-scored counts
+and percentages separately for source, reference, and candidate (`prediction`). A 0% size-exclusion
+rate does **not** mean all content was matched. The real-record reports also include
+`coverage_summary` entries pooled overall and by dataset/language direction. Percentages use summed
+counts, not averages of document percentages. These are counts across candidate variants, not
+counts of distinct original documents. Benchmark output exposes the corresponding coverage counters
+and percentages alongside each score for downstream aggregation.
+
+### Rerun Results
+
+All three earlier suites were rerun with the original models and settings, changing only this
+filtering option. Ordinary COMET remained unchanged; all three runs finished without scoring
+exceptions. Original strict reports are preserved.
+
+| Suite | Method | Scored cases | Excluded / matched blocks | Excluded matched blocks |
+| --- | --- | --- | --- | --- |
+| 37 synthetic cases | Reference Assignment COMET | 37/37 | 0/1276 | 0.00% |
+| 37 synthetic cases | SentAlign-COMET | 37/37 | 0/1387 | 0.00% |
+| 80 cases from the consistent ten-record cohort | Reference Assignment COMET | 80/80 | 0/537 | 0.00% |
+| 80 cases from the consistent ten-record cohort | SentAlign-COMET | 77/80 | 0/483 | 0.00% |
+| 8 cases from the archived oversized Chinese example | Reference Assignment COMET | 5/8 | 8/17 | 47.06% |
+| 8 cases from the archived oversized Chinese example | SentAlign-COMET | 7/8 | 0/13 | 0.00% |
+
+The [synthetic rerun](../reports/aligned_comet_long_prefix/three_metric_comparison_filtered_20261119.json)
+has exactly the same scores as its strict run. The
+[ten-record rerun](../reports/real_document_metrics/comparison_filtered_length_safe_20261119.json)
+also has identical scores wherever a filtered score exists. Its three unscored SentAlign cases
+previously scored zero: German JRC definition tail omissions at 50% and 75%, and the Spanish JRC
+definition tail omission at 75%. These have no matched blocks, **not** oversized-block exclusions.
+Reference Assignment COMET still places the control above all 70 degraded cases. SentAlign does
+so in 67/67 scored comparisons, with three unscored; that denominator change is not an improvement.
+
+The [oversized Chinese rerun](../reports/real_document_metrics/comparison_filtered_oversized_chinese_20261119.json)
+is a separate failure example, **not pooled into the ten-record cohort**. Reference Assignment
+COMET previously rejected all eight cases; it now scores five and leaves three unscored. Across
+these variants it excludes 8/40 source sentences (20.00%), 8/32 reference sentences (25.00%), and
+8/27 candidate sentences (29.63%). Its control scores **0.7447** after excluding the oversized
+substantive block; the remaining scored reference segments are only HTML-comment fragments.
+Thus removing just 25% of reference segments can discard essentially all substantive reference
+content. This recovered number is **not evidence of valid Chinese quality evaluation**.
+SentAlign still scores comment fragments in this example; its zero size-exclusion rate does not
+repair the upstream alignment failure. Its former all-null 75% omission zero is now unscored.
+
+These are **partial-coverage results**, not a full-benchmark run or a fix for SentAlign's upstream
+word-limit, embedding, or segmentation constraints. Exclusion rates can depend on the candidate
+translation and the metric's alignments, so different scores can cover different content. Always
+interpret scores with scored coverage and missing-case counts, not exclusion percentage alone.
+
+### What Changes In Individual Cases
+
+The following before/after values come from the actual strict and filtered neural reports linked
+above, not from mocked COMET scores. The method names here abbreviate Reference Assignment COMET
+and SentAlign-COMET. `Rejected` means a strict token-budget error; `Unscored` means the filtered
+alignment has no scoreable matched blocks. Exclusion percentages count matched blocks, while
+reference coverage counts original reference sentence segments included in COMET-scored blocks.
+
+| Case | Method | Strict score | Filtered score | Matched blocks excluded | Reference segments scored |
+| --- | --- | --- | --- | --- | --- |
+| Length-safe Chinese control | Reference Assignment | 0.6712 | 0.6712 | 0.00% | 100.00% |
+| Length-safe Chinese control | SentAlign | 0.6679 | 0.6679 | 0.00% | 100.00% |
+| Oversized Chinese control | Reference Assignment | Rejected | 0.7447 | 25.00% | 75.00% |
+| Oversized Chinese control | SentAlign | 0.4256 | 0.4256 | 0.00% | 75.00% |
+| Oversized Chinese 50% omission | Reference Assignment | Rejected | 0.2489 | 50.00% | 25.00% |
+| Oversized Chinese 50% omission | SentAlign | 0.1422 | 0.1422 | 0.00% | 25.00% |
+| Oversized Chinese 75% replacement | Reference Assignment | Rejected | Unscored | 100.00% | 0.00% |
+| Oversized Chinese 75% replacement | SentAlign | 0.0416 | 0.0416 | 0.00% | 25.00% |
+| German JRC definition 50% omission | Reference Assignment | 0.0350 | 0.0350 | 0.00% | 3.70% |
+| German JRC definition 50% omission | SentAlign | 0.0000 | Unscored | N/A (no matches) | 0.00% |
+
+These rows show three distinct effects: safe scores remain unchanged; some strict size errors
+become partial scores; and penalty-only zeros become explicitly unscored. They do not show an
+improvement in translation-quality accuracy. In the oversized Chinese control, the three scored
+comment segments account for only **16/1,148 nonwhitespace reference characters (1.39%)**, despite
+the apparently high 75% sentence coverage. Neither that segment percentage nor the recovered
+0.7447 score establishes meaningful-text coverage.
+
+### Verified Usage And Limits
+
+The normal benchmark constructs each selected scorer from its corresponding evaluation config.
+Selecting the two metric names and setting the flags as shown above enables filtering; selecting
+the metrics without those flags leaves strict mode unchanged. Both neural rerun commands explicitly
+enabled `--exclude-overlong-blocks`. No global benchmark default was changed.
+
+An additional four-case regression in [the aligned metric tests](../tests/test_aligned_comet.py)
+checks both metrics with filtering off and on through configuration parsing, full document scoring,
+metric dispatch, and `score_prediction_row`. Controlled test doubles make one matched source block
+511 tokens and leave a second block scoreable. Strict mode produces a benchmark evaluation error
+without inference; filtered mode batches only the safe block, retains the unmatched-addition
+penalty, returns 0.45 from a test-double block score of 0.9, and exports exclusion and scored-coverage
+statistics. This verifies the software path and denominator, **not learned COMET quality accuracy**.
+
+The evidence supports checked input lengths, auditable exclusions, preserved penalties, and
+explicit missing scores. It does not yet establish human agreement, robust cross-language model
+rankings, or full-benchmark coverage. Use the filtered scores as partial-coverage research results,
+not a validated replacement for a whole-document evaluation.
+
+### Reproducing The Filtered Runs
+
+Use new output filenames because the runners preserve existing reports:
+
+```powershell
+uv run --no-sync python scripts/test_aligned_comet_long_prefix.py --compare-three `
+  --exclude-overlong-blocks `
+  --output reports/aligned_comet_long_prefix/filtered_rerun.json
+uv run --no-sync python scripts/evaluate_real_document_metrics.py `
+  --fixtures tests/fixtures/real_document_metrics.json `
+  --additional-fixtures tests/fixtures/real_document_metrics_chinese_length_safe.json `
+  --exclude-overlong-blocks `
+  --output reports/real_document_metrics/filtered_length_safe_rerun.json
+uv run --no-sync python scripts/evaluate_real_document_metrics.py `
+  --fixtures tests/fixtures/real_document_metrics_chinese.json `
+  --exclude-overlong-blocks `
+  --output reports/real_document_metrics/filtered_oversized_chinese_rerun.json
+```
+
 ## Full-Benchmark Input Coverage Audit
 
 **The current segmentation does not guarantee that all benchmark texts fit COMET.** On
@@ -990,6 +1137,12 @@ dashed line; teal bars contain lengths at or below 510, and red bars contain len
 The bins have inclusive integer endpoints and unequal widths, displayed as categorical ranges,
 not a density estimate. Counts use a logarithmic vertical scale to keep the long tail visible;
 panel titles give the exact sample size and overflow count/percentage.
+
+**All sentences, all languages combined:** pool all **156,107 sentence segments** into one
+distribution. This counts sentence occurrences, not row maxima or an equal-weight language
+average; **5,830 (3.73%)** exceed 510 tokens. The input-text deduplication rules are unchanged.
+
+![Sentence token-length distribution across all languages](../reports/comet_input_coverage/sentence_lengths_20261118/sentence_lengths_all_languages.png)
 
 **Per sentence, by language:** count each segment within each unique language/text input once,
 matching the table above. Across all eight languages there are **156,107 segments**, including

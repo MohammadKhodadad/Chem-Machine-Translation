@@ -22,6 +22,7 @@ class AlignedCometConfig:
     null_score: float = 0.0
     max_comet_tokens: int = 510
     max_sentences: int = 1000
+    exclude_overlong_blocks: bool = False
 
     def __post_init__(self) -> None:
         if not self.embedding_model.strip() or not self.comet_model.strip():
@@ -139,10 +140,11 @@ class TokenCheckedCometScorer(UnbabelCometScorer):
 
 @dataclass(frozen=True)
 class AlignedCometResult:
-    score: float
+    score: float | None
     null_alignment_ratio: float
     blocks: tuple[dict[str, Any], ...]
     config: dict[str, Any]
+    coverage: dict[str, Any] = field(default_factory=dict)
 
 
 def pair_sentences(left: list[Any], right: list[Any], minimum_similarity: float):
@@ -282,20 +284,28 @@ class AlignedCometScorer:
         )
 
     def _score_blocks(self, blocks, source_language, target_language, alignment):
-        matched = [block for block in blocks if block["state"] == "matched"]
-        if matched:
+        aligned = [block for block in blocks if block["state"] == "matched"]
+        excluded = []
+        matched = []
+        if aligned:
             limit = min(self.config.max_comet_tokens, self.comet.token_limit())
-            for block in matched:
+            for block in aligned:
                 counts = {
                     name: self.comet.token_count(block[name])
                     for name in ("source", "reference", "prediction")
                 }
                 block["token_counts"] = counts
                 if max(counts.values()) > limit:
-                    raise ValueError(
-                        f"Aligned COMET token budget exceeded ({limit} tokens): {counts}. "
-                        "Split the long sentences explicitly; inputs were not truncated."
-                    )
+                    if not self.config.exclude_overlong_blocks:
+                        raise ValueError(
+                            f"Aligned COMET token budget exceeded ({limit} tokens): {counts}. "
+                            "Split the long sentences explicitly; inputs were not truncated."
+                        )
+                    block.update(excluded=True, exclusion_reason="comet_token_limit", score=None)
+                    excluded.append(block)
+                else:
+                    matched.append(block)
+        if matched:
             if hasattr(self.comet, "score_many"):
                 scores = self.comet.score_many(matched)
             else:
@@ -307,16 +317,47 @@ class AlignedCometScorer:
                 raise ValueError("Aligned COMET returned invalid segment scores.")
             for block, score in zip(matched, scores, strict=True):
                 block["score"] = float(score)
+        retained = [block for block in blocks if not block.get("excluded", False)]
+        unscored = self.config.exclude_overlong_blocks and not matched
+        sentence_coverage = {}
+
+        def sentence_count(group, side):
+            return sum(
+                len(block[f"{side}_indices"]) if f"{side}_indices" in block
+                else int(block.get(f"{side}_index") is not None)
+                for block in group
+            )
+
+        for side in ("source", "reference", "prediction"):
+            total, removed, scored = (
+                sentence_count(group, side) for group in (blocks, excluded, matched)
+            )
+            sentence_coverage[side] = {
+                "total_sentences": total, "excluded_sentences": removed,
+                "scored_sentences": scored,
+                "excluded_percentage": 100 * removed / total if total else None,
+                "scored_percentage": 100 * scored / total if total else None,
+            }
         return AlignedCometResult(
-            score=sum(block["score"] for block in blocks) / len(blocks),
-            null_alignment_ratio=1 - len(matched) / len(blocks),
+            score=None if unscored else sum(block["score"] for block in retained) / len(retained),
+            null_alignment_ratio=1 - len(aligned) / len(blocks),
             blocks=tuple(blocks),
             config={
                 **asdict(self.config),
                 "alignment": alignment,
-                "aggregation": "equal_block_mean",
+                "aggregation": "retained_equal_block_mean"
+                if self.config.exclude_overlong_blocks else "equal_block_mean",
                 "source_language": source_language,
                 "target_language": target_language,
+            },
+            coverage={
+                "total_blocks": len(blocks), "matched_blocks": len(aligned),
+                "scored_blocks": len(matched), "excluded_blocks": len(excluded),
+                "retained_blocks": len(retained),
+                "excluded_matched_block_percentage":
+                    100 * len(excluded) / len(aligned) if aligned else None,
+                "score_status": "unscored_no_matched_blocks" if unscored else "scored",
+                "sentences": sentence_coverage,
             },
         )
 
@@ -338,6 +379,7 @@ class SentAlignCometConfig:
     null_score: float = 0.0
     max_comet_tokens: int = 510
     max_sentences: int = 1000
+    exclude_overlong_blocks: bool = False
 
     def __post_init__(self):
         if not self.alignment_model.strip() or not self.comet_model.strip():
@@ -509,4 +551,5 @@ class SentAlignCometScorer(AlignedCometScorer):
              "source_alignment": self._alignment_audits[0],
              "candidate_alignment": self._alignment_audits[1],
              "backend_config": backend_config.to_dict() if backend_config is not None else None},
+              coverage=result.coverage,
         )

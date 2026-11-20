@@ -202,7 +202,44 @@ def quality_checks(results):
     return checks
 
 
-def run_inference(report, output):
+def summarize_coverage(results):
+    groups = {("all", "all"): results}
+    for row in results:
+        groups.setdefault((row["dataset"], row["direction"]), []).append(row)
+    summary = []
+    for (dataset, direction), rows in sorted(groups.items()):
+        for metric in METRICS[1:]:
+            audits = [row["metric_details"][metric]["coverage"] for row in rows
+                      if metric in row["metric_details"]]
+            counts = {name: sum(audit[name] for audit in audits) for name in (
+                "total_blocks", "matched_blocks", "scored_blocks", "excluded_blocks",
+            )}
+            matched = counts["matched_blocks"]
+            sentences = {}
+            for side in ("source", "reference", "prediction"):
+                values = {name: sum(audit["sentences"][side][name] for audit in audits)
+                          for name in ("total_sentences", "excluded_sentences", "scored_sentences")}
+                total = values["total_sentences"]
+                values["excluded_percentage"] = (
+                    100 * values["excluded_sentences"] / total if total else None
+                )
+                values["scored_percentage"] = (
+                    100 * values["scored_sentences"] / total if total else None
+                )
+                sentences[side] = values
+            summary.append({
+                "dataset": dataset, "direction": direction, "metric": metric,
+                "case_count": len(rows), "audited_case_count": len(audits),
+                "scored_case_count": sum(row["scores"][metric] is not None for row in rows),
+                "unscored_case_count": sum(row["scores"][metric] is None for row in rows),
+                **counts, "excluded_matched_block_percentage":
+                    100 * counts["excluded_blocks"] / matched if matched else None,
+                "sentences": sentences,
+            })
+    return summary
+
+
+def run_inference(report, output, exclude_overlong_blocks=False):
     import numpy as np
     import torch
     from comet import load_from_checkpoint
@@ -229,10 +266,13 @@ def run_inference(report, output):
     model = load_from_checkpoint(str(checkpoints[0]))
     model.eval()
     tokenizer = model.encoder.tokenizer
-    assignment_config = AlignedCometConfig(embedding_model=embedding_path)
+    assignment_config = AlignedCometConfig(
+        embedding_model=embedding_path, exclude_overlong_blocks=exclude_overlong_blocks,
+    )
     sentalign_config = SentAlignCometConfig(
         alignment_model=embedding_path,
         alignment_cache=str(Path("benchmark_work/sentalign_real_embedding_cache").resolve()),
+        exclude_overlong_blocks=exclude_overlong_blocks,
     )
     checked_comet = CachedComet(model)
     regular = UnbabelCometScorer(batch_size=8)
@@ -285,7 +325,7 @@ def run_inference(report, output):
                         )
                         score = result.score
                         row["metric_details"][metric] = asdict(result)
-                    if not math.isfinite(score):
+                    if score is not None and not math.isfinite(score):
                         raise ValueError("Metric returned a nonfinite score.")
                     row["scores"][metric] = score
                 except (ValueError, RuntimeError) as exc:
@@ -301,6 +341,7 @@ def run_inference(report, output):
             }), flush=True)
     report["summary"] = summarize(report["results"])
     report["quality_checks"] = quality_checks(report["results"])
+    report["coverage_summary"] = summarize_coverage(report["results"])
     report["completed"] = True
     report["finished_at"] = datetime.now(timezone.utc).isoformat()
     output.write_text(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False),
@@ -313,6 +354,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--select-only", action="store_true")
     parser.add_argument("--fixtures", type=Path)
+    parser.add_argument("--additional-fixtures", type=Path, nargs="+", default=[])
+    parser.add_argument("--exclude-overlong-blocks", action="store_true")
     parser.add_argument("--directions", nargs="+", default=["en-de", "en-fr", "en-es"])
     parser.add_argument("--only-dataset", choices=sorted(DEFAULT_DATASETS))
     parser.add_argument("--allow-overlong-sentences", action="store_true")
@@ -329,6 +372,11 @@ def main():
     segmenter = SpacySentenceSegmenter({})
     if args.fixtures:
         report = json.loads(args.fixtures.read_text(encoding="utf-8"))
+        for path in args.additional_fixtures:
+            report["documents"].extend(json.loads(path.read_text(encoding="utf-8"))["documents"])
+        report["fixture_sources"] = [
+            str(path) for path in [args.fixtures, *args.additional_fixtures]
+        ]
     else:
         documents, screening = select_documents(
             {name: path for name, path in DEFAULT_DATASETS.items()
@@ -358,7 +406,7 @@ def main():
         for document in report["documents"]:
             print(document["id"], document["full_token_counts"], flush=True)
         return
-    run_inference(report, args.output)
+    run_inference(report, args.output, exclude_overlong_blocks=args.exclude_overlong_blocks)
 
 
 if __name__ == "__main__":
