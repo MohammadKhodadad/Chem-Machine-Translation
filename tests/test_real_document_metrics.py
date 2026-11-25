@@ -41,11 +41,83 @@ def test_coverage_summary_uses_pooled_counts_not_mean_document_percentages():
 REAL_DOCUMENTS = json.loads(
     (Path(__file__).parent / "fixtures" / "real_document_metrics.json").read_text(encoding="utf-8")
 )["documents"]
+
+
+def test_sentalign_comparison_selects_three_distinct_length_strata_per_language():
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        from evaluate_sentalign_filter_comparison import select_cases
+    finally:
+        sys.path.remove(str(SCRIPTS))
+    audit = {"records": [], "text_audits": {}}
+    for language in ("de", "zh"):
+        for index, maximum in enumerate((100, 511, 600)):
+            key = f"{language}:{index}"
+            audit["text_audits"][key] = {
+                "language": language, "sentence_count": 2, "max_sentence_embedding_tokens": 600,
+                "max_sentence_tokens": maximum, "max_word_eligible_local_span_tokens": maximum,
+                "full_tokens": 1200,
+                "overlong_sentences": [{"words": 100}] if maximum > 510 else [],
+            }
+            audit["records"].append({
+                "dataset": "sample", "direction": f"en-{language}", "source": key,
+                "reference": key, "manifest_line": index + 1, "doc_id": key,
+                "source_row_id": key,
+            })
+    selected = select_cases(audit)
+    assert len(selected) == 6
+    for language in ("de", "zh"):
+        rows = [row for row in selected if row["target_language"] == language]
+        assert len({row["doc_id"] for row in rows}) == 3
+        assert [row["stratum"] for row in rows] == [
+            "safe", "overlong_sentence", "overlong_sentence",
+        ]
+
+
+@pytest.mark.parametrize("changed", [None, "audit", "cases"])
+def test_sentalign_comparison_resume_checks_audit_and_selected_cases(changed):
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        from evaluate_sentalign_filter_comparison import validate_resume
+    finally:
+        sys.path.remove(str(SCRIPTS))
+    report = {"audit_sha256": "original", "results": [{"case_id": "de-1", "dataset": "sample"}]}
+    cases = [{"case_id": "de-1", "dataset": "sample"}, {"case_id": "de-2", "dataset": "sample"}]
+    if changed == "audit":
+        with pytest.raises(ValueError, match="audit changed"):
+            validate_resume(report, "different", cases)
+    elif changed == "cases":
+        cases[0]["case_id"] = "de-3"
+        with pytest.raises(ValueError, match="selected cases changed"):
+            validate_resume(report, "original", cases)
+    else:
+        validate_resume(report, "original", cases)
+
+
 CHINESE_DOCUMENTS = json.loads(
     (
         Path(__file__).parent / "fixtures" / "real_document_metrics_chinese_length_safe.json"
     ).read_text(encoding="utf-8")
 )["documents"]
+
+
+def test_sentalign_summary_separates_recovered_scores_from_changed_missingness():
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        from evaluate_sentalign_filter_comparison import summarize
+    finally:
+        sys.path.remove(str(SCRIPTS))
+    rows = [{"target_language": "de", "strict_score": before, "filtered_score": after,
+             "strict_error": "size error" if before is None else None}
+            for before, after in ((None, 0.9), (0, None), (None, None), (0.8, 0.8))]
+    summary = summarize(rows)
+    for item in summary:
+        assert item["case_count"] == 4
+        assert item["strict_scored_rows"] == item["filtered_scored_rows"] == 2
+        assert item["recovered_rows"] == item["zero_to_unscored_rows"] == 1
+        assert item["unscored_in_both_rows"] == 1
+        assert item["paired_mean_score_change"] == 0
+        assert item["audited_case_count"] == 0
 
 
 def test_real_variants_use_only_reference_and_real_donor_sentences():

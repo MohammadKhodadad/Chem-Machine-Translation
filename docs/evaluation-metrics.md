@@ -945,6 +945,114 @@ explicit missing scores. It does not yet establish human agreement, robust cross
 rankings, or full-benchmark coverage. Use the filtered scores as partial-coverage research results,
 not a validated replacement for a whole-document evaluation.
 
+### SentAlign-Only Comparison: Three Real Cases Per Language
+
+The [24-case report](../reports/real_document_metrics/sentalign_three_per_language_20261124.json)
+compares strict and filtered **SentAlign-COMET only**, with three distinct real records per target
+language: German, English, Spanish, French, Japanese, Portuguese, Russian, and Chinese. The run
+completed on 2026-11-24. Source and reference texts come from the original benchmark CSVs, with
+hashes checked against the full coverage audit. The candidate is the **unmodified reference** in
+each case: these are real-record positive controls, not generated model translations.
+
+Selection is deterministic and size-stratified, not COMET-score-selected: one safe case, one
+overlong-sentence case, and one merge-risk case where available, otherwise a second overlong case.
+This produces eight safe, twelve overlong, and four merge-risk records. Selection prefers overlong
+segments within SentAlign's upstream 110-word limit, then the shorter side nearest 1,200 full-text
+tokens. Records exceeding the embedding budget or sentence-count bound are excluded at sampling.
+This is a targeted operational experiment, **not an estimate of full-dataset exclusion prevalence**.
+Language means would also mix datasets and source directions, so they are not language rankings.
+
+Both modes use the same cached COMET checkpoint and BGE-M3 settings. Their raw alignment links
+were verified identical in **all 24 cases**. Every filtered retained matched block was checked to
+fit the effective 510-token cap; every excluded block exceeded it in at least one field. Original
+sentence indices, CSV provenance, score denominators, and character coverage were independently
+checked. The interrupted initial run was resumed only after validating the audit checksum,
+selected-case prefix, model settings, and candidate origin.
+
+#### Language-Level Impact
+
+`Affected rows` means rows with at least one matched block excluded by size. `Blocks excluded`
+counts final matched source/reference/candidate blocks, not raw two-way alignment links.
+Sentence counts are original pipeline segments; reference and candidate counts are identical
+because the candidate is copied from the reference. Counts are pooled, not mean percentages.
+
+| Target language | Affected rows | Strict scored rows | Filtered scored rows | Blocks excluded / matched | Source segments excluded / total | Reference and candidate segments excluded / total, each |
+| --- | --- | --- | --- | --- | --- | --- |
+| All | 5/24 | 19/24 | 19/24 | 5/152 | 5/275 | 5/218 |
+| German (`de`) | 1/3 | 2/3 | 1/3 | 1/11 | 1/14 | 1/22 |
+| English (`en`) | 0/3 | 3/3 | 3/3 | 0/26 | 0/63 | 0/37 |
+| Spanish (`es`) | 0/3 | 3/3 | 1/3 | 0/15 | 0/27 | 0/21 |
+| French (`fr`) | 1/3 | 2/3 | 3/3 | 1/24 | 1/54 | 1/26 |
+| Japanese (`ja`) | 1/3 | 2/3 | 3/3 | 1/18 | 1/24 | 1/29 |
+| Portuguese (`pt`) | 0/3 | 3/3 | 3/3 | 0/9 | 0/35 | 0/14 |
+| Russian (`ru`) | 1/3 | 2/3 | 3/3 | 1/35 | 1/40 | 1/46 |
+| Chinese (`zh`) | 1/3 | 2/3 | 2/3 | 1/14 | 1/18 | 1/23 |
+
+Overall, **20.83% of rows** were size-affected and **3.29% of matched blocks** were excluded.
+The filter excluded **1.82% of source segments** and **2.29% of reference/candidate segments**,
+but **15.11% of source nonwhitespace characters** and **14.15% of reference/candidate characters**.
+Scored blocks cover 66.18% of source segments and 72.94% of reference/candidate segments, versus
+only 44.62% and 50.03% of their characters respectively. Unmatched content accounts for additional
+loss of COMET-scored coverage; a small exclusion rate is not full-document coverage.
+
+#### All 24 Strict And Filtered Scores
+
+`Rejected` means a strict COMET input-size error; `Unscored` means no scoreable matched blocks
+remain. Strict numeric zeros count as scores in the table above, even when all blocks are null.
+`Reference text scored` is the percentage of nonwhitespace reference characters in COMET-scored
+blocks, not a semantic-quality judgment. Case IDs identify full original texts in the raw report.
+
+| Case | Dataset | Direction | Selection stratum | Strict | Filtered | Blocks excluded / matched | Reference segments excluded / total | Reference text scored |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| de-1 | google_patents | en-de | safe | 0.6570 | 0.6570 | 0/10 | 0/12 | 68.79% |
+| de-2 | google_patents | en-de | overlong_sentence | 0.0000 | Unscored | 0/0 | 0/9 | 0.00% |
+| de-3 | google_patents | en-de | overlong_sentence | Rejected | Unscored | 1/1 | 1/1 | 0.00% |
+| en-1 | jrc_articles | de-en | safe | 0.9169 | 0.9169 | 0/11 | 0/11 | 100.00% |
+| en-2 | jrc_definitions | de-en | overlong_sentence | 0.6399 | 0.6399 | 0/13 | 0/22 | 60.10% |
+| en-3 | jrc_definitions | de-en | overlong_sentence | 0.0908 | 0.0908 | 0/2 | 0/4 | 31.21% |
+| es-1 | google_patents | en-es | safe | 0.6667 | 0.6667 | 0/15 | 0/17 | 89.03% |
+| es-2 | google_patents | en-es | overlong_sentence | 0.0000 | Unscored | 0/0 | 0/2 | 0.00% |
+| es-3 | google_patents | en-es | overlong_sentence | 0.0000 | Unscored | 0/0 | 0/2 | 0.00% |
+| fr-1 | google_patents | en-fr | safe | 0.3139 | 0.3139 | 0/13 | 0/15 | 53.55% |
+| fr-2 | google_patents | en-fr | overlong_sentence | Rejected | 0.9468 | 1/4 | 1/4 | 61.26% |
+| fr-3 | google_patents | de-fr | merge_risk | 0.9384 | 0.9384 | 0/7 | 0/7 | 100.00% |
+| ja-1 | google_patents | fr-ja | safe | 0.3825 | 0.3825 | 0/8 | 0/18 | 37.12% |
+| ja-2 | google_patents | fr-ja | overlong_sentence | Rejected | 0.9705 | 1/2 | 1/2 | 2.20% |
+| ja-3 | google_patents | en-ja | merge_risk | 0.6933 | 0.6933 | 0/8 | 0/9 | 81.72% |
+| pt-1 | jrc_articles | fr-pt | safe | 0.6479 | 0.6479 | 0/7 | 0/9 | 76.54% |
+| pt-2 | jrc_definitions | de-pt | overlong_sentence | 0.0417 | 0.0417 | 0/1 | 0/3 | 13.61% |
+| pt-3 | jrc_definitions | de-pt | overlong_sentence | 0.0844 | 0.0844 | 0/1 | 0/2 | 6.78% |
+| ru-1 | google_patents | en-ru | safe | 0.7556 | 0.7556 | 0/17 | 0/20 | 85.99% |
+| ru-2 | google_patents | en-ru | overlong_sentence | Rejected | 0.5541 | 1/5 | 1/8 | 13.64% |
+| ru-3 | google_patents | en-ru | merge_risk | 0.6961 | 0.6961 | 0/13 | 0/18 | 94.33% |
+| zh-1 | google_patents | en-zh | safe | 0.4007 | 0.4007 | 0/8 | 0/17 | 38.97% |
+| zh-2 | google_patents | en-zh | overlong_sentence | Rejected | Unscored | 1/1 | 1/1 | 0.00% |
+| zh-3 | google_patents | en-zh | merge_risk | 0.6679 | 0.6679 | 0/5 | 0/5 | 100.00% |
+
+The filter eliminates all five strict input-size exceptions. Three rejected cases recover partial
+scores (`fr-2`, `ja-2`, `ru-2`); two lose their only matched block and remain unscored (`de-3`,
+`zh-2`). Separately, three strict all-null zeros become unscored (`de-2`, `es-2`, `es-3`), without
+any size exclusion. That leaves 19 numeric scores in either mode, **on different case sets**.
+The 16 cases scored in both modes have identical scores: the paired mean change is exactly zero.
+An apparent aggregate mean difference over each mode's available scores would reflect changed
+case membership, not improved quality measurement.
+
+**Production assessment:** the input guard, complete-block exclusion, preserved penalties,
+missing-score reporting, and unchanged alignment links passed this operational test. This does
+**not** certify production translation-quality evaluation. The Japanese recovered score of 0.9705
+uses only 2.20% of reference characters; size safety alone is insufficient. Production approval
+still needs actual model candidates, coverage requirements declared in advance, representative
+sampling, and held-out human/quality validation. These controls must not be presented as a
+production model ranking or full-benchmark exclusion rate.
+
+Reproduce with a new filename; `--resume` continues an interrupted report only when its inputs
+and settings match. Completed reports are preserved:
+
+```powershell
+uv run --no-sync python scripts/evaluate_sentalign_filter_comparison.py `
+  --output reports/real_document_metrics/sentalign_three_per_language_rerun.json
+```
+
 ### Reproducing The Filtered Runs
 
 Use new output filenames because the runners preserve existing reports:
